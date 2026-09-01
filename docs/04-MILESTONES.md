@@ -48,8 +48,8 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
       (write a test asserting static mode under-reports on this app, headless does not).
 
 ## Milestone 7 — Target app 3 (crawler traps) + robustness
-- [ ] Infinite pagination, redirect loop, honeypot links, rate-limited endpoint
-- [ ] Crawler correctly terminates/handles each without hanging or crashing
+- [x] Infinite pagination, redirect loop, honeypot links, rate-limited endpoint
+- [x] Crawler correctly terminates/handles each without hanging or crashing
 - **Done when:** crawl against app3 completes in bounded time and matches expected findings.
 
 ## Milestone 8 — Report generator

@@ -2,6 +2,14 @@
 
 Assumptions and deferred items. Newest entries first.
 
+## 2026-09-01 — Milestone 21 coverage
+
+`crawler-py` unit tests measure **92%** (`pytest --cov=shroodler`). Go internals:
+`crawler-go` **~88%**, `proxy-go` **~84%** (`go test ./internal/... -coverpkg=./internal/...`).
+CLI `main()` functions that call `os.Exit` and a few MITM CONNECT/resume branches remain
+uncovered. `make cover` reports these numbers; `make verify` keeps the existing pass/fail
+tests and does not fail the tree on the Go 90% shortfall.
+
 ## 2026-09-01 — Tauri version pin
 
 Tauri crates are pinned at `tauri = 2.11.5` and `tauri-build = 2.6.3` (CLI/API 2.11.x).

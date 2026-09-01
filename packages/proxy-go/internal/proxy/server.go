@@ -143,6 +143,13 @@ func (s *Server) StartOn(ln net.Listener) error {
 }
 
 func (s *Server) controlLoop() {
+	ln, err := net.Listen("tcp", s.ControlAddr)
+	if err != nil {
+		return
+	}
+	s.mu.Lock()
+	s.ControlAddr = ln.Addr().String()
+	s.mu.Unlock()
 	mux := http.NewServeMux()
 	mux.HandleFunc("/control", func(w http.ResponseWriter, r *http.Request) {
 		ws, err := upgrader.Upgrade(w, r, nil)
@@ -160,7 +167,7 @@ func (s *Server) controlLoop() {
 			s.handleControl(ws, data)
 		}
 	})
-	http.ListenAndServe(s.ControlAddr, mux)
+	_ = http.Serve(ln, mux)
 }
 
 func (s *Server) handleControl(ws *websocket.Conn, data []byte) {

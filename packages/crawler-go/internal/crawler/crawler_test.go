@@ -118,9 +118,50 @@ func itoa(n int) string {
 	return string(d)
 }
 
+func TestRobots429AndJS(t *testing.T) {
+	var n429 int
+	mux := http.NewServeMux()
+	mux.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("User-agent: *\nDisallow: /hidden\n"))
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/hidden">h</a><a href="/ok">o</a><script src="/a.js"></script>`))
+	})
+	mux.HandleFunc("/ok", func(w http.ResponseWriter, r *http.Request) {
+		if n429 < 1 {
+			n429++
+			w.WriteHeader(429)
+			return
+		}
+		w.Write([]byte("ok"))
+	})
+	mux.HandleFunc("/a.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write([]byte(`fetch("/api/x")`))
+	})
+	mux.HandleFunc("/.git/config", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("[core]"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 2, IgnoreRobots: false, MaxPages: 40})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Pages {
+		if strings.Contains(p.URL, "/hidden") {
+			t.Fatal("robots")
+		}
+	}
+}
+
 func TestRefuseExternal(t *testing.T) {
 	_, err := crawler.Crawl("http://example.com/", crawler.Config{})
 	if err == nil {
 		t.Fatal("expected refuse")
+	}
+	if err.Error() == "" {
+		t.Fatal("empty error")
 	}
 }

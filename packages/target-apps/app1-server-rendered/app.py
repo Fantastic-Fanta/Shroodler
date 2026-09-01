@@ -78,6 +78,21 @@ def dashboard():
     return resp
 
 
+@app.route("/lab-gated")
+def lab_gated():
+    """Test-only fixture: cookie/header gated page, unlinked from navigation."""
+    cookie_ok = request.cookies.get("lab_auth") == "open"
+    header_ok = request.headers.get("X-Lab-Auth") == "open"
+    if cookie_ok or header_ok:
+        return (
+            "<html><body><h1>Lab gated</h1>"
+            '<form action="/lab-gated" method="POST">'
+            '<input type="text" name="lab_gated_field" value="ok">'
+            "</form></body></html>"
+        )
+    return "<html><body><p>lab wall</p></body></html>", 200
+
+
 @app.route("/settings")
 def settings():
     return render_template("settings.html")

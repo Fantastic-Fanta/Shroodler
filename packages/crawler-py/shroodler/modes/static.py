@@ -17,6 +17,7 @@ class FetchResult:
     redirect_to: str | None
     error: str | None = None
     set_cookies: list[str] = field(default_factory=list)
+    discovered_urls: list[str] = field(default_factory=list)
 
 
 def _decode_body(body: bytes, content_type: str) -> str:
@@ -30,18 +31,34 @@ def _decode_body(body: bytes, content_type: str) -> str:
 
 
 class StaticFetcher:
-    def __init__(self, timeout: float = 10.0, user_agent: str = DEFAULT_UA) -> None:
-        self.client = httpx.Client(
-            timeout=timeout,
-            follow_redirects=False,
-            headers={"User-Agent": user_agent},
-        )
+    def __init__(
+        self,
+        timeout: float = 10.0,
+        user_agent: str = DEFAULT_UA,
+        proxy: str | None = None,
+        extra_headers: dict[str, str] | None = None,
+    ) -> None:
+        headers: dict[str, str] = {"User-Agent": user_agent}
+        if extra_headers:
+            headers.update(extra_headers)
+        kwargs: dict = {
+            "timeout": timeout,
+            "follow_redirects": False,
+            "headers": headers,
+            "trust_env": False,
+        }
+        if proxy:
+            kwargs["proxy"] = proxy
+        self.client = httpx.Client(**kwargs)
         self.user_agent = user_agent
+        self.proxy = proxy
+        self.requests = 0
 
     def close(self) -> None:
         self.client.close()
 
     def fetch(self, url: str) -> FetchResult:
+        self.requests += 1
         try:
             resp = self.client.get(url)
         except httpx.RequestError as exc:

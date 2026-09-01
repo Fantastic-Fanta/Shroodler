@@ -3,10 +3,21 @@ from __future__ import annotations
 from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime, timezone
-from time import sleep
+from time import monotonic, sleep
 from urllib.parse import urljoin
 
 from shroodler import __version__
+from shroodler.auth import (
+    CookieSpec,
+    apply_httpx_cookies,
+    load_cookie_jar,
+    load_login_recipe,
+    load_storage_state,
+    parse_cookie_pairs,
+    parse_header_lines,
+    resolve_recipe_url,
+    run_login_httpx,
+)
 from shroodler.extractors.common_paths import probe_paths
 from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.forms import extract_forms
@@ -14,8 +25,14 @@ from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.js_endpoints import extract_js_endpoints
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.secrets import scan_text
+from shroodler.extractors.sourcemap import (
+    decode_data_url,
+    extract_from_source_map,
+    parse_source_map,
+    source_mapping_url,
+)
 from shroodler.extractors.verbose import extract_verbose_errors
-from shroodler.models import CrawlerInfo, CrawlResult, Finding, JsEndpoint, Page
+from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats, Finding, JsEndpoint, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
 from shroodler.robots import (
     DEFAULT_UA,
@@ -24,7 +41,14 @@ from shroodler.robots import (
     load_robots,
     pagination_family,
 )
-from shroodler.urls import canonical_key, is_loopback_or_local, query_param_names, same_origin
+from shroodler.sitemap import parse_robots_sitemaps, parse_sitemap_xml
+from shroodler.urls import (
+    canonical_key,
+    is_loopback_or_local,
+    normalize_url,
+    query_param_names,
+    same_origin,
+)
 
 ProgressCb = Callable[[int, str], None]
 
@@ -53,6 +77,14 @@ class Crawler:
         rate_limit_retries: int = 3,
         user_agent: str = DEFAULT_UA,
         progress: ProgressCb | None = None,
+        cookies: list[str] | None = None,
+        headers: list[str] | None = None,
+        cookie_jar: str | None = None,
+        storage_state: str | None = None,
+        login_recipe: str | None = None,
+        proxy: str | None = None,
+        extra_seeds: list[str] | None = None,
+        no_sitemap: bool = False,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -65,11 +97,21 @@ class Crawler:
         self.rate_limit_retries = rate_limit_retries
         self.user_agent = user_agent
         self.progress = progress
-        self.http = StaticFetcher(user_agent=user_agent)
+        self.proxy = proxy
+        self.extra_seeds = extra_seeds or []
+        self.no_sitemap = no_sitemap
+        self._cookie_args = cookies or []
+        self._cookie_jar = cookie_jar
+        self._storage_state = storage_state
+        self._login_recipe_path = login_recipe
+        extra_headers = parse_header_lines(headers)
+        self.http = StaticFetcher(user_agent=user_agent, proxy=proxy, extra_headers=extra_headers)
         if mode == "headless":
             from shroodler.modes.headless import HeadlessFetcher
 
-            self.fetcher = HeadlessFetcher(user_agent=user_agent)
+            self.fetcher = HeadlessFetcher(
+                user_agent=user_agent, proxy=proxy, extra_headers=extra_headers
+            )
         else:
             self.fetcher = self.http
 
@@ -80,21 +122,31 @@ class Crawler:
 
     def crawl(self, start_url: str) -> CrawlResult:
         started = _now()
+        t0 = monotonic()
         if not self.allow_external and not is_loopback_or_local(start_url):
             raise ValueError(
                 "refusing to crawl non-local host; pass --allow-external for listed public fixtures"
             )
         seed = start_url if "://" in start_url else "http://" + start_url
         origin_url = seed
+        self._prime_auth(seed)
         rp = None
-        if not self.ignore_robots:
+        robots_body = ""
+        if not self.ignore_robots or not self.no_sitemap:
             robots_url = urljoin(seed, "/robots.txt")
             robots_res = self.http.fetch(robots_url)
             if robots_res.status_code == 200 and robots_res.text:
-                rp = load_robots(robots_res.text, seed)
+                robots_body = robots_res.text
+                if not self.ignore_robots:
+                    rp = load_robots(robots_body, seed)
 
         queue: deque[tuple[str, int]] = deque([(seed, 0)])
+        for extra in self.extra_seeds:
+            if same_origin(extra, origin_url):
+                queue.append((extra, 0))
         seen: set[str] = set()
+        if not self.no_sitemap:
+            self._enqueue_sitemap_seeds(seed, origin_url, robots_body, queue, seen)
         pages: list[Page] = []
         findings: list[Finding] = []
         js_endpoints: list = []
@@ -142,6 +194,7 @@ class Crawler:
                 next_links.extend(extract_links(result.url, result.text))
             if "css" in ctype:
                 next_links.extend(extract_css_urls(result.url, result.text))
+            next_links.extend(result.discovered_urls)
 
             for link in next_links:
                 if not same_origin(link, origin_url):
@@ -157,6 +210,9 @@ class Crawler:
         findings.extend(extra_findings)
 
         finished = _now()
+        requests = getattr(self.http, "requests", 0)
+        if self.fetcher is not self.http:
+            requests += getattr(self.fetcher, "requests", 0)
         return CrawlResult(
             target=seed,
             scan_started_at=started,
@@ -165,7 +221,77 @@ class Crawler:
             pages=pages,
             findings=_dedupe_findings(findings),
             js_endpoints=_dedupe_endpoints(js_endpoints),
+            stats=CrawlStats(
+                pages_crawled=len(pages),
+                requests=requests,
+                elapsed_ms=int((monotonic() - t0) * 1000),
+            ),
         )
+
+    def _enqueue_sitemap_seeds(
+        self,
+        seed: str,
+        origin_url: str,
+        robots_body: str,
+        queue: deque[tuple[str, int]],
+        seen: set[str],
+    ) -> None:
+        pending: list[str] = []
+        queued_sitemaps: set[str] = set()
+
+        def offer_sitemap(raw: str, base: str) -> None:
+            resolved = normalize_url(base, raw)
+            if not resolved or not same_origin(resolved, origin_url):
+                return
+            key = canonical_key(resolved)
+            if key in queued_sitemaps:
+                return
+            queued_sitemaps.add(key)
+            pending.append(resolved)
+
+        for sm in parse_robots_sitemaps(robots_body):
+            offer_sitemap(sm, seed)
+        offer_sitemap("/sitemap.xml", seed)
+
+        fetched = 0
+        while pending and fetched < 10:
+            sm_url = pending.pop(0)
+            if not same_origin(sm_url, origin_url):
+                continue
+            fetched += 1
+            res = self.http.fetch(sm_url)
+            if res.status_code != 200 or not res.text:
+                continue
+            seen.add(canonical_key(sm_url))
+            url_locs, nested = parse_sitemap_xml(res.text)
+            for loc in nested:
+                offer_sitemap(loc, sm_url)
+            for loc in url_locs:
+                page = normalize_url(sm_url, loc)
+                if page and same_origin(page, origin_url):
+                    queue.append((page, 0))
+
+    def _prime_auth(self, seed: str) -> None:
+        specs: list[CookieSpec] = []
+        specs.extend(parse_cookie_pairs(self._cookie_args))
+        if self._cookie_jar:
+            specs.extend(load_cookie_jar(self._cookie_jar))
+        if self._storage_state:
+            specs.extend(load_storage_state(self._storage_state))
+        if specs:
+            apply_httpx_cookies(self.http.client, specs, seed)
+            setter = getattr(self.fetcher, "set_cookies", None)
+            if setter is not None:
+                setter(specs, seed)
+        if not self._login_recipe_path:
+            return
+        recipe = resolve_recipe_url(load_login_recipe(self._login_recipe_path), seed)
+        if self.mode == "headless":
+            login_fn = getattr(self.fetcher, "login", None)
+            if login_fn is not None:
+                login_fn(recipe)
+                return
+        run_login_httpx(self.http.client, recipe)
 
     def _fetch_with_retries(self, url: str) -> FetchResult:
         delay = 0.2
@@ -188,46 +314,80 @@ class Crawler:
     def _page_from_result(
         self, result: FetchResult
     ) -> tuple[Page, list[Finding], list[JsEndpoint]]:
-        js_files: list[str] = []
-        forms = []
-        form_findings: list[Finding] = []
-        endpoints: list[JsEndpoint] = []
-        ep_findings: list[Finding] = []
-        if result.text:
-            from bs4 import BeautifulSoup
+        page, findings, endpoints = page_from_fetch(result)
+        if result.text and (
+            "javascript" in _content_type(result.headers) or result.url.endswith(".js")
+        ):
+            map_eps, map_findings = self._from_source_map(result.url, result.text)
+            endpoints = list(endpoints) + map_eps
+            findings = list(findings) + map_findings
+        return page, findings, endpoints
 
-            soup = BeautifulSoup(result.text, "lxml")
-            for script in soup.find_all("script", src=True):
-                src = script.get("src")
-                if src:
-                    js_files.append(src)
-            ctype = _content_type(result.headers)
-            if "html" in ctype or result.text.lstrip().startswith("<"):
-                forms, form_findings = extract_forms(result.text, result.url)
-            if "javascript" in ctype or result.url.endswith(".js"):
-                endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
-        cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
-        headers, header_findings = extract_headers(result.headers, result.url)
-        verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
-        secret_findings = scan_text(result.text, result.url)
-        page = Page(
-            url=result.url,
-            status_code=result.status_code,
-            forms=forms,
-            params=query_param_names(result.url),
-            cookies=cookies,
-            headers=headers,
-            js_files=js_files,
-        )
-        all_f = (
-            form_findings
-            + cookie_findings
-            + header_findings
-            + verbose_findings
-            + secret_findings
-            + ep_findings
-        )
-        return page, all_f, endpoints
+    def _from_source_map(self, js_url: str, js_text: str) -> tuple[list[JsEndpoint], list[Finding]]:
+        spec = source_mapping_url(js_text)
+        if not spec:
+            return [], []
+        raw: str | bytes | None = None
+        if spec.startswith("data:"):
+            decoded = decode_data_url(spec)
+            if not decoded:
+                return [], []
+            raw = decoded
+        else:
+            map_url = urljoin(js_url, spec)
+            if not same_origin(map_url, js_url):
+                return [], []
+            fetched = self.http.fetch(map_url)
+            if fetched.status_code != 200 or not fetched.text:
+                return [], []
+            raw = fetched.text
+        obj = parse_source_map(raw)
+        if not obj:
+            return [], []
+        return extract_from_source_map(js_url, obj)
+
+
+def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEndpoint]]:
+    js_files: list[str] = []
+    forms = []
+    form_findings: list[Finding] = []
+    endpoints: list[JsEndpoint] = []
+    ep_findings: list[Finding] = []
+    if result.text:
+        from bs4 import BeautifulSoup
+
+        soup = BeautifulSoup(result.text, "lxml")
+        for script in soup.find_all("script", src=True):
+            src = script.get("src")
+            if src:
+                js_files.append(src)
+        ctype = _content_type(result.headers)
+        if "html" in ctype or result.text.lstrip().startswith("<"):
+            forms, form_findings = extract_forms(result.text, result.url)
+        if "javascript" in ctype or result.url.endswith(".js"):
+            endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
+    cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
+    headers, header_findings = extract_headers(result.headers, result.url)
+    verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
+    secret_findings = scan_text(result.text, result.url)
+    page = Page(
+        url=result.url,
+        status_code=result.status_code,
+        forms=forms,
+        params=query_param_names(result.url),
+        cookies=cookies,
+        headers=headers,
+        js_files=js_files,
+    )
+    all_f = (
+        form_findings
+        + cookie_findings
+        + header_findings
+        + verbose_findings
+        + secret_findings
+        + ep_findings
+    )
+    return page, all_f, endpoints
 
 
 def _dedupe_findings(findings: list[Finding]) -> list[Finding]:

@@ -34,7 +34,7 @@
       "properties": {
         "name": { "type": "string", "minLength": 1 },
         "version": { "type": "string", "minLength": 1 },
-        "mode": { "type": "string", "enum": ["static", "headless"] }
+        "mode": { "type": "string", "enum": ["static", "headless", "ingest"] }
       }
     },
     "pages": {
@@ -48,6 +48,10 @@
     "js_endpoints": {
       "type": "array",
       "items": { "$ref": "#/$defs/js_endpoint" }
+    },
+    "stats": {
+      "$ref": "#/$defs/stats",
+      "description": "Optional crawl metrics. Absent on older scans; not required."
     }
   },
   "$defs": {
@@ -174,6 +178,27 @@
       "properties": {
         "source": { "type": "string" },
         "endpoint": { "type": "string" }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "pages_crawled": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Number of pages recorded in pages[]"
+        },
+        "requests": {
+          "type": "number",
+          "minimum": 0,
+          "description": "HTTP requests issued during the crawl, when counted"
+        },
+        "elapsed_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Wall time from crawl start to finish in milliseconds"
+        }
       }
     }
   }

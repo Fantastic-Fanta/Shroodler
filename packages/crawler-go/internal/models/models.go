@@ -57,6 +57,12 @@ type JSEndpoint struct {
 	Endpoint string `json:"endpoint"`
 }
 
+type CrawlStats struct {
+	PagesCrawled int   `json:"pages_crawled"`
+	Requests     int   `json:"requests"`
+	ElapsedMs    int64 `json:"elapsed_ms"`
+}
+
 type CrawlResult struct {
 	Target         string       `json:"target"`
 	ScanStartedAt  string       `json:"scan_started_at"`
@@ -65,4 +71,5 @@ type CrawlResult struct {
 	Pages          []Page       `json:"pages"`
 	Findings       []Finding    `json:"findings"`
 	JSEndpoints    []JSEndpoint `json:"js_endpoints"`
+	Stats          *CrawlStats  `json:"stats,omitempty"`
 }

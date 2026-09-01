@@ -38,6 +38,9 @@ packages/desktop-app/src-tauri/target/
 *.pem
 *.key
 
+# Local process fallback (no Docker)
+.local-run/
+
 # Scan / report output
 out.json
 out.html

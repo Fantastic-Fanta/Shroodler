@@ -2,6 +2,19 @@
 
 Assumptions and deferred items. Newest entries first.
 
+## 2026-09-01 — Docker Desktop missing on this machine
+
+`/usr/local/bin/docker` is a broken symlink to Docker.app, which is not installed.
+`make up` / `make verify` use a local process fallback (`scripts/local-up.sh`) that
+binds the same ports (8081–8084) on 127.0.0.1. Docker Compose files remain the
+canonical container path for machines that have Docker.
+
+## 2026-09-01 — Milestone 1 dashboard cookie vs session gate
+
+Unauthenticated `GET /dashboard` returns 200 with a login-wall body and still sets
+`session_id` (Secure=false). Full dashboard content remains session-gated. This lets
+the crawler observe the insecure-cookie finding without posting credentials.
+
 ## 2026-09-01 — Milestone 0 scaffolding
 
 - Docs originally lived in the repo root. Moved into `docs/` to match `01-ARCHITECTURE.md`.

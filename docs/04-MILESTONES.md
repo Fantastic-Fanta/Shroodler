@@ -11,10 +11,10 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** `make verify` runs and exits 0 with no real checks yet.
 
 ## Milestone 1 — Target app 1 (server-rendered)
-- [ ] Flask (or Express) app with: home page, login form, dashboard (session-gated),
+- [x] Flask (or Express) app with: home page, login form, dashboard (session-gated),
       settings page, an exposed `.git/config`, a `backup.sql.bak`, one page missing CSP,
       one insecure cookie, one page with a verbose stack-trace error
-- [ ] `expected_findings.json` written for it
+- [x] `expected_findings.json` written for it
 - **Done when:** app runs via `docker compose up app1` and is manually reachable.
 
 ## Milestone 2 — Python crawler MVP

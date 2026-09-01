@@ -1,0 +1,6 @@
+[core]
+	repositoryformatversion = 1
+	filemode = true
+	bare = false
+[remote "origin"]
+	url = git@internal.example.local:app1.git

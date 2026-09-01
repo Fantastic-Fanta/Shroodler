@@ -7,6 +7,7 @@ Generated from package layout (docstrings live in source).
 - `crawler.Crawler` / `crawl_url` — static or Playwright crawl
 - `extractors.*` — forms, headers, cookies, secrets, JS endpoints, common paths
 - `cli` — `shroodler crawl|diff|report`
+- `--header` / `--cookie` / `--cookie-jar` — extra request headers and cookie-jar auth
 - `--allow-external` — off by default; required for hosts outside loopback/`.local`
 
 ## crawler-go

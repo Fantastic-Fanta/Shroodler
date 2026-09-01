@@ -19,6 +19,7 @@ pass them (`[py]` / `[go]`).
 | Robots.txt | respected in default mode, ignorable via flag (documented, since this is your own app) | [x] | [ ] |
 | Pagination traps | infinite "next page" links (app3) | [x] | [ ] |
 | Honeypot links | hidden/invisible links only bots would follow (app3) | [x] | [ ] |
+| Authenticated crawl | `--header` / `--cookie` sent on every static fetch; app1 `/lab-gated` visible only with them; `--allow-external` unchanged | [x] | [x] |
 
 ## Form extraction
 

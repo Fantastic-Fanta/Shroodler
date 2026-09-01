@@ -7,6 +7,7 @@ from time import sleep
 from urllib.parse import urljoin
 
 from shroodler import __version__
+from shroodler.extractors.common_paths import probe_paths
 from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.headers import extract_headers
@@ -139,6 +140,10 @@ class Crawler:
                 if is_pagination_trap(link, family_counts):
                     continue
                 queue.append((link, depth + 1))
+
+        extra_pages, extra_findings = probe_paths(origin_url, self.fetcher, seen)
+        pages.extend(extra_pages)
+        findings.extend(extra_findings)
 
         finished = _now()
         return CrawlResult(

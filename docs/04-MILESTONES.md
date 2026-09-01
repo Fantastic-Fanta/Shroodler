@@ -36,8 +36,8 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
       least a few thousand iterations clean.
 
 ## Milestone 5 — Common-path prober
-- [ ] Wordlist-based prober for exposed files
-- [ ] Matrix rows green against app1 (positives) with zero false positives
+- [x] Wordlist-based prober for exposed files
+- [x] Matrix rows green against app1 (positives) with zero false positives
 - **Done when:** diff passes including exposed-file findings.
 
 ## Milestone 6 — Target app 2 (SPA) + headless mode

@@ -1,0 +1,7 @@
+/.git/config
+/.env
+/backup.sql.bak
+/.DS_Store
+/wp-config.php.bak
+/server-status
+/config.php.bak

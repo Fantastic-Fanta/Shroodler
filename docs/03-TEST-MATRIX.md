@@ -75,11 +75,11 @@ should never crash, should have a bounded false-positive rate on pure-random inp
 
 | Path | Should exist in app1 | Should exist in app3 | py | go |
 |---|---|---|---|---|
-| `/.git/config` | yes | no | [ ] | [ ] |
-| `/.env` | no | yes | [ ] | [ ] |
-| `/backup.sql.bak` | yes | no | [ ] | [ ] |
-| `/.DS_Store` | no | no | [ ] | [ ] |
-| `/wp-config.php.bak` | no | no | [ ] | [ ] |
+| `/.git/config` | yes | no | [x] | [ ] |
+| `/.env` | no | yes | [x] | [ ] |
+| `/backup.sql.bak` | yes | no | [x] | [ ] |
+| `/.DS_Store` | no | no | [x] | [ ] |
+| `/wp-config.php.bak` | no | no | [x] | [ ] |
 
 Assert zero false positives on paths that don't exist in a given app.
 

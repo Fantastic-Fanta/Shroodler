@@ -46,6 +46,7 @@ def test_app1_forms_headers_cookies():
             "verbose-error",
             "server-version-leak",
             "aws-access-key",
+            "exposed-file",
         }
     ]
     errors = diff_documents(doc, filtered, pages_only=False)

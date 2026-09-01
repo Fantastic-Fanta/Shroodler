@@ -199,6 +199,17 @@ Assert zero false positives on paths that don't exist in a given app.
 | CA confirm | Install/uninstall never proceeds without an explicit confirmation dialog/flag |
 | Composer / BP / AR | Compose request, set breakpoint, apply AutoResponder YAML from GUI helpers |
 
+## Payload tester
+
+| Case | Notes |
+|---|---|
+| Local injectable form | SQLi-shaped payload yields `payload-sql-error` on app5 |
+| External target | Refused without a local crawl target |
+
+## External smoke (opt-in)
+
+Never run by `make verify`. Requires `--allow-external` / `SHROODLER_ALLOW_EXTERNAL=1`.
+
 ## Coverage gate
 
 Once the above matrix is fully green, run coverage tooling (`pytest --cov`, `go test

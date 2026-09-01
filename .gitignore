@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# Go
+*.exe
+*.test
+*.out
+vendor/
+
+# Node
+node_modules/
+packages/target-apps/app2-spa/dist/
+packages/desktop-app/node_modules/
+packages/desktop-app/dist/
+packages/desktop-app/src-tauri/target/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets and local data — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Scan / report output
+out.json
+out.html
+out.csv
+*.sessions.jsonl
+
+# Coverage artifacts
+coverage/
+coverage.xml

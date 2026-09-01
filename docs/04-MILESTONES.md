@@ -77,40 +77,40 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** CLI contract in `02-SPEC.md` fully implemented in both languages.
 
 ## Milestone 12 — Proxy engine core: CA + capture
-- [ ] Read `docs/07-PROXY-SPEC.md` in full before starting — it's the source of truth for
+- [x] Read `docs/07-PROXY-SPEC.md` in full before starting — it's the source of truth for
       this whole feature, the same way `02-SPEC.md` is for the crawler
-- [ ] Scaffold `packages/proxy-go/`, produce the `shroodler-proxy` binary
-- [ ] `schema/proxy-session.schema.json` created matching section 1 of the proxy spec
-- [ ] Root CA generation/export/uninstall (`shroodler-proxy ca ...`)
-- [ ] Core HTTP(S) capture: proxy listener, on-the-fly leaf cert signing, session
+- [x] Scaffold `packages/proxy-go/`, produce the `shroodler-proxy` binary
+- [x] `schema/proxy-session.schema.json` created matching section 1 of the proxy spec
+- [x] Root CA generation/export/uninstall (`shroodler-proxy ca ...`)
+- [x] Core HTTP(S) capture: proxy listener, on-the-fly leaf cert signing, session
       recording via `--record` to JSONL
-- [ ] Matrix rows under "Proxy capture core" and "Root CA management" green
+- [x] Matrix rows under "Proxy capture core" and "Root CA management" green
 - **Done when:** `shroodler-proxy start --record out.jsonl`, pointing curl or a browser
   at it (HTTP and HTTPS, after trusting the exported CA) produces valid schema-conformant
   captured sessions.
 
 ## Milestone 13 — Proxy control channel + session inspector data
-- [ ] WebSocket control channel per section 3 of the proxy spec (`session:new`,
+- [x] WebSocket control channel per section 3 of the proxy spec (`session:new`,
       `session:complete`, `subscribe`)
-- [ ] Body decoding for the inspector: JSON, form-urlencoded, multipart, gzip/br/deflate,
+- [x] Body decoding for the inspector: JSON, form-urlencoded, multipart, gzip/br/deflate,
       binary fallback
-- [ ] Matrix rows under "Session inspector / decoding" green
+- [x] Matrix rows under "Session inspector / decoding" green
 - **Done when:** a client connected to the control channel receives real-time session
   events with correctly decoded bodies for a live capture.
 
 ## Milestone 14 — Breakpoints + AutoResponder
-- [ ] Breakpoint engine: request-stage and response-stage pausing, resume/edit/drop,
+- [x] Breakpoint engine: request-stage and response-stage pausing, resume/edit/drop,
       concurrent breakpoints, timeout auto-drop
-- [ ] AutoResponder: rule loading, first-match-wins evaluation, passthrough on no match
-- [ ] Matrix rows under "Breakpoints" and "AutoResponder" green
+- [x] AutoResponder: rule loading, first-match-wins evaluation, passthrough on no match
+- [x] Matrix rows under "Breakpoints" and "AutoResponder" green
 - **Done when:** a breakpoint rule reliably pauses matching traffic for edit/drop, and an
   AutoResponder rule reliably mocks a response without contacting the real upstream.
 
 ## Milestone 15 — Replay & composer
-- [ ] Replay a captured session (unmodified and with edits) through the proxy pipeline,
+- [x] Replay a captured session (unmodified and with edits) through the proxy pipeline,
       tagged `replayed_from`
-- [ ] Composer path: build and send a request with no originating session
-- [ ] Matrix rows under "Replay & composer" green
+- [x] Composer path: build and send a request with no originating session
+- [x] Matrix rows under "Replay & composer" green
 - **Done when:** both replay and from-scratch composition work via the CLI (`shroodler-
   proxy replay ...`) without the GUI, per the proxy spec's CLI contract.
 

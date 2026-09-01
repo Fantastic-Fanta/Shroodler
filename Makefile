@@ -20,6 +20,7 @@ test-unit: bootstrap
 	cd packages/secret-patterns && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/report-generator && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/crawler-go && go test ./...
+	cd packages/proxy-go && go test ./...
 
 test-integration: bootstrap up
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/integration -q

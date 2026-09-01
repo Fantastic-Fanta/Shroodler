@@ -2,7 +2,11 @@
 
 Assumptions and deferred items. Newest entries first.
 
-## 2026-09-01 — App4 multi-host via gateway
+## 2026-09-01 — Proxy brotli
+
+Bodies with `Content-Encoding: br` are stored as captured bytes; gzip/deflate are
+decoded. A brotli decoder was not added as a dependency. Composer is `replay` with
+an empty originating session (CLI `shroodler-proxy replay`).
 
 Backends listen on 127.0.0.1:8085/8086 and are only reached through the gateway
 on :8084. The crawler stays same-origin, so multi-service recon is via gateway

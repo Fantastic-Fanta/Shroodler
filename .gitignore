@@ -12,7 +12,9 @@ htmlcov/
 dist/
 build/
 
-# Go
+# Go binaries
+packages/crawler-go/shroodler-go
+packages/proxy-go/shroodler-proxy
 *.exe
 *.test
 *.out

@@ -10,7 +10,8 @@
     { "id": "verbose-error", "url": "/error" },
     { "id": "exposed-file", "url": "/.git/config" },
     { "id": "exposed-file", "url": "/backup.sql.bak" },
-    { "id": "server-version-leak", "url": "/" }
+    { "id": "server-version-leak", "url": "/" },
+    { "id": "aws-access-key", "url": "/static/app.js" }
   ],
   "expected_not_found": [
     { "id": "leaked-secret", "url": "/about" }

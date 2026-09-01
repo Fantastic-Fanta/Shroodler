@@ -72,8 +72,8 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** parity test suite is green across all three shared target apps.
 
 ## Milestone 11 — CLI polish
-- [ ] Config file support (`.shroodlerrc` or similar) for default flags
-- [ ] Multiple output formats wired through consistently in both language CLIs
+- [x] Config file support (`.shroodlerrc` or similar) for default flags
+- [x] Multiple output formats wired through consistently in both language CLIs
 - **Done when:** CLI contract in `02-SPEC.md` fully implemented in both languages.
 
 ## Milestone 12 — Proxy engine core: CA + capture

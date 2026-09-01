@@ -10,7 +10,30 @@ import (
 	"github.com/shroodler/crawler-go/internal/crawler"
 	"github.com/shroodler/crawler-go/internal/models"
 	"github.com/shroodler/crawler-go/internal/urls"
+	"gopkg.in/yaml.v3"
 )
+
+type rcFile struct {
+	Mode          string `yaml:"mode"`
+	Depth         *int   `yaml:"depth"`
+	IgnoreRobots  bool   `yaml:"ignore_robots"`
+	AllowExternal bool   `yaml:"allow_external"`
+	Format        string `yaml:"format"`
+}
+
+func loadRC() rcFile {
+	for _, p := range []string{".shroodlerrc", filepath.Join(os.Getenv("HOME"), ".shroodlerrc")} {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		var rc rcFile
+		if yaml.Unmarshal(b, &rc) == nil {
+			return rc
+		}
+	}
+	return rcFile{}
+}
 
 func main() {
 	if len(os.Args) < 2 {
@@ -42,7 +65,11 @@ func cmdCrawl(args []string) int {
 		return 2
 	}
 	target := args[0]
-	cfg := crawler.Config{Depth: 5}
+	rc := loadRC()
+	cfg := crawler.Config{Depth: 5, IgnoreRobots: rc.IgnoreRobots, AllowExternal: rc.AllowExternal}
+	if rc.Depth != nil {
+		cfg.Depth = *rc.Depth
+	}
 	var outPath string
 	for i := 1; i < len(args); i++ {
 		switch args[i] {

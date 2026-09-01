@@ -2,7 +2,10 @@
 
 Assumptions and deferred items. Newest entries first.
 
-## 2026-09-01 — Milestone 2 crawler defaults
+## 2026-09-01 — Optional form fields may be JSON null
+
+`enctype`, `disabled`, and `readonly` are optional in the spec. The schema allows
+`null` so crawlers can omit a value without dropping the key inconsistently.
 
 - Pagination traps are detected only for `/page/<n>` paths and `page=` query params,
   not every numeric path segment (so depth tests like `/p/10` still work).

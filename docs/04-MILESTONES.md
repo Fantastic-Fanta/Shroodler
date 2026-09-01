@@ -24,8 +24,8 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
       `shroodler diff` against `expected_findings.json` passes for page discovery.
 
 ## Milestone 3 — Extractors (forms, headers, cookies)
-- [ ] Implement all three extractors
-- [ ] Full matrix rows for "Form extraction", "Header analysis", "Cookie analysis" green
+- [x] Implement all three extractors
+- [x] Full matrix rows for "Form extraction", "Header analysis", "Cookie analysis" green
 - **Done when:** diff against app1's `expected_findings.json` passes on all these categories.
 
 ## Milestone 4 — Secret pattern rule-pack + scanner

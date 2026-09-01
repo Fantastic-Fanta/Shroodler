@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import httpx
 
@@ -16,6 +16,7 @@ class FetchResult:
     text: str
     redirect_to: str | None
     error: str | None = None
+    set_cookies: list[str] = field(default_factory=list)
 
 
 def _decode_body(body: bytes, content_type: str) -> str:
@@ -67,4 +68,5 @@ class StaticFetcher:
             body=resp.content,
             text=text,
             redirect_to=redirect_to,
+            set_cookies=list(resp.headers.get_list("set-cookie")),
         )

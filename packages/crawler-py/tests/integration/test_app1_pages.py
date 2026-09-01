@@ -34,7 +34,7 @@ pytestmark = pytest.mark.skipif(not _app1_up(), reason="app1 not running")
 
 def test_app1_page_discovery():
     result = crawl_url(APP1, depth=5, ignore_robots=False)
-    doc = result.model_dump(mode="json")
+    doc = result.to_dict()
     validate_crawl(doc)
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
     errors = diff_documents(doc, expected, pages_only=True)

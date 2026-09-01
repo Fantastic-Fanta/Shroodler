@@ -7,8 +7,12 @@ from time import sleep
 from urllib.parse import urljoin
 
 from shroodler import __version__
+from shroodler.extractors.cookies import extract_cookies
+from shroodler.extractors.forms import extract_forms
+from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.links import extract_css_urls, extract_links
-from shroodler.models import CrawlerInfo, CrawlResult, HeaderAnalysis, Page
+from shroodler.extractors.verbose import extract_verbose_errors
+from shroodler.models import CrawlerInfo, CrawlResult, Finding, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
 from shroodler.robots import (
     DEFAULT_UA,
@@ -81,6 +85,7 @@ class Crawler:
         queue: deque[tuple[str, int]] = deque([(seed, 0)])
         seen: set[str] = set()
         pages: list[Page] = []
+        findings: list[Finding] = []
         family_counts: dict[str, int] = defaultdict(int)
         redirect_hits: dict[str, int] = defaultdict(int)
 
@@ -101,8 +106,9 @@ class Crawler:
                 family_counts[fam] += 1
 
             result = self._fetch_with_retries(url)
-            page = self._page_from_result(result)
+            page, page_findings = self._page_from_result(result)
             pages.append(page)
+            findings.extend(page_findings)
             if self.progress:
                 self.progress(len(pages), result.url)
 
@@ -140,7 +146,7 @@ class Crawler:
             scan_finished_at=finished,
             crawler=CrawlerInfo(name="shroodler-py", version=__version__, mode="static"),
             pages=pages,
-            findings=[],
+            findings=_dedupe_findings(findings),
             js_endpoints=[],
         )
 
@@ -162,8 +168,10 @@ class Crawler:
             last = self.fetcher.fetch(url)
         return last
 
-    def _page_from_result(self, result: FetchResult) -> Page:
+    def _page_from_result(self, result: FetchResult) -> tuple[Page, list[Finding]]:
         js_files: list[str] = []
+        forms = []
+        form_findings: list[Finding] = []
         if result.text:
             from bs4 import BeautifulSoup
 
@@ -172,15 +180,35 @@ class Crawler:
                 src = script.get("src")
                 if src:
                     js_files.append(src)
-        return Page(
+            ctype = _content_type(result.headers)
+            if "html" in ctype or result.text.lstrip().startswith("<"):
+                forms, form_findings = extract_forms(result.text, result.url)
+        cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
+        headers, header_findings = extract_headers(result.headers, result.url)
+        verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
+        page = Page(
             url=result.url,
             status_code=result.status_code,
-            forms=[],
+            forms=forms,
             params=query_param_names(result.url),
-            cookies=[],
-            headers=HeaderAnalysis(present=[], missing=[]),
+            cookies=cookies,
+            headers=headers,
             js_files=js_files,
         )
+        all_f = form_findings + cookie_findings + header_findings + verbose_findings
+        return page, all_f
+
+
+def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
+    out: list[Finding] = []
+    seen: set[tuple[str, str]] = set()
+    for f in findings:
+        key = (f.id, f.url)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(f)
+    return out
 
 
 def crawl_url(url: str, **kwargs) -> CrawlResult:

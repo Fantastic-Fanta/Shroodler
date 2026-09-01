@@ -24,34 +24,34 @@ pass them (`[py]` / `[go]`).
 
 | Dimension | Cases | py | go |
 |---|---|---|---|
-| Method | GET, POST, missing method (defaults to GET) | [ ] | [ ] |
-| Encoding | `application/x-www-form-urlencoded`, `multipart/form-data` | [ ] | [ ] |
-| Field types | text, password, hidden, checkbox, radio, select, textarea, file | [ ] | [ ] |
-| Field state | disabled fields, readonly fields | [ ] | [ ] |
-| Structure | nested forms (invalid HTML but happens), multiple forms per page | [ ] | [ ] |
-| Dynamic | JS-injected form (headless mode only) | [ ] | [ ] |
+| Method | GET, POST, missing method (defaults to GET) | [x] | [ ] |
+| Encoding | `application/x-www-form-urlencoded`, `multipart/form-data` | [x] | [ ] |
+| Field types | text, password, hidden, checkbox, radio, select, textarea, file | [x] | [ ] |
+| Field state | disabled fields, readonly fields | [x] | [ ] |
+| Structure | nested forms (invalid HTML but happens), multiple forms per page | [x] | [ ] |
+| Dynamic | JS-injected form (headless mode only) | [x] | [ ] |
 
 ## Header analysis
 
 | Header | States tested | py | go |
 |---|---|---|---|
-| Content-Security-Policy | present-strict, present-weak (`unsafe-inline`), absent | [ ] | [ ] |
-| X-Frame-Options | DENY, SAMEORIGIN, absent | [ ] | [ ] |
-| Strict-Transport-Security | present, absent, present-but-short-max-age | [ ] | [ ] |
-| X-Content-Type-Options | nosniff, absent | [ ] | [ ] |
-| Referrer-Policy | present, absent | [ ] | [ ] |
-| Server / X-Powered-By | present (version leak), absent | [ ] | [ ] |
+| Content-Security-Policy | present-strict, present-weak (`unsafe-inline`), absent | [x] | [ ] |
+| X-Frame-Options | DENY, SAMEORIGIN, absent | [x] | [ ] |
+| Strict-Transport-Security | present, absent, present-but-short-max-age | [x] | [ ] |
+| X-Content-Type-Options | nosniff, absent | [x] | [ ] |
+| Referrer-Policy | present, absent | [x] | [ ] |
+| Server / X-Powered-By | present (version leak), absent | [x] | [ ] |
 
 ## Cookie analysis
 
 | Secure | HttpOnly | SameSite | py | go |
 |---|---|---|---|---|
-| true | true | Strict | [ ] | [ ] |
-| true | true | Lax | [ ] | [ ] |
-| true | true | None | [ ] | [ ] |
-| true | false | Strict/Lax/None | [ ] | [ ] |
-| false | true | Strict/Lax/None | [ ] | [ ] |
-| false | false | Strict/Lax/None | [ ] | [ ] |
+| true | true | Strict | [x] | [ ] |
+| true | true | Lax | [x] | [ ] |
+| true | true | None | [x] | [ ] |
+| true | false | Strict/Lax/None | [x] | [ ] |
+| false | true | Strict/Lax/None | [x] | [ ] |
+| false | false | Strict/Lax/None | [x] | [ ] |
 
 (18 combinations total — generate programmatically rather than hand-writing each.)
 

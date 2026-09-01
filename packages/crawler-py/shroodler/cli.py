@@ -24,7 +24,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         allow_external=args.allow_external,
         progress=_progress,
     )
-    doc = result.model_dump(mode="json")
+    doc = result.to_dict()
     validate_crawl(doc)
     text = json.dumps(doc, indent=2)
     if args.output:

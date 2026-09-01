@@ -11,10 +11,11 @@ from shroodler.extractors.common_paths import probe_paths
 from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.headers import extract_headers
+from shroodler.extractors.js_endpoints import extract_js_endpoints
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.secrets import scan_text
 from shroodler.extractors.verbose import extract_verbose_errors
-from shroodler.models import CrawlerInfo, CrawlResult, Finding, Page
+from shroodler.models import CrawlerInfo, CrawlResult, Finding, JsEndpoint, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
 from shroodler.robots import (
     DEFAULT_UA,
@@ -53,8 +54,8 @@ class Crawler:
         user_agent: str = DEFAULT_UA,
         progress: ProgressCb | None = None,
     ) -> None:
-        if mode != "static":
-            raise ValueError(f"mode {mode!r} is not implemented in this milestone")
+        if mode not in {"static", "headless"}:
+            raise ValueError(f"mode {mode!r} is not supported")
         self.mode = mode
         self.depth = depth
         self.ignore_robots = ignore_robots
@@ -64,10 +65,18 @@ class Crawler:
         self.rate_limit_retries = rate_limit_retries
         self.user_agent = user_agent
         self.progress = progress
-        self.fetcher = StaticFetcher(user_agent=user_agent)
+        self.http = StaticFetcher(user_agent=user_agent)
+        if mode == "headless":
+            from shroodler.modes.headless import HeadlessFetcher
+
+            self.fetcher = HeadlessFetcher(user_agent=user_agent)
+        else:
+            self.fetcher = self.http
 
     def close(self) -> None:
         self.fetcher.close()
+        if self.fetcher is not self.http:
+            self.http.close()
 
     def crawl(self, start_url: str) -> CrawlResult:
         started = _now()
@@ -80,7 +89,7 @@ class Crawler:
         rp = None
         if not self.ignore_robots:
             robots_url = urljoin(seed, "/robots.txt")
-            robots_res = self.fetcher.fetch(robots_url)
+            robots_res = self.http.fetch(robots_url)
             if robots_res.status_code == 200 and robots_res.text:
                 rp = load_robots(robots_res.text, seed)
 
@@ -88,6 +97,7 @@ class Crawler:
         seen: set[str] = set()
         pages: list[Page] = []
         findings: list[Finding] = []
+        js_endpoints: list = []
         family_counts: dict[str, int] = defaultdict(int)
         redirect_hits: dict[str, int] = defaultdict(int)
 
@@ -108,9 +118,10 @@ class Crawler:
                 family_counts[fam] += 1
 
             result = self._fetch_with_retries(url)
-            page, page_findings = self._page_from_result(result)
+            page, page_findings, page_eps = self._page_from_result(result)
             pages.append(page)
             findings.extend(page_findings)
+            js_endpoints.extend(page_eps)
             if self.progress:
                 self.progress(len(pages), result.url)
 
@@ -141,7 +152,7 @@ class Crawler:
                     continue
                 queue.append((link, depth + 1))
 
-        extra_pages, extra_findings = probe_paths(origin_url, self.fetcher, seen)
+        extra_pages, extra_findings = probe_paths(origin_url, self.http, seen)
         pages.extend(extra_pages)
         findings.extend(extra_findings)
 
@@ -150,10 +161,10 @@ class Crawler:
             target=seed,
             scan_started_at=started,
             scan_finished_at=finished,
-            crawler=CrawlerInfo(name="shroodler-py", version=__version__, mode="static"),
+            crawler=CrawlerInfo(name="shroodler-py", version=__version__, mode=self.mode),
             pages=pages,
             findings=_dedupe_findings(findings),
-            js_endpoints=[],
+            js_endpoints=_dedupe_endpoints(js_endpoints),
         )
 
     def _fetch_with_retries(self, url: str) -> FetchResult:
@@ -174,10 +185,14 @@ class Crawler:
             last = self.fetcher.fetch(url)
         return last
 
-    def _page_from_result(self, result: FetchResult) -> tuple[Page, list[Finding]]:
+    def _page_from_result(
+        self, result: FetchResult
+    ) -> tuple[Page, list[Finding], list[JsEndpoint]]:
         js_files: list[str] = []
         forms = []
         form_findings: list[Finding] = []
+        endpoints: list[JsEndpoint] = []
+        ep_findings: list[Finding] = []
         if result.text:
             from bs4 import BeautifulSoup
 
@@ -189,6 +204,8 @@ class Crawler:
             ctype = _content_type(result.headers)
             if "html" in ctype or result.text.lstrip().startswith("<"):
                 forms, form_findings = extract_forms(result.text, result.url)
+            if "javascript" in ctype or result.url.endswith(".js"):
+                endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
         cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
         headers, header_findings = extract_headers(result.headers, result.url)
         verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
@@ -208,8 +225,9 @@ class Crawler:
             + header_findings
             + verbose_findings
             + secret_findings
+            + ep_findings
         )
-        return page, all_f
+        return page, all_f, endpoints
 
 
 def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
@@ -221,6 +239,18 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
             continue
         seen.add(key)
         out.append(f)
+    return out
+
+
+def _dedupe_endpoints(items: list[JsEndpoint]) -> list[JsEndpoint]:
+    out: list[JsEndpoint] = []
+    seen: set[tuple[str, str]] = set()
+    for item in items:
+        key = (item.source, item.endpoint)
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
     return out
 
 

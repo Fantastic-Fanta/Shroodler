@@ -41,9 +41,9 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** diff passes including exposed-file findings.
 
 ## Milestone 6 — Target app 2 (SPA) + headless mode
-- [ ] React SPA target app where key content loads via `fetch()` after mount
-- [ ] `expected_findings.json` for it
-- [ ] Playwright-based headless crawl mode in `crawler-py`
+- [x] React SPA target app where key content loads via `fetch()` after mount
+- [x] `expected_findings.json` for it
+- [x] Playwright-based headless crawl mode in `crawler-py`
 - **Done when:** headless mode discovers pages/forms that static mode provably misses
       (write a test asserting static mode under-reports on this app, headless does not).
 

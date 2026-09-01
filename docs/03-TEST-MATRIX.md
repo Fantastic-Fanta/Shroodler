@@ -87,19 +87,19 @@ Assert zero false positives on paths that don't exist in a given app.
 
 | Case | py | go |
 |---|---|---|
-| Fetch API call with string literal URL | [ ] | [ ] |
-| Endpoint built via template literal (best-effort) | [ ] | [ ] |
-| Minified JS (single-line, no whitespace) | [ ] | [ ] |
+| Fetch API call with string literal URL | [x] | [ ] |
+| Endpoint built via template literal (best-effort) | [x] | [ ] |
+| Minified JS (single-line, no whitespace) | [x] | [ ] |
 | Source map present (bonus: resolve original file) | [ ] | [ ] |
 
 ## Headless mode (Playwright)
 
 | Case | py | go (n/a — parity via py only) |
 |---|---|---|
-| Content only rendered after `fetch()` resolves | [ ] | n/a |
-| Content behind a client-side route (SPA router) | [ ] | n/a |
-| Form injected by JS after page load | [ ] | n/a |
-| Infinite scroll pagination | [ ] | n/a |
+| Content only rendered after `fetch()` resolves | [x] | n/a |
+| Content behind a client-side route (SPA router) | [x] | n/a |
+| Form injected by JS after page load | [x] | n/a |
+| Infinite scroll pagination | [x] | n/a |
 
 ## Report generator
 

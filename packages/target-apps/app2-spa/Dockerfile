@@ -1,5 +1,8 @@
-FROM python:3.12-slim
+FROM node:22-alpine
 WORKDIR /app
+COPY package.json package-lock.json* ./
+RUN npm install
 COPY . .
+RUN npm run build
 EXPOSE 8082
-CMD ["python", "-m", "http.server", "8082"]
+CMD ["node", "server.mjs"]

@@ -1,0 +1,11 @@
+{
+  "target_app": "app2-spa",
+  "expected_pages": ["/", "/account"],
+  "expected_forms": {
+    "/account": ["email", "csrf"]
+  },
+  "expected_findings": [],
+  "expected_not_found": [
+    { "id": "leaked-secret", "url": "/" }
+  ]
+}

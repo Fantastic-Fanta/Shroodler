@@ -84,3 +84,6 @@ class CrawlResult(BaseModel):
     pages: list[Page]
     findings: list[Finding]
     js_endpoints: list[JsEndpoint] = Field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return self.model_dump(mode="json")

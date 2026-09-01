@@ -92,7 +92,7 @@
       "properties": {
         "action": { "type": "string" },
         "method": { "type": "string" },
-        "enctype": { "type": "string" },
+        "enctype": { "type": ["string", "null"] },
         "fields": {
           "type": "array",
           "items": { "$ref": "#/$defs/form_field" }
@@ -107,8 +107,8 @@
         "name": { "type": "string" },
         "type": { "type": "string" },
         "hidden": { "type": "boolean" },
-        "disabled": { "type": "boolean" },
-        "readonly": { "type": "boolean" }
+        "disabled": { "type": ["boolean", "null"] },
+        "readonly": { "type": ["boolean", "null"] }
       }
     },
     "cookie": {

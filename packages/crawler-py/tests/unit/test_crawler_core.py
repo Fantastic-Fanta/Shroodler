@@ -270,7 +270,7 @@ def test_honeypot_links_skipped(fx):
 def test_output_validates_against_schema(fx):
     fx.html("/", "<p>hi</p>")
     result = crawl_url(fx.origin + "/", depth=0)
-    validate_crawl(result.model_dump(mode="json"))
+    validate_crawl(result.to_dict())
 
 
 def test_refuses_external_without_flag():

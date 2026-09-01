@@ -2,7 +2,11 @@
 
 Assumptions and deferred items. Newest entries first.
 
-## 2026-09-01 — Optional form fields may be JSON null
+## 2026-09-01 — Generic API key rule
+
+The `generic-api-key` YAML rule uses a sentinel pattern `__ENTROPY__` so both
+language implementations can special-case the heuristic without hardcoding other
+patterns in crawler source.
 
 `enctype`, `disabled`, and `readonly` are optional in the spec. The schema allows
 `null` so crawlers can omit a value without dropping the key inconsistently.

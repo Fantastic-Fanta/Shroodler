@@ -29,9 +29,9 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** diff against app1's `expected_findings.json` passes on all these categories.
 
 ## Milestone 4 — Secret pattern rule-pack + scanner
-- [ ] `secret-patterns` package with initial 8 patterns from the test matrix
-- [ ] Scanner wired into crawler, scans response bodies + JS files
-- [ ] Fuzz tests running (no crashes on random input)
+- [x] `secret-patterns` package with initial 8 patterns from the test matrix
+- [x] Scanner wired into crawler, scans response bodies + JS files
+- [x] Fuzz tests running (no crashes on random input)
 - **Done when:** matrix rows under "Secret detection" green, fuzz suite runs for at
       least a few thousand iterations clean.
 

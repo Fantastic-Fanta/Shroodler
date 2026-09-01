@@ -59,14 +59,14 @@ pass them (`[py]` / `[go]`).
 
 | Pattern | Present in body, present in JS, absent (no false positive), high-entropy-but-not-a-secret | py | go |
 |---|---|---|---|
-| AWS access key | | [ ] | [ ] |
-| AWS secret key | | [ ] | [ ] |
-| Generic JWT | | [ ] | [ ] |
-| Private key block (`BEGIN RSA PRIVATE KEY`) | | [ ] | [ ] |
-| Slack token | | [ ] | [ ] |
-| Generic API key (heuristic/entropy-based) | | [ ] | [ ] |
-| Basic auth in URL | | [ ] | [ ] |
-| Database connection string | | [ ] | [ ] |
+| AWS access key | | [x] | [ ] |
+| AWS secret key | | [x] | [ ] |
+| Generic JWT | | [x] | [ ] |
+| Private key block (`BEGIN RSA PRIVATE KEY`) | | [x] | [ ] |
+| Slack token | | [x] | [ ] |
+| Generic API key (heuristic/entropy-based) | | [x] | [ ] |
+| Basic auth in URL | | [x] | [ ] |
+| Database connection string | | [x] | [ ] |
 
 Fuzz target: feed the secret scanner random byte strings via `hypothesis`/Go fuzzing —
 should never crash, should have a bounded false-positive rate on pure-random input.

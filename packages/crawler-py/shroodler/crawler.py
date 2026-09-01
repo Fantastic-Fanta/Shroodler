@@ -11,6 +11,7 @@ from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.links import extract_css_urls, extract_links
+from shroodler.extractors.secrets import scan_text
 from shroodler.extractors.verbose import extract_verbose_errors
 from shroodler.models import CrawlerInfo, CrawlResult, Finding, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
@@ -186,6 +187,7 @@ class Crawler:
         cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
         headers, header_findings = extract_headers(result.headers, result.url)
         verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
+        secret_findings = scan_text(result.text, result.url)
         page = Page(
             url=result.url,
             status_code=result.status_code,
@@ -195,7 +197,13 @@ class Crawler:
             headers=headers,
             js_files=js_files,
         )
-        all_f = form_findings + cookie_findings + header_findings + verbose_findings
+        all_f = (
+            form_findings
+            + cookie_findings
+            + header_findings
+            + verbose_findings
+            + secret_findings
+        )
         return page, all_f
 
 

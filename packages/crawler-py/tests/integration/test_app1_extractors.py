@@ -45,6 +45,7 @@ def test_app1_forms_headers_cookies():
             "insecure-cookie",
             "verbose-error",
             "server-version-leak",
+            "aws-access-key",
         }
     ]
     errors = diff_documents(doc, filtered, pages_only=False)

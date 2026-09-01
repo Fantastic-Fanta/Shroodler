@@ -1,2 +1,3 @@
-/* Intentionally empty of secrets on the home path; leaked patterns land later. */
 console.log("app1 loaded");
+// fixture AWS access key id (Amazon documentation example)
+const k = "AKIAIOSFODNN7EXAMPLE";

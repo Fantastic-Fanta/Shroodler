@@ -1,4 +1,4 @@
-.PHONY: verify up down lint test test-unit test-integration bootstrap bins desktop-test
+.PHONY: verify up down lint test test-unit test-integration bootstrap bins desktop-test cover
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 VENV := $(ROOT).venv
@@ -31,6 +31,12 @@ test-unit: bootstrap bins
 	cd packages/proxy-go && go test ./...
 	cd packages/desktop-app && node --test tests/*.mjs
 	cd packages/desktop-app/src-tauri && cargo test -q
+	cd packages/payload-tester && PYTHONPATH="$(ROOT)packages/payload-tester" "$(ROOT).venv/bin/pytest" tests -q
+
+cover: bootstrap
+	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit --cov=shroodler --cov-fail-under=90 -q --cov-report=term
+	cd packages/crawler-go && go test ./internal/... -coverpkg=./internal/...
+	cd packages/proxy-go && go test ./internal/... -coverpkg=./internal/...
 
 test-integration: bootstrap up
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/integration -q

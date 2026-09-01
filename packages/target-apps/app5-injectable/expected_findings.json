@@ -1,0 +1,7 @@
+{
+  "expected_pages": ["/", "/search"],
+  "expected_findings": [
+    {"id": "payload-sql-error", "url": "/search"}
+  ],
+  "expected_not_found": []
+}

@@ -30,6 +30,11 @@ def run(bin_path: Path, target: str, dest: Path) -> dict:
 
 
 def compare(py_doc: dict, go_doc: dict) -> list[str]:
+    """Compare page paths and finding id+path pairs.
+
+    Timestamps, crawler.version, and stats are ignored — elapsed_ms / request
+    counts are not required to match across engines (see docs/DECISIONS.md).
+    """
     errs = []
     if path_set(py_doc) != path_set(go_doc):
         errs.append(f"page mismatch py={sorted(path_set(py_doc))} go={sorted(path_set(go_doc))}")

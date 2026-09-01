@@ -14,7 +14,7 @@ Category = Literal[
     "verbose-error",
     "autocomplete",
 ]
-Mode = Literal["static", "headless"]
+Mode = Literal["static", "headless", "ingest"]
 
 
 class CrawlerInfo(BaseModel):
@@ -76,6 +76,12 @@ class JsEndpoint(BaseModel):
     endpoint: str
 
 
+class CrawlStats(BaseModel):
+    pages_crawled: int = 0
+    requests: int = 0
+    elapsed_ms: int = 0
+
+
 class CrawlResult(BaseModel):
     target: str
     scan_started_at: str
@@ -84,6 +90,10 @@ class CrawlResult(BaseModel):
     pages: list[Page]
     findings: list[Finding]
     js_endpoints: list[JsEndpoint] = Field(default_factory=list)
+    stats: CrawlStats | None = None
 
     def to_dict(self) -> dict:
-        return self.model_dump(mode="json")
+        data = self.model_dump(mode="json")
+        if data.get("stats") is None:
+            data.pop("stats", None)
+        return data

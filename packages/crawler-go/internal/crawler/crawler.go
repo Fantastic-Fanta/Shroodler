@@ -3,6 +3,7 @@ package crawler
 import (
 	"io"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"strings"
 	"time"
@@ -21,6 +22,14 @@ type Config struct {
 	MaxPages      int
 	MaxRedirects  int
 	Progress      func(pages int, current string)
+	Proxy         string
+	Cookie        string
+	Seeds         []string
+	Cookies       []SeedCookie
+	Headers       []string
+	LoginRecipe   *LoginRecipe
+	Mode          string
+	NoSitemap     bool
 }
 
 type fetchResult struct {
@@ -30,6 +39,7 @@ type fetchResult struct {
 	SetCookies []string
 	Body       string
 	RedirectTo string
+	Discovered []string
 }
 
 func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
@@ -39,6 +49,13 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	if cfg.MaxRedirects == 0 {
 		cfg.MaxRedirects = 10
 	}
+	mode := cfg.Mode
+	if mode == "" {
+		mode = "static"
+	}
+	if mode != "static" && mode != "headless" {
+		return nil, errString("mode must be static or headless")
+	}
 	if !cfg.AllowExternal && !urls.IsLocal(start) {
 		return nil, errNonLocal
 	}
@@ -46,18 +63,67 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		start = "http://" + start
 	}
 	started := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	t0 := time.Now()
+	nreq := 0
+	jar, _ := cookiejar.New(nil)
 	client := &http.Client{
 		Timeout: 10 * time.Second,
+		Jar:     jar,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
 	}
-	client.Transport = &http.Transport{}
+	transport := &http.Transport{}
+	if cfg.Proxy != "" {
+		pu, err := url.Parse(cfg.Proxy)
+		if err != nil {
+			return nil, err
+		}
+		transport.Proxy = http.ProxyURL(pu)
+	}
+	client.Transport = &countingTransport{
+		base: &headerTransport{base: transport, extra: ParseHeaders(cfg.Headers)},
+		n:    &nreq,
+	}
+	if cfg.Cookie != "" {
+		for _, part := range strings.Split(cfg.Cookie, ";") {
+			if c, ok := ParseCookiePair(strings.TrimSpace(part)); ok {
+				cfg.Cookies = append(cfg.Cookies, c)
+			}
+		}
+	}
+	applySeedCookies(jar, start, cfg.Cookies)
+	if cfg.LoginRecipe != nil {
+		runLogin(client, *cfg.LoginRecipe, start)
+	}
+
+	fetchPage := func(u string) fetchResult { return fetchRetry(client, u, "") }
+	if mode == "headless" {
+		hsCookies := append([]SeedCookie{}, cfg.Cookies...)
+		if u, err := url.Parse(start); err == nil {
+			for _, c := range jar.Cookies(u) {
+				hsCookies = append(hsCookies, SeedCookie{Name: c.Name, Value: c.Value, Path: c.Path, Domain: c.Domain})
+			}
+		}
+		hs, err := newHeadless(start, hsCookies, ParseHeaders(cfg.Headers))
+		if err != nil {
+			return nil, err
+		}
+		defer hs.close()
+		fetchPage = func(u string) fetchResult {
+			nreq++
+			return hs.fetch(u)
+		}
+	}
 
 	var robots []string
-	if !cfg.IgnoreRobots {
+	var robotsBody string
+	if !cfg.IgnoreRobots || !cfg.NoSitemap {
 		if body, status, _ := get(client, originJoin(start, "/robots.txt")); status == 200 {
-			robots = extractors.ParseRobots(body)
+			robotsBody = body
+			if !cfg.IgnoreRobots {
+				robots = extractors.ParseRobots(body)
+			}
 		}
 	}
 
@@ -66,7 +132,23 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		depth int
 	}
 	queue := []item{{start, 0}}
+	for _, extra := range cfg.Seeds {
+		if urls.SameOrigin(extra, start) {
+			queue = append(queue, item{extra, 0})
+		}
+	}
 	seen := map[string]bool{}
+	if !cfg.NoSitemap {
+		smPages, smDocs := discoverSitemapSeeds(client, start, robotsBody)
+		for _, u := range smDocs {
+			seen[urls.CanonicalKey(u)] = true
+		}
+		for _, u := range smPages {
+			if urls.SameOrigin(u, start) {
+				queue = append(queue, item{u, 0})
+			}
+		}
+	}
 	family := map[string]int{}
 	var pages []models.Page
 	var findings []models.Finding
@@ -91,8 +173,8 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		if fam != "" {
 			family[fam]++
 		}
-		res := fetchRetry(client, it.u)
-		page, f, eps := pageFrom(res, rules)
+		res := fetchPage(it.u)
+		page, f, eps := pageFrom(res, rules, func(u string) fetchResult { return fetchRetry(client, u, "") })
 		pages = append(pages, page)
 		findings = append(findings, f...)
 		endpoints = append(endpoints, eps...)
@@ -119,6 +201,13 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 				}
 			}
 		}
+		for _, d := range res.Discovered {
+			if n := urls.Normalize(res.URL, d); n != "" {
+				links = append(links, n)
+			} else if urls.SameOrigin(d, start) {
+				links = append(links, d)
+			}
+		}
 		for _, link := range links {
 			if !urls.SameOrigin(link, start) || seen[urls.CanonicalKey(link)] {
 				continue
@@ -137,7 +226,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		if seen[key] {
 			continue
 		}
-		res := fetchRetry(client, u)
+		res := fetchRetry(client, u, "")
 		if res.Status != 200 {
 			continue
 		}
@@ -145,6 +234,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		pages = append(pages, models.Page{URL: u, StatusCode: 200, Forms: []models.Form{}, Params: []string{}, Cookies: []models.Cookie{}, Headers: models.HeaderAnalysis{Present: []string{}, Missing: []string{}}, JSFiles: []string{}})
 		ev := p
 		findings = append(findings, models.Finding{ID: "exposed-file", Severity: "high", Category: "exposed-file", URL: u, Description: "Common path " + p + " is reachable", Evidence: &ev})
+		findings = append(findings, extractors.ScanSecrets(res.Body, u, rules)...)
 	}
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
@@ -152,10 +242,15 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		Target:         start,
 		ScanStartedAt:  started,
 		ScanFinishedAt: finished,
-		Crawler:        models.CrawlerInfo{Name: "shroodler-go", Version: version, Mode: "static"},
+		Crawler:        models.CrawlerInfo{Name: "shroodler-go", Version: version, Mode: mode},
 		Pages:          pages,
 		Findings:       dedupeF(findings),
 		JSEndpoints:    endpoints,
+		Stats: &models.CrawlStats{
+			PagesCrawled: len(pages),
+			Requests:     nreq,
+			ElapsedMs:    time.Since(t0).Milliseconds(),
+		},
 	}, nil
 }
 
@@ -165,7 +260,7 @@ type errString string
 
 func (e errString) Error() string { return string(e) }
 
-func pageFrom(res fetchResult, rules []extractors.Rule) (models.Page, []models.Finding, []models.JSEndpoint) {
+func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchResult) (models.Page, []models.Finding, []models.JSEndpoint) {
 	forms, ff := extractors.ExtractForms(res.Body, res.URL)
 	cookies, cf := extractors.ExtractCookies(res.SetCookies, res.URL)
 	headers, hf := extractors.ExtractHeaders(res.Headers, res.URL)
@@ -178,6 +273,13 @@ func pageFrom(res fetchResult, rules []extractors.Rule) (models.Page, []models.F
 		for _, e := range eps {
 			ev := e.Endpoint
 			hf = append(hf, models.Finding{ID: "js-endpoint", Severity: "info", Category: "js-endpoint", URL: res.URL, Description: "JS references endpoint " + e.Endpoint, Evidence: &ev})
+		}
+		if spec := extractors.SourceMappingURL(res.Body); spec != "" {
+			if raw := fetchSourceMap(res.URL, spec, get); len(raw) > 0 {
+				meps, mf := extractors.ParseSourceMap(res.URL, raw, rules)
+				eps = append(eps, meps...)
+				hf = append(hf, mf...)
+			}
 		}
 	}
 	if forms == nil {
@@ -211,10 +313,10 @@ func pageFrom(res fetchResult, rules []extractors.Rule) (models.Page, []models.F
 	return page, all, eps
 }
 
-func fetchRetry(client *http.Client, raw string) fetchResult {
+func fetchRetry(client *http.Client, raw, cookie string) fetchResult {
 	var last fetchResult
 	for i := 0; i < 4; i++ {
-		last = doGet(client, raw)
+		last = doGet(client, raw, cookie)
 		if last.Status != 429 {
 			return last
 		}
@@ -223,12 +325,15 @@ func fetchRetry(client *http.Client, raw string) fetchResult {
 	return last
 }
 
-func doGet(client *http.Client, raw string) fetchResult {
+func doGet(client *http.Client, raw, cookie string) fetchResult {
 	req, err := http.NewRequest(http.MethodGet, raw, nil)
 	if err != nil {
 		return fetchResult{URL: raw}
 	}
 	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
+	if cookie != "" {
+		req.Header.Set("Cookie", cookie)
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fetchResult{URL: raw}
@@ -249,7 +354,7 @@ func doGet(client *http.Client, raw string) fetchResult {
 }
 
 func get(client *http.Client, raw string) (string, int, error) {
-	r := doGet(client, raw)
+	r := doGet(client, raw, "")
 	return r.Body, r.Status, nil
 }
 
@@ -260,6 +365,42 @@ func header(h map[string]string, key string) string {
 		}
 	}
 	return ""
+}
+
+type countingTransport struct {
+	base http.RoundTripper
+	n    *int
+}
+
+func (t *countingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	if t.n != nil {
+		*t.n++
+	}
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	return base.RoundTrip(req)
+}
+
+type headerTransport struct {
+	base  http.RoundTripper
+	extra map[string]string
+}
+
+func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	if t == nil || len(t.extra) == 0 {
+		return base.RoundTrip(req)
+	}
+	clone := req.Clone(req.Context())
+	for k, v := range t.extra {
+		clone.Header.Set(k, v)
+	}
+	return base.RoundTrip(clone)
 }
 
 func origin(raw string) string {
@@ -299,4 +440,22 @@ func dedupeF(in []models.Finding) []models.Finding {
 		out = []models.Finding{}
 	}
 	return out
+}
+
+func fetchSourceMap(jsURL, spec string, get func(string) fetchResult) []byte {
+	if strings.HasPrefix(spec, "data:") {
+		return extractors.DecodeDataURL(spec)
+	}
+	if get == nil {
+		return nil
+	}
+	u := urls.Normalize(jsURL, spec)
+	if u == "" || !urls.SameOrigin(u, jsURL) {
+		return nil
+	}
+	r := get(u)
+	if r.Status != 200 {
+		return nil
+	}
+	return []byte(r.Body)
 }

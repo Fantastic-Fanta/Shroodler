@@ -1,0 +1,37 @@
+{
+  "target": "http://127.0.0.1:8081",
+  "scan_started_at": "2026-09-01T12:00:00Z",
+  "scan_finished_at": "2026-09-01T12:00:01Z",
+  "crawler": { "name": "shroodler-py", "version": "0.1.0", "mode": "static" },
+  "pages": [
+    {
+      "url": "http://127.0.0.1:8081/login",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/login",
+          "method": "POST",
+          "fields": [
+            { "name": "username", "type": "text", "hidden": false },
+            { "name": "password", "type": "password", "hidden": false }
+          ]
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": { "present": [], "missing": [] },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "http://127.0.0.1:8081/login",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    }
+  ],
+  "js_endpoints": []
+}

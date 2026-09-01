@@ -270,7 +270,13 @@ def test_honeypot_links_skipped(fx):
 def test_output_validates_against_schema(fx):
     fx.html("/", "<p>hi</p>")
     result = crawl_url(fx.origin + "/", depth=0)
-    validate_crawl(result.to_dict())
+    doc = result.to_dict()
+    validate_crawl(doc)
+    stats = doc["stats"]
+    assert stats["pages_crawled"] == len(doc["pages"])
+    assert stats["pages_crawled"] >= 1
+    assert stats["requests"] >= 1
+    assert stats["elapsed_ms"] >= 0
 
 
 def test_refuses_external_without_flag():

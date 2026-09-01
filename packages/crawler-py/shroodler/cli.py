@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+from shroodler.config import load_rc
 from shroodler.crawler import crawl_url
 from shroodler.diffcmd import diff_documents, load_json
 from shroodler.validate import validate_crawl
@@ -26,11 +27,19 @@ def cmd_crawl(args: argparse.Namespace) -> int:
     )
     doc = result.to_dict()
     validate_crawl(doc)
-    text = json.dumps(doc, indent=2)
-    if args.output:
-        Path(args.output).write_text(text + "\n", encoding="utf-8")
+    fmt = args.format
+    if fmt == "json":
+        text = json.dumps(doc, indent=2) + "\n"
     else:
-        print(text)
+        from shroodler.report import write_report
+
+        text = write_report(doc, fmt, None)
+        if not text.endswith("\n"):
+            text += "\n"
+    if args.output:
+        Path(args.output).write_text(text, encoding="utf-8")
+    else:
+        print(text, end="")
     return 0
 
 
@@ -50,6 +59,13 @@ def cmd_report(args: argparse.Namespace) -> int:
     from shroodler.report import write_report
 
     doc = load_json(args.findings)
+    if args.format == "json":
+        text = json.dumps(doc, indent=2) + "\n"
+        if args.output:
+            Path(args.output).write_text(text, encoding="utf-8")
+        else:
+            print(text, end="")
+        return 0
     text = write_report(doc, args.format, args.output)
     if not args.output:
         print(text)
@@ -65,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument("--mode", choices=["static", "headless"], default="static")
     crawl.add_argument("--depth", type=int, default=5, help="Max depth; -1 for unbounded")
     crawl.add_argument("--output", "-o")
+    crawl.add_argument("--format", choices=["json", "html", "csv"], default="json")
     crawl.add_argument("--ignore-robots", action="store_true")
     crawl.add_argument(
         "--allow-external",
@@ -81,7 +98,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     report = sub.add_parser("report", help="Render findings JSON as HTML or CSV")
     report.add_argument("findings")
-    report.add_argument("--format", choices=["html", "csv"], default="html")
+    report.add_argument("--format", choices=["html", "csv", "json"], default="html")
     report.add_argument("--output", "-o")
     report.set_defaults(func=cmd_report)
 
@@ -90,6 +107,17 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
+    rc = load_rc()
+    if rc.get("mode"):
+        parser.set_defaults(mode=rc["mode"])
+    if "depth" in rc:
+        parser.set_defaults(depth=int(rc["depth"]))
+    if rc.get("ignore_robots"):
+        parser.set_defaults(ignore_robots=True)
+    if rc.get("allow_external"):
+        parser.set_defaults(allow_external=True)
+    if rc.get("format"):
+        parser.set_defaults(format=rc["format"])
     args = parser.parse_args(argv)
     try:
         code = args.func(args)

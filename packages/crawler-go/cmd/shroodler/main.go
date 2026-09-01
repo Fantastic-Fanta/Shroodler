@@ -67,6 +67,10 @@ func cmdCrawl(args []string) int {
 	target := args[0]
 	rc := loadRC()
 	cfg := crawler.Config{Depth: 5, IgnoreRobots: rc.IgnoreRobots, AllowExternal: rc.AllowExternal}
+	cfg.Progress = func(pages int, u string) {
+		fmt.Printf("PROGRESS pages=%d current=%s\n", pages, u)
+		_ = os.Stdout.Sync()
+	}
 	if rc.Depth != nil {
 		cfg.Depth = *rc.Depth
 	}

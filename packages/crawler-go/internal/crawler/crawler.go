@@ -20,6 +20,7 @@ type Config struct {
 	AllowExternal bool
 	MaxPages      int
 	MaxRedirects  int
+	Progress      func(pages int, current string)
 }
 
 type fetchResult struct {
@@ -95,6 +96,9 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		pages = append(pages, page)
 		findings = append(findings, f...)
 		endpoints = append(endpoints, eps...)
+		if cfg.Progress != nil {
+			cfg.Progress(len(pages), res.URL)
+		}
 
 		if res.RedirectTo != "" {
 			loc := resolve(res.URL, res.RedirectTo)

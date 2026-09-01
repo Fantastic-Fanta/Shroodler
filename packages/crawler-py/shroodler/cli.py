@@ -47,8 +47,13 @@ def cmd_diff(args: argparse.Namespace) -> int:
 
 
 def cmd_report(args: argparse.Namespace) -> int:
-    print("shroodler report is not implemented yet", file=sys.stderr)
-    return 2
+    from shroodler.report import write_report
+
+    doc = load_json(args.findings)
+    text = write_report(doc, args.format, args.output)
+    if not args.output:
+        print(text)
+    return 0
 
 
 def build_parser() -> argparse.ArgumentParser:

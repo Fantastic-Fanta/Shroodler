@@ -53,8 +53,8 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** crawl against app3 completes in bounded time and matches expected findings.
 
 ## Milestone 8 — Report generator
-- [ ] JSON → HTML and JSON → CSV
-- [ ] Snapshot tests per `03-TEST-MATRIX.md` report section
+- [x] JSON → HTML and JSON → CSV
+- [x] Snapshot tests per `03-TEST-MATRIX.md` report section
 - **Done when:** `shroodler report` produces valid, human-readable output for all target apps.
 
 ## Milestone 9 — Go port

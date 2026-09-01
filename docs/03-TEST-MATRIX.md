@@ -186,6 +186,19 @@ Assert zero false positives on paths that don't exist in a given app.
 | Replay against unreachable target | Clear error via control channel, not a silent no-op |
 | Replayed session tagging | New session tagged `replayed_from: <original_id>` |
 
+## Desktop app
+
+| Dimension | Cases |
+|---|---|
+| Scan trigger | Target + Scan starts `shroodler-go` sidecar, writes finding JSON, surfaces output path |
+| Progress stream | Sidecar `PROGRESS pages=N current=URL` lines parsed into `scan:progress` |
+| Findings table | Filter by severity, sort by id/severity, detail drawer on select |
+| Scan history | Completed scans listed and reloadable from app-data JSON |
+| Diff view | Two scans compared by `id+url`; added vs resolved |
+| Proxy sidecar | Start/stop `shroodler-proxy`; live session list via control channel |
+| CA confirm | Install/uninstall never proceeds without an explicit confirmation dialog/flag |
+| Composer / BP / AR | Compose request, set breakpoint, apply AutoResponder YAML from GUI helpers |
+
 ## Coverage gate
 
 Once the above matrix is fully green, run coverage tooling (`pytest --cov`, `go test

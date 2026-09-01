@@ -1,4 +1,4 @@
-.PHONY: verify up down lint test test-unit test-integration bootstrap
+.PHONY: verify up down lint test test-unit test-integration bootstrap bins desktop-test
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 VENV := $(ROOT).venv
@@ -11,16 +11,26 @@ bootstrap:
 	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]"
 	@$(VENV)/bin/playwright install chromium
 
+bins:
+	cd packages/crawler-go && go build -o shroodler-go ./cmd/shroodler
+	cd packages/proxy-go && go build -o shroodler-proxy ./cmd/shroodler-proxy
+
 lint: bootstrap
 	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests
 	cd packages/crawler-go && gofmt -l . | { ! grep .; }
 
-test-unit: bootstrap
+desktop-test: bins
+	cd packages/desktop-app && node --test tests/*.mjs
+	cd packages/desktop-app/src-tauri && cargo test -q
+
+test-unit: bootstrap bins
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit -q
 	cd packages/secret-patterns && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/report-generator && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/crawler-go && go test ./...
 	cd packages/proxy-go && go test ./...
+	cd packages/desktop-app && node --test tests/*.mjs
+	cd packages/desktop-app/src-tauri && cargo test -q
 
 test-integration: bootstrap up
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/integration -q

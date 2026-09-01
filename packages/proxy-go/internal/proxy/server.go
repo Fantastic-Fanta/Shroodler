@@ -73,23 +73,23 @@ type resume struct {
 }
 
 type BPRule struct {
-	Method     string
-	URLPattern string
-	Stage      string
+	Method     string `json:"method"`
+	URLPattern string `json:"url_pattern"`
+	Stage      string `json:"stage"`
 }
 
 type AutoRule struct {
 	Match struct {
-		Method     string `yaml:"method"`
-		URLPattern string `yaml:"url_pattern"`
-	} `yaml:"match"`
+		Method     string `yaml:"method" json:"method"`
+		URLPattern string `yaml:"url_pattern" json:"url_pattern"`
+	} `yaml:"match" json:"match"`
 	Respond struct {
-		Status    int               `yaml:"status"`
-		Headers   map[string]string `yaml:"headers"`
-		Body      string            `yaml:"body"`
-		BodyFile  string            `yaml:"body_file"`
-		BodyBytes []byte            `yaml:"-"`
-	} `yaml:"respond"`
+		Status    int               `yaml:"status" json:"status"`
+		Headers   map[string]string `yaml:"headers" json:"headers"`
+		Body      string            `yaml:"body" json:"body"`
+		BodyFile  string            `yaml:"body_file" json:"body_file"`
+		BodyBytes []byte            `yaml:"-" json:"-"`
+	} `yaml:"respond" json:"respond"`
 }
 
 var upgrader = websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}
@@ -182,6 +182,26 @@ func (s *Server) handleControl(ws *websocket.Conn, data []byte) {
 		id, _ := msg["session_id"].(string)
 		edits, _ := msg["edits"].(map[string]any)
 		go s.ReplayID(id, edits)
+	case "set_autoresponder_rules":
+		raw, _ := json.Marshal(msg["rules"])
+		var rules []AutoRule
+		if json.Unmarshal(raw, &rules) == nil {
+			for i := range rules {
+				if len(rules[i].Respond.BodyBytes) == 0 {
+					rules[i].Respond.BodyBytes = []byte(rules[i].Respond.Body)
+				}
+			}
+			s.SetRules(rules)
+		}
+	case "set_breakpoints":
+		raw, _ := json.Marshal(msg["rules"])
+		var rules []BPRule
+		if json.Unmarshal(raw, &rules) == nil {
+			s.SetBreakpoints(rules)
+		}
+	case "compose_request":
+		req, _ := msg["request"].(map[string]any)
+		go s.Compose(req)
 	}
 }
 
@@ -429,6 +449,30 @@ func (s *Server) ReplayID(id string, edits map[string]any) error {
 		return fmt.Errorf("unknown session")
 	}
 	return s.ReplaySession(sess, edits)
+}
+
+func (s *Server) Compose(req map[string]any) error {
+	method, _ := req["method"].(string)
+	rawURL, _ := req["url"].(string)
+	if method == "" {
+		method = "GET"
+	}
+	headers := map[string]string{}
+	if h, ok := req["headers"].(map[string]any); ok {
+		for k, v := range h {
+			headers[k] = fmt.Sprint(v)
+		}
+	}
+	body, _ := req["body"].(string)
+	base := &Session{
+		Request: HTTPMsg{
+			Method:  method,
+			URL:     rawURL,
+			Headers: headers,
+			Body:    Body{Encoding: "utf8", Content: body},
+		},
+	}
+	return s.ReplaySession(base, nil)
 }
 
 func (s *Server) ReplaySession(base *Session, edits map[string]any) error {

@@ -115,16 +115,16 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
   proxy replay ...`) without the GUI, per the proxy spec's CLI contract.
 
 ## Milestone 16 — Desktop app shell + scan trigger
-- [ ] Read `docs/06-UI-STYLE.md` in full before writing any UI code — it is the single
+- [x] Read `docs/06-UI-STYLE.md` in full before writing any UI code — it is the single
       source of truth for colors, typography, layout, and motion in this app, the same
       way `02-SPEC.md` is for the JSON schema
-- [ ] Scaffold `packages/desktop-app/` — Tauri v2 (pin this version explicitly in
+- [x] Scaffold `packages/desktop-app/` — Tauri v2 (pin this version explicitly in
       `Cargo.toml`/`package.json`, do not mix v1 patterns) with a Svelte frontend
-- [ ] Rust shell invokes the `shroodler-go` binary as a sidecar process — the desktop app
+- [x] Rust shell invokes the `shroodler-go` binary as a sidecar process — the desktop app
       contains zero scanning/extraction logic of its own, it only orchestrates and renders
-- [ ] Basic window: target input, start/stop scan, live progress (page count, current URL)
+- [x] Basic window: target input, start/stop scan, live progress (page count, current URL)
       via a Tauri event stream from the Rust shell
-- [ ] Dark theme applied per the style doc's color tokens (no default Tauri/OS light theme)
+- [x] Dark theme applied per the style doc's color tokens (no default Tauri/OS light theme)
 - **Done when:** entering a local target URL and clicking "scan" runs a real crawl via the
   Go sidecar and shows a completion state with the output file location.
 

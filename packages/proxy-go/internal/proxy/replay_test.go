@@ -31,6 +31,22 @@ func TestReplayTags(t *testing.T) {
 	_ = http.StatusOK
 }
 
+func TestCompose(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("composed"))
+	}))
+	defer upstream.Close()
+	s, _, _ := startProxy(t)
+	if err := s.Compose(map[string]any{
+		"method":  "GET",
+		"url":     upstream.URL + "/",
+		"headers": map[string]any{},
+		"body":    "",
+	}); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestBreakpointTimeout(t *testing.T) {
 	s, _, _ := startProxy(t)
 	s.Timeout = 30 * time.Millisecond

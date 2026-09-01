@@ -2,6 +2,28 @@
 
 Assumptions and deferred items. Newest entries first.
 
+## 2026-09-01 — Tauri version pin
+
+Tauri crates are pinned at `tauri = 2.11.5` and `tauri-build = 2.6.3` (CLI/API 2.11.x).
+Pinning `2.1.1` for both pulled a newer `tauri-utils` and failed to compile.
+
+## 2026-09-01 — Desktop + proxy control extras
+
+The proxy spec lists AutoResponder updates over the control channel
+(`set_autoresponder_rules`) but not an explicit breakpoint-set or composer message.
+`set_breakpoints` and `compose_request` were added so the desktop GUI can drive those
+features without editing YAML on disk. Composer still uses the same `ReplaySession`
+path as CLI replay.
+
+Desktop `start_scan` with `mode=headless` errors: the shipped sidecar is `shroodler-go`,
+which is static-only per architecture.
+
+`accent-rare` is used only for input focus rings.
+
+CA install from the GUI still requires an explicit dialog; the Rust command refuses
+`confirmed: false`. macOS Keychain trust may prompt the OS for a password — that is
+intentional and not silent.
+
 ## 2026-09-01 — Proxy brotli
 
 Bodies with `Content-Encoding: br` are stored as captured bytes; gzip/deflate are

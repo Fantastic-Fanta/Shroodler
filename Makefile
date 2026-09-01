@@ -13,14 +13,17 @@ bootstrap:
 
 lint: bootstrap
 	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests
+	cd packages/crawler-go && gofmt -l . | { ! grep .; }
 
 test-unit: bootstrap
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit -q
 	cd packages/secret-patterns && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/report-generator && "$(ROOT).venv/bin/pytest" tests -q
+	cd packages/crawler-go && go test ./...
 
 test-integration: bootstrap up
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/integration -q
+	cd packages/crawler-go && go test ./tests -count=1
 
 test: test-unit test-integration
 

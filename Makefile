@@ -17,6 +17,7 @@ lint: bootstrap
 test-unit: bootstrap
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit -q
 	cd packages/secret-patterns && "$(ROOT).venv/bin/pytest" tests -q
+	cd packages/report-generator && "$(ROOT).venv/bin/pytest" tests -q
 
 test-integration: bootstrap up
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/integration -q

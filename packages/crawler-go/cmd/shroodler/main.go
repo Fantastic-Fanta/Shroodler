@@ -8,7 +8,10 @@ import (
 	"strings"
 
 	"github.com/shroodler/crawler-go/internal/crawler"
+	"github.com/shroodler/crawler-go/internal/lab"
 	"github.com/shroodler/crawler-go/internal/models"
+	"github.com/shroodler/crawler-go/internal/payload"
+	"github.com/shroodler/crawler-go/internal/sessions"
 	"github.com/shroodler/crawler-go/internal/urls"
 	"gopkg.in/yaml.v3"
 )
@@ -19,6 +22,34 @@ type rcFile struct {
 	IgnoreRobots  bool   `yaml:"ignore_robots"`
 	AllowExternal bool   `yaml:"allow_external"`
 	Format        string `yaml:"format"`
+	Header        any    `yaml:"header"`
+	Cookie        any    `yaml:"cookie"`
+	CookieJar     string `yaml:"cookie_jar"`
+	LoginRecipe   string `yaml:"login_recipe"`
+}
+
+func asStringList(v any) []string {
+	switch t := v.(type) {
+	case nil:
+		return nil
+	case string:
+		if t == "" {
+			return nil
+		}
+		return []string{t}
+	case []string:
+		return t
+	case []any:
+		var out []string
+		for _, item := range t {
+			if s, ok := item.(string); ok && s != "" {
+				out = append(out, s)
+			}
+		}
+		return out
+	default:
+		return nil
+	}
 }
 
 func loadRC() rcFile {
@@ -36,27 +67,42 @@ func loadRC() rcFile {
 }
 
 func main() {
-	if len(os.Args) < 2 {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) < 1 {
 		usage()
-		os.Exit(2)
+		return 2
 	}
-	switch os.Args[1] {
+	switch args[0] {
 	case "crawl":
-		os.Exit(cmdCrawl(os.Args[2:]))
+		return cmdCrawl(args[1:])
 	case "diff":
-		os.Exit(cmdDiff(os.Args[2:]))
+		return cmdDiff(args[1:])
 	case "report":
-		os.Exit(cmdReport(os.Args[2:]))
+		return cmdReport(args[1:])
+	case "payload":
+		return cmdPayload(args[1:])
+	case "baseline", "expected":
+		return cmdBaseline(args[1:])
+	case "ingest-sessions":
+		return cmdIngest(args[1:])
 	default:
 		usage()
-		os.Exit(2)
+		return 2
 	}
 }
 
 func usage() {
-	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--output out.json] [--ignore-robots] [--allow-external]")
-	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv] [--output out.html]")
-	fmt.Fprintln(os.Stderr, "shroodler diff <findings.json> <expected_findings.json> [--pages-only]")
+	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
+	fmt.Fprintln(os.Stderr, "shroodler ingest-sessions <sessions.jsonl> [--target url] [--output out.json] [--allow-external]")
+	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit] [--output out] [--suppressions FILE]")
+	fmt.Fprintln(os.Stderr, "shroodler diff <findings.json> <expected_findings.json> [--pages-only] [--gate] [--suppressions FILE] [--format text|junit|sarif]")
+	fmt.Fprintln(os.Stderr, "shroodler baseline <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
+	fmt.Fprintln(os.Stderr, "shroodler expected <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
+	fmt.Fprintln(os.Stderr, "  expected is an alias of baseline; expected_not_found is left empty — add negatives by hand")
+	fmt.Fprintln(os.Stderr, "shroodler payload <crawl.json> [--output out.json] [--pack PATH]")
 }
 
 func cmdCrawl(args []string) int {
@@ -74,6 +120,31 @@ func cmdCrawl(args []string) int {
 	if rc.Depth != nil {
 		cfg.Depth = *rc.Depth
 	}
+	if rc.Mode != "" {
+		cfg.Mode = rc.Mode
+	}
+	cfg.Headers = append(cfg.Headers, asStringList(rc.Header)...)
+	for _, raw := range asStringList(rc.Cookie) {
+		if c, ok := crawler.ParseCookiePair(raw); ok {
+			cfg.Cookies = append(cfg.Cookies, c)
+		}
+	}
+	if rc.CookieJar != "" {
+		loaded, err := crawler.LoadCookieFile(rc.CookieJar)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		cfg.Cookies = append(cfg.Cookies, loaded...)
+	}
+	if rc.LoginRecipe != "" {
+		recipe, err := crawler.LoadLoginRecipe(rc.LoginRecipe)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+		cfg.LoginRecipe = recipe
+	}
 	var outPath string
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
@@ -85,12 +156,66 @@ func cmdCrawl(args []string) int {
 			outPath = args[i]
 		case "--ignore-robots":
 			cfg.IgnoreRobots = true
+		case "--no-sitemap":
+			cfg.NoSitemap = true
 		case "--allow-external":
 			cfg.AllowExternal = true
+		case "--header":
+			i++
+			cfg.Headers = append(cfg.Headers, args[i])
+		case "--cookie":
+			i++
+			if c, ok := crawler.ParseCookiePair(args[i]); ok {
+				cfg.Cookies = append(cfg.Cookies, c)
+			}
+		case "--cookie-jar", "--storage-state":
+			i++
+			loaded, err := crawler.LoadCookieFile(args[i])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			cfg.Cookies = append(cfg.Cookies, loaded...)
+		case "--login-recipe":
+			i++
+			recipe, err := crawler.LoadLoginRecipe(args[i])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			cfg.LoginRecipe = recipe
+		case "--proxy":
+			i++
+			cfg.Proxy = args[i]
+		case "--seed":
+			i++
+			cfg.Seeds = append(cfg.Seeds, args[i])
+		case "--seed-from":
+			i++
+			list, err := sessions.LoadJSONL(args[i])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			cfg.Seeds = append(cfg.Seeds, sessions.SeedURLs(list, target)...)
+		case "--cookies-from":
+			i++
+			list, err := sessions.LoadJSONL(args[i])
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				return 1
+			}
+			hdr := sessions.CookieHeader(list, target)
+			for _, part := range strings.Split(hdr, ";") {
+				if c, ok := crawler.ParseCookiePair(strings.TrimSpace(part)); ok {
+					cfg.Cookies = append(cfg.Cookies, c)
+				}
+			}
 		case "--mode":
 			i++
-			if args[i] == "headless" {
-				fmt.Fprintln(os.Stderr, "headless mode is Python-only")
+			cfg.Mode = args[i]
+			if cfg.Mode != "static" && cfg.Mode != "headless" {
+				fmt.Fprintln(os.Stderr, "mode must be static or headless")
 				return 2
 			}
 		}
@@ -109,15 +234,73 @@ func cmdCrawl(args []string) int {
 	return 0
 }
 
+func cmdIngest(args []string) int {
+	if len(args) < 1 {
+		usage()
+		return 2
+	}
+	path := args[0]
+	target := ""
+	allow := false
+	var outPath string
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--target":
+			i++
+			target = args[i]
+		case "--output", "-o":
+			i++
+			outPath = args[i]
+		case "--allow-external":
+			allow = true
+		}
+	}
+	res, err := crawler.Ingest(path, target, allow)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	b, _ := json.MarshalIndent(res, "", "  ")
+	if outPath != "" {
+		_ = os.WriteFile(outPath, append(b, '\n'), 0o644)
+	} else {
+		fmt.Println(string(b))
+	}
+	return 0
+}
+
 func cmdDiff(args []string) int {
 	pagesOnly := false
+	gate := false
+	format := "text"
+	var suppressions string
+	var outPath string
 	var files []string
-	for _, a := range args {
-		if a == "--pages-only" {
+	for i := 0; i < len(args); i++ {
+		a := args[i]
+		switch a {
+		case "--pages-only":
 			pagesOnly = true
-			continue
+		case "--gate":
+			gate = true
+		case "--suppressions":
+			i++
+			if i < len(args) {
+				suppressions = args[i]
+			}
+		case "--format":
+			i++
+			if i < len(args) {
+				format = args[i]
+			}
+		case "--output", "-o":
+			i++
+			if i < len(args) {
+				outPath = args[i]
+			}
+		default:
+			files = append(files, a)
 		}
-		files = append(files, a)
 	}
 	if len(files) != 2 {
 		usage()
@@ -125,14 +308,80 @@ func cmdDiff(args []string) int {
 	}
 	actual := loadJSON(files[0])
 	expected := loadJSON(files[1])
-	errs := diffDocs(actual, expected, pagesOnly)
-	if len(errs) > 0 {
-		for _, e := range errs {
+	rules := lab.LoadSuppressions(suppressions)
+	outcome := lab.Diff(actual, expected, pagesOnly, gate, rules)
+	if format == "junit" || format == "sarif" {
+		var text string
+		if format == "junit" {
+			text = lab.RenderDiffJUnit(outcome.Errors)
+		} else {
+			text = lab.RenderDiffSARIF(outcome.Errors)
+		}
+		if outPath != "" {
+			_ = os.WriteFile(outPath, []byte(text), 0o644)
+		} else {
+			os.Stdout.WriteString(text)
+		}
+		if len(outcome.Errors) > 0 {
+			return 1
+		}
+		return 0
+	}
+	for _, e := range outcome.Resolved {
+		fmt.Println(e)
+	}
+	if len(outcome.Errors) > 0 {
+		for _, e := range outcome.Errors {
 			fmt.Fprintln(os.Stderr, e)
 		}
 		return 1
 	}
 	fmt.Println("diff ok")
+	return 0
+}
+
+func cmdPayload(args []string) int {
+	if len(args) < 1 {
+		usage()
+		return 2
+	}
+	path := args[0]
+	var outPath string
+	var extra []string
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--output", "-o":
+			i++
+			if i < len(args) {
+				outPath = args[i]
+			}
+		case "--pack":
+			i++
+			if i < len(args) {
+				extra = append(extra, args[i])
+			}
+		}
+	}
+	doc := loadJSON(path)
+	packs, err := payload.LoadPacks(extra...)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	res, err := payload.Run(doc, nil, packs)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	b := payload.Encode(res)
+	if outPath != "" {
+		if err := os.WriteFile(outPath, b, 0o644); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 1
+		}
+	} else {
+		os.Stdout.Write(b)
+	}
 	return 0
 }
 
@@ -143,6 +392,7 @@ func cmdReport(args []string) int {
 	}
 	format := "html"
 	var out string
+	var suppressions string
 	path := args[0]
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
@@ -152,13 +402,28 @@ func cmdReport(args []string) int {
 		case "--output", "-o":
 			i++
 			out = args[i]
+		case "--suppressions":
+			i++
+			suppressions = args[i]
 		}
 	}
 	doc := loadJSON(path)
+	rules := lab.LoadSuppressions(suppressions)
+	if len(rules) > 0 {
+		doc["findings"] = toAny(lab.FilterFindings(asFindingMaps(doc["findings"]), rules))
+	}
 	var text string
-	if format == "csv" {
+	switch format {
+	case "csv":
 		text = csvReport(doc)
-	} else {
+	case "json":
+		b, _ := json.MarshalIndent(doc, "", "  ")
+		text = string(b) + "\n"
+	case "sarif":
+		text = lab.RenderSARIF(doc)
+	case "junit":
+		text = lab.RenderJUnit(doc)
+	default:
 		text = htmlReport(doc)
 	}
 	if out != "" {
@@ -167,6 +432,62 @@ func cmdReport(args []string) int {
 		os.Stdout.WriteString(text)
 	}
 	return 0
+}
+
+func cmdBaseline(args []string) int {
+	if len(args) < 1 {
+		usage()
+		return 2
+	}
+	path := args[0]
+	var out string
+	var name string
+	var suppressions string
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--output", "-o":
+			i++
+			out = args[i]
+		case "--name":
+			i++
+			name = args[i]
+		case "--suppressions":
+			i++
+			suppressions = args[i]
+		}
+	}
+	doc := loadJSON(path)
+	base := lab.BaselineFromDoc(doc, name, lab.LoadSuppressions(suppressions))
+	b, _ := json.MarshalIndent(base, "", "  ")
+	text := append(b, '\n')
+	if out != "" {
+		_ = os.WriteFile(out, text, 0o644)
+	} else {
+		os.Stdout.Write(text)
+	}
+	return 0
+}
+
+func asFindingMaps(v any) []map[string]any {
+	arr, ok := v.([]any)
+	if !ok {
+		return nil
+	}
+	out := make([]map[string]any, 0, len(arr))
+	for _, item := range arr {
+		if m, ok := item.(map[string]any); ok {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
+func toAny(ms []map[string]any) []any {
+	out := make([]any, 0, len(ms))
+	for _, m := range ms {
+		out = append(out, m)
+	}
+	return out
 }
 
 func loadJSON(path string) map[string]any {
@@ -188,52 +509,7 @@ func pathOf(u string) string {
 }
 
 func diffDocs(actual, expected map[string]any, pagesOnly bool) []string {
-	var errs []string
-	actualPaths := map[string]bool{}
-	if pages, ok := actual["pages"].([]any); ok {
-		for _, p := range pages {
-			m := p.(map[string]any)
-			actualPaths[pathOf(fmt.Sprint(m["url"]))] = true
-		}
-	}
-	if exp, ok := expected["expected_pages"].([]any); ok {
-		for _, p := range exp {
-			ps := fmt.Sprint(p)
-			if !actualPaths[ps] {
-				errs = append(errs, "missing page "+ps)
-			}
-		}
-	}
-	if pagesOnly {
-		return errs
-	}
-	actualF := map[string]bool{}
-	if findings, ok := actual["findings"].([]any); ok {
-		for _, f := range findings {
-			m := f.(map[string]any)
-			k := fmt.Sprint(m["id"]) + "|" + pathOf(fmt.Sprint(m["url"]))
-			actualF[k] = true
-		}
-	}
-	if exp, ok := expected["expected_findings"].([]any); ok {
-		for _, f := range exp {
-			m := f.(map[string]any)
-			k := fmt.Sprint(m["id"]) + "|" + pathOf(fmt.Sprint(m["url"]))
-			if !actualF[k] {
-				errs = append(errs, "missing finding "+fmt.Sprint(m["id"])+" at "+pathOf(fmt.Sprint(m["url"])))
-			}
-		}
-	}
-	if nf, ok := expected["expected_not_found"].([]any); ok {
-		for _, f := range nf {
-			m := f.(map[string]any)
-			k := fmt.Sprint(m["id"]) + "|" + pathOf(fmt.Sprint(m["url"]))
-			if actualF[k] {
-				errs = append(errs, "unexpected finding "+fmt.Sprint(m["id"]))
-			}
-		}
-	}
-	return errs
+	return lab.Diff(actual, expected, pagesOnly, false, nil).Errors
 }
 
 func csvReport(doc map[string]any) string {
@@ -261,4 +537,5 @@ func htmlReport(doc map[string]any) string {
 func init() {
 	_ = filepath.Separator
 	_ = models.CrawlResult{}
+	_ = pathOf
 }

@@ -7,6 +7,7 @@
     parseHeaderBlock,
     sortFindings,
   } from "./lib/findings.js";
+  import { parseCookieHeader, scanSecrets } from "./lib/secrets.js";
 
   let view = "scan";
   let target = "http://127.0.0.1:8081";
@@ -33,6 +34,7 @@
   let bpPattern = ".*";
   let bpStage = "request";
   let paused = [];
+  let secretHits = [];
   let arYaml =
     "- match:\n    method: GET\n    url_pattern: .*\n  respond:\n    status: 200\n    body: mocked\n";
   let caOpen = false;
@@ -348,6 +350,18 @@
       </ul>
       {#if selectedSession}
         <pre>{JSON.stringify(selectedSession, null, 2)}</pre>
+        <button
+          on:click={() => {
+            const body = selectedSession.response?.body?.content || selectedSession.request?.body?.content || "";
+            secretHits = scanSecrets(body);
+          }}>Scan secrets</button
+        >
+        {#each secretHits as h}
+          <div class="chip">{h.id} {h.evidence}</div>
+        {/each}
+        {#each Object.entries(selectedSession.response?.headers || {}).filter(([k]) => k.toLowerCase() === "set-cookie") as [, v]}
+          <code>{JSON.stringify(parseCookieHeader(v))}</code>
+        {/each}
       {/if}
     {:else if view === "compose"}
       <div class="stack">

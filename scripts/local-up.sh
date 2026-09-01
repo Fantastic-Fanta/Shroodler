@@ -22,15 +22,30 @@ start_if_needed() {
   echo "started $name pid $! :$port"
 }
 
-start_if_needed app1 8081 "\"$VENV/bin/python\" \"$ROOT/packages/target-apps/app1-server-rendered/app.py\""
-
-for i in $(seq 1 40); do
-  if curl -sf "http://127.0.0.1:8081/" >/dev/null 2>&1; then
-    echo "app1 ready"
-    exit 0
+ensure_app2() {
+  local dir="$ROOT/packages/target-apps/app2-spa"
+  if [ ! -f "$dir/dist/index.html" ]; then
+    (cd "$dir" && npm install && npm run build)
   fi
-  sleep 0.25
-done
-echo "app1 failed to become ready" >&2
-cat "$PIDDIR/app1.log" >&2 || true
-exit 1
+}
+
+start_if_needed app1 8081 "\"$VENV/bin/python\" \"$ROOT/packages/target-apps/app1-server-rendered/app.py\""
+ensure_app2
+start_if_needed app2 8082 "node \"$ROOT/packages/target-apps/app2-spa/server.mjs\""
+
+wait_port() {
+  local name="$1" port="$2"
+  for _ in $(seq 1 40); do
+    if curl -sf "http://127.0.0.1:${port}/" >/dev/null 2>&1; then
+      echo "$name ready"
+      return 0
+    fi
+    sleep 0.25
+  done
+  echo "$name failed to become ready" >&2
+  cat "$PIDDIR/${name}.log" >&2 || true
+  return 1
+}
+
+wait_port app1 8081
+wait_port app2 8082

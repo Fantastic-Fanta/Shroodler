@@ -9,6 +9,7 @@ DOCKER := $(shell test -e /Applications/Docker.app/Contents/Resources/bin/docker
 bootstrap:
 	@test -x "$(PY)" || python3 -m venv "$(VENV)"
 	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]"
+	@$(VENV)/bin/playwright install chromium
 
 lint: bootstrap
 	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests

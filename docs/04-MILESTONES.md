@@ -58,17 +58,17 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** `shroodler report` produces valid, human-readable output for all target apps.
 
 ## Milestone 9 — Go port
-- [ ] Port crawler core, extractors (excluding headless), secret scanner, common-path
+- [x] Port crawler core, extractors (excluding headless), secret scanner, common-path
       prober to Go
-- [ ] Go implementation consumes the same `schema/finding.schema.json` and
+- [x] Go implementation consumes the same `schema/finding.schema.json` and
       `secret-patterns` YAML files
 - **Done when:** Go crawler independently passes the same integration tests as Python
       (excluding headless-only cases) against app1 and app3.
 
 ## Milestone 10 — Target app 4 (microservices) + parity tests
-- [ ] Gateway + 2-3 backend services, at least one cross-service auth flow
-- [ ] `expected_findings.json` covering multi-host recon
-- [ ] `parity-tests/run_parity.py` runs both crawlers against app1, app3, app4 and diffs
+- [x] Gateway + 2-3 backend services, at least one cross-service auth flow
+- [x] `expected_findings.json` covering multi-host recon
+- [x] `parity-tests/run_parity.py` runs both crawlers against app1, app3, app4 and diffs
 - **Done when:** parity test suite is green across all three shared target apps.
 
 ## Milestone 11 — CLI polish

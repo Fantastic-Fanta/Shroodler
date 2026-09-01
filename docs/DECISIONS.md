@@ -2,7 +2,12 @@
 
 Assumptions and deferred items. Newest entries first.
 
-## 2026-09-01 — Generic API key rule
+## 2026-09-01 — App4 multi-host via gateway
+
+Backends listen on 127.0.0.1:8085/8086 and are only reached through the gateway
+on :8084. The crawler stays same-origin, so multi-service recon is via gateway
+paths (`/users`, `/orders`) plus JS `fetch` endpoints, not by crawling backend
+origins directly.
 
 The `generic-api-key` YAML rule uses a sentinel pattern `__ENTROPY__` so both
 language implementations can special-case the heuristic without hardcoding other

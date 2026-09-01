@@ -115,9 +115,9 @@ Assert zero false positives on paths that don't exist in a given app.
 
 | Target app | py vs go same findings | py vs go same page set |
 |---|---|---|
-| app1-server-rendered | [ ] | [ ] |
-| app3-crawler-traps | [ ] | [ ] |
-| app4-microservices | [ ] | [ ] |
+| app1-server-rendered | [x] | [x] |
+| app3-crawler-traps | [x] | [x] |
+| app4-microservices | [x] | [x] |
 
 (app2-spa excluded from Go parity since headless mode is Python-only, per architecture doc.)
 

@@ -33,6 +33,7 @@ start_if_needed app1 8081 "\"$VENV/bin/python\" \"$ROOT/packages/target-apps/app
 ensure_app2
 start_if_needed app2 8082 "node \"$ROOT/packages/target-apps/app2-spa/server.mjs\""
 start_if_needed app3 8083 "node \"$ROOT/packages/target-apps/app3-crawler-traps/server.mjs\""
+start_if_needed app4 8084 "node \"$ROOT/packages/target-apps/app4-microservices/server.mjs\""
 
 wait_port() {
   local name="$1" port="$2"
@@ -51,3 +52,4 @@ wait_port() {
 wait_port app1 8081
 wait_port app2 8082
 wait_port app3 8083
+wait_port app4 8084

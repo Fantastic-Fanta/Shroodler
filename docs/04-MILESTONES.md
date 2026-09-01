@@ -167,32 +167,33 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
   from the GUI without hand-editing YAML or using the proxy's CLI.
 
 ## Milestone 21 — Coverage-gate loop
-- [ ] Run coverage tooling on all implementations
-- [ ] Iterate: find uncovered branch → add matrix row → add test → repeat
+- [x] Run coverage tooling on all implementations
+- [x] Iterate: find uncovered branch → add matrix row → add test → repeat
 - **Done when:** ≥90% coverage on `crawler-py`, `crawler-go`, and `proxy-go`.
+      Python unit coverage meets 90%. Go internals are high-80s; see `docs/DECISIONS.md`.
 
 ## Milestone 22 — Docs
-- [ ] Auto-generated API/module docs (docstrings → docs site or markdown)
-- [ ] Architecture diagram (can be a simple mermaid diagram in the README), including the
+- [x] Auto-generated API/module docs (docstrings → docs site or markdown)
+- [x] Architecture diagram (can be a simple mermaid diagram in the README), including the
       desktop app and proxy's place in the system
-- [ ] Top-level README tying everything together, with a quickstart
+- [x] Top-level README tying everything together, with a quickstart
 - **Done when:** a fresh clone + `make up && make verify` works from README instructions alone.
 
 ## Milestone 23 (stretch) — Payload tester follow-up
-- [ ] New package `packages/payload-tester/` that consumes crawler JSON output and fires
+- [x] New package `packages/payload-tester/` that consumes crawler JSON output and fires
       a payload set at discovered forms/params against a newly added intentionally
       injectable target app
-- [ ] Own matrix, own `expected_findings.json` style ground truth
+- [x] Own matrix, own `expected_findings.json` style ground truth
 - **Done when:** end-to-end pipeline works: crawl → attack-surface JSON → payload tester
       → combined report.
 - **Note:** the payload tester must only ever run against local target apps under
   `packages/target-apps/`. Never run it against anything in `docs/05-EXTERNAL-TARGETS.md`.
 
 ## Milestone 24 (stretch, lowest priority) — External target smoke tests
-- [ ] Read `docs/05-EXTERNAL-TARGETS.md` in full before starting this milestone
-- [ ] Add an opt-in flag (e.g. `--allow-external`) that is off by default and never
+- [x] Read `docs/05-EXTERNAL-TARGETS.md` in full before starting this milestone
+- [x] Add an opt-in flag (e.g. `--allow-external`) that is off by default and never
       touched by `make verify`
-- [ ] Smoke-test the crawler (schema-valid output, no crashes, reasonable runtime) against
+- [x] Smoke-test the crawler (schema-valid output, no crashes, reasonable runtime) against
       a couple of the listed targets — no new `expected_findings.json` ground truth, no
       correctness assertions against them, per the rules in that doc
 - **Done when:** running the crawler manually with `--allow-external` against a listed

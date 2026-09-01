@@ -9,16 +9,16 @@ pass them (`[py]` / `[go]`).
 
 | Dimension | Cases | py | go |
 |---|---|---|---|
-| Depth limiting | depth 0, 1, 2, 5, 10, unbounded | [ ] | [ ] |
-| Link scope | same-origin, subdomain, cross-origin (must exclude), path-relative, protocol-relative | [ ] | [ ] |
-| Link forms | `<a href>`, `<form action>`, `<link>`, `<script src>`, CSS `url()`, meta-refresh | [ ] | [ ] |
-| Redirects | single 301/302, chain of 5+, redirect loop (must detect & stop) | [ ] | [ ] |
-| Malformed HTML | unclosed tags, invalid nesting, non-UTF8 bytes | [ ] | [ ] |
-| Duplicate detection | trailing slash variants, query param order, fragment-only diffs | [ ] | [ ] |
-| Rate limiting | target returns 429, target throttles via delay | [ ] | [ ] |
-| Robots.txt | respected in default mode, ignorable via flag (documented, since this is your own app) | [ ] | [ ] |
-| Pagination traps | infinite "next page" links (app3) | [ ] | [ ] |
-| Honeypot links | hidden/invisible links only bots would follow (app3) | [ ] | [ ] |
+| Depth limiting | depth 0, 1, 2, 5, 10, unbounded | [x] | [ ] |
+| Link scope | same-origin, subdomain, cross-origin (must exclude), path-relative, protocol-relative | [x] | [ ] |
+| Link forms | `<a href>`, `<form action>`, `<link>`, `<script src>`, CSS `url()`, meta-refresh | [x] | [ ] |
+| Redirects | single 301/302, chain of 5+, redirect loop (must detect & stop) | [x] | [ ] |
+| Malformed HTML | unclosed tags, invalid nesting, non-UTF8 bytes | [x] | [ ] |
+| Duplicate detection | trailing slash variants, query param order, fragment-only diffs | [x] | [ ] |
+| Rate limiting | target returns 429, target throttles via delay | [x] | [ ] |
+| Robots.txt | respected in default mode, ignorable via flag (documented, since this is your own app) | [x] | [ ] |
+| Pagination traps | infinite "next page" links (app3) | [x] | [ ] |
+| Honeypot links | hidden/invisible links only bots would follow (app3) | [x] | [ ] |
 
 ## Form extraction
 

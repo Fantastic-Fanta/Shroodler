@@ -107,10 +107,15 @@ def backup():
     return send_from_directory("exposed", "backup.sql.bak", mimetype="text/plain")
 
 
+@app.route("/internal-only")
+def internal_only():
+    return "<h1>internal</h1><p>Disallowed by robots.txt</p>"
+
+
 @app.route("/robots.txt")
 def robots():
     return (
-        "User-agent: *\nDisallow: /error\nDisallow: /settings\n",
+        "User-agent: *\nDisallow: /internal-only\n",
         200,
         {"Content-Type": "text/plain"},
     )

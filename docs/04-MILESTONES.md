@@ -18,8 +18,8 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
 - **Done when:** app runs via `docker compose up app1` and is manually reachable.
 
 ## Milestone 2 — Python crawler MVP
-- [ ] Static crawler: fetch, parse links, depth limit, same-origin scope, dedupe
-- [ ] Matrix rows under "Crawler core" implemented as tests, passing against app1
+- [x] Static crawler: fetch, parse links, depth limit, same-origin scope, dedupe
+- [x] Matrix rows under "Crawler core" implemented as tests, passing against app1
 - **Done when:** `shroodler crawl http://app1.local:8081` produces valid schema JSON and
       `shroodler diff` against `expected_findings.json` passes for page discovery.
 

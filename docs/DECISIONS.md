@@ -2,7 +2,13 @@
 
 Assumptions and deferred items. Newest entries first.
 
-## 2026-09-01 — Docker Desktop missing on this machine
+## 2026-09-01 — Milestone 2 crawler defaults
+
+- Pagination traps are detected only for `/page/<n>` paths and `page=` query params,
+  not every numeric path segment (so depth tests like `/p/10` still work).
+- `shroodler diff --pages-only` exists so page-discovery can pass before extractors
+  populate findings.
+- Rate-limit tests use `Retry-After: 0` to stay fast.
 
 `/usr/local/bin/docker` is a broken symlink to Docker.app, which is not installed.
 `make up` / `make verify` use a local process fallback (`scripts/local-up.sh`) that

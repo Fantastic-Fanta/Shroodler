@@ -1,9 +1,31 @@
-.PHONY: verify up down lint test
+.PHONY: verify up down lint test test-unit test-integration bootstrap
 
-DOCKER := $(shell test -x /usr/local/bin/docker -a -e /Applications/Docker.app/Contents/Resources/bin/docker && echo yes || echo no)
+ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+VENV := $(ROOT).venv
+PY := $(VENV)/bin/python
+PIP := $(VENV)/bin/pip
+DOCKER := $(shell test -e /Applications/Docker.app/Contents/Resources/bin/docker && echo yes || echo no)
 
-verify:
-	@echo "no tests yet"
+bootstrap:
+	@test -x "$(PY)" || python3 -m venv "$(VENV)"
+	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]"
+
+lint: bootstrap
+	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests
+
+test-unit: bootstrap
+	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit -q
+
+test-integration: bootstrap up
+	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/integration -q
+
+test: test-unit test-integration
+
+verify: lint test-unit
+	$(MAKE) down
+	$(MAKE) test-integration
+	$(MAKE) down
+	@echo "verify ok"
 
 up:
 ifeq ($(DOCKER),yes)
@@ -19,9 +41,3 @@ ifeq ($(DOCKER),yes)
 else
 	bash scripts/local-down.sh
 endif
-
-lint:
-	@echo "no lint yet"
-
-test:
-	@echo "no tests yet"

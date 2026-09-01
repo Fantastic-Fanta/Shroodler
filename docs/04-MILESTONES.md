@@ -129,40 +129,40 @@ Work through these in order. Each milestone's "Definition of Done" must be fully
   Go sidecar and shows a completion state with the output file location.
 
 ## Milestone 17 — Results dashboard
-- [ ] Findings table: sortable/filterable by severity/category, detail drawer on row select
-- [ ] Scan history sidebar — past scans persisted locally (e.g. under the OS app-data dir),
+- [x] Findings table: sortable/filterable by severity/category, detail drawer on row select
+- [x] Scan history sidebar — past scans persisted locally (e.g. under the OS app-data dir),
       selectable to reload their results
-- [ ] Motion for filtering, drawer open/close, and new-finding entry per the rules in
+- [x] Motion for filtering, drawer open/close, and new-finding entry per the rules in
       `docs/06-UI-STYLE.md`
 - **Done when:** a completed scan's full findings are browsable and filterable natively in
   the app, matching the data already produced by the CLI/report generator.
 
 ## Milestone 18 — Baseline/diff view
-- [ ] Pick any two saved scans from history and view a diff: findings added vs resolved
+- [x] Pick any two saved scans from history and view a diff: findings added vs resolved
       since the baseline, matched by the same `id + url` equality rule used in the
       cross-language parity contract (`02-SPEC.md` section 5) — this is computed by the
       desktop app itself, not a new CLI flag
-- [ ] Diff view gets the slightly more noticeable "this changed" motion treatment called
+- [x] Diff view gets the slightly more noticeable "this changed" motion treatment called
       out as the one exception in the style doc's motion section
 - **Done when:** comparing two scans of the same target clearly shows what's new and
   what's resolved, without needing to read raw JSON.
 
 ## Milestone 19 — Desktop app: proxy session list + inspector
-- [ ] Manage `shroodler-proxy` as a second sidecar (start/stop, connect to its control
+- [x] Manage `shroodler-proxy` as a second sidecar (start/stop, connect to its control
       channel per `docs/07-PROXY-SPEC.md`)
-- [ ] Live session list view, updating in real time as traffic is captured
-- [ ] Request/response inspector: headers, decoded body, cookies, per section 1/8 of the
+- [x] Live session list view, updating in real time as traffic is captured
+- [x] Request/response inspector: headers, decoded body, cookies, per section 1/8 of the
       proxy spec, including the opt-in secret-pattern scan action
-- [ ] CA install/export/uninstall exposed in-app, with an explicit confirmation step
+- [x] CA install/export/uninstall exposed in-app, with an explicit confirmation step
       before installing a root CA (never silent)
 - **Done when:** traffic routed through the proxy from a local target app is visible and
   inspectable live in the app, and CA install/uninstall both work from the UI.
 
 ## Milestone 20 — Desktop app: composer, breakpoints, AutoResponder UI
-- [ ] Composer view: build and send a request from scratch or from an edited existing
+- [x] Composer view: build and send a request from scratch or from an edited existing
       session
-- [ ] Breakpoint UI: define rules, get notified on `breakpoint:hit`, edit/resume/drop
-- [ ] AutoResponder rule editor, backed by the same YAML rule format from the proxy spec
+- [x] Breakpoint UI: define rules, get notified on `breakpoint:hit`, edit/resume/drop
+- [x] AutoResponder rule editor, backed by the same YAML rule format from the proxy spec
 - **Done when:** all three (composer, breakpoints, AutoResponder) are usable end-to-end
   from the GUI without hand-editing YAML or using the proxy's CLI.
 

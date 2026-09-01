@@ -85,9 +85,20 @@ test("tauri commands exist in rust shell", () => {
   assert.ok(rs.includes("CA install requires explicit confirmation"));
 });
 
+test("opt-in secret scan and cookie parser", async () => {
+  const { scanSecrets, parseCookieHeader } = await import("../src/lib/secrets.js");
+  const hits = scanSecrets("AKIAIOSFODNN7EXAMPLE");
+  assert.ok(hits.some((h) => h.id === "aws-access-key"));
+  const c = parseCookieHeader("sid=1; Secure; HttpOnly; SameSite=Lax");
+  assert.equal(c.secure, true);
+  assert.equal(c.httpOnly, true);
+  assert.equal(c.sameSite, "Lax");
+});
+
 test("ca install never silent", () => {
   const ui = readFileSync(join(root, "src/App.svelte"), "utf8");
   assert.ok(ui.includes("role=\"dialog\""));
   assert.ok(ui.includes("install_ca"));
   assert.ok(ui.includes("confirmed: true"));
+  assert.ok(ui.includes("Scan secrets"));
 });

@@ -33,7 +33,10 @@ packages/desktop-app/src-tauri/target/
 .vscode/
 *.swp
 
-# Secrets and local data — never commit
+# Proxy CA / captured sessions — never commit
+packages/proxy-go/data/
+.proxy-data/
+*.sessions.jsonl
 .env
 .env.*
 !.env.example

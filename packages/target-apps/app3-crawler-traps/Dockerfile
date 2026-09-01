@@ -1,5 +1,5 @@
-FROM python:3.12-slim
+FROM node:22-alpine
 WORKDIR /app
 COPY . .
 EXPOSE 8083
-CMD ["python", "-m", "http.server", "8083"]
+CMD ["node", "server.mjs"]

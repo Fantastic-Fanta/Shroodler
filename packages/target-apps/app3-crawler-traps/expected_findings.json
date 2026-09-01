@@ -1,0 +1,12 @@
+{
+  "target_app": "app3-crawler-traps",
+  "expected_pages": ["/", "/visible"],
+  "expected_forms": {},
+  "expected_findings": [
+    { "id": "exposed-file", "url": "/.env" }
+  ],
+  "expected_not_found": [
+    { "id": "exposed-file", "url": "/.git/config" },
+    { "id": "leaked-secret", "url": "/visible" }
+  ]
+}

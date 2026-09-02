@@ -1,0 +1,9 @@
+# Backup / editor leftover suffixes. Both crawlers append these to a small set
+# of discovered interesting paths (e.g. /login, /settings, wordlist hits).
+# 404 is not a finding. Not a common-path list — do not load via LoadCommonPaths.
+.bak
+.old
+.orig
+~
+.swp
+.copy

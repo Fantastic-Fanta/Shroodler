@@ -1,6 +1,6 @@
 {
   "target_app": "app1-server-rendered",
-  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only"],
+  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only", "/login.bak"],
   "expected_forms": {
     "/login": ["username", "password", "csrf_token"]
   },
@@ -13,6 +13,7 @@
     { "id": "exposed-file", "url": "/backup.sql.bak" },
     { "id": "exposed-file", "url": "/.well-known/security.txt" },
     { "id": "exposed-file", "url": "/id_rsa" },
+    { "id": "exposed-file", "url": "/login.bak" },
     { "id": "server-version-leak", "url": "/" },
     { "id": "aws-access-key", "url": "/static/app.js" },
     { "id": "github-pat", "url": "/static/app.js" },
@@ -30,6 +31,8 @@
     { "id": "github-pat", "url": "/about" },
     { "id": "exposed-file", "url": "/.env" },
     { "id": "exposed-file", "url": "/.DS_Store" },
-    { "id": "exposed-file", "url": "/wp-config.php.bak" }
+    { "id": "exposed-file", "url": "/wp-config.php.bak" },
+    { "id": "exposed-file", "url": "/settings.bak" },
+    { "id": "exposed-file", "url": "/login.old" }
   ]
 }

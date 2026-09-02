@@ -76,40 +76,136 @@ func LoadSecretRules() []Rule {
 	return rules
 }
 
-func LoadCommonPaths() []string {
-	dir := filepath.Join(RepoRoot(), "packages", "secret-patterns", "wordlists")
-	ents, err := os.ReadDir(dir)
+func wordlistsDir() string {
+	return filepath.Join(RepoRoot(), "packages", "secret-patterns", "wordlists")
+}
+
+func parseWordlist(path string, asPaths bool) []string {
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil
 	}
-	var names []string
-	for _, e := range ents {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".txt") {
+	var out []string
+	for _, line := range strings.Split(string(b), "\n") {
+		line = strings.TrimSpace(line)
+		if line == "" || strings.HasPrefix(line, "#") {
 			continue
 		}
-		names = append(names, e.Name())
+		if asPaths && !strings.HasPrefix(line, "/") {
+			line = "/" + line
+		}
+		out = append(out, line)
 	}
-	sort.Strings(names)
+	return out
+}
+
+var pathWordlists = []string{"common-paths.txt", "source-control.txt", "well-known.txt"}
+
+func LoadCommonPaths() []string {
 	seen := map[string]bool{}
 	var out []string
+	names := append([]string(nil), pathWordlists...)
+	sort.Strings(names)
 	for _, name := range names {
-		b, err := os.ReadFile(filepath.Join(dir, name))
-		if err != nil {
-			continue
-		}
-		for _, line := range strings.Split(string(b), "\n") {
-			line = strings.TrimSpace(line)
-			if line == "" || strings.HasPrefix(line, "#") {
-				continue
-			}
-			if !strings.HasPrefix(line, "/") {
-				line = "/" + line
-			}
+		for _, line := range parseWordlist(filepath.Join(wordlistsDir(), name), true) {
 			if seen[line] {
 				continue
 			}
 			seen[line] = true
 			out = append(out, line)
+		}
+	}
+	return out
+}
+
+func LoadBackupSuffixes() []string {
+	return parseWordlist(filepath.Join(wordlistsDir(), "backup-suffixes.txt"), false)
+}
+
+func LoadBackupInteresting() []string {
+	names := parseWordlist(filepath.Join(wordlistsDir(), "backup-interesting.txt"), false)
+	for i, n := range names {
+		names[i] = strings.ToLower(strings.TrimPrefix(n, "/"))
+	}
+	return names
+}
+
+func pathOfURL(raw string) string {
+	path := raw
+	if i := strings.Index(raw, "://"); i >= 0 {
+		rest := raw[i+3:]
+		if sl := strings.Index(rest, "/"); sl >= 0 {
+			path = rest[sl:]
+		} else {
+			path = "/"
+		}
+	}
+	if q := strings.Index(path, "?"); q >= 0 {
+		path = path[:q]
+	}
+	if path == "" {
+		path = "/"
+	}
+	if path != "/" && strings.HasSuffix(path, "/") {
+		path = strings.TrimSuffix(path, "/")
+	}
+	return path
+}
+
+func IsMutationBase(path string, wordlist, interesting []string) bool {
+	path = pathOfURL(path)
+	if path == "/" {
+		return false
+	}
+	for _, w := range wordlist {
+		if path == w {
+			return true
+		}
+	}
+	name := path
+	if i := strings.LastIndex(path, "/"); i >= 0 {
+		name = path[i+1:]
+	}
+	name = strings.ToLower(name)
+	if name == "" {
+		return false
+	}
+	stem := name
+	if i := strings.Index(name, "."); i >= 0 {
+		stem = name[:i]
+	}
+	for _, n := range interesting {
+		if name == n || stem == n {
+			return true
+		}
+	}
+	return false
+}
+
+func MutationPaths(discovered []string) []string {
+	suffixes := LoadBackupSuffixes()
+	interesting := LoadBackupInteresting()
+	wordlist := LoadCommonPaths()
+	var bases []string
+	seenBase := map[string]bool{}
+	for _, raw := range discovered {
+		path := pathOfURL(raw)
+		if seenBase[path] || !IsMutationBase(path, wordlist, interesting) {
+			continue
+		}
+		seenBase[path] = true
+		bases = append(bases, path)
+	}
+	var out []string
+	seenOut := map[string]bool{}
+	for _, base := range bases {
+		for _, suffix := range suffixes {
+			mutated := base + suffix
+			if mutated == base || seenOut[mutated] || seenBase[mutated] {
+				continue
+			}
+			seenOut[mutated] = true
+			out = append(out, mutated)
 		}
 	}
 	return out

@@ -4,7 +4,7 @@ from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime, timezone
 from time import monotonic, sleep
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from shroodler import __version__
 from shroodler.auth import (
@@ -18,7 +18,7 @@ from shroodler.auth import (
     resolve_recipe_url,
     run_login_httpx,
 )
-from shroodler.extractors.common_paths import probe_paths
+from shroodler.extractors.common_paths import probe_mutations, probe_paths
 from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.headers import extract_headers
@@ -208,6 +208,10 @@ class Crawler:
         extra_pages, extra_findings = probe_paths(origin_url, self.http, seen)
         pages.extend(extra_pages)
         findings.extend(extra_findings)
+        discovered = [urlparse(p.url).path for p in pages]
+        mut_pages, mut_findings = probe_mutations(origin_url, self.http, seen, discovered)
+        pages.extend(mut_pages)
+        findings.extend(mut_findings)
 
         finished = _now()
         requests = getattr(self.http, "requests", 0)

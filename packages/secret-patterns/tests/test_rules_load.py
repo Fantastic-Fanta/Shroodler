@@ -25,9 +25,12 @@ def test_rules_are_loadable_yaml():
     assert "stripe-secret-key" in ids
 
 
+PATH_WORDLISTS = {"common-paths.txt", "source-control.txt", "well-known.txt"}
+
+
 def test_wordlists_are_plain_text_paths():
     wordlists = ROOT / "wordlists"
-    files = sorted(wordlists.glob("*.txt"))
+    files = sorted(p for p in wordlists.glob("*.txt") if p.name in PATH_WORDLISTS)
     assert files
     paths: list[str] = []
     for path in files:
@@ -42,3 +45,22 @@ def test_wordlists_are_plain_text_paths():
     assert "/.well-known/security.txt" in paths
     assert "/.env" in paths
     assert len(paths) == len(set(paths))
+
+
+def test_backup_suffix_wordlist():
+    root = Path(__file__).resolve().parents[1]
+    suffixes: list[str] = []
+    for raw in (root / "wordlists" / "backup-suffixes.txt").read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        suffixes.append(line)
+    assert suffixes == [".bak", ".old", ".orig", "~", ".swp", ".copy"]
+    names: list[str] = []
+    for raw in (root / "wordlists" / "backup-interesting.txt").read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        names.append(line)
+    assert "login" in names
+    assert "settings" in names

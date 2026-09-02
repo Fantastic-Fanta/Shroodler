@@ -23,7 +23,7 @@ func TestApp1Pages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	need := []string{"/", "/login", "/dashboard", "/settings"}
+	need := []string{"/", "/login", "/dashboard", "/settings", "/login.bak"}
 	have := map[string]bool{}
 	for _, p := range res.Pages {
 		have[urls.PathOf(p.URL)] = true

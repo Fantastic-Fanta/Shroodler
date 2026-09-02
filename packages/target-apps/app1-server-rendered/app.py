@@ -151,6 +151,11 @@ def backup():
     return send_from_directory("exposed", "backup.sql.bak", mimetype="text/plain")
 
 
+@app.route("/login.bak")
+def login_bak():
+    return "# leftover login template backup\n", 200, {"Content-Type": "text/plain"}
+
+
 @app.route("/internal-only")
 def internal_only():
     return "<h1>internal</h1><p>Disallowed by robots.txt</p>"

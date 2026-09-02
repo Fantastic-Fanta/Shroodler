@@ -220,8 +220,9 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		}
 	}
 
+	root := strings.TrimRight(origin(start), "/")
 	for _, p := range extractors.LoadCommonPaths() {
-		u := strings.TrimRight(origin(start), "/") + p
+		u := root + p
 		key := urls.CanonicalKey(u)
 		if seen[key] {
 			continue
@@ -235,6 +236,26 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		ev := p
 		findings = append(findings, models.Finding{ID: "exposed-file", Severity: "high", Category: "exposed-file", URL: u, Description: "Common path " + p + " is reachable", Evidence: &ev})
 		findings = append(findings, extractors.ScanSecrets(res.Body, u, rules)...)
+	}
+
+	var discovered []string
+	for _, p := range pages {
+		discovered = append(discovered, urls.PathOf(p.URL))
+	}
+	for _, p := range extractors.MutationPaths(discovered) {
+		u := root + p
+		key := urls.CanonicalKey(u)
+		if seen[key] {
+			continue
+		}
+		res := fetchRetry(client, u, "")
+		if res.Status != 200 {
+			continue
+		}
+		seen[key] = true
+		pages = append(pages, models.Page{URL: u, StatusCode: 200, Forms: []models.Form{}, Params: []string{}, Cookies: []models.Cookie{}, Headers: models.HeaderAnalysis{Present: []string{}, Missing: []string{}}, JSFiles: []string{}})
+		ev := p
+		findings = append(findings, models.Finding{ID: "exposed-file", Severity: "high", Category: "exposed-file", URL: u, Description: "Backup-name mutation " + p + " is reachable", Evidence: &ev})
 	}
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")

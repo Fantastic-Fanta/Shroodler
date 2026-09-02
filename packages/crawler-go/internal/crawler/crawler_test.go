@@ -188,6 +188,61 @@ func TestProbedEnvScansSecrets(t *testing.T) {
 	}
 }
 
+func TestBackupNameMutation(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/login">login</a><a href="/settings">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<p>login</p>"))
+	})
+	mux.HandleFunc("/settings", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<p>settings</p>"))
+	})
+	mux.HandleFunc("/login.bak", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("# leftover login template backup\n"))
+	})
+	mux.HandleFunc("/backup.sql.bak", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("DUMP"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, MaxPages: 80})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]bool{}
+	exposed := map[string]bool{}
+	for _, p := range res.Pages {
+		got[urls.PathOf(p.URL)] = true
+	}
+	for _, f := range res.Findings {
+		if f.ID == "exposed-file" && f.Evidence != nil {
+			exposed[*f.Evidence] = true
+		}
+	}
+	if !got["/login.bak"] || !exposed["/login.bak"] {
+		t.Fatalf("missing /login.bak pages=%v exposed=%v", got, exposed)
+	}
+	if !exposed["/backup.sql.bak"] {
+		t.Fatalf("missing wordlist hit /backup.sql.bak in %v", exposed)
+	}
+	if got["/settings.bak"] || exposed["/settings.bak"] {
+		t.Fatal("404 /settings.bak must not be a finding")
+	}
+	if got["/login.old"] || exposed["/login.old"] {
+		t.Fatal("404 /login.old must not be a finding")
+	}
+}
+
 func TestRefuseExternal(t *testing.T) {
 	_, err := crawler.Crawl("http://example.com/", crawler.Config{})
 	if err == nil {

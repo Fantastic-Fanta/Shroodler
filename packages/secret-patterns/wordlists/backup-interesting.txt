@@ -1,0 +1,7 @@
+# Last path-segment (or filename stem) that qualifies a crawled page for
+# backup-suffix mutation. Wordlist hits are always mutated as well.
+login
+settings
+admin
+config
+backup

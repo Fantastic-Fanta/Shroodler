@@ -108,6 +108,49 @@ func TestHeadersCookiesSecretsJS(t *testing.T) {
 	_ = Redact("supersecretvalue")
 }
 
+func TestBackupSuffixesAreDataFiles(t *testing.T) {
+	suffixes := LoadBackupSuffixes()
+	if len(suffixes) == 0 {
+		t.Skip("wordlists not found from cwd")
+	}
+	want := []string{".bak", ".old", ".orig", "~", ".swp", ".copy"}
+	if len(suffixes) != len(want) {
+		t.Fatalf("suffixes %v", suffixes)
+	}
+	for i, s := range want {
+		if suffixes[i] != s {
+			t.Fatalf("suffixes %v", suffixes)
+		}
+	}
+	paths := LoadCommonPaths()
+	have := map[string]bool{}
+	for _, p := range paths {
+		have[p] = true
+	}
+	if have["/.bak"] || have["/~"] || have[".bak"] {
+		t.Fatalf("suffix wordlist leaked into common paths: %v", paths)
+	}
+	interesting := LoadBackupInteresting()
+	if len(interesting) == 0 {
+		t.Fatal("interesting names empty")
+	}
+	mutated := MutationPaths([]string{"/", "/login", "/settings", "/about", "/backup.sql.bak", "/static/app.js"})
+	has := map[string]bool{}
+	for _, p := range mutated {
+		has[p] = true
+	}
+	for _, wantPath := range []string{"/login.bak", "/login.old", "/login~", "/settings.bak", "/backup.sql.bak.bak"} {
+		if !has[wantPath] {
+			t.Fatalf("missing mutation %s in %v", wantPath, mutated)
+		}
+	}
+	for _, no := range []string{"/about.bak", "/static/app.js.bak", "/.bak"} {
+		if has[no] {
+			t.Fatalf("unexpected mutation %s", no)
+		}
+	}
+}
+
 func TestVerboseAndHoneypotStyle(t *testing.T) {
 	fs := ExtractVerbose("Traceback (most recent call last)\nboom", "http://127.0.0.1/e", 500)
 	if len(fs) == 0 {

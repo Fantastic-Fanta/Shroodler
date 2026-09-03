@@ -9,6 +9,7 @@ import (
 
 	"github.com/shroodler/proxy-go/internal/autoresponder"
 	"github.com/shroodler/proxy-go/internal/ca"
+	"github.com/shroodler/proxy-go/internal/har"
 	"github.com/shroodler/proxy-go/internal/proxy"
 )
 
@@ -28,6 +29,8 @@ func run(args []string) int {
 		return cmdStart(args[1:])
 	case "replay":
 		return cmdReplay(args[1:])
+	case "har":
+		return cmdHAR(args[1:])
 	default:
 		usage()
 		return 2
@@ -38,6 +41,8 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "shroodler-proxy start [--port 8888] [--control-port 8890] [--record out.sessions.jsonl] [--rules rules.yaml]")
 	fmt.Fprintln(os.Stderr, "shroodler-proxy ca generate|export [--output path]|uninstall [--yes]")
 	fmt.Fprintln(os.Stderr, "shroodler-proxy replay <session.json> [--output out.json]")
+	fmt.Fprintln(os.Stderr, "shroodler-proxy har export <sessions.jsonl> --output out.har")
+	fmt.Fprintln(os.Stderr, "shroodler-proxy har import <in.har> --output sessions.jsonl")
 }
 
 func store() *ca.Store { return ca.NewStore("") }
@@ -164,4 +169,57 @@ func cmdReplay(args []string) int {
 		_ = os.WriteFile(out, b, 0o644)
 	}
 	return 0
+}
+
+func cmdHAR(args []string) int {
+	if len(args) < 1 {
+		usage()
+		return 2
+	}
+	switch args[0] {
+	case "export", "import":
+		in, out, err := parseInOut(args[1:])
+		if err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
+		}
+		var run error
+		if args[0] == "export" {
+			run = har.ExportFile(in, out)
+		} else {
+			run = har.ImportFile(in, out)
+		}
+		if run != nil {
+			fmt.Fprintln(os.Stderr, run)
+			return 1
+		}
+		fmt.Println(args[0]+"ed", out)
+		return 0
+	default:
+		usage()
+		return 2
+	}
+}
+
+func parseInOut(args []string) (in, out string, err error) {
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--output" {
+			if i+1 >= len(args) {
+				return "", "", fmt.Errorf("--output requires a path")
+			}
+			out = args[i+1]
+			i++
+			continue
+		}
+		if strings.HasPrefix(args[i], "-") {
+			return "", "", fmt.Errorf("unknown flag %s", args[i])
+		}
+		if in == "" {
+			in = args[i]
+		}
+	}
+	if in == "" || out == "" {
+		return "", "", fmt.Errorf("usage: shroodler-proxy har export|import <input> --output <path>")
+	}
+	return in, out, nil
 }

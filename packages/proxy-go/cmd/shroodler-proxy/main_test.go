@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -69,5 +70,48 @@ func TestUsageAndUnknown(t *testing.T) {
 	}
 	if run([]string{"nope"}) != 2 {
 		t.Fatal("unknown")
+	}
+	if cmdHAR(nil) != 2 {
+		t.Fatal()
+	}
+	if cmdHAR([]string{"nope"}) != 2 {
+		t.Fatal()
+	}
+}
+
+func TestCmdHARRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	jsonl := filepath.Join(dir, "sessions.jsonl")
+	harPath := filepath.Join(dir, "out.har")
+	back := filepath.Join(dir, "back.jsonl")
+	line := `{"id":"abc","started_at":"2026-09-01T12:00:00Z","request":{"method":"GET","url":"http://127.0.0.1:8081/api","http_version":"HTTP/1.1","headers":{},"body":{"encoding":"utf8","content":""}},"response":{"status_code":201,"headers":{"Content-Type":"text/plain"},"body":{"encoding":"utf8","content":"created"}}}` + "\n"
+	if err := os.WriteFile(jsonl, []byte(line), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if cmdHAR([]string{"export", jsonl, "--output", harPath}) != 0 {
+		t.Fatal("export")
+	}
+	if cmdHAR([]string{"import", harPath, "--output", back}) != 0 {
+		t.Fatal("import")
+	}
+	if cmdHAR([]string{"export"}) != 2 {
+		t.Fatal("missing paths")
+	}
+	if cmdHAR([]string{"export", jsonl, "--output"}) != 2 {
+		t.Fatal("missing output path")
+	}
+	b, err := os.ReadFile(back)
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := string(b)
+	if !strings.Contains(s, `"method":"GET"`) && !strings.Contains(s, `"method": "GET"`) {
+		t.Fatalf("method missing: %s", s)
+	}
+	if !strings.Contains(s, "http://127.0.0.1:8081/api") {
+		t.Fatalf("url missing: %s", s)
+	}
+	if !strings.Contains(s, `"status_code":201`) && !strings.Contains(s, `"status_code": 201`) {
+		t.Fatalf("status missing: %s", s)
 	}
 }

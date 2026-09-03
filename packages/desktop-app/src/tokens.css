@@ -47,10 +47,10 @@
   --space-lg: 1.5rem;
   --space-xl: 2.5rem;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-md: 0.875rem;
-  --text-lg: 0.9375rem;
+  --text-xs: 0.875rem;
+  --text-sm: 0.9375rem;
+  --text-md: 1rem;
+  --text-lg: 1.0625rem;
 
   --chrome-tab: 2.25rem;
   --chrome-cmd: 3rem;

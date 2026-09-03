@@ -21,6 +21,96 @@ def test_csp_strict_weak_absent():
     assert any(x.id == "missing-csp" for x in f_abs)
 
 
+def test_csp_wildcard_script():
+    _, pos = extract_headers(
+        {"Content-Security-Policy": "script-src *", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert any(x.id == "csp-wildcard-script" for x in pos)
+
+    _, via_default = extract_headers(
+        {"Content-Security-Policy": "default-src *", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert any(x.id == "csp-wildcard-script" for x in via_default)
+
+    _, https_scheme = extract_headers(
+        {"Content-Security-Policy": "script-src https:", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert any(x.id == "csp-wildcard-script" for x in https_scheme)
+
+    _, both = extract_headers(
+        {"Content-Security-Policy": "script-src * 'unsafe-inline'", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert {x.id for x in both} >= {"csp-wildcard-script", "weak-csp"}
+
+    _, overridden = extract_headers(
+        {"Content-Security-Policy": "default-src *; script-src 'self'", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert all(x.id != "csp-wildcard-script" for x in overridden)
+
+    _, host = extract_headers(
+        {"Content-Security-Policy": "script-src *.example.com", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert all(x.id != "csp-wildcard-script" for x in host)
+
+    _, strict = extract_headers(
+        {"Content-Security-Policy": "script-src 'self'", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert all(x.id != "csp-wildcard-script" for x in strict)
+
+
+def test_csp_missing_frame_ancestors():
+    _, pos = extract_headers(
+        {"Content-Security-Policy": "default-src 'self'"},
+        "https://127.0.0.1/",
+    )
+    assert any(x.id == "csp-missing-frame-ancestors" for x in pos)
+
+    _, fa = extract_headers(
+        {"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'"},
+        "https://127.0.0.1/",
+    )
+    assert all(x.id != "csp-missing-frame-ancestors" for x in fa)
+
+    _, xfo = extract_headers(
+        {"Content-Security-Policy": "default-src 'self'", "X-Frame-Options": "DENY"},
+        "https://127.0.0.1/",
+    )
+    assert all(x.id != "csp-missing-frame-ancestors" for x in xfo)
+
+    _, absent = extract_headers({}, "https://127.0.0.1/")
+    assert all(x.id != "csp-missing-frame-ancestors" for x in absent)
+    assert any(x.id == "missing-x-frame-options" for x in absent)
+
+
+def test_csp_report_only():
+    _, pos = extract_headers(
+        {"Content-Security-Policy-Report-Only": "default-src 'self'"},
+        "https://127.0.0.1/",
+    )
+    assert any(x.id == "csp-report-only" for x in pos)
+    assert any(x.id == "missing-csp" for x in pos)
+
+    _, both = extract_headers(
+        {
+            "Content-Security-Policy": "default-src 'self'",
+            "Content-Security-Policy-Report-Only": "default-src 'none'",
+            "X-Frame-Options": "DENY",
+        },
+        "https://127.0.0.1/",
+    )
+    assert all(x.id != "csp-report-only" for x in both)
+
+    _, none = extract_headers({"X-Frame-Options": "DENY"}, "https://127.0.0.1/")
+    assert all(x.id != "csp-report-only" for x in none)
+
+
 def test_x_frame_options_states():
     _, f_deny = extract_headers({"X-Frame-Options": "DENY"}, "https://127.0.0.1/")
     assert all(x.id != "missing-x-frame-options" for x in f_deny)

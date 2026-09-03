@@ -47,6 +47,7 @@ fn scans_dir() -> PathBuf {
 fn find_bin(kind: &str) -> PathBuf {
     let env_key = match kind {
         "go" => "SHROODLER_GO_BIN",
+        "py" => "SHROODLER_PY_BIN",
         _ => "SHROODLER_PROXY_BIN",
     };
     if let Ok(p) = std::env::var(env_key) {
@@ -58,11 +59,103 @@ fn find_bin(kind: &str) -> PathBuf {
     if kind == "go" {
         p.push("crawler-go");
         p.push("shroodler-go");
+    } else if kind == "py" {
+        p.pop();
+        p.push(".venv");
+        p.push("bin");
+        p.push("python");
     } else {
         p.push("proxy-go");
         p.push("shroodler-proxy");
     }
     p
+}
+
+fn is_python_bin(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|s| s.to_str())
+        .map(|n| n.starts_with("python"))
+        .unwrap_or(false)
+}
+
+/// Program + argv prefix before `crawl ...`.
+/// Headless prefers repo Python (Playwright Chromium from `make bootstrap`);
+/// otherwise Go chromedp against system Chrome. Neither CPython nor Chrome is bundled.
+fn crawl_sidecar(mode: &str) -> Result<(PathBuf, Vec<String>), String> {
+    if mode == "headless" {
+        let py = find_bin("py");
+        if py.exists() {
+            let prefix = if is_python_bin(&py) {
+                vec!["-m".into(), "shroodler".into()]
+            } else {
+                vec![]
+            };
+            return Ok((py, prefix));
+        }
+    }
+    let go = find_bin("go");
+    if !go.exists() {
+        if mode == "headless" {
+            return Err(format!(
+                "headless sidecar missing (no {} and no {})",
+                find_bin("py").display(),
+                go.display()
+            ));
+        }
+        return Err(format!("sidecar missing: {}", go.display()));
+    }
+    Ok((go, vec![]))
+}
+
+fn crawl_args(
+    prefix: &[String],
+    target: &str,
+    mode: &str,
+    depth: u32,
+    output: &str,
+    cookie_jar: Option<&str>,
+    login_recipe: Option<&str>,
+    via_proxy: bool,
+    cookie: Option<&str>,
+    seeds: &[String],
+) -> Vec<String> {
+    let mut args = prefix.to_vec();
+    args.push("crawl".into());
+    args.push(target.into());
+    args.push("--mode".into());
+    args.push(mode.into());
+    args.push("--depth".into());
+    args.push(depth.to_string());
+    args.push("--output".into());
+    args.push(output.into());
+    if let Some(j) = cookie_jar.filter(|s| !s.is_empty()) {
+        args.push("--cookie-jar".into());
+        args.push(j.into());
+    }
+    if let Some(r) = login_recipe.filter(|s| !s.is_empty()) {
+        args.push("--login-recipe".into());
+        args.push(r.into());
+    }
+    if via_proxy {
+        args.push("--proxy".into());
+        args.push("http://127.0.0.1:8888".into());
+    }
+    if let Some(c) = cookie.filter(|s| !s.is_empty()) {
+        for part in c.split(';') {
+            let part = part.trim();
+            if !part.is_empty() {
+                args.push("--cookie".into());
+                args.push(part.into());
+            }
+        }
+    }
+    for s in seeds {
+        if !s.is_empty() {
+            args.push("--seed".into());
+            args.push(s.clone());
+        }
+    }
+    args
 }
 
 fn slug(target: &str) -> String {
@@ -89,42 +182,43 @@ fn start_scan(
     target: String,
     mode: String,
     depth: u32,
+    cookie_jar: Option<String>,
+    login_recipe: Option<String>,
+    via_proxy: Option<bool>,
+    cookie: Option<String>,
+    seeds: Option<Vec<String>>,
 ) -> Result<String, String> {
-    if mode == "headless" {
-        let id = format!("{}-{}", now_secs(), slug(&target));
-        let _ = app.emit(
-            "scan:error",
-            serde_json::json!({
-                "scan_id": id,
-                "message": "headless mode is Python-only; the desktop sidecar is shroodler-go (static)"
-            }),
-        );
-        return Err("headless mode is Python-only".into());
+    if mode != "static" && mode != "headless" {
+        return Err("mode must be static or headless".into());
     }
-    let dir = scans_dir();
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    let id = format!("{}-{}", now_secs(), slug(&target));
-    let out = dir.join(format!("{id}.json"));
-    let bin = find_bin("go");
-    if !bin.exists() {
-        let msg = format!("sidecar missing: {}", bin.display());
+    let sidecar = crawl_sidecar(&mode);
+    if let Err(msg) = &sidecar {
+        let id = format!("{}-{}", now_secs(), slug(&target));
         let _ = app.emit(
             "scan:error",
             serde_json::json!({"scan_id": id, "message": msg}),
         );
-        return Err(msg);
+        return Err(msg.clone());
     }
+    let (bin, prefix) = sidecar.unwrap();
+    let dir = scans_dir();
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let id = format!("{}-{}", now_secs(), slug(&target));
+    let out = dir.join(format!("{id}.json"));
+    let args = crawl_args(
+        &prefix,
+        &target,
+        &mode,
+        depth,
+        out.to_str().unwrap(),
+        cookie_jar.as_deref(),
+        login_recipe.as_deref(),
+        via_proxy.unwrap_or(false),
+        cookie.as_deref(),
+        seeds.as_deref().unwrap_or(&[]),
+    );
     let mut child = Command::new(&bin)
-        .args([
-            "crawl",
-            &target,
-            "--mode",
-            "static",
-            "--depth",
-            &depth.to_string(),
-            "--output",
-            out.to_str().unwrap(),
-        ])
+        .args(&args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -251,6 +345,56 @@ fn diff_scans(base_id: String, compare_id: String) -> Result<serde_json::Value, 
 }
 
 #[tauri::command]
+fn ingest_sessions(
+    app: AppHandle,
+    sessions: Vec<serde_json::Value>,
+    target: String,
+) -> Result<String, String> {
+    if sessions.is_empty() {
+        return Err("no sessions to ingest".into());
+    }
+    let dir = scans_dir();
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let id = format!("{}-{}", now_secs(), slug(&target));
+    let jsonl = dir.join(format!("{id}.sessions.jsonl"));
+    let out = dir.join(format!("{id}.json"));
+    let mut body = String::new();
+    for s in &sessions {
+        body.push_str(&serde_json::to_string(s).map_err(|e| e.to_string())?);
+        body.push('\n');
+    }
+    fs::write(&jsonl, body).map_err(|e| e.to_string())?;
+    let bin = find_bin("go");
+    if !bin.exists() {
+        return Err(format!("sidecar missing: {}", bin.display()));
+    }
+    let output = Command::new(&bin)
+        .args([
+            "ingest-sessions",
+            jsonl.to_str().unwrap(),
+            "--target",
+            &target,
+            "--output",
+            out.to_str().unwrap(),
+        ])
+        .output()
+        .map_err(|e| e.to_string())?;
+    if !output.status.success() {
+        let msg = String::from_utf8_lossy(&output.stderr).to_string();
+        let _ = app.emit(
+            "scan:error",
+            serde_json::json!({"scan_id": id, "message": msg}),
+        );
+        return Err(msg);
+    }
+    let _ = app.emit(
+        "scan:complete",
+        serde_json::json!({"scan_id": id, "output_path": out.display().to_string()}),
+    );
+    Ok(id)
+}
+
+#[tauri::command]
 fn start_proxy(state: State<AppState>) -> Result<serde_json::Value, String> {
     let mut slot = state.proxy.lock().unwrap();
     if let Some(child) = slot.as_mut() {
@@ -365,6 +509,7 @@ pub fn run() {
             list_scans,
             load_scan,
             diff_scans,
+            ingest_sessions,
             start_proxy,
             stop_proxy,
             install_ca,
@@ -377,7 +522,8 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::parse_progress;
+    use super::{crawl_args, crawl_sidecar, is_python_bin, parse_progress};
+    use std::path::Path;
 
     #[test]
     fn progress_line() {
@@ -389,5 +535,46 @@ mod tests {
     #[test]
     fn progress_rejects_noise() {
         assert!(parse_progress("{").is_none());
+    }
+
+    #[test]
+    fn python_bin_name() {
+        assert!(is_python_bin(Path::new("/opt/venv/bin/python3")));
+        assert!(!is_python_bin(Path::new("/opt/shroodler")));
+    }
+
+    #[test]
+    fn crawl_args_include_auth_files() {
+        let args = crawl_args(
+            &["-m".into(), "shroodler".into()],
+            "http://127.0.0.1:8081",
+            "headless",
+            3,
+            "/tmp/out.json",
+            Some("/tmp/jar.json"),
+            Some("/tmp/login.json"),
+            true,
+            Some("sid=abc"),
+            &["http://127.0.0.1:8081/hidden".into()],
+        );
+        assert_eq!(args[0], "-m");
+        assert!(args.contains(&"--mode".into()) && args.contains(&"headless".into()));
+        assert!(args.contains(&"--cookie-jar".into()));
+        assert!(args.contains(&"--login-recipe".into()));
+        assert!(args.contains(&"--proxy".into()));
+        assert!(args.contains(&"--cookie".into()));
+        assert!(args.contains(&"--seed".into()));
+    }
+
+    #[test]
+    fn headless_sidecar_is_python_or_go() {
+        let (bin, prefix) = crawl_sidecar("headless").expect("a headless sidecar");
+        let name = bin.file_name().unwrap().to_string_lossy();
+        if name.starts_with("python") {
+            assert_eq!(prefix, vec!["-m".to_string(), "shroodler".to_string()]);
+        } else {
+            assert!(prefix.is_empty());
+            assert!(name.contains("shroodler"));
+        }
     }
 }

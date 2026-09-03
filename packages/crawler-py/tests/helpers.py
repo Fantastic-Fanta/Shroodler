@@ -23,6 +23,7 @@ class FixtureServer:
         self._routes: dict[str, Callable[[str], Response]] = {}
         self._prefixes: list[tuple[str, Callable[[str], Response]]] = []
         self._on: dict[tuple[str, str], Callable[[Incoming], Response]] = {}
+        self.calls: list[tuple[str, str]] = []
         server = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -40,19 +41,35 @@ class FixtureServer:
                     cookies=self.headers.get("Cookie", ""),
                 )
 
+            def _send(self, status: int, headers: dict[str, str], body: bytes) -> None:
+                self.send_response(status)
+                for k, v in headers.items():
+                    self.send_header(k, v)
+                self.end_headers()
+                if body:
+                    self.wfile.write(body)
+
             def _dispatch(self, method: str, body: bytes = b"") -> None:
                 parsed = urlparse(self.path)
                 path = parsed.path
+                server.calls.append((method, path))
                 on_handler = server._on.get((method, path))
                 if on_handler is not None:
                     status, headers, payload = on_handler(self._incoming(method, body))
                     self._send(status, headers, payload)
                     return
-                if method != "GET":
-                    self._send(405, {"Content-Type": "text/plain"}, b"method not allowed")
-                    return
+                if method == "OPTIONS":
+                    get_on = server._on.get(("GET", path))
+                    if get_on is not None:
+                        status, headers, payload = get_on(self._incoming(method, body))
+                        self._send(status, headers, payload)
+                        return
+                if method not in {"GET", "OPTIONS"}:
+                    if method != "POST":
+                        self._send(405, {"Content-Type": "text/plain"}, b"method not allowed")
+                        return
                 handler = server._routes.get(path)
-                if handler is None:
+                if handler is None and method in {"GET", "OPTIONS"}:
                     for prefix, h in server._prefixes:
                         if path.startswith(prefix):
                             handler = h
@@ -63,14 +80,6 @@ class FixtureServer:
                 status, headers, payload = handler(self.path)
                 self._send(status, headers, payload)
 
-            def _send(self, status: int, headers: dict[str, str], body: bytes) -> None:
-                self.send_response(status)
-                for k, v in headers.items():
-                    self.send_header(k, v)
-                self.end_headers()
-                if body:
-                    self.wfile.write(body)
-
             def do_GET(self) -> None:
                 self._dispatch("GET")
 
@@ -78,6 +87,9 @@ class FixtureServer:
                 length = int(self.headers.get("Content-Length") or 0)
                 body = self.rfile.read(length) if length else b""
                 self._dispatch("POST", body)
+
+            def do_OPTIONS(self) -> None:
+                self._dispatch("OPTIONS")
 
         self._httpd = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
         self._thread = Thread(target=self._httpd.serve_forever, daemon=True)

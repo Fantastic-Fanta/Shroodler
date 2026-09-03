@@ -58,9 +58,14 @@ class StaticFetcher:
         self.client.close()
 
     def fetch(self, url: str) -> FetchResult:
+        return self.request("GET", url)
+
+    def request(
+        self, method: str, url: str, extra_headers: dict[str, str] | None = None
+    ) -> FetchResult:
         self.requests += 1
         try:
-            resp = self.client.get(url)
+            resp = self.client.request(method, url, headers=extra_headers or {})
         except httpx.RequestError as exc:
             return FetchResult(
                 url=url,

@@ -198,6 +198,11 @@
           "type": "number",
           "minimum": 0,
           "description": "Wall time from crawl start to finish in milliseconds"
+        },
+        "stopped_reason": {
+          "type": "string",
+          "enum": ["complete", "max-pages", "max-time"],
+          "description": "Why the crawl stopped enqueueing more work"
         }
       }
     }

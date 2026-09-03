@@ -15,6 +15,7 @@ Category = Literal[
     "autocomplete",
 ]
 Mode = Literal["static", "headless", "ingest"]
+StoppedReason = Literal["complete", "max-pages", "max-time"]
 
 
 class CrawlerInfo(BaseModel):
@@ -80,6 +81,7 @@ class CrawlStats(BaseModel):
     pages_crawled: int = 0
     requests: int = 0
     elapsed_ms: int = 0
+    stopped_reason: StoppedReason = "complete"
 
 
 class CrawlResult(BaseModel):

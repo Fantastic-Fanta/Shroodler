@@ -56,6 +56,65 @@ func TestCmdCrawlAndDiff(t *testing.T) {
 	}
 }
 
+func TestCmdCrawlMaxPages(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/a">a</a><a href="/b">b</a>`))
+	})
+	mux.HandleFunc("/a", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("a")) })
+	mux.HandleFunc("/b", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("b")) })
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	dir := t.TempDir()
+	out := filepath.Join(dir, "o.json")
+	if cmdCrawl([]string{srv.URL + "/", "--depth", "5", "--max-pages", "1", "--ignore-robots", "--output", out}) != 0 {
+		t.Fatal("crawl")
+	}
+	b, err := os.ReadFile(out)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(b, &doc); err != nil {
+		t.Fatal(err)
+	}
+	pages, _ := doc["pages"].([]any)
+	if len(pages) != 1 {
+		t.Fatalf("pages=%d", len(pages))
+	}
+	stats, _ := doc["stats"].(map[string]any)
+	if stats["stopped_reason"] != "max-pages" {
+		t.Fatalf("stats %#v", stats)
+	}
+}
+
+func TestLoadRCMaxBudget(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, ".shroodlerrc"), []byte("max_pages: 7\nmax_time: 1.5\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(wd)
+	rc := loadRC()
+	if rc.MaxPages == nil || *rc.MaxPages != 7 {
+		t.Fatalf("max_pages %#v", rc.MaxPages)
+	}
+	if rc.MaxTime == nil || *rc.MaxTime != 1.5 {
+		t.Fatalf("max_time %#v", rc.MaxTime)
+	}
+}
+
 func TestCmdCrawlHeaderAndCookie(t *testing.T) {
 	var gotHeader, gotCookie string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

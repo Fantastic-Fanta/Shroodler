@@ -79,6 +79,7 @@ class Crawler:
         ignore_robots: bool = False,
         allow_external: bool = False,
         max_pages: int = 400,
+        max_time: float | None = None,
         max_redirects: int = 10,
         rate_limit_retries: int = 3,
         user_agent: str = DEFAULT_UA,
@@ -98,7 +99,8 @@ class Crawler:
         self.depth = depth
         self.ignore_robots = ignore_robots
         self.allow_external = allow_external
-        self.max_pages = max_pages
+        self.max_pages = 400 if max_pages <= 0 else max_pages
+        self.max_time = max_time if max_time and max_time > 0 else None
         self.max_redirects = max_redirects
         self.rate_limit_retries = rate_limit_retries
         self.user_agent = user_agent
@@ -129,6 +131,7 @@ class Crawler:
     def crawl(self, start_url: str) -> CrawlResult:
         started = _now()
         t0 = monotonic()
+        stopped = "complete"
         if not self.allow_external and not is_loopback_or_local(start_url):
             raise ValueError(
                 "refusing to crawl non-local host; pass --allow-external for listed public fixtures"
@@ -160,7 +163,11 @@ class Crawler:
         family_counts: dict[str, int] = defaultdict(int)
         redirect_hits: dict[str, int] = defaultdict(int)
 
-        while queue and len(pages) < self.max_pages:
+        while queue:
+            hit = self._budget_hit(t0, len(pages))
+            if hit:
+                stopped = hit
+                break
             url, depth = queue.popleft()
             key = canonical_key(url)
             if key in seen:
@@ -171,12 +178,16 @@ class Crawler:
                 continue
             if is_pagination_trap(url, family_counts):
                 continue
+            hit = self._budget_hit(t0, len(pages))
+            if hit:
+                stopped = hit
+                break
             seen.add(key)
             fam = pagination_family(url)
             if fam:
                 family_counts[fam] += 1
 
-            result = self._fetch_with_retries(url)
+            result = self._fetch_with_retries(url, t0)
             page, page_findings, page_eps = self._page_from_result(result)
             pages.append(page)
             findings.extend(page_findings)
@@ -218,7 +229,13 @@ class Crawler:
                     continue
                 queue.append((link, depth + 1))
 
-        extra_pages, extra_findings = probe_paths(origin_url, self.http, seen)
+        extra_pages, extra_findings = probe_paths(
+            origin_url,
+            self.http,
+            seen,
+            remaining=self.max_pages - len(pages),
+            deadline=(t0 + self.max_time) if self.max_time is not None else None,
+        )
         pages.extend(extra_pages)
         findings.extend(extra_findings)
         discovered = [urlparse(p.url).path for p in pages]
@@ -226,6 +243,11 @@ class Crawler:
         pages.extend(mut_pages)
         findings.extend(mut_findings)
         findings.extend(probe_cors(origin_url, self.http, cors_candidates))
+
+        if stopped == "complete":
+            later = self._budget_hit(t0, len(pages))
+            if later:
+                stopped = later
 
         finished = _now()
         requests = getattr(self.http, "requests", 0)
@@ -243,6 +265,7 @@ class Crawler:
                 pages_crawled=len(pages),
                 requests=requests,
                 elapsed_ms=int((monotonic() - t0) * 1000),
+                stopped_reason=stopped,
             ),
         )
 
@@ -311,11 +334,20 @@ class Crawler:
                 return
         run_login_httpx(self.http.client, recipe)
 
-    def _fetch_with_retries(self, url: str) -> FetchResult:
+    def _budget_hit(self, t0: float, n_pages: int) -> str | None:
+        if self.max_time is not None and (monotonic() - t0) >= self.max_time:
+            return "max-time"
+        if n_pages >= self.max_pages:
+            return "max-pages"
+        return None
+
+    def _fetch_with_retries(self, url: str, t0: float | None = None) -> FetchResult:
         delay = 0.2
         last = self.fetcher.fetch(url)
         for _ in range(self.rate_limit_retries):
             if last.status_code != 429:
+                return last
+            if t0 is not None and self._budget_hit(t0, 0) == "max-time":
                 return last
             retry_after = last.headers.get("Retry-After") or last.headers.get("retry-after")
             wait = delay
@@ -324,6 +356,11 @@ class Crawler:
                     wait = min(float(retry_after), 5.0)
                 except ValueError:
                     wait = delay
+            if t0 is not None and self.max_time is not None:
+                remaining = self.max_time - (monotonic() - t0)
+                if remaining <= 0:
+                    return last
+                wait = min(wait, remaining)
             sleep(wait)
             delay = min(delay * 2, 2.0)
             last = self.fetcher.fetch(url)

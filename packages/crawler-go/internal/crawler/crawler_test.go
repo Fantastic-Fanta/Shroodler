@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/shroodler/crawler-go/internal/crawler"
 	"github.com/shroodler/crawler-go/internal/models"
@@ -250,6 +251,148 @@ func TestRefuseExternal(t *testing.T) {
 	}
 	if err.Error() == "" {
 		t.Fatal("empty error")
+	}
+}
+
+
+func liveOK(url string) bool {
+	c := http.Client{Timeout: time.Second}
+	resp, err := c.Get(url)
+	if err != nil {
+		return false
+	}
+	resp.Body.Close()
+	return resp.StatusCode == 200
+}
+
+func TestMaxPagesBounds(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
+	})
+	mux.HandleFunc("/a", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("a")) })
+	mux.HandleFunc("/b", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("b")) })
+	mux.HandleFunc("/c", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("c")) })
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	one, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 5, IgnoreRobots: true, MaxPages: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(one.Pages) != 1 {
+		t.Fatalf("max-pages 1: got %d", len(one.Pages))
+	}
+	if one.Stats == nil || one.Stats.StoppedReason != "max-pages" {
+		t.Fatalf("stats %#v", one.Stats)
+	}
+	two, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 5, IgnoreRobots: true, MaxPages: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(two.Pages) != 2 {
+		t.Fatalf("max-pages 2: got %d", len(two.Pages))
+	}
+}
+
+func TestMaxPagesDoesNotOverrideDepth(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/a">a</a>`))
+	})
+	mux.HandleFunc("/a", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/b">b</a>`))
+	})
+	mux.HandleFunc("/b", func(w http.ResponseWriter, r *http.Request) { w.Write([]byte("b")) })
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, MaxPages: 50})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Pages {
+		if urls.PathOf(p.URL) == "/a" {
+			t.Fatal("depth 0 should not follow /a")
+		}
+	}
+	if res.Stats == nil || res.Stats.StoppedReason != "complete" {
+		t.Fatalf("stats %#v", res.Stats)
+	}
+}
+
+func TestMaxTimeStops(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(250 * time.Millisecond)
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/q/1">1</a>`))
+	})
+	mux.HandleFunc("/q/", func(w http.ResponseWriter, r *http.Request) {
+		time.Sleep(250 * time.Millisecond)
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/q/` + next(strings.TrimPrefix(r.URL.Path, "/q/")) + `">n</a>`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	start := time.Now()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: -1, IgnoreRobots: true, MaxPages: 400, MaxTime: 400 * time.Millisecond})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if elapsed > 3*time.Second {
+		t.Fatalf("max-time hung: %s", elapsed)
+	}
+	if res.Stats == nil || res.Stats.StoppedReason != "max-time" {
+		t.Fatalf("stats %#v", res.Stats)
+	}
+}
+
+func TestLiveApp1MaxPages(t *testing.T) {
+	if !liveOK("http://127.0.0.1:8081/") {
+		t.Skip("app1 not running")
+	}
+	one, err := crawler.Crawl("http://127.0.0.1:8081/", crawler.Config{Depth: 5, IgnoreRobots: true, MaxPages: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(one.Pages) != 1 {
+		t.Fatalf("max-pages 1: got %d", len(one.Pages))
+	}
+	two, err := crawler.Crawl("http://127.0.0.1:8081/", crawler.Config{Depth: 5, IgnoreRobots: true, MaxPages: 2})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(two.Pages) != 2 {
+		t.Fatalf("max-pages 2: got %d", len(two.Pages))
+	}
+}
+
+func TestLiveApp3MaxTime(t *testing.T) {
+	if !liveOK("http://127.0.0.1:8083/") {
+		t.Skip("app3 not running")
+	}
+	start := time.Now()
+	res, err := crawler.Crawl("http://127.0.0.1:8083/", crawler.Config{Depth: -1, IgnoreRobots: true, MaxPages: 400, MaxTime: 10 * time.Millisecond})
+	elapsed := time.Since(start)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if elapsed > 8*time.Second {
+		t.Fatalf("max-time hung against app3: %s", elapsed)
+	}
+	if res.Stats == nil || res.Stats.StoppedReason != "max-time" {
+		t.Fatalf("stats %#v pages=%d", res.Stats, len(res.Pages))
 	}
 }
 

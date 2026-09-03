@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
+from time import monotonic
 from urllib.parse import urlparse
 
 from shroodler.extractors.secrets import scan_text
@@ -157,10 +158,16 @@ def probe_paths(
     origin: str,
     fetcher: StaticFetcher,
     already: set[str],
+    remaining: int | None = None,
+    deadline: float | None = None,
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []
     for path in load_paths():
+        if remaining is not None and len(pages) >= remaining:
+            break
+        if deadline is not None and monotonic() >= deadline:
+            break
         url = origin.rstrip("/") + path
         key = canonical_key(url)
         if key in already:

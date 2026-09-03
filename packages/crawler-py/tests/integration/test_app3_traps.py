@@ -47,3 +47,15 @@ def test_app3_completes_bounded_and_matches():
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
     errors = diff_documents(result.to_dict(), expected, pages_only=False)
     assert errors == []
+
+
+def test_app3_max_time_completes_without_hang():
+    start = time.monotonic()
+    result = crawl_url(APP3, depth=None, max_pages=400, max_time=0.01)
+    elapsed = time.monotonic() - start
+    assert elapsed < 8
+    assert result.stats is not None
+    assert result.stats.stopped_reason == "max-time"
+    from shroodler.validate import validate_crawl
+
+    validate_crawl(result.to_dict())

@@ -1,0 +1,5 @@
+# Well-known and disclosure files. Absence is asserted via expected_not_found.
+/.well-known/security.txt
+/security.txt
+/humans.txt
+/crossdomain.xml

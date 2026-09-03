@@ -28,9 +28,14 @@ VALID_PASS = "admin"
 @app.after_request
 def add_headers(resp):
     path = request.path
-    if path != "/login":
+    if path == "/csp-wildcard":
+        resp.headers["Content-Security-Policy"] = "script-src *"
+    elif path == "/csp-report-only":
+        resp.headers["Content-Security-Policy-Report-Only"] = "default-src 'self'"
+    elif path != "/login":
         resp.headers["Content-Security-Policy"] = "default-src 'self'"
-    resp.headers["X-Frame-Options"] = "SAMEORIGIN"
+    if path != "/csp-wildcard":
+        resp.headers["X-Frame-Options"] = "SAMEORIGIN"
     if path not in ("/", "/about"):
         resp.headers["X-Content-Type-Options"] = "nosniff"
     resp.headers["Referrer-Policy"] = "no-referrer"
@@ -122,6 +127,16 @@ def settings():
 @app.route("/about")
 def about():
     return render_template("about.html")
+
+
+@app.route("/csp-wildcard")
+def csp_wildcard():
+    return "<html><body><h1>CSP wildcard</h1></body></html>"
+
+
+@app.route("/csp-report-only")
+def csp_report_only():
+    return "<html><body><h1>CSP report-only</h1></body></html>"
 
 
 @app.route("/error")

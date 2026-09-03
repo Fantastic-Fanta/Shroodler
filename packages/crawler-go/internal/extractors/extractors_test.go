@@ -108,6 +108,101 @@ func TestHeadersCookiesSecretsJS(t *testing.T) {
 	_ = Redact("supersecretvalue")
 }
 
+func TestCSPHeaderFindings(t *testing.T) {
+	_, wild := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "script-src *",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if !findingHas(wild, "csp-wildcard-script") {
+		t.Fatalf("wildcard script-src: %v", wild)
+	}
+	_, viaDefault := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "default-src *",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if !findingHas(viaDefault, "csp-wildcard-script") {
+		t.Fatalf("wildcard default-src: %v", viaDefault)
+	}
+	_, httpsScheme := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "script-src https:",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if !findingHas(httpsScheme, "csp-wildcard-script") {
+		t.Fatalf("https: scheme: %v", httpsScheme)
+	}
+	_, both := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "script-src * 'unsafe-inline'",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if !findingHas(both, "csp-wildcard-script") || !findingHas(both, "weak-csp") {
+		t.Fatalf("wildcard+unsafe: %v", both)
+	}
+	_, overridden := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "default-src *; script-src 'self'",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if findingHas(overridden, "csp-wildcard-script") {
+		t.Fatalf("script-src should override default-src *: %v", overridden)
+	}
+	_, host := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "script-src *.example.com",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if findingHas(host, "csp-wildcard-script") {
+		t.Fatalf("*.example.com is not a token *: %v", host)
+	}
+	_, strict := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "script-src 'self'",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if findingHas(strict, "csp-wildcard-script") {
+		t.Fatalf("strict script-src: %v", strict)
+	}
+
+	_, missingFA := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "default-src 'self'",
+	}, "https://127.0.0.1/")
+	if !findingHas(missingFA, "csp-missing-frame-ancestors") {
+		t.Fatalf("missing frame-ancestors: %v", missingFA)
+	}
+	_, withFA := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
+	}, "https://127.0.0.1/")
+	if findingHas(withFA, "csp-missing-frame-ancestors") {
+		t.Fatalf("frame-ancestors present: %v", withFA)
+	}
+	_, withXFO := ExtractHeaders(map[string]string{
+		"Content-Security-Policy": "default-src 'self'",
+		"X-Frame-Options":         "DENY",
+	}, "https://127.0.0.1/")
+	if findingHas(withXFO, "csp-missing-frame-ancestors") {
+		t.Fatalf("XFO present: %v", withXFO)
+	}
+	_, noCSP := ExtractHeaders(map[string]string{}, "https://127.0.0.1/")
+	if findingHas(noCSP, "csp-missing-frame-ancestors") {
+		t.Fatalf("no enforcing CSP should not emit csp-missing-frame-ancestors: %v", noCSP)
+	}
+
+	_, reportOnly := ExtractHeaders(map[string]string{
+		"Content-Security-Policy-Report-Only": "default-src 'self'",
+	}, "https://127.0.0.1/")
+	if !findingHas(reportOnly, "csp-report-only") || !findingHas(reportOnly, "missing-csp") {
+		t.Fatalf("report-only: %v", reportOnly)
+	}
+	_, enforcing := ExtractHeaders(map[string]string{
+		"Content-Security-Policy":             "default-src 'self'",
+		"Content-Security-Policy-Report-Only": "default-src 'none'",
+		"X-Frame-Options":                     "DENY",
+	}, "https://127.0.0.1/")
+	if findingHas(enforcing, "csp-report-only") {
+		t.Fatalf("enforcing CSP present: %v", enforcing)
+	}
+	_, none := ExtractHeaders(map[string]string{"X-Frame-Options": "DENY"}, "https://127.0.0.1/")
+	if findingHas(none, "csp-report-only") {
+		t.Fatalf("no report-only header: %v", none)
+	}
+}
+
 func TestBackupSuffixesAreDataFiles(t *testing.T) {
 	suffixes := LoadBackupSuffixes()
 	if len(suffixes) == 0 {

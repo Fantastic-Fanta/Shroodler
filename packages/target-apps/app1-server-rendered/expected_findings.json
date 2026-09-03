@@ -1,11 +1,15 @@
 {
   "target_app": "app1-server-rendered",
-  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only", "/login.bak"],
+  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only", "/login.bak", "/csp-wildcard", "/csp-report-only"],
   "expected_forms": {
     "/login": ["username", "password", "csrf_token"]
   },
   "expected_findings": [
     { "id": "missing-csp", "url": "/login" },
+    { "id": "missing-csp", "url": "/csp-report-only" },
+    { "id": "csp-report-only", "url": "/csp-report-only" },
+    { "id": "csp-wildcard-script", "url": "/csp-wildcard" },
+    { "id": "csp-missing-frame-ancestors", "url": "/csp-wildcard" },
     { "id": "insecure-cookie", "url": "/dashboard", "cookie": "session_id" },
     { "id": "cookie-path-broad", "url": "/dashboard" },
     { "id": "cookie-domain-broad", "url": "/dashboard" },
@@ -39,6 +43,11 @@
     { "id": "cookie-path-broad", "url": "/about" },
     { "id": "cookie-domain-broad", "url": "/about" },
     { "id": "cookie-missing-host-prefix", "url": "/dashboard" },
-    { "id": "cookie-missing-secure-prefix", "url": "/dashboard" }
+    { "id": "cookie-missing-secure-prefix", "url": "/dashboard" },
+    { "id": "csp-wildcard-script", "url": "/" },
+    { "id": "csp-wildcard-script", "url": "/login" },
+    { "id": "csp-report-only", "url": "/" },
+    { "id": "csp-missing-frame-ancestors", "url": "/" },
+    { "id": "csp-missing-frame-ancestors", "url": "/login" }
   ]
 }

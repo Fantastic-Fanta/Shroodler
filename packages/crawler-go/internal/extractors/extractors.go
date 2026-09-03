@@ -392,6 +392,49 @@ func ExtractForms(body, pageURL string) ([]models.Form, []models.Finding) {
 	return forms, findings
 }
 
+func parseCSP(policy string) map[string][]string {
+	out := map[string][]string{}
+	for _, raw := range strings.Split(policy, ";") {
+		raw = strings.TrimSpace(raw)
+		if raw == "" {
+			continue
+		}
+		parts := strings.Fields(raw)
+		if len(parts) == 0 {
+			continue
+		}
+		toks := make([]string, 0, len(parts)-1)
+		for _, p := range parts[1:] {
+			toks = append(toks, strings.ToLower(p))
+		}
+		out[strings.ToLower(parts[0])] = toks
+	}
+	return out
+}
+
+func cspScriptTokens(dirs map[string][]string) []string {
+	if t, ok := dirs["script-src"]; ok {
+		return t
+	}
+	return dirs["default-src"]
+}
+
+func cspHasScriptWildcard(tokens []string) bool {
+	for _, t := range tokens {
+		if t == "*" || t == "https:" {
+			return true
+		}
+	}
+	return false
+}
+
+func truncateHeader(s string, n int) string {
+	if len(s) > n {
+		return s[:n]
+	}
+	return s
+}
+
 func ExtractHeaders(h map[string]string, pageURL string) (models.HeaderAnalysis, []models.Finding) {
 	lower := map[string]string{}
 	for k, v := range h {
@@ -407,14 +450,29 @@ func ExtractHeaders(h map[string]string, pageURL string) (models.HeaderAnalysis,
 			missing = append(missing, name)
 		}
 	}
-	if _, ok := lower["content-security-policy"]; !ok {
+	csp, hasCSP := lower["content-security-policy"]
+	reportOnly, hasReportOnly := lower["content-security-policy-report-only"]
+	_, hasXFO := lower["x-frame-options"]
+	if !hasCSP {
 		findings = append(findings, models.Finding{ID: "missing-csp", Severity: "medium", Category: "header", URL: pageURL, Description: "Content-Security-Policy header not set"})
-	} else if csp := lower["content-security-policy"]; strings.Contains(strings.ToLower(csp), "unsafe-inline") || strings.Contains(strings.ToLower(csp), "unsafe-eval") {
-		ev := csp
-		if len(ev) > 120 {
-			ev = ev[:120]
+	} else {
+		low := strings.ToLower(csp)
+		if strings.Contains(low, "unsafe-inline") || strings.Contains(low, "unsafe-eval") {
+			ev := truncateHeader(csp, 120)
+			findings = append(findings, models.Finding{ID: "weak-csp", Severity: "low", Category: "header", URL: pageURL, Description: "Content-Security-Policy allows unsafe-inline or unsafe-eval", Evidence: &ev})
 		}
-		findings = append(findings, models.Finding{ID: "weak-csp", Severity: "low", Category: "header", URL: pageURL, Description: "Content-Security-Policy allows unsafe-inline or unsafe-eval", Evidence: &ev})
+		dirs := parseCSP(csp)
+		if cspHasScriptWildcard(cspScriptTokens(dirs)) {
+			ev := truncateHeader(csp, 120)
+			findings = append(findings, models.Finding{ID: "csp-wildcard-script", Severity: "medium", Category: "header", URL: pageURL, Description: "Content-Security-Policy script-src or default-src allows a host wildcard", Evidence: &ev})
+		}
+		if _, ok := dirs["frame-ancestors"]; !ok && !hasXFO {
+			findings = append(findings, models.Finding{ID: "csp-missing-frame-ancestors", Severity: "medium", Category: "header", URL: pageURL, Description: "Content-Security-Policy has no frame-ancestors and X-Frame-Options is not set"})
+		}
+	}
+	if hasReportOnly && !hasCSP {
+		ev := truncateHeader(reportOnly, 120)
+		findings = append(findings, models.Finding{ID: "csp-report-only", Severity: "info", Category: "header", URL: pageURL, Description: "Content-Security-Policy-Report-Only is set without an enforcing Content-Security-Policy", Evidence: &ev})
 	}
 	if _, ok := lower["x-frame-options"]; !ok {
 		findings = append(findings, models.Finding{ID: "missing-x-frame-options", Severity: "medium", Category: "header", URL: pageURL, Description: "X-Frame-Options header not set"})

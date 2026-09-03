@@ -32,6 +32,7 @@ from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.links import extract_css_urls, extract_links
+from shroodler.extractors.openapi import is_probe_url, probe_urls, urls_from_spec
 from shroodler.extractors.secrets import scan_text
 from shroodler.extractors.sourcemap import (
     decode_data_url,
@@ -155,6 +156,8 @@ class Crawler:
         for extra in self.extra_seeds:
             if same_origin(extra, origin_url):
                 queue.append((extra, 0))
+        for spec in probe_urls(seed):
+            queue.append((spec, 0))
         seen: set[str] = set()
         if not self.no_sitemap:
             self._enqueue_sitemap_seeds(seed, origin_url, robots_body, queue, seen)
@@ -190,6 +193,8 @@ class Crawler:
                 family_counts[fam] += 1
 
             result = self._fetch_with_retries(url, t0)
+            if result.status_code != 200 and is_probe_url(url):
+                continue
             page, page_findings, page_eps = self._page_from_result(result)
             pages.append(page)
             findings.extend(page_findings)
@@ -210,6 +215,14 @@ class Crawler:
                     loc_key = canonical_key(loc)
                     if loc_key not in seen and same_origin(loc, origin_url):
                         queue.append((loc, depth))
+
+            if result.status_code == 200:
+                for spec_url in urls_from_spec(origin_url, result.text):
+                    if canonical_key(spec_url) in seen:
+                        continue
+                    if is_pagination_trap(spec_url, family_counts):
+                        continue
+                    queue.append((spec_url, depth))
 
             if self.depth is not None and depth >= self.depth:
                 continue

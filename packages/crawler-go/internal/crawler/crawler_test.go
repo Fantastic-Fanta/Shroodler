@@ -346,6 +346,42 @@ func liveOK(url string) bool {
 	return resp.StatusCode == 200
 }
 
+func TestOpenAPIUnlinkedPathCrawled(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<h1>home</h1>`))
+	})
+	mux.HandleFunc("/openapi.json", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"openapi":"3.0.3","info":{"title":"d","version":"1"},"paths":{"/internal/inventory":{"get":{}}}}`))
+	})
+	mux.HandleFunc("/internal/inventory", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"items":["widget"]}`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := map[string]bool{}
+	for _, p := range res.Pages {
+		paths[urls.PathOf(p.URL)] = true
+	}
+	if !paths["/openapi.json"] || !paths["/internal/inventory"] {
+		t.Fatalf("missing openapi ingest in %v", paths)
+	}
+	if paths["/swagger.json"] {
+		t.Fatal("404 spec probe should not be recorded")
+	}
+}
+
 func TestGraphQLProbe(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

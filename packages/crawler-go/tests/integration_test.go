@@ -188,3 +188,24 @@ func TestApp3Bounded(t *testing.T) {
 		t.Fatal(len(res.Pages))
 	}
 }
+
+func TestApp4OpenAPI(t *testing.T) {
+	resp, err := http.Get("http://127.0.0.1:8084/")
+	if err != nil {
+		t.Skip("app4 not running")
+	}
+	resp.Body.Close()
+	res, err := crawler.Crawl("http://127.0.0.1:8084", crawler.Config{Depth: 5, MaxPages: 80})
+	if err != nil {
+		t.Fatal(err)
+	}
+	have := map[string]bool{}
+	for _, p := range res.Pages {
+		have[urls.PathOf(p.URL)] = true
+	}
+	for _, n := range []string{"/", "/openapi.json", "/internal/inventory"} {
+		if !have[n] {
+			t.Fatalf("missing %s in %v", n, have)
+		}
+	}
+}

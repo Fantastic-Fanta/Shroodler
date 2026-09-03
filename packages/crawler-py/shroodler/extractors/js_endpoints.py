@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 
-from shroodler.models import Finding, JsEndpoint
-from shroodler.urls import normalize_url
+from shroodler.models import Finding, JsEndpoint, Page
+from shroodler.urls import canonical_key, normalize_url, same_origin
 
 _FETCH_STR = re.compile(r"""fetch\(\s*['"]([^'"]+)['"]""")
 _FETCH_TPL = re.compile(r"fetch\(\s*`([^`$]+)`")
@@ -39,3 +39,36 @@ def extract_js_endpoints(source_url: str, js_text: str) -> tuple[list[JsEndpoint
     for m in _XHR.finditer(js_text):
         add(m.group(1))
     return endpoints, findings
+
+
+def ghost_route_findings(
+    origin: str, pages: list[Page], endpoints: list[JsEndpoint]
+) -> list[Finding]:
+    """Same-origin JS endpoints never recorded in pages[] — do not fetch them."""
+    visited = {canonical_key(p.url) for p in pages}
+    out: list[Finding] = []
+    seen: set[str] = set()
+    for ep in endpoints:
+        resolved = _resolve_endpoint(origin, ep.source, ep.endpoint)
+        if not resolved or not same_origin(resolved, origin):
+            continue
+        key = canonical_key(resolved)
+        if key in visited or key in seen:
+            continue
+        seen.add(key)
+        out.append(
+            Finding(
+                id="ghost-route",
+                severity="info",
+                category="js-endpoint",
+                url=resolved,
+                description="endpoint mentioned in JS but never crawled",
+                evidence=ep.source,
+            )
+        )
+    return out
+
+
+def _resolve_endpoint(origin: str, source: str, endpoint: str) -> str | None:
+    base = source if "://" in source else origin
+    return normalize_url(base, endpoint) or normalize_url(origin, endpoint)

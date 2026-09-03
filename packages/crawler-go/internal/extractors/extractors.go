@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/shroodler/crawler-go/internal/models"
+	"github.com/shroodler/crawler-go/internal/urls"
 	"golang.org/x/net/html"
 	"gopkg.in/yaml.v3"
 )
@@ -593,6 +594,49 @@ func ExtractJSEndpoints(source, js string) []models.JSEndpoint {
 		add(m[1])
 	}
 	return out
+}
+
+// GhostRouteFindings emits ghost-route for same-origin JS endpoints never recorded in pages.
+// Callers must not fetch those URLs just to suppress the finding.
+func GhostRouteFindings(origin string, pages []models.Page, endpoints []models.JSEndpoint) []models.Finding {
+	visited := map[string]bool{}
+	for _, p := range pages {
+		visited[urls.CanonicalKey(p.URL)] = true
+	}
+	seen := map[string]bool{}
+	var out []models.Finding
+	for _, ep := range endpoints {
+		resolved := resolveJSEndpoint(origin, ep.Source, ep.Endpoint)
+		if resolved == "" || !urls.SameOrigin(resolved, origin) {
+			continue
+		}
+		key := urls.CanonicalKey(resolved)
+		if visited[key] || seen[key] {
+			continue
+		}
+		seen[key] = true
+		src := ep.Source
+		out = append(out, models.Finding{
+			ID:          "ghost-route",
+			Severity:    "info",
+			Category:    "js-endpoint",
+			URL:         resolved,
+			Description: "endpoint mentioned in JS but never crawled",
+			Evidence:    &src,
+		})
+	}
+	return out
+}
+
+func resolveJSEndpoint(origin, source, endpoint string) string {
+	base := source
+	if !strings.Contains(source, "://") {
+		base = origin
+	}
+	if n := urls.Normalize(base, endpoint); n != "" {
+		return n
+	}
+	return urls.Normalize(origin, endpoint)
 }
 
 func ScriptSrcs(body string) []string {

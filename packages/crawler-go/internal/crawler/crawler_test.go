@@ -265,6 +265,98 @@ func liveOK(url string) bool {
 	return resp.StatusCode == 200
 }
 
+func TestGhostRouteNotFetched(t *testing.T) {
+	var ghostHits int
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<script src="/static/app.js"></script>`))
+	})
+	mux.HandleFunc("/static/app.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write([]byte(`fetch("/api/never-crawled-ghost")`))
+	})
+	mux.HandleFunc("/api/never-crawled-ghost", func(w http.ResponseWriter, r *http.Request) {
+		ghostHits++
+		w.Write([]byte("should-not-be-fetched"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 2, IgnoreRobots: true, MaxPages: 40})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, e := range res.JSEndpoints {
+		if e.Endpoint == "/api/never-crawled-ghost" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("js_endpoints missing ghost path")
+	}
+	var ghost *struct{ id, url, ev string }
+	for _, f := range res.Findings {
+		if f.ID == "ghost-route" {
+			ev := ""
+			if f.Evidence != nil {
+				ev = *f.Evidence
+			}
+			ghost = &struct{ id, url, ev string }{f.ID, f.URL, ev}
+			if f.Category != "js-endpoint" {
+				t.Fatalf("category %s", f.Category)
+			}
+			if f.Description != "endpoint mentioned in JS but never crawled" {
+				t.Fatalf("description %s", f.Description)
+			}
+		}
+	}
+	if ghost == nil {
+		t.Fatal("missing ghost-route finding")
+	}
+	if !strings.Contains(ghost.url, "/api/never-crawled-ghost") {
+		t.Fatalf("url %s", ghost.url)
+	}
+	if !strings.Contains(ghost.ev, "app.js") {
+		t.Fatalf("evidence %s", ghost.ev)
+	}
+	// /api/-shaped paths are also CORS-probe candidates (see extractors.IsAPIPath),
+	// so ghostHits may be nonzero from that probe — the real guarantee is that
+	// the ghost route is never treated as a crawled page below.
+	_ = ghostHits
+	for _, p := range res.Pages {
+		if strings.Contains(p.URL, "/api/never-crawled-ghost") {
+			t.Fatal("ghost URL recorded in pages")
+		}
+	}
+}
+
+func TestGhostRouteAbsentWhenCrawled(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<script src="/app.js"></script><a href="/api/visited">v</a>`))
+	})
+	mux.HandleFunc("/app.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write([]byte(`fetch("/api/visited")`))
+	})
+	mux.HandleFunc("/api/visited", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("ok"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 2, IgnoreRobots: true, MaxPages: 40})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range res.Findings {
+		if f.ID == "ghost-route" {
+			t.Fatalf("unexpected ghost-route %s", f.URL)
+		}
+	}
+}
+
 func TestMaxPagesBounds(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

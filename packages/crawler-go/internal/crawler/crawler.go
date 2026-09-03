@@ -295,6 +295,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}
 
 	findings = append(findings, probeCORS(client, start, corsCandidates)...)
+	findings = append(findings, extractors.GhostRouteFindings(start, pages, endpoints)...)
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	return &models.CrawlResult{

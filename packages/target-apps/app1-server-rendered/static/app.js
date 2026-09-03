@@ -13,3 +13,5 @@ const slackHook = "https://hooks.slack.com/services/T00000000/B00000000/fixturet
 const azure = "AccountKey=ShroodlerFakeAzureStorageAccountKey00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==";
 const jwt = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0In0.abc";
 void k; void github; void githubFg; void npm; void stripe; void stripePk; void google; void openai; void sendgrid; void slackHook; void azure; void jwt;
+// Unlinked same-origin path — mentioned in JS only, never crawled.
+fetch("/api/never-crawled-ghost");

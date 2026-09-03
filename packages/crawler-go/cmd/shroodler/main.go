@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -88,6 +89,14 @@ func run(args []string) int {
 		return cmdBaseline(args[1:])
 	case "ingest-sessions":
 		return cmdIngest(args[1:])
+	case "proxy":
+		return cmdProxy(args[1:])
+	case "version", "-V", "--version":
+		fmt.Println("shroodler-go 0.1.0")
+		return 0
+	case "help", "-h", "--help":
+		usage()
+		return 0
 	default:
 		usage()
 		return 2
@@ -95,6 +104,7 @@ func run(args []string) int {
 }
 
 func usage() {
+	fmt.Fprintln(os.Stderr, "Shroodler Go CLI — crawl, report, diff, payload-test, or drive the proxy.")
 	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler ingest-sessions <sessions.jsonl> [--target url] [--output out.json] [--allow-external]")
 	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit] [--output out] [--suppressions FILE]")
@@ -103,6 +113,47 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "shroodler expected <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "  expected is an alias of baseline; expected_not_found is left empty — add negatives by hand")
 	fmt.Fprintln(os.Stderr, "shroodler payload <crawl.json> [--output out.json] [--pack PATH]")
+	fmt.Fprintln(os.Stderr, "shroodler proxy [shroodler-proxy args...]")
+	fmt.Fprintln(os.Stderr, "shroodler version")
+}
+
+func findProxyBin() (string, error) {
+	if env := os.Getenv("SHROODLER_PROXY_BIN"); env != "" {
+		if _, err := os.Stat(env); err != nil {
+			return "", err
+		}
+		return env, nil
+	}
+	if exe, err := os.Executable(); err == nil {
+		cand := filepath.Join(filepath.Dir(exe), "..", "proxy-go", "shroodler-proxy")
+		if _, err := os.Stat(cand); err == nil {
+			return cand, nil
+		}
+	}
+	if path, err := exec.LookPath("shroodler-proxy"); err == nil {
+		return path, nil
+	}
+	return "", fmt.Errorf("shroodler-proxy not found. Run `make bins` or set SHROODLER_PROXY_BIN")
+}
+
+func cmdProxy(args []string) int {
+	bin, err := findProxyBin()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	cmd := exec.Command(bin, args...)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		if ee, ok := err.(*exec.ExitError); ok {
+			return ee.ExitCode()
+		}
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	return 0
 }
 
 func cmdCrawl(args []string) int {

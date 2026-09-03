@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/shroodler/crawler-go/internal/models"
@@ -53,12 +54,17 @@ func LoadSecretRules() []Rule {
 	if err != nil {
 		return nil
 	}
-	var rules []Rule
+	var names []string
 	for _, e := range ents {
 		if e.IsDir() || !strings.HasSuffix(e.Name(), ".yaml") {
 			continue
 		}
-		b, err := os.ReadFile(filepath.Join(dir, e.Name()))
+		names = append(names, e.Name())
+	}
+	sort.Strings(names)
+	var rules []Rule
+	for _, name := range names {
+		b, err := os.ReadFile(filepath.Join(dir, name))
 		if err != nil {
 			continue
 		}
@@ -71,21 +77,40 @@ func LoadSecretRules() []Rule {
 }
 
 func LoadCommonPaths() []string {
-	p := filepath.Join(RepoRoot(), "packages", "secret-patterns", "wordlists", "common-paths.txt")
-	b, err := os.ReadFile(p)
+	dir := filepath.Join(RepoRoot(), "packages", "secret-patterns", "wordlists")
+	ents, err := os.ReadDir(dir)
 	if err != nil {
 		return nil
 	}
-	var out []string
-	for _, line := range strings.Split(string(b), "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "#") {
+	var names []string
+	for _, e := range ents {
+		if e.IsDir() || !strings.HasSuffix(e.Name(), ".txt") {
 			continue
 		}
-		if !strings.HasPrefix(line, "/") {
-			line = "/" + line
+		names = append(names, e.Name())
+	}
+	sort.Strings(names)
+	seen := map[string]bool{}
+	var out []string
+	for _, name := range names {
+		b, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			continue
 		}
-		out = append(out, line)
+		for _, line := range strings.Split(string(b), "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			if !strings.HasPrefix(line, "/") {
+				line = "/" + line
+			}
+			if seen[line] {
+				continue
+			}
+			seen[line] = true
+			out = append(out, line)
+		}
 	}
 	return out
 }

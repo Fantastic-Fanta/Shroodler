@@ -346,7 +346,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}, nil
 }
 
-var errNonLocal = errString("refusing to crawl non-local host; pass --allow-external for listed public fixtures")
+var errNonLocal = errString("refusing to crawl non-local host; pass --allow-external to scan a remote target")
 
 type errString string
 

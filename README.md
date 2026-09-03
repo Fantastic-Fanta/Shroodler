@@ -1,8 +1,9 @@
 # Shroodler
 
-Self-contained **local** web attack-surface mapping toolkit. Target apps live in this
-repo and are intentionally vulnerable — do not "fix" them. The crawler must not probe
-the public internet except during optional Milestone 24 (`--allow-external`).
+Web attack-surface mapping toolkit. Target apps live in this repo and are intentionally
+vulnerable — do not "fix" them. By default the crawler only probes local targets
+(127.0.0.1/localhost); pass `--allow-external` to scan any remote host you're
+authorized to test.
 
 ```mermaid
 flowchart LR

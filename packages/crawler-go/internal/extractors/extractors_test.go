@@ -88,6 +88,24 @@ func TestHeadersCookiesSecretsJS(t *testing.T) {
 	if DecodeDataURL("data:text/plain,hello") == nil {
 		t.Fatal("data url")
 	}
+	ghosts := GhostRouteFindings("http://127.0.0.1:8081/", []models.Page{{URL: "http://127.0.0.1:8081/static/app.js"}}, []models.JSEndpoint{{Source: "http://127.0.0.1:8081/static/app.js", Endpoint: "/api/never-crawled-ghost"}})
+	if len(ghosts) != 1 || ghosts[0].ID != "ghost-route" || ghosts[0].Category != "js-endpoint" {
+		t.Fatalf("ghost %+v", ghosts)
+	}
+	if ghosts[0].URL != "http://127.0.0.1:8081/api/never-crawled-ghost" {
+		t.Fatalf("ghost url %s", ghosts[0].URL)
+	}
+	if ghosts[0].Evidence == nil || !strings.Contains(*ghosts[0].Evidence, "app.js") {
+		t.Fatalf("ghost evidence %v", ghosts[0].Evidence)
+	}
+	visited := GhostRouteFindings("http://127.0.0.1:8081/", []models.Page{{URL: "http://127.0.0.1:8081/api/never-crawled-ghost"}}, []models.JSEndpoint{{Source: "http://127.0.0.1:8081/static/app.js", Endpoint: "/api/never-crawled-ghost"}})
+	if len(visited) != 0 {
+		t.Fatalf("visited should not be ghost: %+v", visited)
+	}
+	off := GhostRouteFindings("http://127.0.0.1:8081/", nil, []models.JSEndpoint{{Source: "http://127.0.0.1:8081/static/app.js", Endpoint: "https://evil.example/api/x"}})
+	if len(off) != 0 {
+		t.Fatalf("cross-origin ghost: %+v", off)
+	}
 	if len(ScriptSrcs(`<script src="/a.js"></script>`)) == 0 {
 		t.Fatal("script")
 	}

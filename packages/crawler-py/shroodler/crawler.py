@@ -28,7 +28,7 @@ from shroodler.extractors.cors import (
 )
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.headers import extract_headers
-from shroodler.extractors.js_endpoints import extract_js_endpoints
+from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.secrets import scan_text
 from shroodler.extractors.sourcemap import (
@@ -243,6 +243,7 @@ class Crawler:
         pages.extend(mut_pages)
         findings.extend(mut_findings)
         findings.extend(probe_cors(origin_url, self.http, cors_candidates))
+        findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
 
         if stopped == "complete":
             later = self._budget_hit(t0, len(pages))

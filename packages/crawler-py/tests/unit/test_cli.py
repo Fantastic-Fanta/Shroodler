@@ -61,3 +61,17 @@ def test_expected_command_parses():
     joined = p._subparsers._group_actions[0].choices["expected"].format_help()
     assert "expected_not_found" in joined
     assert "negatives" in joined
+
+
+def test_payload_and_proxy_parse():
+    p = build_parser()
+    args = p.parse_args(["payload", "scan.json", "-o", "hits.json", "--pack", "extra.yaml"])
+    assert args.crawl_json == "scan.json"
+    assert args.output == "hits.json"
+    assert args.pack == ["extra.yaml"]
+    args = p.parse_args(["proxy", "start", "--record", "sess.jsonl"])
+    assert args.proxy_args == ["start", "--record", "sess.jsonl"]
+    text = p.format_help()
+    assert "payload" in text
+    assert "proxy" in text
+    assert "version" in text

@@ -1,4 +1,4 @@
-.PHONY: verify up down lint test test-unit test-integration bootstrap bins desktop-test cover
+.PHONY: verify up down lint test test-unit test-integration bootstrap bins desktop-test cover cli install-cli
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 VENV := $(ROOT).venv
@@ -8,15 +8,29 @@ DOCKER := $(shell test -e /Applications/Docker.app/Contents/Resources/bin/docker
 
 bootstrap:
 	@test -x "$(PY)" || python3 -m venv "$(VENV)"
-	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]"
+	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]" -e "$(ROOT)packages/cli"
 	@$(VENV)/bin/playwright install chromium
 
 bins:
 	cd packages/crawler-go && go build -o shroodler-go ./cmd/shroodler
 	cd packages/proxy-go && go build -o shroodler-proxy ./cmd/shroodler-proxy
 
+cli: bootstrap bins
+	@echo "Python CLI:  $(VENV)/bin/shroodler"
+	@echo "Repo wrapper: $(ROOT)scripts/shroodler"
+	@echo "Go CLI:      $(ROOT)packages/crawler-go/shroodler-go"
+	@echo "Proxy:       $(ROOT)packages/proxy-go/shroodler-proxy"
+	@$(VENV)/bin/shroodler version
+
+install-cli: cli
+	mkdir -p "$(HOME)/.local/bin"
+	ln -sf "$(VENV)/bin/shroodler" "$(HOME)/.local/bin/shroodler"
+	ln -sf "$(ROOT)packages/crawler-go/shroodler-go" "$(HOME)/.local/bin/shroodler-go"
+	ln -sf "$(ROOT)packages/proxy-go/shroodler-proxy" "$(HOME)/.local/bin/shroodler-proxy"
+	@echo "Symlinked into $(HOME)/.local/bin — add that directory to PATH if needed"
+
 lint: bootstrap
-	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests
+	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests packages/cli
 	cd packages/crawler-go && gofmt -l . | { ! grep .; }
 
 desktop-test: bins
@@ -32,6 +46,7 @@ test-unit: bootstrap bins
 	cd packages/desktop-app && node --test tests/*.mjs
 	cd packages/desktop-app/src-tauri && cargo test -q
 	cd packages/payload-tester && PYTHONPATH="$(ROOT)packages/payload-tester" "$(ROOT).venv/bin/pytest" tests -q
+	cd packages/cli && "$(ROOT).venv/bin/pytest" tests -q
 
 cover: bootstrap
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit --cov=shroodler --cov-fail-under=90 -q --cov-report=term

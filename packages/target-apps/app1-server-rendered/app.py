@@ -78,6 +78,16 @@ def dashboard():
     return resp
 
 
+@app.route("/profile", methods=["GET", "POST"])
+def profile():
+    user = session.get("user")
+    if user != VALID_USER:
+        return render_template("login.html", error="Session required"), 401
+    if request.method == "POST":
+        return redirect(url_for("profile"))
+    return render_template("profile.html", user=user)
+
+
 @app.route("/lab-gated")
 def lab_gated():
     """Test-only fixture: cookie/header gated page, unlinked from navigation."""
@@ -117,6 +127,25 @@ def git_config():
     return send_from_directory("exposed", "git-config", mimetype="text/plain")
 
 
+@app.route("/.git/HEAD")
+def git_head():
+    return "ref: refs/heads/main\n", 200, {"Content-Type": "text/plain"}
+
+
+@app.route("/.well-known/security.txt")
+def security_txt():
+    return "Contact: mailto:security@app1.local\n", 200, {"Content-Type": "text/plain"}
+
+
+@app.route("/id_rsa")
+def id_rsa():
+    return (
+        "-----BEGIN RSA PRIVATE KEY-----\nMIIBfixture\n-----END RSA PRIVATE KEY-----\n",
+        200,
+        {"Content-Type": "text/plain"},
+    )
+
+
 @app.route("/backup.sql.bak")
 def backup():
     return send_from_directory("exposed", "backup.sql.bak", mimetype="text/plain")
@@ -127,10 +156,28 @@ def internal_only():
     return "<h1>internal</h1><p>Disallowed by robots.txt</p>"
 
 
+@app.route("/sitemap-only")
+def sitemap_only():
+    return "<h1>sitemap-only</h1><p>Listed in sitemap.xml, not linked from HTML.</p>"
+
+
+@app.route("/sitemap.xml")
+def sitemap_xml():
+    loc = request.url_root.rstrip("/") + "/sitemap-only"
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f"  <url><loc>{loc}</loc></url>\n"
+        "</urlset>\n"
+    )
+    return xml, 200, {"Content-Type": "application/xml"}
+
+
 @app.route("/robots.txt")
 def robots():
+    sitemap = request.url_root.rstrip("/") + "/sitemap.xml"
     return (
-        "User-agent: *\nDisallow: /internal-only\n",
+        f"User-agent: *\nDisallow: /internal-only\nSitemap: {sitemap}\n",
         200,
         {"Content-Type": "text/plain"},
     )

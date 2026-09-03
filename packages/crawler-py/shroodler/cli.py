@@ -2,15 +2,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 
+from shroodler import __version__
 from shroodler.baseline import document_to_baseline
 from shroodler.config import load_rc
 from shroodler.crawler import crawl_url
 from shroodler.diffcmd import diff_outcome, load_json
 from shroodler.suppress import filter_findings, load_suppressions
 from shroodler.validate import validate_crawl
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _as_str_list(value: object) -> list[str]:
@@ -160,9 +166,90 @@ def cmd_baseline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _payload_tester_dir() -> Path:
+    env = os.environ.get("SHROODLER_PAYLOAD_DIR")
+    if env:
+        cand = Path(env)
+        if (cand / "tester.py").is_file():
+            return cand
+        raise FileNotFoundError(f"payload-tester not found in {cand}")
+    for parent in Path(__file__).resolve().parents:
+        for cand in (
+            parent / "packages" / "payload-tester",
+            parent / "payload-tester",
+        ):
+            if (cand / "tester.py").is_file():
+                return cand
+    raise FileNotFoundError("payload-tester not found; set SHROODLER_PAYLOAD_DIR")
+
+
+def cmd_payload(args: argparse.Namespace) -> int:
+    tester_dir = _payload_tester_dir()
+    if str(tester_dir) not in sys.path:
+        sys.path.insert(0, str(tester_dir))
+    import tester
+
+    extra = [Path(x) for x in (getattr(args, "pack", None) or [])]
+    doc = load_json(args.crawl_json)
+    packs = tester.load_packs(extra=extra) if extra else tester.load_packs()
+    out = tester.run(doc, packs=packs)
+    text = json.dumps(out, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def find_proxy_bin() -> Path | None:
+    env = os.environ.get("SHROODLER_PROXY_BIN")
+    if env:
+        path = Path(env)
+        return path if path.is_file() else None
+    which = shutil.which("shroodler-proxy")
+    if which:
+        return Path(which)
+    for root in (_REPO_ROOT, Path.cwd()):
+        cand = root / "packages" / "proxy-go" / "shroodler-proxy"
+        if cand.is_file():
+            return cand
+    return None
+
+
+def cmd_proxy(args: argparse.Namespace) -> int:
+    binary = find_proxy_bin()
+    if binary is None:
+        print(
+            "shroodler-proxy not found. Run `make bins` or set SHROODLER_PROXY_BIN.",
+            file=sys.stderr,
+        )
+        return 1
+    forwarded = list(getattr(args, "proxy_args", None) or [])
+    completed = subprocess.run([str(binary), *forwarded], check=False)
+    return int(completed.returncode)
+
+
+def cmd_version(_args: argparse.Namespace | None = None) -> int:
+    print(f"shroodler {__version__}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(prog="shroodler")
-    sub = p.add_subparsers(dest="command", required=True)
+    p = argparse.ArgumentParser(
+        prog="shroodler",
+        description=(
+            "Shroodler command-line toolkit: crawl a local target, render reports, "
+            "diff baselines, run payload packs, or drive the intercepting proxy."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  shroodler crawl http://127.0.0.1:8081 -o out.json\n"
+            "  shroodler report out.json --format html -o out.html\n"
+            "  shroodler payload out.json -o hits.json\n"
+            "  shroodler proxy start --record /tmp/sess.jsonl\n"
+            "Desktop GUI is optional; this CLI is the full product surface."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("-V", "--version", action="store_true", help="Print version and exit")
+    sub = p.add_subparsers(dest="command", required=False)
 
     crawl = sub.add_parser("crawl", help="Crawl a target URL")
     crawl.add_argument("url")
@@ -285,6 +372,35 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("--allow-external", action="store_true")
     ingest.set_defaults(func=cmd_ingest)
 
+    payload = sub.add_parser(
+        "payload",
+        help="Run YAML payload packs against crawl JSON (local targets only)",
+    )
+    payload.add_argument("crawl_json")
+    payload.add_argument("--output", "-o")
+    payload.add_argument(
+        "--pack",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Extra YAML pack file or directory (repeatable)",
+    )
+    payload.set_defaults(func=cmd_payload)
+
+    proxy = sub.add_parser(
+        "proxy",
+        help="Forward to shroodler-proxy (start, ca, replay)",
+    )
+    proxy.add_argument(
+        "proxy_args",
+        nargs=argparse.REMAINDER,
+        help="Arguments passed to shroodler-proxy",
+    )
+    proxy.set_defaults(func=cmd_proxy)
+
+    version = sub.add_parser("version", help="Print version")
+    version.set_defaults(func=cmd_version)
+
     return p
 
 
@@ -308,6 +424,11 @@ def main(argv: list[str] | None = None) -> None:
     if rc.get("login_recipe"):
         parser.set_defaults(login_recipe=rc["login_recipe"])
     args = parser.parse_args(argv)
+    if getattr(args, "version", False) and not getattr(args, "command", None):
+        raise SystemExit(cmd_version())
+    if not getattr(args, "command", None):
+        parser.print_help(sys.stderr)
+        raise SystemExit(2)
     if getattr(args, "command", None) == "crawl":
         args.cookie = _as_str_list(rc.get("cookie")) + list(getattr(args, "cookie", None) or [])
         args.header = _as_str_list(rc.get("header")) + list(getattr(args, "header", None) or [])

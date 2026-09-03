@@ -36,19 +36,6 @@ def test_app1_forms_headers_cookies():
     doc = result.to_dict()
     expected = json.loads(EXPECTED.read_text(encoding="utf-8"))
     filtered = dict(expected)
-    filtered["expected_findings"] = [
-        f
-        for f in expected["expected_findings"]
-        if f["id"]
-        in {
-            "missing-csp",
-            "insecure-cookie",
-            "verbose-error",
-            "server-version-leak",
-            "aws-access-key",
-            "exposed-file",
-        }
-    ]
     errors = diff_documents(doc, filtered, pages_only=False)
     assert errors == []
     login = next(p for p in result.pages if urlparse(p.url).path == "/login")

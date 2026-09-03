@@ -65,6 +65,7 @@
     "- match:\n    method: GET\n    url_pattern: .*\n  respond:\n    status: 200\n    body: mocked\n";
   let caOpen = false;
   let caAction = "install";
+  let caInstalled = false;
   let findingPane = "detail";
   let sessionPane = "headers";
   let composePane = "request";
@@ -373,6 +374,20 @@
     });
   }
 
+  async function refreshCaStatus() {
+    try {
+      const st = await invoke("ca_status");
+      caInstalled = !!(st && st.installed);
+    } catch {
+      caInstalled = false;
+    }
+  }
+
+  function openCa(action) {
+    caAction = action;
+    caOpen = true;
+  }
+
   async function confirmCa() {
     try {
       if (caAction === "install") await invoke("install_ca", { confirmed: true });
@@ -381,6 +396,7 @@
       error = String(e);
     }
     caOpen = false;
+    await refreshCaStatus();
   }
 
   function hostOf(url) {
@@ -455,6 +471,7 @@
 
   onMount(async () => {
     if (!isTauri()) return;
+    refreshCaStatus();
     const { listen } = await import("@tauri-apps/api/event");
     listen("scan:progress", (ev) => {
       progress = ev.payload;
@@ -553,20 +570,8 @@
         >{proxyOn ? "Listening" : "Start proxy"}</button
       >
       <button class="btn" on:click={ingestCaptured} disabled={!sessions.length}>Ingest findings</button>
-      <button
-        class="btn"
-        on:click={() => {
-          caAction = "install";
-          caOpen = true;
-        }}>Install CA</button
-      >
-      <button
-        class="btn"
-        on:click={() => {
-          caAction = "uninstall";
-          caOpen = true;
-        }}>Uninstall CA</button
-      >
+      <button class="btn" on:click={() => openCa("install")}>Install CA</button>
+      <button class="btn" on:click={() => openCa("uninstall")}>Uninstall CA</button>
       {#if paused.length}
         <span class="subcmd-label">{paused.length} paused</span>
       {/if}
@@ -578,6 +583,14 @@
   </div>
 
   {#if error}<div class="banner" role="alert">{error}</div>{/if}
+  {#if caInstalled}
+    <div class="ca-banner on" role="status">
+      <span>Shroodler root CA is trusted on this machine.</span>
+      <button type="button" class="btn" on:click={() => openCa("uninstall")}>Uninstall</button>
+    </div>
+  {:else}
+    <div class="ca-banner off" role="status">CA not trusted</div>
+  {/if}
 
   <div class="body">
     <aside class="rail">

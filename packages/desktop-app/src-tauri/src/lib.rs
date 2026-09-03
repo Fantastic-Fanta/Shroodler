@@ -175,6 +175,23 @@ fn now_secs() -> u64 {
         .as_secs()
 }
 
+/// Proxy CA store dir — same as Go `ca.HomeDir()` (`SHROODLER_PROXY_HOME` or
+/// `$config/shroodler-proxy`). File presence is what generate/uninstall manage.
+fn ca_store_dir() -> PathBuf {
+    if let Ok(d) = std::env::var("SHROODLER_PROXY_HOME") {
+        if !d.is_empty() {
+            return PathBuf::from(d);
+        }
+    }
+    dirs::config_dir()
+        .unwrap_or_else(std::env::temp_dir)
+        .join("shroodler-proxy")
+}
+
+fn ca_is_installed() -> bool {
+    ca_store_dir().join("ca.pem").exists()
+}
+
 #[tauri::command]
 fn start_scan(
     app: AppHandle,
@@ -487,6 +504,11 @@ fn uninstall_ca(confirmed: bool) -> Result<(), String> {
 }
 
 #[tauri::command]
+fn ca_status() -> Result<serde_json::Value, String> {
+    Ok(serde_json::json!({ "installed": ca_is_installed() }))
+}
+
+#[tauri::command]
 fn export_ca(path: String) -> Result<String, String> {
     let bin = find_bin("proxy");
     let out = Command::new(&bin)
@@ -514,6 +536,7 @@ pub fn run() {
             stop_proxy,
             install_ca,
             uninstall_ca,
+            ca_status,
             export_ca
         ])
         .run(tauri::generate_context!())
@@ -522,7 +545,8 @@ pub fn run() {
 
 #[cfg(test)]
 mod tests {
-    use super::{crawl_args, crawl_sidecar, is_python_bin, parse_progress};
+    use super::{ca_is_installed, crawl_args, crawl_sidecar, is_python_bin, now_secs, parse_progress};
+    use std::fs;
     use std::path::Path;
 
     #[test]
@@ -576,5 +600,21 @@ mod tests {
             assert!(prefix.is_empty());
             assert!(name.contains("shroodler"));
         }
+    }
+
+    #[test]
+    fn ca_status_follows_proxy_home_pem() {
+        let dir = std::env::temp_dir().join(format!(
+            "shroodler-ca-status-{}-{}",
+            std::process::id(),
+            now_secs()
+        ));
+        let _ = fs::create_dir_all(&dir);
+        std::env::set_var("SHROODLER_PROXY_HOME", &dir);
+        assert!(!ca_is_installed());
+        fs::write(dir.join("ca.pem"), "dummy").unwrap();
+        assert!(ca_is_installed());
+        let _ = fs::remove_dir_all(&dir);
+        std::env::remove_var("SHROODLER_PROXY_HOME");
     }
 }

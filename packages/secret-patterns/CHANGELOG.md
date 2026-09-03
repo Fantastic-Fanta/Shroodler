@@ -13,7 +13,9 @@ project keys, Slack webhooks, and Azure storage account keys (`AccountKey=` /
 
 Backup-name mutation wordlists: `wordlists/backup-suffixes.txt` (`.bak`, `.old`,
 `.orig`, `~`, `.swp`, `.copy`) and `wordlists/backup-interesting.txt`. Both crawlers
-load these as data; 404 is not a finding.
+load these as data; 404 is not a finding. HTML comment leftover keywords
+(`keywords/html-comments.txt`): TODO, FIXME, PASSWORD, API_KEY, and other
+credential-like markers.
 
 ## 0.1.0 — 2026-09-01
 

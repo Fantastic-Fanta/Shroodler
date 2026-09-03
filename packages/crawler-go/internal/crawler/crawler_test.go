@@ -245,6 +245,44 @@ func TestBackupNameMutation(t *testing.T) {
 	}
 }
 
+func TestHTMLCommentAndMetaGenerator(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><head><meta name="generator" content="App1CMS 0.1.0"></head>
+<body><!-- TODO: remove debug admin at /nope --><a href="/about">a</a></body></html>`))
+	})
+	mux.HandleFunc("/about", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><body><!-- layout --><p>about</p></body></html>`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	homeComment, homeGen, aboutComment := false, false, false
+	for _, f := range res.Findings {
+		path := urls.PathOf(f.URL)
+		if f.ID == "html-comment" && path == "/" {
+			homeComment = true
+		}
+		if f.ID == "meta-generator" && path == "/" {
+			homeGen = true
+		}
+		if f.ID == "html-comment" && path == "/about" {
+			aboutComment = true
+		}
+	}
+	if !homeComment || !homeGen {
+		t.Fatalf("missing home findings: comment=%v gen=%v %#v", homeComment, homeGen, res.Findings)
+	}
+	if aboutComment {
+		t.Fatal("boring layout comment on /about should not be reported")
+	}
+}
+
 func TestRefuseExternal(t *testing.T) {
 	_, err := crawler.Crawl("http://example.com/", crawler.Config{})
 	if err == nil {

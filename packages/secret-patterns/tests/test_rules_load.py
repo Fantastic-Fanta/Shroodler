@@ -74,3 +74,14 @@ def test_backup_suffix_wordlist():
         names.append(line)
     assert "login" in names
     assert "settings" in names
+
+
+def test_html_comment_keywords_are_plain_text():
+    path = Path(__file__).resolve().parents[1] / "keywords" / "html-comments.txt"
+    text = path.read_text(encoding="utf-8")
+    keys = {
+        line.strip().upper()
+        for line in text.splitlines()
+        if line.strip() and not line.strip().startswith("#")
+    }
+    assert {"TODO", "FIXME", "PASSWORD", "API_KEY"} <= keys

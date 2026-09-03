@@ -1,0 +1,12 @@
+# Leftover HTML comment keywords (case-insensitive substring).
+# Only comments matching one of these are reported as html-comment findings.
+TODO
+FIXME
+PASSWORD
+PASSWD
+API_KEY
+APIKEY
+SECRET
+CREDENTIAL
+TOKEN
+AUTH

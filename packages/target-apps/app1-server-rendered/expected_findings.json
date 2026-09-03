@@ -21,6 +21,8 @@
     { "id": "exposed-file", "url": "/id_rsa" },
     { "id": "exposed-file", "url": "/login.bak" },
     { "id": "server-version-leak", "url": "/" },
+    { "id": "html-comment", "url": "/" },
+    { "id": "meta-generator", "url": "/" },
     { "id": "aws-access-key", "url": "/static/app.js" },
     { "id": "github-pat", "url": "/static/app.js" },
     { "id": "github-fine-grained-pat", "url": "/static/app.js" },
@@ -38,6 +40,7 @@
   ],
   "expected_not_found": [
     { "id": "leaked-secret", "url": "/about" },
+    { "id": "html-comment", "url": "/about" },
     { "id": "github-pat", "url": "/about" },
     { "id": "stripe-secret-key", "url": "/about" },
     { "id": "exposed-file", "url": "/.env" },

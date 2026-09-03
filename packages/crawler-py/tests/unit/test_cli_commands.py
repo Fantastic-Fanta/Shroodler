@@ -276,3 +276,41 @@ def test_write_report_file(tmp_path):
     text = write_report({"target": "t", "findings": []}, "html", str(p))
     assert "html" in text.lower() or "<" in text
     assert p.exists()
+
+
+def test_cmd_report_sarif_and_markdown(tmp_path):
+    docp = tmp_path / "d.json"
+    docp.write_text(
+        json.dumps(
+            {
+                "target": "http://127.0.0.1/",
+                "crawler": {"name": "shroodler-py", "version": "0.1.0", "mode": "static"},
+                "pages": [],
+                "findings": [
+                    {
+                        "id": "missing-csp",
+                        "severity": "medium",
+                        "category": "header",
+                        "url": "http://127.0.0.1/",
+                        "description": "no csp",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    sarif_path = tmp_path / "r.sarif"
+    ns = argparse.Namespace(findings=str(docp), format="sarif", output=str(sarif_path))
+    assert cmd_report(ns) == 0
+    sarif = json.loads(sarif_path.read_text(encoding="utf-8"))
+    assert sarif["version"] == "2.1.0"
+    assert sarif["runs"][0]["results"][0]["ruleId"] == "missing-csp"
+    assert sarif["runs"][0]["results"][0]["level"] == "warning"
+    md_path = tmp_path / "r.md"
+    ns = argparse.Namespace(findings=str(docp), format="md", output=str(md_path))
+    assert cmd_report(ns) == 0
+    md = md_path.read_text(encoding="utf-8")
+    assert "## medium" in md
+    assert "`missing-csp`" in md
+    ns = argparse.Namespace(findings=str(docp), format="markdown", output=str(tmp_path / "r2.md"))
+    assert cmd_report(ns) == 0

@@ -41,6 +41,12 @@ func TestCmdCrawlAndDiff(t *testing.T) {
 	if cmdReport([]string{out, "--format", "sarif", "--output", filepath.Join(dir, "r.sarif")}) != 0 {
 		t.Fatal("sarif")
 	}
+	if cmdReport([]string{out, "--format", "md", "--output", filepath.Join(dir, "r.md")}) != 0 {
+		t.Fatal("md")
+	}
+	if cmdReport([]string{out, "--format", "nope"}) != 2 {
+		t.Fatal("bad format")
+	}
 	if cmdBaseline([]string{out, "--name", "cli-app", "--output", filepath.Join(dir, "base.json")}) != 0 {
 		t.Fatal("baseline")
 	}

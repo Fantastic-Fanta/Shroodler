@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import html
 import io
 import json
 from pathlib import Path
@@ -68,11 +69,125 @@ def render_csv(doc: dict) -> str:
     return buf.getvalue()
 
 
+SARIF_LEVEL = {
+    "critical": "error",
+    "high": "error",
+    "medium": "warning",
+    "low": "note",
+    "info": "note",
+}
+
+
+def render_sarif(doc: dict, *, results: list[dict] | None = None) -> str:
+    findings = results if results is not None else list(doc.get("findings") or [])
+    crawler = doc.get("crawler") or {}
+    rules = []
+    seen = set()
+    for f in findings:
+        rid = f.get("id") or "finding"
+        if rid in seen:
+            continue
+        seen.add(rid)
+        rules.append(
+            {
+                "id": rid,
+                "shortDescription": {"text": rid},
+                "fullDescription": {"text": f.get("description") or rid},
+            }
+        )
+    sarif_results = []
+    for f in findings:
+        uri = f.get("url") or doc.get("target") or "about:blank"
+        sarif_results.append(
+            {
+                "ruleId": f.get("id") or "finding",
+                "level": SARIF_LEVEL.get(f.get("severity", "info"), "note"),
+                "message": {"text": f.get("description") or f.get("id") or ""},
+                "locations": [
+                    {
+                        "physicalLocation": {
+                            "artifactLocation": {"uri": uri},
+                        }
+                    }
+                ],
+            }
+        )
+    payload = {
+        "version": "2.1.0",
+        "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+        "runs": [
+            {
+                "tool": {
+                    "driver": {
+                        "name": crawler.get("name") or "shroodler",
+                        "version": crawler.get("version") or "0.1.0",
+                        "rules": rules,
+                    }
+                },
+                "results": sarif_results,
+            }
+        ],
+    }
+    return json.dumps(payload, indent=2) + "\n"
+
+
+def _xml(text: str) -> str:
+    return html.escape(str(text), quote=True)
+
+
+def render_junit(doc: dict, *, failures: list[dict] | None = None, suite: str = "shroodler") -> str:
+    rows = failures if failures is not None else list(doc.get("findings") or [])
+    tests = max(len(rows), 1)
+    fails = len(rows)
+    buf = io.StringIO()
+    buf.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+    buf.write(
+        f'<testsuite name="{_xml(suite)}" tests="{tests}" failures="{fails}" errors="0">\n'
+    )
+    if not rows:
+        buf.write('  <testcase classname="shroodler" name="ok"/>\n')
+    for f in rows:
+        name = f"{f.get('id', '')} {f.get('url', '')}".strip() or "finding"
+        classname = f.get("category") or "finding"
+        message = f.get("description") or name
+        evidence = f.get("evidence") or message
+        buf.write(
+            f'  <testcase classname="{_xml(classname)}" name="{_xml(name)}">\n'
+            f'    <failure message="{_xml(message)}">{_xml(evidence)}</failure>\n'
+            f"  </testcase>\n"
+        )
+    buf.write("</testsuite>\n")
+    return buf.getvalue()
+
+
+def render_diff_junit(errors: list[str]) -> str:
+    rows = [{"id": "diff", "category": "diff", "url": "", "description": e, "evidence": e} for e in errors]
+    return render_junit({"findings": rows}, failures=rows, suite="shroodler-diff")
+
+
+def render_diff_sarif(errors: list[str]) -> str:
+    findings = [
+        {
+            "id": "diff",
+            "severity": "high",
+            "category": "diff",
+            "url": "",
+            "description": e,
+        }
+        for e in errors
+    ]
+    return render_sarif({"crawler": {"name": "shroodler", "version": "0.1.0"}, "findings": findings})
+
+
 def render(doc: dict, fmt: str) -> str:
     if fmt == "html":
         return render_html(doc)
     if fmt == "csv":
         return render_csv(doc)
+    if fmt == "sarif":
+        return render_sarif(doc)
+    if fmt == "junit":
+        return render_junit(doc)
     raise ValueError(f"unsupported format {fmt}")
 
 

@@ -53,6 +53,22 @@ func TestApp1Pages(t *testing.T) {
 	if !json.Valid(b) {
 		t.Fatal("invalid json")
 	}
+	got := map[string]bool{}
+	for _, e := range res.JSEndpoints {
+		got[e.Endpoint] = true
+	}
+	if !got["/ws/live"] || !got["/sse/events"] {
+		t.Fatalf("missing websocket/sse endpoints %#v", res.JSEndpoints)
+	}
+	hit := false
+	for _, f := range res.Findings {
+		if f.ID == "js-endpoint" && strings.HasSuffix(f.URL, "/static/realtime.js") {
+			hit = true
+		}
+	}
+	if !hit {
+		t.Fatal("missing js-endpoint finding for realtime.js")
+	}
 	_ = os.Stdout
 }
 

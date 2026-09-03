@@ -45,6 +45,56 @@ def _page(url: str) -> Page:
     return Page(url=url, status_code=200)
 
 
+def test_websocket_and_eventsource_literals():
+    js = 'new WebSocket("/ws/live"); new EventSource("/sse/events");'
+    eps, findings = extract_js_endpoints("/static/realtime.js", js)
+    assert {e.endpoint for e in eps} == {"/ws/live", "/sse/events"}
+    assert {f.id for f in findings} == {"js-endpoint"}
+
+def test_ws_scheme_literals_same_host():
+    js = 'const a = "ws://127.0.0.1:8081/ws/live"; const b = \'wss://127.0.0.1:8081/ws/live\';'
+    eps, _ = extract_js_endpoints("http://127.0.0.1:8081/static/app.js", js)
+    assert {e.endpoint for e in eps} == {
+        "ws://127.0.0.1:8081/ws/live",
+        "wss://127.0.0.1:8081/ws/live",
+    }
+
+def test_websocket_template_literal_best_effort():
+    js = "new WebSocket(`/ws/tpl`); new EventSource(`/sse/tpl`);"
+    eps, _ = extract_js_endpoints("/static/app.js", js)
+    assert {e.endpoint for e in eps} == {"/ws/tpl", "/sse/tpl"}
+
+def test_minified_websocket_oneliner():
+    js = 'function x(){new WebSocket("/ws");new EventSource("/sse")}'
+    eps, _ = extract_js_endpoints("/m.js", js)
+    assert {e.endpoint for e in eps} == {"/ws", "/sse"}
+
+def test_garbage_js_does_not_crash():
+    garbage = "\x00\xff{{{ not javascript " + "new WebSocket(" + "'" * 50
+    eps, findings = extract_js_endpoints("/g.js", garbage)
+    assert eps == []
+    assert findings == []
+
+def test_html_inline_script(fx):
+    fx.html(
+        "/",
+        '<script src="/rt.js"></script><script>new EventSource("/sse/inline")</script>',
+    )
+    fx.route(
+        "/rt.js",
+        lambda _req: (
+            200,
+            {"Content-Type": "application/javascript"},
+            b'new WebSocket("/ws/live")',
+        ),
+    )
+    result = crawl_url(fx.origin + "/", depth=2)
+    got = {e.endpoint for e in result.js_endpoints}
+    assert "/ws/live" in got
+    assert "/sse/inline" in got
+    assert all(not (p.url or "").startswith("ws") for p in result.pages)
+
+
 def test_ghost_route_unvisited_same_origin():
     origin = "http://127.0.0.1:8081/"
     src = "http://127.0.0.1:8081/static/app.js"

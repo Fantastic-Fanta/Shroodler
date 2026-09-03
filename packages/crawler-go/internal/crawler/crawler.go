@@ -341,7 +341,9 @@ func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchRe
 	mf := extractors.ExtractHTMLMarkup(res.Body, res.URL, rules)
 	var eps []models.JSEndpoint
 	ctype := strings.ToLower(header(res.Headers, "content-type"))
-	if strings.Contains(ctype, "javascript") || strings.HasSuffix(res.URL, ".js") {
+	isJS := strings.Contains(ctype, "javascript") || strings.HasSuffix(res.URL, ".js")
+	isHTML := strings.Contains(ctype, "html") || strings.HasPrefix(strings.TrimLeft(res.Body, " \t\r\n"), "<")
+	if isJS || isHTML {
 		eps = extractors.ExtractJSEndpoints(res.URL, res.Body)
 		for _, e := range eps {
 			ev := e.Endpoint

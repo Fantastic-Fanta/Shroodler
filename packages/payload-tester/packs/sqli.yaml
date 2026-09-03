@@ -1,0 +1,20 @@
+- id: sqli-single-quote
+  finding_id: payload-sql-error
+  payload: "'"
+  severity: high
+  description: Payload triggered a database-looking error
+  match:
+    any:
+      - status_gte: 500
+      - body_contains: sql
+      - body_contains: syntax error
+- id: sqli-or-true
+  finding_id: payload-sql-error
+  payload: "' OR '1'='1"
+  severity: high
+  description: Payload triggered a database-looking error
+  match:
+    any:
+      - status_gte: 500
+      - body_contains: sql
+      - body_contains: syntax error

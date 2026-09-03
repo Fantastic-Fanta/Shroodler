@@ -4,33 +4,46 @@ from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urljoin
 
+from shroodler.extractors.secrets import scan_text
 from shroodler.models import Finding, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
 from shroodler.urls import canonical_key, query_param_names
 
 
-def wordlist_path() -> Path:
+def wordlists_dir() -> Path:
     here = Path(__file__).resolve()
     for parent in here.parents:
-        candidate = parent / "packages" / "secret-patterns" / "wordlists" / "common-paths.txt"
-        if candidate.is_file():
+        candidate = parent / "packages" / "secret-patterns" / "wordlists"
+        if candidate.is_dir():
             return candidate
-        alt = parent / "secret-patterns" / "wordlists" / "common-paths.txt"
-        if alt.is_file():
+        alt = parent / "secret-patterns" / "wordlists"
+        if alt.is_dir():
             return alt
-    raise FileNotFoundError("common-paths.txt not found")
+    raise FileNotFoundError("secret-patterns/wordlists not found")
 
 
-@lru_cache(maxsize=1)
-def load_paths() -> list[str]:
+def _parse_wordlist(text: str) -> list[str]:
     lines = []
-    for raw in wordlist_path().read_text(encoding="utf-8").splitlines():
+    for raw in text.splitlines():
         line = raw.strip()
         if not line or line.startswith("#"):
             continue
         if not line.startswith("/"):
             line = "/" + line
         lines.append(line)
+    return lines
+
+
+@lru_cache(maxsize=1)
+def load_paths() -> list[str]:
+    seen: set[str] = set()
+    lines: list[str] = []
+    for path in sorted(wordlists_dir().glob("*.txt")):
+        for line in _parse_wordlist(path.read_text(encoding="utf-8")):
+            if line in seen:
+                continue
+            seen.add(line)
+            lines.append(line)
     return lines
 
 
@@ -69,4 +82,5 @@ def probe_paths(
                 evidence=path,
             )
         )
+        findings.extend(scan_text(result.text, url))
     return pages, findings

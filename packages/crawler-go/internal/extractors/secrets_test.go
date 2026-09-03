@@ -1,6 +1,7 @@
 package extractors
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -13,19 +14,52 @@ func FuzzScanSecrets(f *testing.F) {
 	})
 }
 
-func TestAWSKey(t *testing.T) {
+func TestYAMLRulesCoverCloudAndCore(t *testing.T) {
 	rules := LoadSecretRules()
 	if len(rules) == 0 {
 		t.Skip("rules not found from cwd")
 	}
-	fs := ScanSecrets("AKIAIOSFODNN7EXAMPLE", "http://127.0.0.1/x", rules)
-	found := false
-	for _, x := range fs {
-		if x.ID == "aws-access-key" {
-			found = true
+	ids := map[string]bool{}
+	for _, r := range rules {
+		ids[r.ID] = true
+	}
+	for _, id := range []string{
+		"aws-access-key", "github-pat", "stripe-secret-key", "google-api-key",
+		"npm-access-token", "sendgrid-api-key", "openai-api-key", "slack-webhook",
+	} {
+		if !ids[id] {
+			t.Fatalf("missing rule %s", id)
 		}
 	}
-	if !found {
+	body := strings.Join([]string{
+		"AKIAIOSFODNN7EXAMPLE",
+		"ghp_0123456789abcdefghijklmnopqrstuvwxyz",
+		"sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+		"AIzaSyD-app1-fixture-not-real-000000000",
+	}, "\n")
+	fs := ScanSecrets(body, "http://127.0.0.1/x", rules)
+	found := map[string]bool{}
+	for _, x := range fs {
+		found[x.ID] = true
+	}
+	if !found["aws-access-key"] || !found["github-pat"] || !found["stripe-secret-key"] {
 		t.Fatal(fs)
+	}
+}
+
+func TestWordlistsAreDataFiles(t *testing.T) {
+	paths := LoadCommonPaths()
+	if len(paths) == 0 {
+		t.Skip("wordlists not found from cwd")
+	}
+	want := []string{"/.git/config", "/.git/HEAD", "/.well-known/security.txt", "/.env"}
+	have := map[string]bool{}
+	for _, p := range paths {
+		have[p] = true
+	}
+	for _, w := range want {
+		if !have[w] {
+			t.Fatalf("missing wordlist path %s in %v", w, paths)
+		}
 	}
 }

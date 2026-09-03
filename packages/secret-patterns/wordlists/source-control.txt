@@ -1,0 +1,5 @@
+# Source-control dumps. Same loader as common-paths — data, not crawler code.
+/.git/config
+/.git/HEAD
+/.svn/entries
+/.hg/hgrc

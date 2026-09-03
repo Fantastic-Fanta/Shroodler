@@ -1,0 +1,33 @@
+# Cloud / SaaS tokens. High-precision prefixes only — both crawlers load this as data.
+- id: github-pat
+  pattern: 'ghp_[A-Za-z0-9]{36}'
+  severity: high
+  description: GitHub personal access token
+- id: github-fine-grained-pat
+  pattern: 'github_pat_[A-Za-z0-9_]{20,}'
+  severity: high
+  description: GitHub fine-grained personal access token
+- id: npm-access-token
+  pattern: 'npm_[A-Za-z0-9]{36}'
+  severity: high
+  description: npm access token
+- id: stripe-secret-key
+  pattern: 'sk_(?:live|test)_[A-Za-z0-9]{24,}'
+  severity: critical
+  description: Stripe secret key
+- id: google-api-key
+  pattern: 'AIza[0-9A-Za-z\-_]{35}'
+  severity: high
+  description: Google API key
+- id: sendgrid-api-key
+  pattern: 'SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}'
+  severity: high
+  description: SendGrid API key
+- id: slack-webhook
+  pattern: 'https://hooks\.slack\.com/services/T[A-Z0-9]+/B[A-Z0-9]+/[A-Za-z0-9]+'
+  severity: high
+  description: Slack incoming webhook URL
+- id: openai-api-key
+  pattern: 'sk-proj-[A-Za-z0-9_-]{20,}'
+  severity: high
+  description: OpenAI project API key

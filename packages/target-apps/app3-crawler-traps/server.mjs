@@ -66,7 +66,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (p === "/.env") {
-    return send(200, "text/plain", "SECRET=app3-fixture-not-a-real-key\n");
+    return send(200, "text/plain", "SECRET=app3-fixture-not-a-real-key\nGITHUB_TOKEN=ghp_0123456789abcdefghijklmnopqrstuvwxyz\n");
   }
 
   if (p === "/robots.txt") {

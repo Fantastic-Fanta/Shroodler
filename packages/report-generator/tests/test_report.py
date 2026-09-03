@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 from pathlib import Path
+from xml.etree import ElementTree
 
 from bs4 import BeautifulSoup
 
@@ -97,3 +99,20 @@ def test_csv_roundtrip():
     assert [r["severity"] for r in rows] == ["critical", "high", "medium", "low", "info"]
     assert len(rows) == 5
     assert render(ALL_SEV, "csv") == text
+
+
+def test_sarif_and_junit_from_findings():
+    sarif = json.loads(render(ALL_SEV, "sarif"))
+    assert sarif["version"] == "2.1.0"
+    results = sarif["runs"][0]["results"]
+    assert len(results) == 5
+    levels = {r["ruleId"]: r["level"] for r in results}
+    assert levels["b"] == "error"
+    assert levels["e"] == "warning"
+    assert levels["a"] == "note"
+    xml = render(ALL_SEV, "junit")
+    root = ElementTree.fromstring(xml)
+    assert root.tag == "testsuite"
+    assert int(root.attrib["failures"]) == 5
+    empty = render({"findings": [], "crawler": {"name": "shroodler", "version": "0"}}, "junit")
+    assert 'failures="0"' in empty

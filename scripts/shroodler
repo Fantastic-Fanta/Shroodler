@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Repo-root wrapper so `./scripts/shroodler crawl …` works without remembering the venv path.
+set -euo pipefail
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BIN="$ROOT/.venv/bin/shroodler"
+if [[ ! -x "$BIN" ]]; then
+  echo "Shroodler CLI is not installed. From the repo root run: make bootstrap" >&2
+  exit 1
+fi
+exec "$BIN" "$@"

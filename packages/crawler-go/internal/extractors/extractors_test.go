@@ -71,6 +71,21 @@ func TestHeadersCookiesSecretsJS(t *testing.T) {
 	if len(eps) == 0 {
 		t.Fatal(eps)
 	}
+	js := "function n(){}\n//# sourceMappingURL=app.min.js.map\n"
+	if SourceMappingURL(js) != "app.min.js.map" {
+		t.Fatal(SourceMappingURL(js))
+	}
+	raw := []byte(`{"version":3,"sources":["src/internal.ts"],"sourcesContent":["fetch(\"/api/sourcemap-only\");\n"]}`)
+	meps, mf := ParseSourceMap("/static/app.min.js", raw, nil)
+	if len(meps) == 0 || meps[0].Endpoint != "/api/sourcemap-only" {
+		t.Fatalf("%v", meps)
+	}
+	if len(mf) == 0 || mf[0].Evidence == nil || !strings.Contains(*mf[0].Evidence, "src/internal.ts") {
+		t.Fatalf("%v", mf)
+	}
+	if DecodeDataURL("data:text/plain,hello") == nil {
+		t.Fatal("data url")
+	}
 	if len(ScriptSrcs(`<script src="/a.js"></script>`)) == 0 {
 		t.Fatal("script")
 	}

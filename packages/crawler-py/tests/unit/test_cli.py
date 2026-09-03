@@ -42,6 +42,11 @@ def test_cli_has_format_flags():
     assert args.cookie == ["lab_auth=open"]
     args = p.parse_args(["crawl", "http://127.0.0.1:8081", "--no-sitemap"])
     assert args.no_sitemap is True
+    args = p.parse_args(
+        ["crawl", "http://127.0.0.1:8081", "--max-pages", "2", "--max-time", "1.5"]
+    )
+    assert args.max_pages == 2
+    assert args.max_time == 1.5
 
 
 def test_load_rc_missing(tmp_path, monkeypatch):

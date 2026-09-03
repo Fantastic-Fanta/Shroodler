@@ -44,6 +44,8 @@ def _write(text: str, output: str | None) -> None:
 
 def cmd_crawl(args: argparse.Namespace) -> int:
     depth = None if args.depth < 0 else args.depth
+    max_pages = getattr(args, "max_pages", 400)
+    max_time = getattr(args, "max_time", 0) or None
     cookies = list(getattr(args, "cookie", None) or [])
     headers = list(getattr(args, "header", None) or [])
     extra_seeds = list(getattr(args, "seed", None) or [])
@@ -63,6 +65,8 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         depth=depth,
         ignore_robots=args.ignore_robots,
         allow_external=args.allow_external,
+        max_pages=max_pages,
+        max_time=max_time,
         progress=_progress,
         cookies=cookies,
         headers=headers,
@@ -255,6 +259,18 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument("url")
     crawl.add_argument("--mode", choices=["static", "headless"], default="static")
     crawl.add_argument("--depth", type=int, default=5, help="Max depth; -1 for unbounded")
+    crawl.add_argument(
+        "--max-pages",
+        type=int,
+        default=400,
+        help="Stop starting new fetches after this many pages (default 400)",
+    )
+    crawl.add_argument(
+        "--max-time",
+        type=float,
+        default=0,
+        help="Wall-clock budget in seconds; 0 means no time limit",
+    )
     crawl.add_argument("--output", "-o")
     crawl.add_argument(
         "--format",
@@ -404,25 +420,41 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _apply_rc(parser: argparse.ArgumentParser, rc: dict) -> None:
+    updates: dict = {}
+    if rc.get("mode"):
+        updates["mode"] = rc["mode"]
+    if "depth" in rc:
+        updates["depth"] = int(rc["depth"])
+    if "max_pages" in rc:
+        updates["max_pages"] = int(rc["max_pages"])
+    if "max_time" in rc:
+        updates["max_time"] = float(rc["max_time"])
+    if rc.get("ignore_robots"):
+        updates["ignore_robots"] = True
+    if rc.get("allow_external"):
+        updates["allow_external"] = True
+    if rc.get("format"):
+        updates["format"] = rc["format"]
+    if rc.get("cookie_jar"):
+        updates["cookie_jar"] = rc["cookie_jar"]
+    if rc.get("storage_state"):
+        updates["storage_state"] = rc["storage_state"]
+    if rc.get("login_recipe"):
+        updates["login_recipe"] = rc["login_recipe"]
+    if not updates:
+        return
+    parser.set_defaults(**updates)
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for sub in action.choices.values():
+                sub.set_defaults(**updates)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     rc = load_rc()
-    if rc.get("mode"):
-        parser.set_defaults(mode=rc["mode"])
-    if "depth" in rc:
-        parser.set_defaults(depth=int(rc["depth"]))
-    if rc.get("ignore_robots"):
-        parser.set_defaults(ignore_robots=True)
-    if rc.get("allow_external"):
-        parser.set_defaults(allow_external=True)
-    if rc.get("format"):
-        parser.set_defaults(format=rc["format"])
-    if rc.get("cookie_jar"):
-        parser.set_defaults(cookie_jar=rc["cookie_jar"])
-    if rc.get("storage_state"):
-        parser.set_defaults(storage_state=rc["storage_state"])
-    if rc.get("login_recipe"):
-        parser.set_defaults(login_recipe=rc["login_recipe"])
+    _apply_rc(parser, rc)
     args = parser.parse_args(argv)
     if getattr(args, "version", False) and not getattr(args, "command", None):
         raise SystemExit(cmd_version())

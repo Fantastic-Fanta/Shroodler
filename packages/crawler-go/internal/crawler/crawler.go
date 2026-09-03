@@ -20,6 +20,7 @@ type Config struct {
 	IgnoreRobots  bool
 	AllowExternal bool
 	MaxPages      int
+	MaxTime       time.Duration // 0 unbounded
 	MaxRedirects  int
 	Progress      func(pages int, current string)
 	Proxy         string
@@ -66,6 +67,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	t0 := time.Now()
 	nreq := 0
 	jar, _ := cookiejar.New(nil)
+	stopped := "complete"
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 		Jar:     jar,
@@ -97,7 +99,9 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		runLogin(client, *cfg.LoginRecipe, start)
 	}
 
-	fetchPage := func(u string) fetchResult { return fetchRetry(client, u, "") }
+	fetchPage := func(u string) fetchResult {
+		return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
+	}
 	if mode == "headless" {
 		hsCookies := append([]SeedCookie{}, cfg.Cookies...)
 		if u, err := url.Parse(start); err == nil {
@@ -156,7 +160,11 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	var corsCandidates []string
 	rules := extractors.LoadSecretRules()
 
-	for len(queue) > 0 && len(pages) < cfg.MaxPages {
+	for len(queue) > 0 {
+		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
+			stopped = hit
+			break
+		}
 		it := queue[0]
 		queue = queue[1:]
 		key := urls.CanonicalKey(it.u)
@@ -170,12 +178,18 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		if fam != "" && family[fam] >= 8 {
 			continue
 		}
+		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
+			stopped = hit
+			break
+		}
 		seen[key] = true
 		if fam != "" {
 			family[fam]++
 		}
 		res := fetchPage(it.u)
-		page, f, eps := pageFrom(res, rules, func(u string) fetchResult { return fetchRetry(client, u, "") })
+		page, f, eps := pageFrom(res, rules, func(u string) fetchResult {
+			return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
+		})
 		pages = append(pages, page)
 		findings = append(findings, f...)
 		endpoints = append(endpoints, eps...)
@@ -232,12 +246,18 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 
 	root := strings.TrimRight(origin(start), "/")
 	for _, p := range extractors.LoadCommonPaths() {
+		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
+			if stopped == "complete" {
+				stopped = hit
+			}
+			break
+		}
 		u := root + p
 		key := urls.CanonicalKey(u)
 		if seen[key] {
 			continue
 		}
-		res := fetchRetry(client, u, "")
+		res := fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
 		if res.Status != 200 {
 			continue
 		}
@@ -253,12 +273,18 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		discovered = append(discovered, urls.PathOf(p.URL))
 	}
 	for _, p := range extractors.MutationPaths(discovered) {
+		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
+			if stopped == "complete" {
+				stopped = hit
+			}
+			break
+		}
 		u := root + p
 		key := urls.CanonicalKey(u)
 		if seen[key] {
 			continue
 		}
-		res := fetchRetry(client, u, "")
+		res := fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
 		if res.Status != 200 {
 			continue
 		}
@@ -280,9 +306,10 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		Findings:       dedupeF(findings),
 		JSEndpoints:    endpoints,
 		Stats: &models.CrawlStats{
-			PagesCrawled: len(pages),
-			Requests:     nreq,
-			ElapsedMs:    time.Since(t0).Milliseconds(),
+			PagesCrawled:  len(pages),
+			Requests:      nreq,
+			ElapsedMs:     time.Since(t0).Milliseconds(),
+			StoppedReason: stopped,
 		},
 	}, nil
 }
@@ -346,7 +373,12 @@ func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchRe
 	return page, all, eps
 }
 
-func fetchRetry(client *http.Client, raw, cookie string) fetchResult {
+func fetchRetry(client *http.Client, raw, cookie string, timeout time.Duration) fetchResult {
+	if timeout > 0 {
+		prev := client.Timeout
+		client.Timeout = timeout
+		defer func() { client.Timeout = prev }()
+	}
 	var last fetchResult
 	for i := 0; i < 4; i++ {
 		last = doGet(client, raw, cookie)
@@ -438,6 +470,31 @@ func doRequest(client *http.Client, method, raw, cookie string, extra map[string
 func get(client *http.Client, raw string) (string, int, error) {
 	r := doGet(client, raw, "")
 	return r.Body, r.Status, nil
+}
+
+func budgetHit(cfg Config, t0 time.Time, nPages int) string {
+	if cfg.MaxTime > 0 && time.Since(t0) >= cfg.MaxTime {
+		return "max-time"
+	}
+	if nPages >= cfg.MaxPages {
+		return "max-pages"
+	}
+	return ""
+}
+
+func remainingTimeout(t0 time.Time, maxTime time.Duration) time.Duration {
+	const fallback = 10 * time.Second
+	if maxTime <= 0 {
+		return fallback
+	}
+	left := maxTime - time.Since(t0)
+	if left <= 0 {
+		return time.Millisecond
+	}
+	if left < fallback {
+		return left
+	}
+	return fallback
 }
 
 func header(h map[string]string, key string) string {

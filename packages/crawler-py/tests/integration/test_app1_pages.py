@@ -45,3 +45,16 @@ def test_app1_page_discovery():
     paths = {urlparse(p.url).path for p in result.pages}
     assert "/internal-only" not in paths
     assert "/sitemap-only" in paths
+
+
+def test_app1_max_pages_bounds_count():
+    one = crawl_url(APP1, depth=5, max_pages=1, ignore_robots=True)
+    assert len(one.pages) <= 1
+    assert len(one.pages) == 1
+    assert one.stats is not None
+    assert one.stats.stopped_reason == "max-pages"
+    validate_crawl(one.to_dict())
+    two = crawl_url(APP1, depth=5, max_pages=2, ignore_robots=True)
+    assert len(two.pages) <= 2
+    assert len(two.pages) == 2
+    assert two.stats.stopped_reason == "max-pages"

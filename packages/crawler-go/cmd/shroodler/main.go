@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/shroodler/crawler-go/internal/crawler"
 	"github.com/shroodler/crawler-go/internal/lab"
@@ -18,15 +19,17 @@ import (
 )
 
 type rcFile struct {
-	Mode          string `yaml:"mode"`
-	Depth         *int   `yaml:"depth"`
-	IgnoreRobots  bool   `yaml:"ignore_robots"`
-	AllowExternal bool   `yaml:"allow_external"`
-	Format        string `yaml:"format"`
-	Header        any    `yaml:"header"`
-	Cookie        any    `yaml:"cookie"`
-	CookieJar     string `yaml:"cookie_jar"`
-	LoginRecipe   string `yaml:"login_recipe"`
+	Mode          string   `yaml:"mode"`
+	Depth         *int     `yaml:"depth"`
+	MaxPages      *int     `yaml:"max_pages"`
+	MaxTime       *float64 `yaml:"max_time"`
+	IgnoreRobots  bool     `yaml:"ignore_robots"`
+	AllowExternal bool     `yaml:"allow_external"`
+	Format        string   `yaml:"format"`
+	Header        any      `yaml:"header"`
+	Cookie        any      `yaml:"cookie"`
+	CookieJar     string   `yaml:"cookie_jar"`
+	LoginRecipe   string   `yaml:"login_recipe"`
 }
 
 func asStringList(v any) []string {
@@ -105,7 +108,7 @@ func run(args []string) int {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "Shroodler Go CLI — crawl, report, diff, payload-test, or drive the proxy.")
-	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
+	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--max-pages N] [--max-time SECONDS] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler ingest-sessions <sessions.jsonl> [--target url] [--output out.json] [--allow-external]")
 	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit] [--output out] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler diff <findings.json> <expected_findings.json> [--pages-only] [--gate] [--suppressions FILE] [--format text|junit|sarif]")
@@ -174,6 +177,12 @@ func cmdCrawl(args []string) int {
 	if rc.Mode != "" {
 		cfg.Mode = rc.Mode
 	}
+	if rc.MaxPages != nil {
+		cfg.MaxPages = *rc.MaxPages
+	}
+	if rc.MaxTime != nil && *rc.MaxTime > 0 {
+		cfg.MaxTime = time.Duration(*rc.MaxTime * float64(time.Second))
+	}
 	cfg.Headers = append(cfg.Headers, asStringList(rc.Header)...)
 	for _, raw := range asStringList(rc.Cookie) {
 		if c, ok := crawler.ParseCookiePair(raw); ok {
@@ -202,6 +211,16 @@ func cmdCrawl(args []string) int {
 		case "--depth":
 			i++
 			fmt.Sscanf(args[i], "%d", &cfg.Depth)
+		case "--max-pages":
+			i++
+			fmt.Sscanf(args[i], "%d", &cfg.MaxPages)
+		case "--max-time":
+			i++
+			var sec float64
+			fmt.Sscanf(args[i], "%f", &sec)
+			if sec > 0 {
+				cfg.MaxTime = time.Duration(sec * float64(time.Second))
+			}
 		case "--output", "-o":
 			i++
 			outPath = args[i]

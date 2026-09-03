@@ -226,7 +226,8 @@ def test_main_systemexit_ok(tmp_path):
 def test_load_rc_file(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     (tmp_path / ".shroodlerrc").write_text(
-        "mode: static\ndepth: 2\nheader:\n  - 'X-Lab-Auth: open'\ncookie:\n  - lab_auth=open\n",
+        "mode: static\ndepth: 2\nmax_pages: 3\nmax_time: 2.5\n"
+        "header:\n  - 'X-Lab-Auth: open'\ncookie:\n  - lab_auth=open\n",
         encoding="utf-8",
     )
     monkeypatch.setattr("shroodler.config.Path.home", lambda: tmp_path)
@@ -234,6 +235,16 @@ def test_load_rc_file(tmp_path, monkeypatch):
     assert rc["mode"] == "static"
     assert rc["header"] == ["X-Lab-Auth: open"]
     assert rc["cookie"] == ["lab_auth=open"]
+    assert rc["max_pages"] == 3
+    assert rc["max_time"] == 2.5
+    from shroodler.cli import _apply_rc, build_parser
+
+    parser = build_parser()
+    _apply_rc(parser, rc)
+    args = parser.parse_args(["crawl", "http://127.0.0.1/"])
+    assert args.max_pages == 3
+    assert args.max_time == 2.5
+    assert args.depth == 2
 
 
 def test_diff_documents_forms_and_unexpected():

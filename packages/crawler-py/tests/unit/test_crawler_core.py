@@ -277,6 +277,57 @@ def test_output_validates_against_schema(fx):
     assert stats["pages_crawled"] >= 1
     assert stats["requests"] >= 1
     assert stats["elapsed_ms"] >= 0
+    assert stats["stopped_reason"] == "complete"
+
+
+def test_max_pages_bounds_recorded_count(fx):
+    fx.html("/", '<a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>')
+    fx.html("/a", "a")
+    fx.html("/b", "b")
+    fx.html("/c", "c")
+    one = crawl_url(fx.origin + "/", depth=5, max_pages=1)
+    assert len(one.pages) == 1
+    assert one.stats is not None
+    assert one.stats.stopped_reason == "max-pages"
+    assert one.stats.pages_crawled == 1
+    validate_crawl(one.to_dict())
+    two = crawl_url(fx.origin + "/", depth=5, max_pages=2)
+    assert len(two.pages) == 2
+    assert two.stats.stopped_reason == "max-pages"
+    assert two.stats.pages_crawled == 2
+
+
+def test_max_pages_does_not_override_depth(fx):
+    fx.html("/", '<a href="/a">a</a>')
+    fx.html("/a", '<a href="/b">b</a>')
+    fx.html("/b", "b")
+    result = crawl_url(fx.origin + "/", depth=0, max_pages=50)
+    assert _paths(result) == {"/"}
+    assert result.stats is not None
+    assert result.stats.stopped_reason == "complete"
+
+
+def test_max_time_stops_without_hang(fx):
+    import time
+
+    def slow_chain(req: str):
+        from urllib.parse import urlparse
+
+        time.sleep(0.25)
+        rest = urlparse(req).path.strip("/").split("/")[-1]
+        n = int(rest)
+        body = f'<a href="/q/{n + 1}">n</a>'
+        return 200, {"Content-Type": "text/html; charset=utf-8"}, body.encode()
+
+    fx.html("/", '<a href="/q/1">1</a>')
+    fx.prefix("/q/", slow_chain)
+    start = time.monotonic()
+    result = crawl_url(fx.origin + "/", depth=None, max_pages=400, max_time=0.4)
+    elapsed = time.monotonic() - start
+    assert elapsed < 3.0
+    assert result.stats is not None
+    assert result.stats.stopped_reason == "max-time"
+    validate_crawl(result.to_dict())
 
 
 def test_refuses_external_without_flag():

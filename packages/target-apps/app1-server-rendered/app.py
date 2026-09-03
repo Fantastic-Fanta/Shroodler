@@ -6,6 +6,7 @@ import traceback
 
 from flask import (
     Flask,
+    jsonify,
     make_response,
     redirect,
     render_template,
@@ -202,6 +203,42 @@ def sitemap_xml():
         "</urlset>\n"
     )
     return xml, 200, {"Content-Type": "application/xml"}
+
+
+@app.route("/graphql-hidden")
+def graphql_hidden():
+    """Unlinked page: GraphQL schema mentions HiddenNote, HTML never links here."""
+    return "<h1>hidden note</h1><p>Only reachable if you already know the path.</p>"
+
+
+@app.route("/graphql", methods=["GET", "POST"])
+def graphql():
+    """Tiny GraphQL fixture: __typename + introspection. Not linked from HTML."""
+    query = ""
+    if request.method == "POST":
+        payload = request.get_json(silent=True) or {}
+        if isinstance(payload, dict):
+            query = str(payload.get("query") or "")
+    if not query:
+        query = request.args.get("query") or ""
+    if "__schema" in query:
+        return jsonify(
+            {
+                "data": {
+                    "__schema": {
+                        "types": [
+                            {"name": "Query"},
+                            {"name": "String"},
+                            {"name": "Boolean"},
+                            {"name": "HiddenNote"},
+                        ]
+                    }
+                }
+            }
+        )
+    if "__typename" in query:
+        return jsonify({"data": {"__typename": "Query"}})
+    return jsonify({"errors": [{"message": "unsupported query"}]}), 200
 
 
 @app.route("/robots.txt")

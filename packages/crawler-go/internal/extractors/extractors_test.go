@@ -3,6 +3,8 @@ package extractors
 import (
 	"strings"
 	"testing"
+
+	"github.com/shroodler/crawler-go/internal/models"
 )
 
 func TestExtractLinksAndForms(t *testing.T) {
@@ -106,6 +108,15 @@ func TestHeadersCookiesSecretsJS(t *testing.T) {
 		t.Fatal("hash")
 	}
 	_ = Redact("supersecretvalue")
+}
+
+func findingHas(fs []models.Finding, id string) bool {
+	for _, f := range fs {
+		if f.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 func TestCSPHeaderFindings(t *testing.T) {

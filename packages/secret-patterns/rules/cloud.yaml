@@ -4,7 +4,7 @@
   severity: high
   description: GitHub personal access token
 - id: github-fine-grained-pat
-  pattern: 'github_pat_[A-Za-z0-9_]{20,}'
+  pattern: 'github_pat_[A-Za-z0-9]{22}_[A-Za-z0-9]{59}'
   severity: high
   description: GitHub fine-grained personal access token
 - id: npm-access-token
@@ -31,3 +31,7 @@
   pattern: 'sk-proj-[A-Za-z0-9_-]{20,}'
   severity: high
   description: OpenAI project API key
+- id: azure-storage-account-key
+  pattern: '(?i)(?:AccountKey|SharedAccessKey)\s*[=:]\s*["'']?[A-Za-z0-9+/=]{88}'
+  severity: high
+  description: Azure storage account key

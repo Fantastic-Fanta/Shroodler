@@ -143,6 +143,10 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			queue = append(queue, item{extra, 0})
 		}
 	}
+	openAPIBase := strings.TrimRight(origin(start), "/")
+	for _, p := range extractors.OpenAPIProbePaths {
+		queue = append(queue, item{openAPIBase + p, 0})
+	}
 	seen := map[string]bool{}
 	if !cfg.NoSitemap {
 		smPages, smDocs := discoverSitemapSeeds(client, start, robotsBody)
@@ -189,6 +193,9 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			family[fam]++
 		}
 		res := fetchPage(it.u)
+		if res.Status != 200 && extractors.IsOpenAPIProbePath(urls.PathOf(it.u)) {
+			continue
+		}
 		page, f, eps := pageFrom(res, rules, func(u string) fetchResult {
 			return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
 		})
@@ -212,6 +219,19 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			loc := resolve(res.URL, res.RedirectTo)
 			if urls.SameOrigin(loc, start) && !seen[urls.CanonicalKey(loc)] {
 				queue = append(queue, item{loc, it.depth})
+			}
+		}
+		if res.Status == 200 {
+			for _, p := range extractors.ParseOpenAPIPaths(res.Body) {
+				u := openAPIBase + p
+				if !urls.SameOrigin(u, start) || seen[urls.CanonicalKey(u)] {
+					continue
+				}
+				fam := extractors.PaginationFamily(u)
+				if fam != "" && family[fam] >= 8 {
+					continue
+				}
+				queue = append(queue, item{u, it.depth})
 			}
 		}
 		if cfg.Depth >= 0 && it.depth >= cfg.Depth {

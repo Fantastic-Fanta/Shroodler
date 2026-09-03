@@ -129,6 +129,24 @@ http
         "Access-Control-Allow-Methods": "GET, OPTIONS",
       });
     }
+    if (u.pathname === "/openapi.json") {
+      return send(
+        res,
+        200,
+        "application/json",
+        JSON.stringify({
+          openapi: "3.0.3",
+          info: { title: "app4 gateway", version: "1.0.0" },
+          paths: {
+            "/users": { get: { summary: "List users" } },
+            "/internal/inventory": { get: { summary: "Unlinked inventory" } },
+          },
+        }),
+      );
+    }
+    if (u.pathname === "/internal/inventory") {
+      return send(res, 200, "application/json", JSON.stringify({ items: ["widget-1"] }));
+    }
     send(res, 404, "text/plain", "not found");
   })
   .listen(gport, "0.0.0.0", () => console.log(`app4 gateway on ${gport}`));

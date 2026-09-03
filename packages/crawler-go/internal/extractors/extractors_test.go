@@ -282,6 +282,29 @@ func TestExtractJSWebSocketSSE(t *testing.T) {
 	}
 }
 
+func TestParseOpenAPISpec(t *testing.T) {
+	o3 := `{"openapi":"3.0.3","info":{"title":"d","version":"1"},"paths":{"/users":{},"/internal/inventory":{}}}`
+	got := map[string]bool{}
+	for _, p := range ParseOpenAPIPaths(o3) {
+		got[p] = true
+	}
+	if !got["/users"] || !got["/internal/inventory"] {
+		t.Fatalf("openapi3 %v", ParseOpenAPIPaths(o3))
+	}
+	s2 := `{"swagger":"2.0","paths":{"/v2/hidden":{}}}`
+	if len(ParseOpenAPIPaths(s2)) != 1 || ParseOpenAPIPaths(s2)[0] != "/v2/hidden" {
+		t.Fatalf("swagger2 %v", ParseOpenAPIPaths(s2))
+	}
+	if len(ParseOpenAPIPaths(`{"paths":{"/nope":{}},"name":"random"}`)) != 0 {
+		t.Fatal("non-spec")
+	}
+	yamlSpec := "openapi: '3.0.0'\ninfo:\n  title: y\n  version: '1'\npaths:\n  /from-yaml:\n    get: {}\n"
+	yp := ParseOpenAPIPaths(yamlSpec)
+	if len(yp) != 1 || yp[0] != "/from-yaml" {
+		t.Fatalf("yaml %v", yp)
+	}
+}
+
 func TestBackupSuffixesAreDataFiles(t *testing.T) {
 	suffixes := LoadBackupSuffixes()
 	if len(suffixes) == 0 {

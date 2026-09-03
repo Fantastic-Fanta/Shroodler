@@ -8,7 +8,9 @@
     "/api/cors-reflect",
     "/api/cors-star-creds",
     "/api/cors-star",
-    "/api/cors-locked"
+    "/api/cors-locked",
+    "/openapi.json",
+    "/internal/inventory"
   ],
   "expected_forms": {
     "/login": ["user", "password"]

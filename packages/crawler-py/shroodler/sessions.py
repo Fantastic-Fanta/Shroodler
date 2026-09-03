@@ -188,7 +188,7 @@ def ingest_sessions(
         inferred = "http://" + inferred
     if not allow_external and not is_loopback_or_local(inferred):
         raise ValueError(
-            "refusing to ingest non-local host; pass --allow-external for listed public fixtures"
+            "refusing to ingest non-local host; pass --allow-external to scan a remote target"
         )
 
     extra_findings = []

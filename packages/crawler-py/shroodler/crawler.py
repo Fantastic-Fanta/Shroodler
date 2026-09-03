@@ -137,7 +137,7 @@ class Crawler:
         stopped = "complete"
         if not self.allow_external and not is_loopback_or_local(start_url):
             raise ValueError(
-                "refusing to crawl non-local host; pass --allow-external for listed public fixtures"
+                "refusing to crawl non-local host; pass --allow-external to scan a remote target"
             )
         seed = start_url if "://" in start_url else "http://" + start_url
         origin_url = seed

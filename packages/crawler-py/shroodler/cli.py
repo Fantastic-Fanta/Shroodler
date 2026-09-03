@@ -239,12 +239,15 @@ def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="shroodler",
         description=(
-            "Shroodler command-line toolkit: crawl a local target, render reports, "
-            "diff baselines, run payload packs, or drive the intercepting proxy."
+            "Shroodler command-line toolkit: crawl a target, render reports, "
+            "diff baselines, run payload packs, or drive the intercepting proxy. "
+            "Local targets (127.0.0.1/localhost) are crawled by default; pass "
+            "--allow-external to scan a remote target you're authorized to test."
         ),
         epilog=(
             "Examples:\n"
             "  shroodler crawl http://127.0.0.1:8081 -o out.json\n"
+            "  shroodler crawl https://example.com --allow-external -o out.json\n"
             "  shroodler report out.json --format html -o out.html\n"
             "  shroodler payload out.json -o hits.json\n"
             "  shroodler proxy start --record /tmp/sess.jsonl\n"
@@ -286,7 +289,7 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument(
         "--allow-external",
         action="store_true",
-        help="Permit crawling listed public fixtures (off by default)",
+        help="Allow crawling a non-local target (any host outside 127.0.0.1/localhost); off by default",
     )
     crawl.add_argument(
         "--header",
@@ -387,7 +390,11 @@ def build_parser() -> argparse.ArgumentParser:
     ingest.add_argument("sessions")
     ingest.add_argument("--target", default=None)
     ingest.add_argument("--output", "-o")
-    ingest.add_argument("--allow-external", action="store_true")
+    ingest.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow ingesting sessions captured against a non-local target; off by default",
+    )
     ingest.set_defaults(func=cmd_ingest)
 
     payload = sub.add_parser(

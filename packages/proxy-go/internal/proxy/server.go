@@ -277,8 +277,8 @@ func (s *Server) handleConnect(c net.Conn, br *bufio.Reader, req *http.Request) 
 func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 	sess := s.newSession(req, https)
 	s.emit(map[string]any{"type": "session:new", "session": sess})
-	if s.pauseIf(sess, req, nil, "request") {
-		s.finish(sess, nil, []string{"dropped"})
+	if dropped, timedOut := s.pauseIf(sess, req, nil, "request"); dropped {
+		s.finish(sess, nil, dropTags(timedOut))
 		fmt.Fprintf(w, "HTTP/1.1 504 Gateway Timeout\r\nContent-Length: 0\r\n\r\n")
 		return
 	}
@@ -303,8 +303,8 @@ func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 		fmt.Fprintf(w, "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\n\r\n")
 		return
 	}
-	if s.pauseIf(sess, req, out, "response") {
-		s.finish(sess, out, []string{"dropped"})
+	if dropped, timedOut := s.pauseIf(sess, req, out, "response"); dropped {
+		s.finish(sess, out, dropTags(timedOut))
 		fmt.Fprintf(w, "HTTP/1.1 504 Gateway Timeout\r\nContent-Length: 0\r\n\r\n")
 		return
 	}
@@ -312,9 +312,9 @@ func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 	writeResp(w, out)
 }
 
-func (s *Server) pauseIf(sess *Session, req *http.Request, resp *HTTPMsg, stage string) bool {
+func (s *Server) pauseIf(sess *Session, req *http.Request, resp *HTTPMsg, stage string) (dropped bool, timedOut bool) {
 	if !s.matchBP(sess.Request.Method, sess.Request.URL, stage) {
-		return false
+		return false, false
 	}
 	ch := make(chan resume, 1)
 	s.mu.Lock()
@@ -331,12 +331,12 @@ func (s *Server) pauseIf(sess *Session, req *http.Request, resp *HTTPMsg, stage 
 		if !r.drop {
 			applyEdits(sess, req, resp, r.edits)
 		}
-		return r.drop
+		return r.drop, false
 	case <-timer.C:
 		s.mu.Lock()
 		delete(s.paused, sess.ID)
 		s.mu.Unlock()
-		return true
+		return true, true
 	}
 }
 
@@ -456,10 +456,17 @@ func (s *Server) newSession(req *http.Request, https bool) *Session {
 	return sess
 }
 
+func dropTags(timedOut bool) []string {
+	if timedOut {
+		return []string{"dropped", "breakpoint_timeout"}
+	}
+	return []string{"dropped"}
+}
+
 func (s *Server) finish(sess *Session, resp *HTTPMsg, tags []string) {
 	sess.FinishedAt = time.Now().UTC().Format(time.RFC3339Nano)
 	sess.Response = resp
-	sess.Tags = tags
+	sess.Tags = mergeTags(tags, autoTags(sess))
 	s.emit(map[string]any{"type": "session:complete", "session": sess})
 	if s.recordFile != nil {
 		b, _ := json.Marshal(sess)

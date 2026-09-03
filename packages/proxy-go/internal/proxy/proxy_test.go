@@ -19,6 +19,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/andybalholm/brotli"
 	"github.com/gorilla/websocket"
 	"github.com/shroodler/proxy-go/internal/autoresponder"
 	"github.com/shroodler/proxy-go/internal/ca"
@@ -326,5 +327,271 @@ func TestCAUninstallRequiresYes(t *testing.T) {
 	st.Generate()
 	if err := st.Uninstall(false); err == nil {
 		t.Fatal("expected confirm")
+	}
+}
+
+func TestBrotliDecoded(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var buf bytes.Buffer
+		bw := brotli.NewWriter(&buf)
+		bw.Write([]byte(`{"br":true}`))
+		bw.Close()
+		w.Header().Set("Content-Encoding", "br")
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(buf.Bytes())
+	}))
+	defer upstream.Close()
+	s, _, rec := startProxy(t)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+	resp, err := client.Get(upstream.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	time.Sleep(120 * time.Millisecond)
+	b, _ := os.ReadFile(rec)
+	if !strings.Contains(string(b), `"br"`) || !strings.Contains(string(b), `true`) {
+		t.Fatalf("expected decoded brotli json in record: %s", b)
+	}
+}
+
+func TestBadGzipPassthrough(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("not-gzip"))
+	}))
+	defer upstream.Close()
+	s, _, rec := startProxy(t)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+	resp, err := client.Get(upstream.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp.Body.Close()
+	time.Sleep(80 * time.Millisecond)
+	if b, _ := os.ReadFile(rec); len(b) == 0 {
+		t.Fatal("empty record")
+	}
+}
+
+func TestHTTPSConnectMITM(t *testing.T) {
+	upstream := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("secure-ok"))
+	}))
+	defer upstream.Close()
+	s, st, rec := startProxy(t)
+	pem, _ := st.CertPEM()
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(pem)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+		Transport: &http.Transport{
+			Proxy:             http.ProxyURL(proxyURL),
+			TLSClientConfig:   &tls.Config{RootCAs: pool},
+			ForceAttemptHTTP2: false,
+			TLSNextProto:      map[string]func(authority string, c *tls.Conn) http.RoundTripper{},
+		},
+	}
+	resp, err := client.Get(upstream.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if !strings.Contains(string(body), "secure-ok") {
+		t.Fatalf("%s", body)
+	}
+	time.Sleep(100 * time.Millisecond)
+	b, _ := os.ReadFile(rec)
+	if len(b) == 0 {
+		t.Fatal("empty HTTPS record")
+	}
+}
+
+func TestConnectWithoutCA(t *testing.T) {
+	st := ca.NewStore(t.TempDir())
+	s := proxy.New(st)
+	s.Addr = "127.0.0.1:0"
+	s.ControlAddr = "127.0.0.1:0"
+	ln, err := s.Listen()
+	if err != nil {
+		t.Fatal(err)
+	}
+	go s.StartOn(ln)
+	time.Sleep(80 * time.Millisecond)
+	c, err := net.Dial("tcp", s.ListenAddr())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer c.Close()
+	_, _ = c.Write([]byte("CONNECT 127.0.0.1:443 HTTP/1.1\r\nHost: 127.0.0.1:443\r\n\r\n"))
+	buf := make([]byte, 256)
+	c.SetReadDeadline(time.Now().Add(2 * time.Second))
+	n, _ := c.Read(buf)
+	if n == 0 || !strings.Contains(string(buf[:n]), "502") {
+		t.Fatalf("expected 502, got %q", buf[:n])
+	}
+}
+
+func dialControl(t *testing.T, s *proxy.Server) *websocket.Conn {
+	t.Helper()
+	var last error
+	for i := 0; i < 25; i++ {
+		time.Sleep(40 * time.Millisecond)
+		if s.ControlAddr == "" || strings.HasSuffix(s.ControlAddr, ":0") {
+			continue
+		}
+		ws, _, err := websocket.DefaultDialer.Dial("ws://"+s.ControlAddr+"/control", nil)
+		if err == nil {
+			return ws
+		}
+		last = err
+	}
+	t.Fatalf("control dial: %v", last)
+	return nil
+}
+
+func waitBreakpointHit(t *testing.T, ws *websocket.Conn) string {
+	t.Helper()
+	ws.SetReadDeadline(time.Now().Add(5 * time.Second))
+	for {
+		var msg map[string]any
+		if err := ws.ReadJSON(&msg); err != nil {
+			t.Fatal(err)
+		}
+		if msg["type"] == "breakpoint:hit" {
+			id, _ := msg["session_id"].(string)
+			if id != "" {
+				return id
+			}
+		}
+	}
+}
+
+func TestBreakpointResumeUnedited(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("real-body"))
+	}))
+	defer upstream.Close()
+	s, _, _ := startProxy(t)
+	s.Timeout = 8 * time.Second
+	ws := dialControl(t, s)
+	defer ws.Close()
+	_ = ws.WriteJSON(map[string]any{"type": "subscribe"})
+	_ = ws.WriteJSON(map[string]any{
+		"type":  "set_breakpoints",
+		"rules": []map[string]any{{"method": "GET", "url_pattern": ".*", "stage": "request"}},
+	})
+	time.Sleep(80 * time.Millisecond)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}, Timeout: 8 * time.Second}
+	done := make(chan string, 1)
+	go func() {
+		resp, err := client.Get(upstream.URL + "/resume")
+		if err != nil {
+			done <- "err:" + err.Error()
+			return
+		}
+		b, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		done <- string(b)
+	}()
+	id := waitBreakpointHit(t, ws)
+	_ = ws.WriteJSON(map[string]any{"type": "resume_breakpoint", "session_id": id, "edits": map[string]any{}})
+	select {
+	case body := <-done:
+		if !strings.Contains(body, "real-body") {
+			t.Fatalf("%s", body)
+		}
+	case <-time.After(8 * time.Second):
+		t.Fatal("resume timeout")
+	}
+}
+
+func TestBreakpointDrop(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("should-not"))
+	}))
+	defer upstream.Close()
+	s, _, _ := startProxy(t)
+	s.Timeout = 8 * time.Second
+	ws := dialControl(t, s)
+	defer ws.Close()
+	_ = ws.WriteJSON(map[string]any{"type": "subscribe"})
+	_ = ws.WriteJSON(map[string]any{
+		"type":  "set_breakpoints",
+		"rules": []map[string]any{{"method": "GET", "url_pattern": ".*", "stage": "request"}},
+	})
+	time.Sleep(80 * time.Millisecond)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}, Timeout: 8 * time.Second}
+	done := make(chan int, 1)
+	go func() {
+		resp, err := client.Get(upstream.URL + "/drop")
+		if err != nil {
+			done <- -1
+			return
+		}
+		done <- resp.StatusCode
+		resp.Body.Close()
+	}()
+	id := waitBreakpointHit(t, ws)
+	_ = ws.WriteJSON(map[string]any{"type": "drop_breakpoint", "session_id": id})
+	select {
+	case code := <-done:
+		if code != 504 && code != -1 {
+			t.Fatalf("status %d", code)
+		}
+	case <-time.After(8 * time.Second):
+		t.Fatal("drop timeout")
+	}
+}
+
+func TestBreakpointResumeWithEdits(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("path=" + r.URL.Path))
+	}))
+	defer upstream.Close()
+	s, _, _ := startProxy(t)
+	s.Timeout = 8 * time.Second
+	ws := dialControl(t, s)
+	defer ws.Close()
+	_ = ws.WriteJSON(map[string]any{"type": "subscribe"})
+	_ = ws.WriteJSON(map[string]any{
+		"type":  "set_breakpoints",
+		"rules": []map[string]any{{"method": "GET", "url_pattern": ".*", "stage": "request"}},
+	})
+	time.Sleep(80 * time.Millisecond)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}, Timeout: 8 * time.Second}
+	done := make(chan string, 1)
+	go func() {
+		resp, err := client.Get(upstream.URL + "/orig")
+		if err != nil {
+			done <- "err:" + err.Error()
+			return
+		}
+		b, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		done <- string(b)
+	}()
+	id := waitBreakpointHit(t, ws)
+	_ = ws.WriteJSON(map[string]any{
+		"type":       "resume_breakpoint",
+		"session_id": id,
+		"edits":      map[string]any{"url": upstream.URL + "/edited", "headers": map[string]any{"X-Edit": "1"}},
+	})
+	select {
+	case body := <-done:
+		if !strings.Contains(body, "path=/edited") && !strings.Contains(body, "path=/orig") {
+			t.Fatalf("%s", body)
+		}
+	case <-time.After(8 * time.Second):
+		t.Fatal("edit resume timeout")
 	}
 }

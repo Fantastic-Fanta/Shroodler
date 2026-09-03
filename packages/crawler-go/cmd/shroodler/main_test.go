@@ -145,6 +145,31 @@ func TestRunUsage(t *testing.T) {
 	if run([]string{"nope"}) != 2 {
 		t.Fatal("unknown")
 	}
+	if run([]string{"version"}) != 0 {
+		t.Fatal("version")
+	}
+	if run([]string{"-h"}) != 0 {
+		t.Fatal("help")
+	}
+}
+
+func TestCmdProxyMissingAndForward(t *testing.T) {
+	t.Setenv("SHROODLER_PROXY_BIN", filepath.Join(t.TempDir(), "missing"))
+	if cmdProxy(nil) != 1 {
+		t.Fatal("missing binary")
+	}
+	dir := t.TempDir()
+	script := filepath.Join(dir, "fake-proxy")
+	if err := os.WriteFile(script, []byte("#!/bin/sh\nexit 0\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chmod(script, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("SHROODLER_PROXY_BIN", script)
+	if cmdProxy([]string{"ca", "generate"}) != 0 {
+		t.Fatal("forward")
+	}
 }
 
 func TestCmdPayloadRefuseAndMissing(t *testing.T) {

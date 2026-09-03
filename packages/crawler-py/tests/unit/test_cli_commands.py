@@ -1,10 +1,19 @@
 from __future__ import annotations
 
 import argparse
+import json
 
 import pytest
 
-from shroodler.cli import cmd_crawl, cmd_diff, cmd_report, main
+from shroodler.cli import (
+    cmd_crawl,
+    cmd_diff,
+    cmd_payload,
+    cmd_proxy,
+    cmd_report,
+    find_proxy_bin,
+    main,
+)
 from shroodler.config import load_rc
 from shroodler.diffcmd import diff_documents, load_json
 from shroodler.report import write_report
@@ -139,6 +148,69 @@ def test_cmd_report_html_and_json(tmp_path, capsys):
         findings=str(docp), format="json", output=str(tmp_path / "x.json"), suppressions=None
     )
     assert cmd_report(ns) == 0
+
+
+def test_cmd_payload_empty_local(tmp_path):
+    crawl = tmp_path / "c.json"
+    crawl.write_text('{"target":"http://127.0.0.1:9/","pages":[]}', encoding="utf-8")
+    out = tmp_path / "p.json"
+    ns = argparse.Namespace(crawl_json=str(crawl), output=str(out), pack=[])
+    assert cmd_payload(ns) == 0
+    body = json.loads(out.read_text(encoding="utf-8"))
+    assert body["findings"] == []
+    assert body["target"] == "http://127.0.0.1:9/"
+
+
+def test_cmd_payload_refuses_external(tmp_path):
+    crawl = tmp_path / "c.json"
+    crawl.write_text('{"target":"https://example.com/","pages":[]}', encoding="utf-8")
+    ns = argparse.Namespace(crawl_json=str(crawl), output=None, pack=[])
+    with pytest.raises(ValueError, match="non-local"):
+        cmd_payload(ns)
+
+
+def test_cmd_proxy_missing_and_forward(tmp_path, monkeypatch, capfd):
+    monkeypatch.delenv("SHROODLER_PROXY_BIN", raising=False)
+    monkeypatch.setattr("shroodler.cli.find_proxy_bin", lambda: None)
+    assert cmd_proxy(argparse.Namespace(proxy_args=["start"])) == 1
+    assert "not found" in capfd.readouterr().err
+    script = tmp_path / "fake-proxy"
+    script.write_text("#!/bin/sh\necho proxy-ok \"$@\"\n", encoding="utf-8")
+    script.chmod(0o755)
+    monkeypatch.setattr("shroodler.cli.find_proxy_bin", lambda: script)
+    assert cmd_proxy(argparse.Namespace(proxy_args=["ca", "generate"])) == 0
+    assert "proxy-ok ca generate" in capfd.readouterr().out
+
+
+def test_find_proxy_bin_env(tmp_path, monkeypatch):
+    fake = tmp_path / "shroodler-proxy"
+    fake.write_text("", encoding="utf-8")
+    monkeypatch.setenv("SHROODLER_PROXY_BIN", str(fake))
+    assert find_proxy_bin() == fake
+    monkeypatch.setenv("SHROODLER_PROXY_BIN", str(tmp_path / "missing"))
+    assert find_proxy_bin() is None
+
+
+def test_cmd_payload_missing_tester_dir(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHROODLER_PAYLOAD_DIR", str(tmp_path / "nope"))
+    crawl = tmp_path / "c.json"
+    crawl.write_text('{"target":"http://127.0.0.1:9/","pages":[]}', encoding="utf-8")
+    ns = argparse.Namespace(crawl_json=str(crawl), output=None, pack=[])
+    with pytest.raises(FileNotFoundError):
+        cmd_payload(ns)
+
+
+def test_main_version_and_no_command(capsys):
+    with pytest.raises(SystemExit) as ex:
+        main(["version"])
+    assert ex.value.code == 0
+    assert "shroodler 0.1.0" in capsys.readouterr().out
+    with pytest.raises(SystemExit) as ex:
+        main(["-V"])
+    assert ex.value.code == 0
+    with pytest.raises(SystemExit) as ex:
+        main([])
+    assert ex.value.code == 2
 
 
 def test_main_systemexit_ok(tmp_path):

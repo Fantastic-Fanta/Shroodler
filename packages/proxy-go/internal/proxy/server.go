@@ -14,6 +14,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/andybalholm/brotli"
 	"github.com/gorilla/websocket"
 	"github.com/shroodler/proxy-go/internal/ca"
 )
@@ -246,6 +248,9 @@ func (s *Server) handleConn(c net.Conn) {
 
 func (s *Server) handleConnect(c net.Conn, br *bufio.Reader, req *http.Request) {
 	host := req.Host
+	if host == "" {
+		host = req.URL.Host
+	}
 	leaf, err := s.CA.Leaf(host)
 	if err != nil {
 		fmt.Fprintf(c, "HTTP/1.1 502 Bad Gateway\r\n\r\nCA error: %v", err)
@@ -272,8 +277,8 @@ func (s *Server) handleConnect(c net.Conn, br *bufio.Reader, req *http.Request) 
 func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 	sess := s.newSession(req, https)
 	s.emit(map[string]any{"type": "session:new", "session": sess})
-	if s.pauseIf(sess, "request") {
-		s.finish(sess, nil, []string{"dropped", "breakpoint_timeout"})
+	if s.pauseIf(sess, req, nil, "request") {
+		s.finish(sess, nil, []string{"dropped"})
 		fmt.Fprintf(w, "HTTP/1.1 504 Gateway Timeout\r\nContent-Length: 0\r\n\r\n")
 		return
 	}
@@ -298,8 +303,8 @@ func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 		fmt.Fprintf(w, "HTTP/1.1 502 Bad Gateway\r\nContent-Length: 0\r\n\r\n")
 		return
 	}
-	if s.pauseIf(sess, "response") {
-		s.finish(sess, out, []string{"dropped", "breakpoint_timeout"})
+	if s.pauseIf(sess, req, out, "response") {
+		s.finish(sess, out, []string{"dropped"})
 		fmt.Fprintf(w, "HTTP/1.1 504 Gateway Timeout\r\nContent-Length: 0\r\n\r\n")
 		return
 	}
@@ -307,7 +312,7 @@ func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 	writeResp(w, out)
 }
 
-func (s *Server) pauseIf(sess *Session, stage string) bool {
+func (s *Server) pauseIf(sess *Session, req *http.Request, resp *HTTPMsg, stage string) bool {
 	if !s.matchBP(sess.Request.Method, sess.Request.URL, stage) {
 		return false
 	}
@@ -323,12 +328,61 @@ func (s *Server) pauseIf(sess *Session, stage string) bool {
 		s.mu.Lock()
 		delete(s.paused, sess.ID)
 		s.mu.Unlock()
+		if !r.drop {
+			applyEdits(sess, req, resp, r.edits)
+		}
 		return r.drop
 	case <-timer.C:
 		s.mu.Lock()
 		delete(s.paused, sess.ID)
 		s.mu.Unlock()
 		return true
+	}
+}
+
+func applyEdits(sess *Session, req *http.Request, resp *HTTPMsg, edits map[string]any) {
+	if edits == nil {
+		return
+	}
+	if m, ok := edits["method"].(string); ok && req != nil {
+		req.Method = m
+		sess.Request.Method = m
+	}
+	if u, ok := edits["url"].(string); ok && req != nil {
+		parsed, err := url.Parse(u)
+		if err == nil {
+			req.URL = parsed
+			req.Host = parsed.Host
+			sess.Request.URL = u
+		}
+	}
+	if body, ok := edits["body"].(string); ok && req != nil {
+		req.Body = io.NopCloser(strings.NewReader(body))
+		req.ContentLength = int64(len(body))
+		sess.Request.Body = Body{Encoding: "utf8", Content: body}
+	}
+	if headers, ok := edits["headers"].(map[string]any); ok {
+		if req != nil && sess.Request.Headers == nil {
+			sess.Request.Headers = map[string]string{}
+		}
+		for k, v := range headers {
+			if req != nil {
+				req.Header.Set(k, fmt.Sprint(v))
+			}
+			sess.Request.Headers[k] = fmt.Sprint(v)
+			if resp != nil {
+				if resp.Headers == nil {
+					resp.Headers = map[string]string{}
+				}
+				resp.Headers[k] = fmt.Sprint(v)
+			}
+		}
+	}
+	if status, ok := edits["status"].(float64); ok && resp != nil {
+		resp.StatusCode = int(status)
+	}
+	if rbody, ok := edits["response_body"].(string); ok && resp != nil {
+		resp.Body = Body{Encoding: "utf8", Content: rbody}
 	}
 }
 
@@ -543,20 +597,32 @@ func encodeBody(b []byte, ctype string) Body {
 }
 
 func decodeEnc(b []byte, enc string) []byte {
-	switch strings.ToLower(enc) {
+	switch strings.ToLower(strings.TrimSpace(enc)) {
 	case "gzip":
 		r, err := gzip.NewReader(bytes.NewReader(b))
 		if err != nil {
 			return b
 		}
-		out, _ := io.ReadAll(r)
+		out, err := io.ReadAll(r)
+		if err != nil {
+			return b
+		}
 		return out
 	case "deflate":
 		r, err := zlib.NewReader(bytes.NewReader(b))
 		if err != nil {
 			return b
 		}
-		out, _ := io.ReadAll(r)
+		out, err := io.ReadAll(r)
+		if err != nil {
+			return b
+		}
+		return out
+	case "br":
+		out, err := io.ReadAll(brotli.NewReader(bytes.NewReader(b)))
+		if err != nil {
+			return b
+		}
 		return out
 	default:
 		return b

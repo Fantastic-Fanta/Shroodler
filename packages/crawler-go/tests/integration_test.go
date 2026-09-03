@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"github.com/shroodler/crawler-go/internal/crawler"
@@ -76,6 +78,46 @@ func TestApp1LabGatedAuth(t *testing.T) {
 	}
 }
 
+func TestApp1LoginRecipeProfile(t *testing.T) {
+	resp, err := http.Get("http://127.0.0.1:8081/")
+	if err != nil {
+		t.Skip("app1 not running")
+	}
+	resp.Body.Close()
+	recipe, err := crawler.LoadLoginRecipe(filepath.Join(repoRoot(), "packages", "target-apps", "app1-server-rendered", "login-recipe.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	anon, err := crawler.Crawl("http://127.0.0.1:8081", crawler.Config{Depth: 3, IgnoreRobots: true, MaxPages: 80})
+	if err != nil {
+		t.Fatal(err)
+	}
+	authed, err := crawler.Crawl("http://127.0.0.1:8081", crawler.Config{
+		Depth: 3, IgnoreRobots: true, MaxPages: 80, LoginRecipe: recipe,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if pageHasPath(anon, "/profile") {
+		t.Fatal("anon crawl should not reach /profile")
+	}
+	if !pageHasPath(authed, "/profile") {
+		t.Fatal("login recipe should discover /profile")
+	}
+}
+
+func pageHasPath(res *models.CrawlResult, path string) bool {
+	if res == nil {
+		return false
+	}
+	for _, p := range res.Pages {
+		if urls.PathOf(p.URL) == path {
+			return true
+		}
+	}
+	return false
+}
+
 func pageHasField(res *models.CrawlResult, name string) bool {
 	if res == nil {
 		return false
@@ -90,6 +132,14 @@ func pageHasField(res *models.CrawlResult, name string) bool {
 		}
 	}
 	return false
+}
+
+func repoRoot() string {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		return "."
+	}
+	return filepath.Clean(filepath.Join(filepath.Dir(file), "..", "..", ".."))
 }
 
 func TestApp3Bounded(t *testing.T) {

@@ -1,3 +1,3 @@
 # Report generator
 
-JSON → HTML/CSV. Implemented in Milestone 8.
+JSON → HTML/CSV/SARIF/JUnit. HTML/CSV from Milestone 8; SARIF 2.1.0 and JUnit XML for CI.

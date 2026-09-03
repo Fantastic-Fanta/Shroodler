@@ -36,5 +36,8 @@ def test_static_underreports_headless_finds_spa_form():
     assert "/account" in headless_paths or any(
         field.name == "email" for form in headless_forms for field in form.fields
     )
+    assert "/billing" in headless_paths
+    assert any(field.name == "plan" for form in headless_forms for field in form.fields)
+    assert not any(field.name == "plan" for form in static_forms for field in form.fields)
     assert len(headless_forms) > len(static_forms)
     assert static_paths  # static still sees the shell

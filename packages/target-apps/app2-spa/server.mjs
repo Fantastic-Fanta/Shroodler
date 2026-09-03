@@ -34,7 +34,7 @@ const server = http.createServer((req, res) => {
   if (url.pathname === "/api/internal/debug") {
     return send(res, 200, { "Content-Type": "application/json" }, JSON.stringify({ debug: true }));
   }
-  if (url.pathname === "/api/save" || url.pathname === "/api/invite") {
+  if (url.pathname === "/api/save" || url.pathname === "/api/invite" || url.pathname === "/api/plan") {
     return send(res, 204, {}, "");
   }
 

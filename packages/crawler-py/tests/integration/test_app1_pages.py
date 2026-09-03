@@ -44,3 +44,4 @@ def test_app1_page_discovery():
 
     paths = {urlparse(p.url).path for p in result.pages}
     assert "/internal-only" not in paths
+    assert "/sitemap-only" in paths

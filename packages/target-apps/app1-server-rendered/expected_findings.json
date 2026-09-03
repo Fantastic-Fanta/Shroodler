@@ -1,6 +1,6 @@
 {
   "target_app": "app1-server-rendered",
-  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error"],
+  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only"],
   "expected_forms": {
     "/login": ["username", "password", "csrf_token"]
   },
@@ -9,11 +9,27 @@
     { "id": "insecure-cookie", "url": "/dashboard", "cookie": "session_id" },
     { "id": "verbose-error", "url": "/error" },
     { "id": "exposed-file", "url": "/.git/config" },
+    { "id": "exposed-file", "url": "/.git/HEAD" },
     { "id": "exposed-file", "url": "/backup.sql.bak" },
+    { "id": "exposed-file", "url": "/.well-known/security.txt" },
+    { "id": "exposed-file", "url": "/id_rsa" },
     { "id": "server-version-leak", "url": "/" },
-    { "id": "aws-access-key", "url": "/static/app.js" }
+    { "id": "aws-access-key", "url": "/static/app.js" },
+    { "id": "github-pat", "url": "/static/app.js" },
+    { "id": "npm-access-token", "url": "/static/app.js" },
+    { "id": "stripe-secret-key", "url": "/static/app.js" },
+    { "id": "google-api-key", "url": "/static/app.js" },
+    { "id": "openai-api-key", "url": "/static/app.js" },
+    { "id": "sendgrid-api-key", "url": "/static/app.js" },
+    { "id": "slack-webhook", "url": "/static/app.js" },
+    { "id": "generic-jwt", "url": "/static/app.js" },
+    { "id": "private-key-block", "url": "/id_rsa" }
   ],
   "expected_not_found": [
-    { "id": "leaked-secret", "url": "/about" }
+    { "id": "leaked-secret", "url": "/about" },
+    { "id": "github-pat", "url": "/about" },
+    { "id": "exposed-file", "url": "/.env" },
+    { "id": "exposed-file", "url": "/.DS_Store" },
+    { "id": "exposed-file", "url": "/wp-config.php.bak" }
   ]
 }

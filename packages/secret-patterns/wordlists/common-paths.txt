@@ -1,7 +1,10 @@
-/.git/config
+# Generic exposed-file probes. Loaded with every *.txt in this directory.
 /.env
 /backup.sql.bak
 /.DS_Store
 /wp-config.php.bak
 /server-status
 /config.php.bak
+/phpinfo.php
+/web.config
+/id_rsa

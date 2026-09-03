@@ -10,6 +10,13 @@ SLACK = "xoxb-1234567890-abcdefABCDE"
 BASIC = "https://user:pass@127.0.0.1:8081/db"
 DB = "postgres://app:secret@127.0.0.1:5432/app1"
 ENTROPY = "N9fQ2vL8xR4mK7pW3sT6yH1cB5dG0jA8"
+GITHUB = "ghp_0123456789abcdefghijklmnopqrstuvwxyz"
+NPM = "npm_0123456789abcdefghijklmnopqrstuvwxyz"
+STRIPE = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+GOOGLE = "AIzaSyD-app1-fixture-not-real-000000000"
+OPENAI = "sk-proj-app1FixtureNotARealOpenAIKey"
+SENDGRID = "SG.aaaaaaaaaaaaaaaaaaaaaa.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+HOOK = "https://hooks.slack.com/services/T00000000/B00000000/fixturetokenxx"
 
 
 def _ids(findings) -> set[str]:
@@ -27,6 +34,13 @@ def test_patterns_in_body_and_absent():
             BASIC,
             DB,
             ENTROPY,
+            GITHUB,
+            NPM,
+            STRIPE,
+            GOOGLE,
+            OPENAI,
+            SENDGRID,
+            HOOK,
         ]
     )
     found = _ids(scan_text(body, "http://127.0.0.1/page"))
@@ -37,6 +51,13 @@ def test_patterns_in_body_and_absent():
     assert "slack-token" in found
     assert "basic-auth-url" in found
     assert "database-connection-string" in found
+    assert "github-pat" in found
+    assert "npm-access-token" in found
+    assert "stripe-secret-key" in found
+    assert "google-api-key" in found
+    assert "openai-api-key" in found
+    assert "sendgrid-api-key" in found
+    assert "slack-webhook" in found
 
     js = f"const k = '{AWS}';"
     assert "aws-access-key" in _ids(scan_text(js, "http://127.0.0.1/static/app.js"))

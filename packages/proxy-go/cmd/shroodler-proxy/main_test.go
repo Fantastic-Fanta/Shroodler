@@ -64,4 +64,10 @@ func TestUsageAndUnknown(t *testing.T) {
 	if cmdReplay(nil) != 2 {
 		t.Fatal()
 	}
+	if run(nil) != 2 {
+		t.Fatal("empty")
+	}
+	if run([]string{"nope"}) != 2 {
+		t.Fatal("unknown")
+	}
 }

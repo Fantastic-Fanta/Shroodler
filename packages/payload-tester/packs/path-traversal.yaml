@@ -1,0 +1,8 @@
+- id: path-traversal-etc-passwd
+  finding_id: payload-path-traversal
+  payload: "../../etc/passwd"
+  severity: high
+  description: Path traversal payload returned a passwd-shaped body
+  match:
+    any:
+      - body_contains: "root:x:0:0"

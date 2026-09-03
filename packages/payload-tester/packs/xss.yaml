@@ -1,0 +1,8 @@
+- id: xss-script-tag
+  finding_id: payload-xss-reflect
+  payload: "<script>alert(1)</script>"
+  severity: medium
+  description: Payload reflected in response
+  match:
+    any:
+      - reflected: true

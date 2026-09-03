@@ -1,0 +1,90 @@
+/* Hallmark · pre-emit critique: P5 H5 E5 S5 R4 V4
+ * genre: modern-minimal · macrostructure: Workbench · tone: utilitarian
+ * theme: custom (instrument-panel) · paper oklch(16% 0.012 52) · accent oklch(74% 0.112 305)
+ * display: IBM Plex Sans · body: IBM Plex Sans · mono: IBM Plex Mono
+ * axes: dark / grotesk-sans / cool · nav: document-tabs · footer: status-bar
+ * designed-as-app · studied: yes · DNA-source: Fiddler layout (structure only)
+ */
+:root {
+  --color-paper: oklch(15% 0.012 52);
+  --color-paper-2: oklch(23% 0.015 52);
+  --color-paper-3: oklch(27% 0.016 52);
+  --color-sunken: oklch(11% 0.01 52);
+  --color-ink: oklch(93% 0.01 90);
+  --color-ink-2: oklch(70% 0.018 75);
+  --color-ink-3: oklch(56% 0.014 70);
+  --color-rule: oklch(30% 0.014 52);
+  --color-rule-2: oklch(26% 0.012 52);
+  --color-accent: oklch(74% 0.112 305);
+  --color-accent-strong: oklch(80% 0.11 305);
+  --color-accent-ink: oklch(18% 0.02 305);
+  --color-accent-dim: oklch(52% 0.08 305);
+  --color-accent-tint: oklch(74% 0.112 305 / 0.16);
+  --color-scrim: oklch(10% 0.01 52 / 0.62);
+  --color-focus: oklch(74% 0.112 305);
+  --color-ok: oklch(80% 0.1 165);
+  --color-ok-tint: oklch(80% 0.1 165 / 0.14);
+  --color-critical: oklch(68% 0.18 22);
+  --color-critical-tint: oklch(68% 0.18 22 / 0.14);
+  --color-high: oklch(74% 0.14 48);
+  --color-high-tint: oklch(74% 0.14 48 / 0.14);
+  --color-medium: oklch(82% 0.12 88);
+  --color-medium-tint: oklch(82% 0.12 88 / 0.14);
+  --color-low: oklch(72% 0.1 240);
+  --color-low-tint: oklch(72% 0.1 240 / 0.14);
+  --color-info: oklch(62% 0.012 70);
+  --color-info-tint: oklch(62% 0.012 70 / 0.14);
+
+  --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
+  --text-md: 0.8125rem;
+  --text-lg: 0.875rem;
+
+  --chrome-tab: 2rem;
+  --chrome-cmd: 2.75rem;
+  --chrome-status: 1.5rem;
+  --chrome-rail: 12rem;
+  --chrome-inspect: 15rem;
+  --row-h: 1.625rem;
+
+  --radius-control: 8px;
+  --radius-none: 0;
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+
+  --bg-base: var(--color-paper);
+  --bg-raised: var(--color-paper-2);
+  --bg-sunken: var(--color-sunken);
+  --bg-hover: var(--color-paper-3);
+  --border: var(--color-rule);
+  --text-primary: var(--color-ink);
+  --text-muted: var(--color-ink-2);
+  --accent: var(--color-accent);
+  --sev-critical: var(--color-critical);
+  --sev-high: var(--color-high);
+  --sev-medium: var(--color-medium);
+  --sev-low: var(--color-low);
+  --sev-info: var(--color-info);
+}

@@ -13,20 +13,24 @@ import (
 )
 
 func main() {
-	if len(os.Args) < 2 {
+	os.Exit(run(os.Args[1:]))
+}
+
+func run(args []string) int {
+	if len(args) < 1 {
 		usage()
-		os.Exit(2)
+		return 2
 	}
-	switch os.Args[1] {
+	switch args[0] {
 	case "ca":
-		os.Exit(cmdCA(os.Args[2:]))
+		return cmdCA(args[1:])
 	case "start":
-		os.Exit(cmdStart(os.Args[2:]))
+		return cmdStart(args[1:])
 	case "replay":
-		os.Exit(cmdReplay(os.Args[2:]))
+		return cmdReplay(args[1:])
 	default:
 		usage()
-		os.Exit(2)
+		return 2
 	}
 }
 

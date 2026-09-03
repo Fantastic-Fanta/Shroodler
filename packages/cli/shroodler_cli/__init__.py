@@ -1,1 +1,5 @@
-"""Shared CLI wrapper — implemented in Milestone 11."""
+"""Unified Shroodler CLI — crawl, report, payload-test, and proxy from one command."""
+
+from shroodler_cli.main import main
+
+__all__ = ["main"]

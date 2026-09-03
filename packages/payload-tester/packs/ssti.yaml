@@ -1,0 +1,8 @@
+- id: ssti-double-curly
+  finding_id: payload-ssti
+  payload: "{{7*7}}"
+  severity: high
+  description: Template expression was evaluated in the response
+  match:
+    any:
+      - body_contains: "computed:49"

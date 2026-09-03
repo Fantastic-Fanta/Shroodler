@@ -575,11 +575,16 @@
   {#if error}<div class="banner" role="alert">{error}</div>{/if}
   {#if caInstalled}
     <div class="ca-banner on" role="status">
+      <Icon name="shield" />
       <span>Shroodler root CA is trusted on this machine.</span>
       <button type="button" class="btn" on:click={() => openCa("uninstall")}>Uninstall</button>
     </div>
   {:else}
-    <div class="ca-banner off" role="status">CA not trusted</div>
+    <div class="ca-banner off" role="status">
+      <Icon name="shield-off" />
+      <span>HTTPS interception is unavailable — the Shroodler root CA is not trusted on this machine.</span>
+      <button type="button" class="btn btn-primary" on:click={() => openCa("install")}>Install CA</button>
+    </div>
   {/if}
 
   <div class="body">
@@ -597,7 +602,7 @@
       {/each}
     </nav>
     <aside class="rail">
-      <div class="rail-h">Scans</div>
+      <div class="rail-h"><span>Scans</span><span class="count-badge">{history.length}</span></div>
       <div class="rail-list">
         {#each history as h}
           <button class="rail-item" class:on={outputPath === h.id} on:click={() => openHistory(h)}>
@@ -606,7 +611,7 @@
             <span class="count-badge">{h.finding_count}</span>
           </button>
         {:else}
-          <div class="hint">No scans yet</div>
+          <div class="hint"><Icon name="folder" />No scans yet</div>
         {/each}
       </div>
     </aside>
@@ -654,7 +659,7 @@
                     </tr>
                   {:else}
                     <tr class="empty-row">
-                      <td colspan="2">Set a target in the bar and press Scan. Results open in Findings.</td>
+                      <td colspan="2"><Icon name="scan" />Set a target in the bar and press Scan. Results open in Findings.</td>
                     </tr>
                   {/if}
                 </tbody>
@@ -697,7 +702,7 @@
                       class:map-host={!row.segment}
                       on:click={() => pickNode(row)}
                     >
-                      <td class="mono {statusClass(row.page?.status_code)}">{row.page?.status_code || (row.segment ? "" : "·")}</td>
+                      <td>{#if row.page?.status_code}<span class="pill {statusClass(row.page.status_code)}">{row.page.status_code}</span>{:else}<span class="mono">{row.segment ? "" : "·"}</span>{/if}</td>
                       <td class="mono clip map-path" style="--depth: {row.depth}" title="{row.origin}{row.path}">
                         {#if !row.segment}<span class="map-origin">{row.origin}</span>{:else}{pageLabel(row)}{/if}
                       </td>
@@ -710,7 +715,7 @@
                     </tr>
                   {:else}
                     <tr class="empty-row">
-                      <td colspan="4">Scan a local app or load crawl JSON. Paths land here as a site map.</td>
+                      <td colspan="4"><Icon name="map" />Scan a local app or load crawl JSON. Paths land here as a site map.</td>
                     </tr>
                   {/each}
                 </tbody>
@@ -741,7 +746,7 @@
                 </table>
               </div>
             {:else}
-              <p class="hint">Select a path. Forms, params, and findings for that URL show here. Baseline / SARIF / JUnit export from the bar.</p>
+              <p class="hint"><Icon name="map" />Select a path. Forms, params, and findings for that URL show here. Baseline / SARIF / JUnit export from the bar.</p>
             {/if}
           </div>
         </div>
@@ -756,11 +761,6 @@
                 {/each}
               </div>
               <div class="cmd-gap"></div>
-              <button class="btn btn-ghost" class:on={sortKey === "id"} on:click={() => (sortKey = "id")}>Id</button>
-              <button class="btn btn-ghost" class:on={sortKey === "severity"} on:click={() => (sortKey = "severity")}
-                >Sev</button
-              >
-              <div class="cmd-gap"></div>
               <button class="btn btn-ghost" class:on={showSuppressed} on:click={() => (showSuppressed = !showSuppressed)}
                 >Suppressed</button
               >
@@ -771,8 +771,12 @@
               <table class="data">
                 <thead>
                   <tr>
-                    <th class="col-sev">Sev</th>
-                    <th class="col-id">Id</th>
+                    <th class="col-sev sortable" class:sorted={sortKey === "severity"} on:click={() => (sortKey = "severity")}
+                      ><span class="th-label">Sev{#if sortKey === "severity"}<Icon name="sort-asc" />{/if}</span></th
+                    >
+                    <th class="col-id sortable" class:sorted={sortKey === "id"} on:click={() => (sortKey = "id")}
+                      ><span class="th-label">Id{#if sortKey === "id"}<Icon name="sort-asc" />{/if}</span></th
+                    >
                     <th class="col-cat">Category</th>
                     <th>Url</th>
                   </tr>
@@ -790,7 +794,7 @@
                       <td class="mono clip" title={f.url}>{f.url}</td>
                     </tr>
                   {:else}
-                    <tr class="empty-row"><td colspan="4">No findings in this filter.</td></tr>
+                    <tr class="empty-row"><td colspan="4"><Icon name="findings" />No findings in this filter.</td></tr>
                   {/each}
                 </tbody>
               </table>
@@ -816,7 +820,7 @@
                 <pre class="payload">{selected.evidence || "No evidence."}</pre>
               {/if}
             {:else}
-              <p class="hint">Select a finding.</p>
+              <p class="hint"><Icon name="findings" />Select a finding.</p>
             {/if}
           </div>
         </div>
@@ -828,7 +832,7 @@
               {#each diff.added as f}
                 <div class="diff-row add"><span>{f.id}</span><span class="clip">{f.url}</span></div>
               {:else}
-                <p class="hint">Nothing added.</p>
+                <p class="hint"><Icon name="diff" />Nothing added.</p>
               {/each}
             </div>
           </div>
@@ -838,7 +842,7 @@
               {#each diff.resolved as f}
                 <div class="diff-row res"><span>{f.id}</span><span class="clip">{f.url}</span></div>
               {:else}
-                <p class="hint">Nothing resolved.</p>
+                <p class="hint"><Icon name="check" />Nothing resolved.</p>
               {/each}
             </div>
           </div>
@@ -895,14 +899,14 @@
                     <tr class:sel={selectedSession === s} on:click={() => pickSession(s)}>
                       <td class="mono">{sessions.length - sessions.indexOf(s)}</td>
                       <td class="mono">{s.request?.method || ""}</td>
-                      <td class="mono {statusClass(s.response?.status_code)}">{s.response?.status_code || "—"}</td>
+                      <td>{#if s.response?.status_code}<span class="pill {statusClass(s.response.status_code)}">{s.response.status_code}</span>{:else}<span class="mono">—</span>{/if}</td>
                       <td class="mono clip">{hostOf(s.request?.url)}</td>
                       <td class="mono clip" title={s.request?.url}>{pathOf(s.request?.url)}</td>
                     </tr>
                   {:else}
                     <tr class="empty-row"
                       ><td colspan="5"
-                        >{sessions.length
+                        ><Icon name={sessions.length ? "filter" : "proxy"} />{sessions.length
                           ? "No sessions in this filter."
                           : "Start the proxy, then traffic appears here."}</td
                       ></tr
@@ -969,7 +973,7 @@
                 </div>
               {/if}
             {:else}
-              <p class="hint">Select a session.</p>
+              <p class="hint"><Icon name="proxy" />Select a session.</p>
             {/if}
           </div>
         </div>
@@ -1027,13 +1031,16 @@
                     <button class="btn" on:click={() => dropPaused(p)}>Drop</button>
                   </div>
                 {:else}
-                  <p class="hint">No paused sessions.</p>
+                  <p class="hint"><Icon name="check" />No paused sessions.</p>
                 {/each}
               </div>
             {:else}
-              <textarea class="field" rows="12" bind:value={arYaml}></textarea>
+              <div class="pane-h"><span>AutoResponder rules (YAML)</span></div>
+              <textarea class="field ar-editor" bind:value={arYaml}></textarea>
               <div class="subcmd">
-                <button class="btn" on:click={applyAutoResponder}>Apply rules</button>
+                <span class="subcmd-label">Match requests and respond without hitting the real server.</span>
+                <div class="cmd-gap"></div>
+                <button class="btn btn-primary" on:click={applyAutoResponder}><Icon name="check" />Apply rules</button>
               </div>
             {/if}
           </div>
@@ -1052,11 +1059,11 @@
                   {#each sessions as s}
                     <tr class:sel={selectedSession === s} on:click={() => pickSession(s)}>
                       <td class="mono">{s.request?.method || ""}</td>
-                      <td class="mono {statusClass(s.response?.status_code)}">{s.response?.status_code || "—"}</td>
+                      <td>{#if s.response?.status_code}<span class="pill {statusClass(s.response.status_code)}">{s.response.status_code}</span>{:else}<span class="mono">—</span>{/if}</td>
                       <td class="mono clip">{s.request?.url}</td>
                     </tr>
                   {:else}
-                    <tr class="empty-row"><td colspan="3">Sent traffic lands here after Start proxy.</td></tr>
+                    <tr class="empty-row"><td colspan="3"><Icon name="proxy" />Start the proxy, then traffic appears here.</td></tr>
                   {/each}
                 </tbody>
               </table>

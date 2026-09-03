@@ -20,6 +20,8 @@
     trash: `<line x1="4" y1="6" x2="20" y2="6"/><path d="M6 6 L7 20 A1.5 1.5 0 0 0 8.5 21.5 H15.5 A1.5 1.5 0 0 0 17 20 L18 6"/><path d="M9.5 6 V4 A1 1 0 0 1 10.5 3 H13.5 A1 1 0 0 1 14.5 4 V6"/>`,
     filter: `<polygon points="3,4 21,4 14,12 14,19 10,21 10,12"/>`,
     check: `<polyline points="4,12 9,17 20,6"/>`,
+    "sort-asc": `<polyline points="6,14 12,8 18,14"/>`,
+    chevron: `<polyline points="9,6 15,12 9,18"/>`,
   };
 </script>
 

@@ -38,6 +38,9 @@ def test_app1_forms_headers_cookies():
     filtered = dict(expected)
     errors = diff_documents(doc, filtered, pages_only=False)
     assert errors == []
+    eps = {e.endpoint for e in result.js_endpoints}
+    assert "/ws/live" in eps
+    assert "/sse/events" in eps
     login = next(p for p in result.pages if urlparse(p.url).path == "/login")
     names = {field.name for form in login.forms for field in form.fields}
     assert {"username", "password", "csrf_token"} <= names

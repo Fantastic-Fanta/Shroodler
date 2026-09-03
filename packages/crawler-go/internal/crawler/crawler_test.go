@@ -245,6 +245,48 @@ func TestBackupNameMutation(t *testing.T) {
 	}
 }
 
+func TestWSAndSSEEndpoints(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<script src="/rt.js"></script><script>new EventSource("/sse/inline")</script>`))
+	})
+	mux.HandleFunc("/rt.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write([]byte(`new WebSocket("/ws/live"); const u="ws://127.0.0.1:9/ws/live";`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 2, IgnoreRobots: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]bool{}
+	for _, e := range res.JSEndpoints {
+		got[e.Endpoint] = true
+	}
+	if !got["/ws/live"] || !got["/sse/inline"] || !got["ws://127.0.0.1:9/ws/live"] {
+		t.Fatalf("endpoints %#v", res.JSEndpoints)
+	}
+	hit := false
+	for _, f := range res.Findings {
+		if f.ID == "js-endpoint" && f.Evidence != nil && *f.Evidence == "/ws/live" {
+			hit = true
+		}
+	}
+	if !hit {
+		t.Fatalf("missing js-endpoint finding %#v", res.Findings)
+	}
+	for _, p := range res.Pages {
+		if strings.HasPrefix(p.URL, "ws") {
+			t.Fatalf("crawled websocket %s", p.URL)
+		}
+		if strings.HasSuffix(urls.PathOf(p.URL), "/ws/live") {
+			t.Fatalf("crawled mapped ws path %s", p.URL)
+		}
+	}
+}
+
 func TestHTMLCommentAndMetaGenerator(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

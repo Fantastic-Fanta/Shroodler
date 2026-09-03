@@ -232,6 +232,56 @@ func TestCSPHeaderFindings(t *testing.T) {
 	}
 }
 
+func TestExtractJSWebSocketSSE(t *testing.T) {
+	eps := ExtractJSEndpoints("/rt.js", `new WebSocket("/ws/live"); new EventSource("/sse/events");`)
+	got := map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	if !got["/ws/live"] || !got["/sse/events"] {
+		t.Fatalf("literals %#v", eps)
+	}
+
+	eps = ExtractJSEndpoints("http://127.0.0.1:8081/app.js", `const a="ws://127.0.0.1:8081/ws/live"; const b='wss://127.0.0.1:8081/ws/live';`)
+	got = map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	if !got["ws://127.0.0.1:8081/ws/live"] || !got["wss://127.0.0.1:8081/ws/live"] {
+		t.Fatalf("scheme literals %#v", eps)
+	}
+
+	eps = ExtractJSEndpoints("/t.js", "new WebSocket(`/ws/tpl`); new EventSource(`/sse/tpl`);")
+	got = map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	if !got["/ws/tpl"] || !got["/sse/tpl"] {
+		t.Fatalf("templates %#v", eps)
+	}
+
+	eps = ExtractJSEndpoints("/m.js", `function x(){new WebSocket("/ws");new EventSource("/sse")}`)
+	got = map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	if !got["/ws"] || !got["/sse"] {
+		t.Fatalf("minified %#v", eps)
+	}
+
+	garbage := "\x00\xff{{{ not javascript " + "new WebSocket(" + strings.Repeat("'", 50)
+	eps = ExtractJSEndpoints("/g.js", garbage)
+	if len(eps) != 0 {
+		t.Fatalf("garbage %#v", eps)
+	}
+
+	html := `<script>new EventSource("/sse/inline")</script>`
+	eps = ExtractJSEndpoints("/about", html)
+	if len(eps) != 1 || eps[0].Endpoint != "/sse/inline" {
+		t.Fatalf("html %#v", eps)
+	}
+}
+
 func TestBackupSuffixesAreDataFiles(t *testing.T) {
 	suffixes := LoadBackupSuffixes()
 	if len(suffixes) == 0 {

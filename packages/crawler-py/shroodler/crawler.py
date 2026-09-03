@@ -427,9 +427,11 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
             if src:
                 js_files.append(src)
         ctype = _content_type(result.headers)
-        if "html" in ctype or result.text.lstrip().startswith("<"):
+        is_html = "html" in ctype or result.text.lstrip().startswith("<")
+        is_js = "javascript" in ctype or result.url.endswith(".js")
+        if is_html:
             forms, form_findings = extract_forms(result.text, result.url)
-        if "javascript" in ctype or result.url.endswith(".js"):
+        if is_js or is_html:
             endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
     cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
     headers, header_findings = extract_headers(result.headers, result.url)

@@ -24,6 +24,12 @@ var (
 	pageQuery   = regexp.MustCompile(`(?i)(?:^|&)page=\d+`)
 	fetchStr    = regexp.MustCompile(`fetch\(\s*['"]([^'"]+)['"]`)
 	fetchTpl    = regexp.MustCompile("fetch\\(\\s*`([^`$]+)`")
+	wsNewStr    = regexp.MustCompile(`new\s+WebSocket\(\s*['"]([^'"]+)['"]`)
+	wsNewTpl    = regexp.MustCompile("new\\s+WebSocket\\(\\s*`([^`$]+)`")
+	esNewStr    = regexp.MustCompile(`new\s+EventSource\(\s*['"]([^'"]+)['"]`)
+	esNewTpl    = regexp.MustCompile("new\\s+EventSource\\(\\s*`([^`$]+)`")
+	wsLitStr    = regexp.MustCompile(`['"]((?:ws|wss)://[^'"]+)['"]`)
+	wsLitTpl    = regexp.MustCompile("`((?:ws|wss)://[^`$]+)`")
 	traceRe     = regexp.MustCompile(`Traceback \(most recent call last\)`)
 	hstsAge     = regexp.MustCompile(`(?i)max-age\s*=\s*(\d+)`)
 	entropyTok  = regexp.MustCompile(`\b[A-Za-z0-9_\-/+=]{32,64}\b`)
@@ -581,17 +587,17 @@ func ExtractJSEndpoints(source, js string) []models.JSEndpoint {
 	var out []models.JSEndpoint
 	seen := map[string]bool{}
 	add := func(ep string) {
+		ep = strings.TrimSpace(ep)
 		if ep == "" || seen[ep] {
 			return
 		}
 		seen[ep] = true
 		out = append(out, models.JSEndpoint{Source: source, Endpoint: ep})
 	}
-	for _, m := range fetchStr.FindAllStringSubmatch(js, -1) {
-		add(m[1])
-	}
-	for _, m := range fetchTpl.FindAllStringSubmatch(js, -1) {
-		add(m[1])
+	for _, re := range []*regexp.Regexp{fetchStr, fetchTpl, wsNewStr, wsNewTpl, esNewStr, esNewTpl, wsLitStr, wsLitTpl} {
+		for _, m := range re.FindAllStringSubmatch(js, -1) {
+			add(m[1])
+		}
 	}
 	return out
 }

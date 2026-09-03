@@ -36,7 +36,8 @@
     { "id": "generic-jwt", "url": "/static/app.js" },
     { "id": "private-key-block", "url": "/id_rsa" },
     { "id": "ghost-route", "url": "/api/never-crawled-ghost" },
-    { "id": "js-endpoint", "url": "/graphql" }
+    { "id": "js-endpoint", "url": "/graphql" },
+    { "id": "js-endpoint", "url": "/static/realtime.js" }
   ],
   "expected_not_found": [
     { "id": "leaked-secret", "url": "/about" },

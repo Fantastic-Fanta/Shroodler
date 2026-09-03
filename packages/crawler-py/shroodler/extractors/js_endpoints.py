@@ -8,6 +8,24 @@ from shroodler.urls import canonical_key, normalize_url, same_origin
 _FETCH_STR = re.compile(r"""fetch\(\s*['"]([^'"]+)['"]""")
 _FETCH_TPL = re.compile(r"fetch\(\s*`([^`$]+)`")
 _XHR = re.compile(r"""(?:axios|request)\(\s*['"]([^'"]+)['"]""")
+_WS_NEW_STR = re.compile(r"""new\s+WebSocket\(\s*['"]([^'"]+)['"]""")
+_WS_NEW_TPL = re.compile(r"new\s+WebSocket\(\s*`([^`$]+)`")
+_ES_NEW_STR = re.compile(r"""new\s+EventSource\(\s*['"]([^'"]+)['"]""")
+_ES_NEW_TPL = re.compile(r"new\s+EventSource\(\s*`([^`$]+)`")
+_WS_LIT_STR = re.compile(r"""['"]((?:ws|wss)://[^'"]+)['"]""")
+_WS_LIT_TPL = re.compile(r"`((?:ws|wss)://[^`$]+)`")
+
+_PATTERNS = (
+    _FETCH_STR,
+    _FETCH_TPL,
+    _XHR,
+    _WS_NEW_STR,
+    _WS_NEW_TPL,
+    _ES_NEW_STR,
+    _ES_NEW_TPL,
+    _WS_LIT_STR,
+    _WS_LIT_TPL,
+)
 
 
 def extract_js_endpoints(source_url: str, js_text: str) -> tuple[list[JsEndpoint], list[Finding]]:
@@ -16,6 +34,9 @@ def extract_js_endpoints(source_url: str, js_text: str) -> tuple[list[JsEndpoint
     seen: set[str] = set()
 
     def add(raw: str) -> None:
+        raw = (raw or "").strip()
+        if not raw:
+            return
         url = normalize_url(source_url, raw) or raw
         if url in seen:
             return
@@ -32,12 +53,11 @@ def extract_js_endpoints(source_url: str, js_text: str) -> tuple[list[JsEndpoint
             )
         )
 
-    for m in _FETCH_STR.finditer(js_text):
-        add(m.group(1))
-    for m in _FETCH_TPL.finditer(js_text):
-        add(m.group(1))
-    for m in _XHR.finditer(js_text):
-        add(m.group(1))
+    if not js_text:
+        return endpoints, findings
+    for pat in _PATTERNS:
+        for m in pat.finditer(js_text):
+            add(m.group(1))
     return endpoints, findings
 
 

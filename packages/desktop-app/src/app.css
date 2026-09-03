@@ -393,6 +393,27 @@ input[type="number"]::-webkit-outer-spin-button {
   font-size: var(--text-sm);
 }
 
+.ca-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-2xs) var(--space-sm);
+  border-bottom: 1px solid var(--color-rule);
+  font-size: var(--text-sm);
+}
+.ca-banner.on {
+  background: var(--color-ok-tint);
+  color: var(--color-ink);
+}
+.ca-banner.off {
+  color: var(--color-ink-3);
+  font-size: var(--text-xs);
+}
+.ca-banner button {
+  flex: none;
+}
+
 .body {
   display: grid;
   grid-template-columns: var(--chrome-rail) minmax(0, 1fr);

@@ -112,6 +112,21 @@ test("ca install never silent", () => {
   assert.ok(ui.includes("Ingest findings"));
 });
 
+test("ca trust status is always visible and uninstall stays confirmed", () => {
+  const ui = readFileSync(join(root, "src/App.svelte"), "utf8");
+  assert.ok(ui.includes("ca_status"));
+  assert.ok(ui.includes("refreshCaStatus"));
+  assert.ok(ui.includes("CA not trusted"));
+  assert.ok(ui.includes("Shroodler root CA is trusted on this machine."));
+  assert.ok(ui.includes("ca-banner"));
+  assert.ok(ui.includes('openCa("uninstall")'));
+  assert.ok(ui.includes("role=\"dialog\""));
+  const uninstallCalls = [...ui.matchAll(/invoke\("uninstall_ca"[^)]*\)/g)].map((m) => m[0]);
+  assert.equal(uninstallCalls.length, 1);
+  assert.ok(uninstallCalls[0].includes("confirmed: true"));
+  assert.ok(ui.includes("function confirmCa") || ui.includes("async function confirmCa"));
+});
+
 test("session cookie and seed helpers", async () => {
   const { cookieHeaderFromSessions, seedUrlsFromSessions } = await import("../src/lib/sessions.js");
   const sessions = [

@@ -67,28 +67,43 @@ class StaticFetcher:
         try:
             resp = self.client.request(method, url, headers=extra_headers or {})
         except httpx.RequestError as exc:
-            return FetchResult(
-                url=url,
-                status_code=0,
-                headers={},
-                body=b"",
-                text="",
-                redirect_to=None,
-                error=str(exc),
-            )
-        headers = {k: v for k, v in resp.headers.items()}
-        location = resp.headers.get("location")
-        redirect_to = None
-        if resp.status_code in {301, 302, 303, 307, 308} and location:
-            redirect_to = location
-        ctype = headers.get("content-type", "")
-        text = _decode_body(resp.content, ctype)
-        return FetchResult(
-            url=str(resp.url) if resp.url else url,
-            status_code=resp.status_code,
-            headers=headers,
-            body=resp.content,
-            text=text,
-            redirect_to=redirect_to,
-            set_cookies=list(resp.headers.get_list("set-cookie")),
-        )
+            return _error_result(url, exc)
+        return _from_response(url, resp)
+
+    def post_json(self, url: str, payload: dict) -> FetchResult:
+        try:
+            resp = self.client.post(url, json=payload)
+        except httpx.RequestError as exc:
+            return _error_result(url, exc)
+        return _from_response(url, resp)
+
+
+def _error_result(url: str, exc: httpx.RequestError) -> FetchResult:
+    return FetchResult(
+        url=url,
+        status_code=0,
+        headers={},
+        body=b"",
+        text="",
+        redirect_to=None,
+        error=str(exc),
+    )
+
+
+def _from_response(url: str, resp: httpx.Response) -> FetchResult:
+    headers = {k: v for k, v in resp.headers.items()}
+    location = resp.headers.get("location")
+    redirect_to = None
+    if resp.status_code in {301, 302, 303, 307, 308} and location:
+        redirect_to = location
+    ctype = headers.get("content-type", "")
+    text = _decode_body(resp.content, ctype)
+    return FetchResult(
+        url=str(resp.url) if resp.url else url,
+        status_code=resp.status_code,
+        headers=headers,
+        body=resp.content,
+        text=text,
+        redirect_to=redirect_to,
+        set_cookies=list(resp.headers.get_list("set-cookie")),
+    )

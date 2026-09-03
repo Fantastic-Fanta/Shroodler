@@ -1,6 +1,6 @@
 {
   "target_app": "app1-server-rendered",
-  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only", "/login.bak", "/csp-wildcard", "/csp-report-only"],
+  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error", "/sitemap-only", "/login.bak", "/csp-wildcard", "/csp-report-only", "/graphql"],
   "expected_forms": {
     "/login": ["username", "password", "csrf_token"]
   },
@@ -33,7 +33,8 @@
     { "id": "azure-storage-account-key", "url": "/static/app.js" },
     { "id": "generic-jwt", "url": "/static/app.js" },
     { "id": "private-key-block", "url": "/id_rsa" },
-    { "id": "ghost-route", "url": "/api/never-crawled-ghost" }
+    { "id": "ghost-route", "url": "/api/never-crawled-ghost" },
+    { "id": "js-endpoint", "url": "/graphql" }
   ],
   "expected_not_found": [
     { "id": "leaked-secret", "url": "/about" },

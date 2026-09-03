@@ -2,6 +2,7 @@ package crawler_test
 
 import (
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -263,6 +264,103 @@ func liveOK(url string) bool {
 	}
 	resp.Body.Close()
 	return resp.StatusCode == 200
+}
+
+func TestGraphQLProbe(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<p>home</p>`))
+	})
+	mux.HandleFunc("/graphql-hidden", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<h1>unlinked</h1>`))
+	})
+	mux.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		query := r.URL.Query().Get("query")
+		if r.Method == http.MethodPost {
+			b, _ := io.ReadAll(r.Body)
+			var payload struct {
+				Query string `json:"query"`
+			}
+			_ = json.Unmarshal(b, &payload)
+			query = payload.Query
+		}
+		w.Header().Set("Content-Type", "application/json")
+		if strings.Contains(query, "__schema") {
+			w.Write([]byte(`{"data":{"__schema":{"types":[{"name":"Query"},{"name":"HiddenNote"},{"name":"String"}]}}}`))
+			return
+		}
+		w.Write([]byte(`{"data":{"__typename":"Query"}}`))
+	})
+	mux.HandleFunc("/query", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method", http.StatusMethodNotAllowed)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"data":{"__typename":"Query"}}`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, MaxPages: 40})
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := map[string]bool{}
+	for _, p := range res.Pages {
+		paths[urls.PathOf(p.URL)] = true
+	}
+	if !paths["/graphql"] || !paths["/query"] {
+		t.Fatalf("missing graphql pages %v", paths)
+	}
+	if paths["/graphql-hidden"] || paths["/api/graphql"] {
+		t.Fatalf("unexpected pages %v", paths)
+	}
+	var gql *models.Finding
+	for i, f := range res.Findings {
+		if f.ID == "js-endpoint" && urls.PathOf(f.URL) == "/graphql" {
+			gql = &res.Findings[i]
+			break
+		}
+	}
+	if gql == nil {
+		t.Fatal("missing js-endpoint finding for /graphql")
+	}
+	if gql.Category != "js-endpoint" || gql.Severity != "info" {
+		t.Fatalf("%+v", gql)
+	}
+	if !strings.Contains(gql.Description, "HiddenNote") {
+		t.Fatalf("types missing: %s", gql.Description)
+	}
+}
+
+func TestGraphQLRejectsNonGraphQLJSON(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<p>home</p>`))
+	})
+	mux.HandleFunc("/graphql", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"data":{"users":[]}}`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Pages {
+		if urls.PathOf(p.URL) == "/graphql" {
+			t.Fatal("non-graphql JSON should not be recorded")
+		}
+	}
 }
 
 func TestGhostRouteNotFetched(t *testing.T) {

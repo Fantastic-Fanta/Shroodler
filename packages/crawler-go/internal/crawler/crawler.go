@@ -1,6 +1,8 @@
 package crawler
 
 import (
+	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -295,7 +297,16 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}
 
 	findings = append(findings, probeCORS(client, start, corsCandidates)...)
+
+	if urls.IsLocal(start) && budgetHit(cfg, t0, len(pages)) == "" {
+		gPages, gFindings, gEps := probeGraphQL(client, start, seen)
+		pages = append(pages, gPages...)
+		findings = append(findings, gFindings...)
+		endpoints = append(endpoints, gEps...)
+	}
+
 	findings = append(findings, extractors.GhostRouteFindings(start, pages, endpoints)...)
+
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	return &models.CrawlResult{
@@ -598,4 +609,114 @@ func fetchSourceMap(jsURL, spec string, get func(string) fetchResult) []byte {
 		return nil
 	}
 	return []byte(r.Body)
+}
+
+func probeGraphQL(client *http.Client, start string, seen map[string]bool) ([]models.Page, []models.Finding, []models.JSEndpoint) {
+	var pages []models.Page
+	var findings []models.Finding
+	var endpoints []models.JSEndpoint
+	base := strings.TrimRight(origin(start), "/")
+	for _, p := range extractors.GraphQLProbePaths {
+		u := base + p
+		key := urls.CanonicalKey(u)
+		body := probeGraphQLTypename(client, u)
+		if !extractors.LooksLikeGraphQL(body) {
+			continue
+		}
+		if !seen[key] {
+			seen[key] = true
+			pages = append(pages, models.Page{
+				URL:        u,
+				StatusCode: 200,
+				Forms:      []models.Form{},
+				Params:     []string{},
+				Cookies:    []models.Cookie{},
+				Headers:    models.HeaderAnalysis{Present: []string{}, Missing: []string{}},
+				JSFiles:    []string{},
+			})
+		}
+		var types []string
+		if urls.IsLocal(u) {
+			types = extractors.ParseGraphQLSchemaTypes(probeGraphQLIntrospection(client, u))
+		}
+		ev := p
+		findings = append(findings, models.Finding{
+			ID:          "js-endpoint",
+			Severity:    "info",
+			Category:    "js-endpoint",
+			URL:         u,
+			Description: extractors.GraphQLFindingDescription(p, types),
+			Evidence:    &ev,
+		})
+		endpoints = append(endpoints, models.JSEndpoint{Source: u, Endpoint: p})
+	}
+	return pages, findings, endpoints
+}
+
+func probeGraphQLTypename(client *http.Client, raw string) string {
+	posted := doJSONPost(client, raw, graphqlJSON(extractors.GraphQLTypenameQuery))
+	if extractors.LooksLikeGraphQL(posted.Body) {
+		return posted.Body
+	}
+	got := doGet(client, withQuery(raw, extractors.GraphQLTypenameQuery), "")
+	if extractors.LooksLikeGraphQL(got.Body) {
+		return got.Body
+	}
+	if posted.Body != "" {
+		return posted.Body
+	}
+	return got.Body
+}
+
+func probeGraphQLIntrospection(client *http.Client, raw string) string {
+	posted := doJSONPost(client, raw, graphqlJSON(extractors.GraphQLIntrospectionQuery))
+	if posted.Body != "" {
+		return posted.Body
+	}
+	return doGet(client, withQuery(raw, extractors.GraphQLIntrospectionQuery), "").Body
+}
+
+func graphqlJSON(query string) string {
+	b, err := json.Marshal(map[string]string{"query": query})
+	if err != nil {
+		return `{"query":""}`
+	}
+	return string(b)
+}
+
+func withQuery(raw, query string) string {
+	u, err := url.Parse(raw)
+	if err != nil {
+		return raw
+	}
+	q := u.Query()
+	q.Set("query", query)
+	u.RawQuery = q.Encode()
+	return u.String()
+}
+
+func doJSONPost(client *http.Client, raw, body string) fetchResult {
+	req, err := http.NewRequest(http.MethodPost, raw, bytes.NewReader([]byte(body)))
+	if err != nil {
+		return fetchResult{URL: raw}
+	}
+	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := client.Do(req)
+	if err != nil {
+		return fetchResult{URL: raw}
+	}
+	defer resp.Body.Close()
+	b, _ := io.ReadAll(io.LimitReader(resp.Body, 2_000_000))
+	hdrs := map[string]string{}
+	for k, vs := range resp.Header {
+		if len(vs) > 0 {
+			hdrs[k] = vs[0]
+		}
+	}
+	out := fetchResult{URL: raw, Status: resp.StatusCode, Headers: hdrs, Body: string(b), SetCookies: resp.Header.Values("Set-Cookie")}
+	if loc := resp.Header.Get("Location"); loc != "" && resp.StatusCode >= 300 && resp.StatusCode < 400 {
+		out.RedirectTo = loc
+	}
+	return out
 }

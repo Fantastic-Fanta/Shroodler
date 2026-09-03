@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/shroodler/crawler-go/internal/crawler"
@@ -23,7 +24,7 @@ func TestApp1Pages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	need := []string{"/", "/login", "/dashboard", "/settings", "/login.bak"}
+	need := []string{"/", "/login", "/dashboard", "/settings", "/login.bak", "/graphql"}
 	have := map[string]bool{}
 	for _, p := range res.Pages {
 		have[urls.PathOf(p.URL)] = true
@@ -32,6 +33,21 @@ func TestApp1Pages(t *testing.T) {
 		if !have[n] {
 			t.Fatalf("missing %s in %v", n, have)
 		}
+	}
+	if have["/graphql-hidden"] {
+		t.Fatal("schema type names must not enqueue /graphql-hidden")
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.ID == "js-endpoint" && urls.PathOf(f.URL) == "/graphql" {
+			found = true
+			if !strings.Contains(f.Description, "HiddenNote") {
+				t.Fatalf("introspection types missing: %s", f.Description)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("missing js-endpoint finding for /graphql")
 	}
 	b, _ := json.Marshal(res)
 	if !json.Valid(b) {

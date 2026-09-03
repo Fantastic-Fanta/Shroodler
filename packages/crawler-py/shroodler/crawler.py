@@ -27,6 +27,7 @@ from shroodler.extractors.cors import (
     probe_cors,
 )
 from shroodler.extractors.forms import extract_forms
+from shroodler.extractors.graphql import probe_graphql
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.links import extract_css_urls, extract_links
@@ -243,6 +244,13 @@ class Crawler:
         pages.extend(mut_pages)
         findings.extend(mut_findings)
         findings.extend(probe_cors(origin_url, self.http, cors_candidates))
+
+        if not self._budget_hit(t0, len(pages)):
+            gql_pages, gql_findings, gql_eps = probe_graphql(origin_url, self.http, seen)
+            pages.extend(gql_pages)
+            findings.extend(gql_findings)
+            js_endpoints.extend(gql_eps)
+
         findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
 
         if stopped == "complete":

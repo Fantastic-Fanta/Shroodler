@@ -7,22 +7,32 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_rules_are_loadable_yaml():
-    rules_dir = ROOT / "rules"
-    files = list(rules_dir.glob("*.yaml"))
-    assert files
-    ids: set[str] = set()
-    for path in files:
+def _load_rules() -> list[dict]:
+    rules: list[dict] = []
+    for path in sorted((ROOT / "rules").glob("*.yaml")):
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert isinstance(data, list)
-        for rule in data:
-            assert "id" in rule and "pattern" in rule
-            assert "severity" in rule
-            assert rule["id"] not in ids
-            ids.add(rule["id"])
+        rules.extend(data)
+    return rules
+
+
+def test_rules_are_loadable_yaml():
+    rules = _load_rules()
+    assert rules
+    ids: set[str] = set()
+    for rule in rules:
+        assert "id" in rule and "pattern" in rule
+        assert "severity" in rule
+        assert rule["id"] not in ids
+        ids.add(rule["id"])
     assert "aws-access-key" in ids
+    assert "slack-token" in ids
     assert "github-pat" in ids
+    assert "github-fine-grained-pat" in ids
+    assert "npm-access-token" in ids
     assert "stripe-secret-key" in ids
+    assert "google-api-key" in ids
+    assert "azure-storage-account-key" in ids
 
 
 PATH_WORDLISTS = {"common-paths.txt", "source-control.txt", "well-known.txt"}

@@ -77,12 +77,29 @@ SARIF_LEVEL = {
     "info": "note",
 }
 
+SEVERITY_ORDER = ("critical", "high", "medium", "low", "info")
+
+
+def format_evidence(value) -> str:
+    """Redact compact tokens and truncate long snippets, matching HTML's caution."""
+    if value is None:
+        return ""
+    text = str(value)
+    if not text or text == "None":
+        return ""
+    compact = text.strip()
+    if len(compact) > 8 and not any(ch.isspace() or ch == "/" for ch in compact):
+        return compact[:4] + "************" + compact[-4:]
+    if len(text) > 80:
+        return text[:76] + "…"
+    return text
+
 
 def render_sarif(doc: dict, *, results: list[dict] | None = None) -> str:
     findings = results if results is not None else list(doc.get("findings") or [])
     crawler = doc.get("crawler") or {}
-    rules = []
-    seen = set()
+    rules: list[dict] = []
+    seen: set[str] = set()
     for f in findings:
         rid = f.get("id") or "finding"
         if rid in seen:
@@ -101,7 +118,7 @@ def render_sarif(doc: dict, *, results: list[dict] | None = None) -> str:
         sarif_results.append(
             {
                 "ruleId": f.get("id") or "finding",
-                "level": SARIF_LEVEL.get(f.get("severity", "info"), "note"),
+                "level": SARIF_LEVEL.get(f.get("severity") or "info", "note"),
                 "message": {"text": f.get("description") or f.get("id") or ""},
                 "locations": [
                     {
@@ -179,6 +196,53 @@ def render_diff_sarif(errors: list[str]) -> str:
     return render_sarif({"crawler": {"name": "shroodler", "version": "0.1.0"}, "findings": findings})
 
 
+def render_markdown(doc: dict) -> str:
+    findings = list(doc.get("findings") or [])
+    crawler = doc.get("crawler") or {}
+    target = doc.get("target") or ""
+    pages = doc.get("pages") or []
+    name = crawler.get("name") or ""
+    version = crawler.get("version") or ""
+    mode = crawler.get("mode") or ""
+    lines = [
+        "# Shroodler report",
+        "",
+        f"Target: `{target}`",
+        f"Crawler: {name} {version} ({mode})".strip(),
+        f"{len(pages)} pages · {len(findings)} findings",
+        "",
+    ]
+    if not findings:
+        lines.append("No findings.")
+        lines.append("")
+        return "\n".join(lines)
+
+    grouped: dict[str, list] = {s: [] for s in SEVERITY_ORDER}
+    for f in findings:
+        sev = f.get("severity") or "info"
+        grouped.setdefault(sev, []).append(f)
+
+    for sev in list(SEVERITY_ORDER) + [s for s in grouped if s not in SEVERITY_ORDER]:
+        rows = grouped.get(sev) or []
+        if not rows:
+            continue
+        lines.append(f"## {sev}")
+        lines.append("")
+        for f in rows:
+            fid = f.get("id") or "finding"
+            url = f.get("url") or ""
+            desc = f.get("description") or ""
+            lines.append(f"### `{fid}`")
+            lines.append("")
+            lines.append(f"- URL: `{url}`")
+            lines.append(f"- Description: {desc}")
+            ev = format_evidence(f.get("evidence"))
+            if ev:
+                lines.append(f"- Evidence: `{ev}`")
+            lines.append("")
+    return "\n".join(lines)
+
+
 def render(doc: dict, fmt: str) -> str:
     if fmt == "html":
         return render_html(doc)
@@ -188,6 +252,8 @@ def render(doc: dict, fmt: str) -> str:
         return render_sarif(doc)
     if fmt == "junit":
         return render_junit(doc)
+    if fmt in {"md", "markdown"}:
+        return render_markdown(doc)
     raise ValueError(f"unsupported format {fmt}")
 
 

@@ -47,6 +47,12 @@ def test_cli_has_format_flags():
     )
     assert args.max_pages == 2
     assert args.max_time == 1.5
+    args = p.parse_args(["report", "out.json", "--format", "sarif"])
+    assert args.format == "sarif"
+    args = p.parse_args(["report", "out.json", "--format", "md"])
+    assert args.format == "md"
+    args = p.parse_args(["report", "out.json", "--format", "markdown"])
+    assert args.format == "markdown"
 
 
 def test_load_rc_missing(tmp_path, monkeypatch):

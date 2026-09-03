@@ -3,15 +3,21 @@ from __future__ import annotations
 import csv
 import io
 import json
+import sys
 from pathlib import Path
 from xml.etree import ElementTree
 
 from bs4 import BeautifulSoup
 
-import sys
-
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from reportgen import render, render_csv, render_html
+from reportgen import (
+    format_evidence,
+    render,
+    render_csv,
+    render_html,
+    render_markdown,
+    render_sarif,
+)
 
 SNAPSHOT = Path(__file__).parent / "snapshots"
 EMPTY = {
@@ -108,11 +114,76 @@ def test_sarif_and_junit_from_findings():
     assert len(results) == 5
     levels = {r["ruleId"]: r["level"] for r in results}
     assert levels["b"] == "error"
+    assert levels["d"] == "error"
     assert levels["e"] == "warning"
+    assert levels["c"] == "note"
     assert levels["a"] == "note"
+    by_id = {r["ruleId"]: r for r in results}
+    assert by_id["b"]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == (
+        "http://127.0.0.1:8081/"
+    )
+    empty = json.loads(render_sarif({"findings": []}))
+    assert empty["runs"][0]["results"] == []
+    assert isinstance(empty["runs"][0]["results"], list)
     xml = render(ALL_SEV, "junit")
     root = ElementTree.fromstring(xml)
     assert root.tag == "testsuite"
     assert int(root.attrib["failures"]) == 5
-    empty = render({"findings": [], "crawler": {"name": "shroodler", "version": "0"}}, "junit")
-    assert 'failures="0"' in empty
+    empty_junit = render({"findings": [], "crawler": {"name": "shroodler", "version": "0"}}, "junit")
+    assert 'failures="0"' in empty_junit
+
+
+def test_markdown_grouped_by_severity():
+    md = render(ALL_SEV, "md")
+    assert md == render_markdown(ALL_SEV)
+    assert render(ALL_SEV, "markdown") == md
+    assert md.startswith("# Shroodler report")
+    crit = md.index("## critical")
+    high = md.index("## high")
+    med = md.index("## medium")
+    low = md.index("## low")
+    info = md.index("## info")
+    assert crit < high < med < low < info
+    assert "`b`" in md
+    assert "http://127.0.0.1:8081/" in md
+    assert "crit finding" in md
+    empty = render(EMPTY, "md")
+    assert "No findings." in empty
+    assert empty.encode("utf-8").decode("utf-8") == empty
+
+
+def test_markdown_redacts_and_truncates_evidence():
+    assert format_evidence("AKIA****") == "AKIA****"
+    assert format_evidence("/.git/HEAD") == "/.git/HEAD"
+    secret = "AKIAIOSFODNN7EXAMPLE"
+    doc = {
+        "target": "http://127.0.0.1:8081",
+        "crawler": {"name": "shroodler-py", "version": "0.1.0", "mode": "static"},
+        "pages": [],
+        "findings": [
+            {
+                "id": "secret",
+                "severity": "high",
+                "category": "secret",
+                "url": "http://127.0.0.1:8081/",
+                "description": "key",
+                "evidence": secret,
+            },
+            {
+                "id": "verbose",
+                "severity": "low",
+                "category": "header",
+                "url": "http://127.0.0.1:8081/",
+                "description": "stack",
+                "evidence": ("word " * 40).strip(),
+            },
+        ],
+    }
+    md = render_markdown(doc)
+    assert secret not in md
+    assert "AKIA************MPLE" in md
+    verbose_line = next(
+        ln for ln in md.splitlines() if ln.startswith("- Evidence:") and "word" in ln
+    )
+    assert verbose_line.endswith("…`") or "…" in verbose_line
+    assert len(verbose_line) < 120

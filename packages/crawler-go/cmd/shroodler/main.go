@@ -13,6 +13,7 @@ import (
 	"github.com/shroodler/crawler-go/internal/lab"
 	"github.com/shroodler/crawler-go/internal/models"
 	"github.com/shroodler/crawler-go/internal/payload"
+	"github.com/shroodler/crawler-go/internal/report"
 	"github.com/shroodler/crawler-go/internal/sessions"
 	"github.com/shroodler/crawler-go/internal/urls"
 	"gopkg.in/yaml.v3"
@@ -110,7 +111,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "Shroodler Go CLI — crawl, report, diff, payload-test, or drive the proxy.")
 	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--max-pages N] [--max-time SECONDS] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler ingest-sessions <sessions.jsonl> [--target url] [--output out.json] [--allow-external]")
-	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit] [--output out] [--suppressions FILE]")
+	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit|md] [--output out] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler diff <findings.json> <expected_findings.json> [--pages-only] [--gate] [--suppressions FILE] [--format text|junit|sarif]")
 	fmt.Fprintln(os.Stderr, "shroodler baseline <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler expected <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
@@ -493,8 +494,13 @@ func cmdReport(args []string) int {
 		text = lab.RenderSARIF(doc)
 	case "junit":
 		text = lab.RenderJUnit(doc)
-	default:
+	case "md", "markdown":
+		text = report.RenderMarkdown(doc)
+	case "html":
 		text = htmlReport(doc)
+	default:
+		fmt.Fprintf(os.Stderr, "unsupported format %s\n", format)
+		return 2
 	}
 	if out != "" {
 		_ = os.WriteFile(out, []byte(text), 0o644)

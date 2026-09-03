@@ -340,11 +340,13 @@ def build_parser() -> argparse.ArgumentParser:
     diff.add_argument("--output", "-o")
     diff.set_defaults(func=cmd_diff)
 
-    report = sub.add_parser("report", help="Render findings JSON as HTML, CSV, SARIF, or JUnit")
+    report = sub.add_parser(
+        "report", help="Render findings JSON as HTML, CSV, SARIF, JUnit, or Markdown"
+    )
     report.add_argument("findings")
     report.add_argument(
         "--format",
-        choices=["html", "csv", "json", "sarif", "junit"],
+        choices=["html", "csv", "json", "sarif", "junit", "md", "markdown"],
         default="html",
     )
     report.add_argument("--output", "-o")

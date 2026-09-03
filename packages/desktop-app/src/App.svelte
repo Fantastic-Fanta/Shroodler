@@ -1,6 +1,7 @@
 <script>
   import { onMount } from "svelte";
   import Select from "./Select.svelte";
+  import Icon from "./Icon.svelte";
   import { diffScans } from "./lib/diff.js";
   import {
     filterFindings,
@@ -76,12 +77,12 @@
   let curlCopiedTimer;
 
   const views = [
-    { id: "scan", label: "Scan" },
-    { id: "map", label: "Map" },
-    { id: "findings", label: "Findings" },
-    { id: "diff", label: "Diff" },
-    { id: "proxy", label: "Proxy" },
-    { id: "compose", label: "Composer" },
+    { id: "scan", label: "Scan", icon: "scan" },
+    { id: "map", label: "Map", icon: "map" },
+    { id: "findings", label: "Findings", icon: "findings" },
+    { id: "diff", label: "Diff", icon: "diff" },
+    { id: "proxy", label: "Proxy", icon: "proxy" },
+    { id: "compose", label: "Composer", icon: "composer" },
   ];
   const modeOpts = [
     { value: "static", label: "static" },
@@ -500,17 +501,6 @@
 <div class="shell" class:has-banner={!!error}>
   <div class="titlebar">
     <div class="wordmark">Shroodler</div>
-    <div class="views" role="tablist" aria-label="Views">
-      {#each views as v}
-        <button
-          type="button"
-          role="tab"
-          class:on={view === v.id}
-          aria-selected={view === v.id}
-          on:click={() => (view = v.id)}>{v.label}</button
-        >
-      {/each}
-    </div>
     <div class="title-meta">
       {#if scanning}<span class="live">Crawling</span>{/if}
       {#if proxyOn}<span class="live">Capturing</span>{/if}
@@ -523,11 +513,11 @@
       <Select class="field-sm" bind:value={mode} ariaLabel="Mode" options={modeOpts} />
       <input class="field field-num" type="number" bind:value={depth} min="0" aria-label="Depth" />
       {#if scanning}
-        <button class="btn" on:click={stopScan}>Stop</button>
+        <button class="btn" on:click={stopScan}><Icon name="stop" />Stop</button>
       {:else}
-        <button class="btn btn-primary" on:click={startScan}>Scan</button>
+        <button class="btn btn-primary" on:click={startScan}><Icon name="play" />Scan</button>
       {/if}
-      <button class="btn btn-ghost" class:on={viaProxy} on:click={() => (viaProxy = !viaProxy)}>Via proxy</button>
+      <button class="btn btn-ghost" class:on={viaProxy} on:click={() => (viaProxy = !viaProxy)}><Icon name="plug" />Via proxy</button>
       <button
         class="btn btn-ghost"
         class:on={useCookies}
@@ -540,11 +530,11 @@
         disabled={!seedUrls.length}
         on:click={() => (seedFromProxy = !seedFromProxy)}>Seeds</button
       >
-      <label class="btn file-btn">Load JSON<input type="file" accept=".json,.yaml,.yml,.shroodlerignore,application/json" on:change={loadFile} /></label>
+      <label class="btn file-btn"><Icon name="upload" />Load JSON<input type="file" accept=".json,.yaml,.yml,.shroodlerignore,application/json" on:change={loadFile} /></label>
       {#if view === "map" || view === "findings"}
-        <button class="btn" on:click={saveBaseline} disabled={!pages.length && !findings.length}>Baseline</button>
-        <button class="btn" on:click={exportSarif} disabled={!findings.length}>SARIF</button>
-        <button class="btn" on:click={exportJunit} disabled={!findings.length}>JUnit</button>
+        <button class="btn" on:click={saveBaseline} disabled={!pages.length && !findings.length}><Icon name="download-cloud" />Baseline</button>
+        <button class="btn" on:click={exportSarif} disabled={!findings.length}><Icon name="download-cloud" />SARIF</button>
+        <button class="btn" on:click={exportJunit} disabled={!findings.length}><Icon name="download-cloud" />JUnit</button>
       {/if}
     {:else if view === "diff"}
       <Select
@@ -567,11 +557,11 @@
       <button class="btn btn-primary" on:click={runDiff}>Compare</button>
     {:else if view === "proxy"}
       <button class="btn btn-primary" on:click={connectProxy} disabled={proxyOn}
-        >{proxyOn ? "Listening" : "Start proxy"}</button
+        ><Icon name="plug" />{proxyOn ? "Listening" : "Start proxy"}</button
       >
-      <button class="btn" on:click={ingestCaptured} disabled={!sessions.length}>Ingest findings</button>
-      <button class="btn" on:click={() => openCa("install")}>Install CA</button>
-      <button class="btn" on:click={() => openCa("uninstall")}>Uninstall CA</button>
+      <button class="btn" on:click={ingestCaptured} disabled={!sessions.length}><Icon name="upload" />Ingest findings</button>
+      <button class="btn" on:click={() => openCa("install")}><Icon name="shield" />Install CA</button>
+      <button class="btn" on:click={() => openCa("uninstall")}><Icon name="shield-off" />Uninstall CA</button>
       {#if paused.length}
         <span class="subcmd-label">{paused.length} paused</span>
       {/if}
@@ -593,13 +583,27 @@
   {/if}
 
   <div class="body">
+    <nav class="nav-rail" role="tablist" aria-label="Views">
+      {#each views as v}
+        <button
+          type="button"
+          role="tab"
+          class:on={view === v.id}
+          aria-selected={view === v.id}
+          title={v.label}
+          aria-label={v.label}
+          on:click={() => (view = v.id)}><Icon name={v.icon} /></button
+        >
+      {/each}
+    </nav>
     <aside class="rail">
       <div class="rail-h">Scans</div>
       <div class="rail-list">
         {#each history as h}
           <button class="rail-item" class:on={outputPath === h.id} on:click={() => openHistory(h)}>
+            <Icon name="folder" />
             <em title={h.target}>{h.target}</em>
-            <span>{h.finding_count}</span>
+            <span class="count-badge">{h.finding_count}</span>
           </button>
         {:else}
           <div class="hint">No scans yet</div>
@@ -745,7 +749,7 @@
         <div class="split">
           <div class="grid-pane">
             <div class="subcmd">
-              <span class="subcmd-label">Severity</span>
+              <span class="subcmd-label"><Icon name="filter" />Severity</span>
               <div class="seg" role="group" aria-label="Severity filter">
                 {#each ["all", "critical", "high", "medium", "low", "info"] as s}
                   <button class:on={filterSev === s} on:click={() => (filterSev = s)}>{s}</button>
@@ -865,12 +869,15 @@
                   >
                 {/each}
               </div>
-              <input
-                class="field field-search"
-                bind:value={sessUrl}
-                aria-label="URL substring filter"
-                placeholder="URL contains"
-              />
+              <span class="search-wrap">
+                <Icon name="search" />
+                <input
+                  class="field field-search"
+                  bind:value={sessUrl}
+                  aria-label="URL substring filter"
+                  placeholder="URL contains"
+                />
+              </span>
             </div>
             <div class="scroll">
               <table class="data">
@@ -1061,11 +1068,11 @@
   </div>
 
   <footer class="status">
-    <strong>{statusLabel}</strong>
-    <span>{activeFindings.length} findings</span>
+    <strong class:live-dot={scanning || proxyOn}>{statusLabel}</strong>
+    <span><Icon name="findings" />{activeFindings.length} findings</span>
     {#if suppressions.length}<span>{suppressions.length} ignored</span>{/if}
-    <span>{pages.length} pages</span>
-    <span>{sessions.length} sessions</span>
+    <span><Icon name="map" />{pages.length} pages</span>
+    <span><Icon name="proxy" />{sessions.length} sessions</span>
     {#if cookieHeader}<span>cookies</span>{/if}
     {#if seedUrls.length}<span>{seedUrls.length} seeds</span>{/if}
     {#if paused.length}<span>{paused.length} paused</span>{/if}

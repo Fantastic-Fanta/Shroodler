@@ -1,26 +1,26 @@
 /* Hallmark · pre-emit critique: P5 H5 E5 S5 R4 V4
  * genre: modern-minimal · macrostructure: Workbench · tone: utilitarian
- * theme: custom (instrument-panel) · paper oklch(16% 0.012 52) · accent oklch(74% 0.112 305)
+ * theme: custom (instrument-panel) · paper oklch(16% 0 0) · accent oklch(74% 0.112 305)
  * display: IBM Plex Sans · body: IBM Plex Sans · mono: IBM Plex Mono
  * axes: dark / grotesk-sans / cool · nav: document-tabs · footer: status-bar
- * designed-as-app · studied: yes · DNA-source: Fiddler layout (structure only)
+ * designed-as-app · studied: yes · DNA-source: Fiddler layout + neutral gray palette, lavender accent
  */
 :root {
-  --color-paper: oklch(15% 0.012 52);
-  --color-paper-2: oklch(23% 0.015 52);
-  --color-paper-3: oklch(27% 0.016 52);
-  --color-sunken: oklch(11% 0.01 52);
-  --color-ink: oklch(93% 0.01 90);
-  --color-ink-2: oklch(70% 0.018 75);
-  --color-ink-3: oklch(56% 0.014 70);
-  --color-rule: oklch(30% 0.014 52);
-  --color-rule-2: oklch(26% 0.012 52);
+  --color-paper: oklch(21% 0 0);
+  --color-paper-2: oklch(26% 0 0);
+  --color-paper-3: oklch(31% 0 0);
+  --color-sunken: oklch(17% 0 0);
+  --color-ink: oklch(85% 0 0);
+  --color-ink-2: oklch(66% 0 0);
+  --color-ink-3: oklch(53% 0 0);
+  --color-rule: oklch(34% 0 0);
+  --color-rule-2: oklch(30% 0 0);
   --color-accent: oklch(74% 0.112 305);
   --color-accent-strong: oklch(80% 0.11 305);
   --color-accent-ink: oklch(18% 0.02 305);
   --color-accent-dim: oklch(52% 0.08 305);
   --color-accent-tint: oklch(74% 0.112 305 / 0.16);
-  --color-scrim: oklch(10% 0.01 52 / 0.62);
+  --color-scrim: oklch(14% 0 0 / 0.62);
   --color-focus: oklch(74% 0.112 305);
   --color-ok: oklch(80% 0.1 165);
   --color-ok-tint: oklch(80% 0.1 165 / 0.14);
@@ -35,9 +35,9 @@
   --color-info: oklch(62% 0.012 70);
   --color-info-tint: oklch(62% 0.012 70 / 0.14);
 
-  --font-display: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+  --font-display: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+  --font-body: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
+  --font-mono: "Consolas", "SF Mono", ui-monospace, monospace;
 
   --space-3xs: 0.125rem;
   --space-2xs: 0.25rem;
@@ -47,19 +47,20 @@
   --space-lg: 1.5rem;
   --space-xl: 2.5rem;
 
-  --text-xs: 0.6875rem;
-  --text-sm: 0.75rem;
-  --text-md: 0.8125rem;
-  --text-lg: 0.875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-md: 0.875rem;
+  --text-lg: 0.9375rem;
 
-  --chrome-tab: 2rem;
-  --chrome-cmd: 2.75rem;
-  --chrome-status: 1.5rem;
+  --chrome-tab: 2.25rem;
+  --chrome-cmd: 3rem;
+  --chrome-status: 1.75rem;
+  --chrome-nav: 2.75rem;
   --chrome-rail: 12rem;
   --chrome-inspect: 15rem;
-  --row-h: 1.625rem;
+  --row-h: 1.875rem;
 
-  --radius-control: 8px;
+  --radius-control: 4px;
   --radius-none: 0;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

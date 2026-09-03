@@ -1,0 +1,11 @@
+{
+  "target_app": "app4-microservices",
+  "expected_pages": ["/", "/login", "/users", "/orders"],
+  "expected_forms": {
+    "/login": ["user", "password"]
+  },
+  "expected_findings": [],
+  "expected_not_found": [
+    { "id": "leaked-secret", "url": "/" }
+  ]
+}

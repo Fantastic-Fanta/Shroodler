@@ -1,0 +1,323 @@
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+
+from shroodler.baseline import document_to_baseline
+from shroodler.config import load_rc
+from shroodler.crawler import crawl_url
+from shroodler.diffcmd import diff_outcome, load_json
+from shroodler.suppress import filter_findings, load_suppressions
+from shroodler.validate import validate_crawl
+
+
+def _as_str_list(value: object) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [value] if value else []
+    if isinstance(value, list):
+        return [str(item) for item in value if str(item)]
+    return []
+
+
+def _progress(pages: int, current: str) -> None:
+    print(f"PROGRESS pages={pages} current={current}", flush=True)
+
+
+def _write(text: str, output: str | None) -> None:
+    if not text.endswith("\n"):
+        text += "\n"
+    if output:
+        Path(output).write_text(text, encoding="utf-8")
+    else:
+        print(text, end="")
+
+
+def cmd_crawl(args: argparse.Namespace) -> int:
+    depth = None if args.depth < 0 else args.depth
+    cookies = list(getattr(args, "cookie", None) or [])
+    headers = list(getattr(args, "header", None) or [])
+    extra_seeds = list(getattr(args, "seed", None) or [])
+    cookies_from = getattr(args, "cookies_from", None)
+    seed_from = getattr(args, "seed_from", None)
+    if cookies_from or seed_from:
+        from shroodler.sessions import cookie_header, load_sessions, seed_urls
+
+        if cookies_from:
+            hdr = cookie_header(load_sessions(cookies_from), args.url)
+            cookies.extend(p.strip() for p in hdr.split(";") if p.strip())
+        if seed_from:
+            extra_seeds.extend(seed_urls(load_sessions(seed_from), args.url))
+    result = crawl_url(
+        args.url,
+        mode=args.mode,
+        depth=depth,
+        ignore_robots=args.ignore_robots,
+        allow_external=args.allow_external,
+        progress=_progress,
+        cookies=cookies,
+        headers=headers,
+        cookie_jar=getattr(args, "cookie_jar", None),
+        storage_state=getattr(args, "storage_state", None),
+        login_recipe=getattr(args, "login_recipe", None),
+        proxy=getattr(args, "proxy", None),
+        extra_seeds=extra_seeds,
+        no_sitemap=bool(getattr(args, "no_sitemap", False)),
+    )
+    doc = result.to_dict()
+    validate_crawl(doc)
+    fmt = args.format
+    if fmt == "json":
+        text = json.dumps(doc, indent=2) + "\n"
+    else:
+        from shroodler.report import write_report
+
+        text = write_report(doc, fmt, None)
+        if not text.endswith("\n"):
+            text += "\n"
+    if args.output:
+        Path(args.output).write_text(text, encoding="utf-8")
+    else:
+        print(text, end="")
+    return 0
+
+
+def cmd_diff(args: argparse.Namespace) -> int:
+    actual = load_json(args.findings)
+    expected = load_json(args.expected)
+    rules = load_suppressions(getattr(args, "suppressions", None))
+    outcome = diff_outcome(
+        actual,
+        expected,
+        pages_only=args.pages_only,
+        gate=bool(getattr(args, "gate", False)),
+        suppressions=rules,
+    )
+    fmt = getattr(args, "format", "text") or "text"
+    output = getattr(args, "output", None)
+    if fmt in {"junit", "sarif"}:
+        from shroodler.report import render_diff_junit, render_diff_sarif
+
+        text = (
+            render_diff_junit(outcome.errors)
+            if fmt == "junit"
+            else render_diff_sarif(outcome.errors)
+        )
+        _write(text, output)
+        return 1 if outcome.errors else 0
+    for line in outcome.resolved:
+        print(line)
+    if outcome.errors:
+        for err in outcome.errors:
+            print(err, file=sys.stderr)
+        return 1
+    print("diff ok")
+    return 0
+
+
+def cmd_report(args: argparse.Namespace) -> int:
+    from shroodler.report import write_report
+
+    doc = load_json(args.findings)
+    rules = load_suppressions(getattr(args, "suppressions", None))
+    if rules:
+        doc = dict(doc)
+        doc["findings"] = filter_findings(doc.get("findings") or [], rules)
+    if args.format == "json":
+        text = json.dumps(doc, indent=2) + "\n"
+        _write(text, args.output)
+        return 0
+    text = write_report(doc, args.format, args.output)
+    if not args.output:
+        print(text, end="" if text.endswith("\n") else "\n")
+    return 0
+
+
+def cmd_ingest(args: argparse.Namespace) -> int:
+    from shroodler.sessions import ingest_sessions
+
+    result = ingest_sessions(
+        args.sessions,
+        target=args.target,
+        allow_external=args.allow_external,
+    )
+    doc = result.to_dict()
+    validate_crawl(doc)
+    text = json.dumps(doc, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def cmd_baseline(args: argparse.Namespace) -> int:
+    doc = load_json(args.findings)
+    rules = load_suppressions(args.suppressions)
+    baseline = document_to_baseline(doc, name=args.name, suppressions=rules)
+    text = json.dumps(baseline, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(prog="shroodler")
+    sub = p.add_subparsers(dest="command", required=True)
+
+    crawl = sub.add_parser("crawl", help="Crawl a target URL")
+    crawl.add_argument("url")
+    crawl.add_argument("--mode", choices=["static", "headless"], default="static")
+    crawl.add_argument("--depth", type=int, default=5, help="Max depth; -1 for unbounded")
+    crawl.add_argument("--output", "-o")
+    crawl.add_argument(
+        "--format",
+        choices=["json", "html", "csv", "sarif", "junit"],
+        default="json",
+    )
+    crawl.add_argument("--ignore-robots", action="store_true")
+    crawl.add_argument(
+        "--no-sitemap",
+        action="store_true",
+        help="Skip robots.txt Sitemap: and /sitemap.xml discovery seeds",
+    )
+    crawl.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Permit crawling listed public fixtures (off by default)",
+    )
+    crawl.add_argument(
+        "--header",
+        action="append",
+        default=[],
+        help="Extra request header 'Name: value' (repeatable). Sent on every crawl fetch.",
+    )
+    crawl.add_argument(
+        "--cookie",
+        action="append",
+        default=[],
+        help="Cookie name=value (repeatable). Applied before the crawl.",
+    )
+    crawl.add_argument(
+        "--cookie-jar",
+        help="Netscape cookies.txt, JSON cookie list, or Playwright storageState",
+    )
+    crawl.add_argument(
+        "--storage-state",
+        help="Playwright storageState JSON (cookies only)",
+    )
+    crawl.add_argument(
+        "--login-recipe",
+        help="JSON {url, method, fields} posted once before crawling (merges hidden fields)",
+    )
+    crawl.add_argument("--proxy", help="HTTP proxy URL, e.g. http://127.0.0.1:8888")
+    crawl.add_argument(
+        "--seed",
+        action="append",
+        default=[],
+        help="Extra same-origin URL to enqueue (repeatable)",
+    )
+    crawl.add_argument("--seed-from", help="Proxy session JSONL; enqueue captured same-origin URLs")
+    crawl.add_argument(
+        "--cookies-from",
+        help="Proxy session JSONL; Cookie header from captured Set-Cookie / Cookie",
+    )
+    crawl.set_defaults(func=cmd_crawl)
+
+    diff = sub.add_parser("diff", help="Compare crawl JSON to expected_findings.json")
+    diff.add_argument("findings")
+    diff.add_argument("expected")
+    diff.add_argument("--pages-only", action="store_true")
+    diff.add_argument(
+        "--gate",
+        action="store_true",
+        help="CI mode: fail on findings not in the baseline; resolved findings do not fail",
+    )
+    diff.add_argument("--suppressions", default=None)
+    diff.add_argument("--format", choices=["text", "junit", "sarif"], default="text")
+    diff.add_argument("--output", "-o")
+    diff.set_defaults(func=cmd_diff)
+
+    report = sub.add_parser("report", help="Render findings JSON as HTML, CSV, SARIF, or JUnit")
+    report.add_argument("findings")
+    report.add_argument(
+        "--format",
+        choices=["html", "csv", "json", "sarif", "junit"],
+        default="html",
+    )
+    report.add_argument("--output", "-o")
+    report.add_argument("--suppressions", default=None)
+    report.set_defaults(func=cmd_report)
+
+    baseline = sub.add_parser(
+        "baseline",
+        help="Write expected_findings.json from a scan",
+        description=(
+            "Map pages → expected_pages, forms → expected_forms, findings → "
+            "expected_findings (id + url path). expected_not_found is left empty — "
+            "add negatives by hand; this command does not invent them."
+        ),
+    )
+    baseline.add_argument("findings")
+    baseline.add_argument("--output", "-o")
+    baseline.add_argument("--name", default=None)
+    baseline.add_argument("--suppressions", default=None)
+    baseline.set_defaults(func=cmd_baseline)
+
+    expected = sub.add_parser(
+        "expected",
+        help="Write expected_findings.json from a scan (alias of baseline)",
+        description=(
+            "Map pages → expected_pages, forms → expected_forms, findings → "
+            "expected_findings (id + url path). expected_not_found is left empty — "
+            "add negatives by hand; this command does not invent them."
+        ),
+    )
+    expected.add_argument("findings")
+    expected.add_argument("--output", "-o")
+    expected.add_argument("--name", default=None)
+    expected.add_argument("--suppressions", default=None)
+    expected.set_defaults(func=cmd_baseline)
+
+    ingest = sub.add_parser("ingest-sessions", help="Turn captured proxy JSONL into findings")
+    ingest.add_argument("sessions")
+    ingest.add_argument("--target", default=None)
+    ingest.add_argument("--output", "-o")
+    ingest.add_argument("--allow-external", action="store_true")
+    ingest.set_defaults(func=cmd_ingest)
+
+    return p
+
+
+def main(argv: list[str] | None = None) -> None:
+    parser = build_parser()
+    rc = load_rc()
+    if rc.get("mode"):
+        parser.set_defaults(mode=rc["mode"])
+    if "depth" in rc:
+        parser.set_defaults(depth=int(rc["depth"]))
+    if rc.get("ignore_robots"):
+        parser.set_defaults(ignore_robots=True)
+    if rc.get("allow_external"):
+        parser.set_defaults(allow_external=True)
+    if rc.get("format"):
+        parser.set_defaults(format=rc["format"])
+    if rc.get("cookie_jar"):
+        parser.set_defaults(cookie_jar=rc["cookie_jar"])
+    if rc.get("storage_state"):
+        parser.set_defaults(storage_state=rc["storage_state"])
+    if rc.get("login_recipe"):
+        parser.set_defaults(login_recipe=rc["login_recipe"])
+    args = parser.parse_args(argv)
+    if getattr(args, "command", None) == "crawl":
+        args.cookie = _as_str_list(rc.get("cookie")) + list(getattr(args, "cookie", None) or [])
+        args.header = _as_str_list(rc.get("header")) + list(getattr(args, "header", None) or [])
+    try:
+        code = args.func(args)
+    except Exception as exc:
+        print(str(exc), file=sys.stderr)
+        raise SystemExit(1) from exc
+    raise SystemExit(code)
+
+
+if __name__ == "__main__":
+    main()

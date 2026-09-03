@@ -1,0 +1,57 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+
+# Go binaries
+packages/crawler-go/shroodler-go
+packages/proxy-go/shroodler-proxy
+*.exe
+*.test
+*.out
+vendor/
+
+# Node
+node_modules/
+packages/target-apps/app2-spa/dist/
+packages/desktop-app/node_modules/
+packages/desktop-app/dist/
+packages/desktop-app/src-tauri/target/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Proxy CA / captured sessions — never commit
+packages/proxy-go/data/
+.proxy-data/
+*.sessions.jsonl
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local process fallback (no Docker)
+.local-run/
+
+# Scan / report output
+out.json
+out.html
+out.csv
+*.sessions.jsonl
+
+# Coverage artifacts
+coverage/
+coverage.xml

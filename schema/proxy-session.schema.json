@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Shroodler proxy session",
+  "type": "object",
+  "required": ["id", "started_at", "request"],
+  "properties": {
+    "id": { "type": "string" },
+    "started_at": { "type": "string" },
+    "finished_at": { "type": ["string", "null"] },
+    "client_addr": { "type": "string" },
+    "request": { "type": "object" },
+    "response": { "type": ["object", "null"] },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "notes": { "type": ["string", "null"] },
+    "replayed_from": { "type": "string" }
+  }
+}

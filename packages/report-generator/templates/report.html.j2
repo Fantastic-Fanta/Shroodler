@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shroodler report — {{ target }}</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #211A17; color: #EDE8C8; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #4A4038; padding: 0.4rem 0.6rem; text-align: left; }
+    .critical { color: #E5484D; }
+    .high { color: #F0883E; }
+    .medium { color: #E8B339; }
+    .low { color: #5B9BD1; }
+    .info { color: #8B8A85; }
+    code { font-family: ui-monospace, monospace; }
+  </style>
+</head>
+<body>
+  <h1>Shroodler report</h1>
+  <p>Target: <code>{{ target }}</code></p>
+  <p>Crawler: {{ crawler.name }} {{ crawler.version }} ({{ crawler.mode }})</p>
+  <p>{{ pages|length }} pages · {{ findings|length }} findings</p>
+  <h2>Findings</h2>
+  <table>
+    <thead>
+      <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+    {% for f in findings|sort(attribute='severity_rank') %}
+      <tr>
+        <td class="{{ f.severity }}">{{ f.severity }}</td>
+        <td><code>{{ f.id }}</code></td>
+        <td>{{ f.category }}</td>
+        <td><code>{{ f.url }}</code></td>
+        <td>{{ f.description }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">No findings.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

@@ -1,0 +1,39 @@
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R5 V4 */
+:root {
+  --bg-base: #211A17;
+  --bg-raised: #2A2320;
+  --bg-hover: #332A26;
+  --border: #4A4038;
+  --accent: #8FE6C4;
+  --accent-dim: #5FA98A;
+  --secondary: #6E8494;
+  --text-primary: #EDE8C8;
+  --text-muted: #B3AD94;
+  --accent-rare: #9B7FC0;
+  --sev-critical: #E5484D;
+  --sev-high: #F0883E;
+  --sev-medium: #E8B339;
+  --sev-low: #5B9BD1;
+  --sev-info: #8B8A85;
+  --font-ui: system-ui, "SF Pro", Inter, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, monospace;
+}
+
+html, body {
+  margin: 0;
+  overflow-x: clip;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  height: 100%;
+}
+
+#app { height: 100%; }
+
+button, input, select, textarea {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

@@ -1,0 +1,19 @@
+{
+  "target_app": "app1-server-rendered",
+  "expected_pages": ["/", "/login", "/dashboard", "/settings", "/about", "/error"],
+  "expected_forms": {
+    "/login": ["username", "password", "csrf_token"]
+  },
+  "expected_findings": [
+    { "id": "missing-csp", "url": "/login" },
+    { "id": "insecure-cookie", "url": "/dashboard", "cookie": "session_id" },
+    { "id": "verbose-error", "url": "/error" },
+    { "id": "exposed-file", "url": "/.git/config" },
+    { "id": "exposed-file", "url": "/backup.sql.bak" },
+    { "id": "server-version-leak", "url": "/" },
+    { "id": "aws-access-key", "url": "/static/app.js" }
+  ],
+  "expected_not_found": [
+    { "id": "leaked-secret", "url": "/about" }
+  ]
+}

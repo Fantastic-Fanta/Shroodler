@@ -1,7 +1,10 @@
 {
   "expected_pages": ["/", "/search"],
   "expected_findings": [
-    {"id": "payload-sql-error", "url": "/search"}
+    {"id": "payload-sql-error", "url": "/search"},
+    {"id": "payload-xss-reflect", "url": "/search"},
+    {"id": "payload-ssti", "url": "/search"},
+    {"id": "payload-path-traversal", "url": "/search"}
   ],
   "expected_not_found": []
 }

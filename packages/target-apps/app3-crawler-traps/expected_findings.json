@@ -3,10 +3,15 @@
   "expected_pages": ["/", "/visible"],
   "expected_forms": {},
   "expected_findings": [
-    { "id": "exposed-file", "url": "/.env" }
+    { "id": "exposed-file", "url": "/.env" },
+    { "id": "github-pat", "url": "/.env" }
   ],
   "expected_not_found": [
     { "id": "exposed-file", "url": "/.git/config" },
-    { "id": "leaked-secret", "url": "/visible" }
+    { "id": "exposed-file", "url": "/.git/HEAD" },
+    { "id": "exposed-file", "url": "/.well-known/security.txt" },
+    { "id": "exposed-file", "url": "/id_rsa" },
+    { "id": "leaked-secret", "url": "/visible" },
+    { "id": "github-pat", "url": "/visible" }
   ]
 }

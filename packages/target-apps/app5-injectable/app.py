@@ -1,4 +1,4 @@
-"""Intentionally injectable local target (SQLi-shaped error). Do not 'fix'."""
+"""Intentionally injectable local target. Do not 'fix'."""
 
 from flask import Flask, request
 
@@ -22,6 +22,10 @@ def home():
 @app.post("/search")
 def search():
     q = request.form.get("q", "")
+    if "../" in q or "..\\" in q:
+        return "root:x:0:0:root:/root:/bin/sh\n", 200
+    if "{{7*7}}" in q:
+        return "computed:49", 200
     if "'" in q or "or" in q.lower():
         return "sqlite3.OperationalError: near \"OR\": syntax error", 500
     return f"<p>no rows for {q}</p>"

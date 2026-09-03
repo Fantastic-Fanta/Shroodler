@@ -253,6 +253,129 @@ func TestRefuseExternal(t *testing.T) {
 	}
 }
 
+
+func TestCORSProbe(t *testing.T) {
+	var options []string
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/api/cors-reflect">r</a><a href="/api/cors-star-creds">c</a><a href="/api/cors-star">s</a><a href="/api/cors-locked">l</a><script src="/static/app.js"></script>`))
+	})
+	mux.HandleFunc("/api/cors-reflect", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			options = append(options, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Write([]byte(`{"ok":true}`))
+	})
+	mux.HandleFunc("/api/cors-star-creds", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			options = append(options, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		w.Write([]byte(`{"ok":true}`))
+	})
+	mux.HandleFunc("/api/cors-star", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			options = append(options, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Write([]byte(`{"ok":true}`))
+	})
+	mux.HandleFunc("/api/cors-locked", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			options = append(options, r.URL.Path)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Header().Set("Access-Control-Allow-Origin", "https://app.example")
+		w.Write([]byte(`{"ok":true}`))
+	})
+	jsOptions := 0
+	mux.HandleFunc("/static/app.js", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodOptions {
+			jsOptions++
+		}
+		w.Header().Set("Content-Type", "application/javascript")
+		w.Write([]byte(`console.log(1)`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, MaxPages: 40})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for _, f := range res.Findings {
+		if strings.HasPrefix(f.ID, "cors-") {
+			got[f.ID+"|"+urls.PathOf(f.URL)] = f.Category
+		}
+	}
+	if got["cors-reflect-origin|/api/cors-reflect"] != "header" {
+		t.Fatalf("missing reflect in %#v", got)
+	}
+	if got["cors-wildcard-credentials|/api/cors-star-creds"] != "header" {
+		t.Fatalf("missing wildcard-credentials in %#v", got)
+	}
+	if got["cors-allow-any|/api/cors-star"] != "header" {
+		t.Fatalf("missing allow-any in %#v", got)
+	}
+	if _, ok := got["cors-allow-any|/api/cors-star-creds"]; ok {
+		t.Fatalf("wildcard-credentials should not also emit allow-any: %#v", got)
+	}
+	if _, ok := got["cors-reflect-origin|/api/cors-locked"]; ok {
+		t.Fatalf("locked origin should be negative: %#v", got)
+	}
+	if len(options) == 0 {
+		t.Fatal("expected OPTIONS probes on API paths")
+	}
+	if jsOptions != 0 {
+		t.Fatalf("OPTIONS sent to static js: %d", jsOptions)
+	}
+}
+
+func TestCORSGETFallback(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/api/only-get">x</a>`))
+	})
+	mux.HandleFunc("/api/only-get", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		if r.Method == http.MethodGet {
+			w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+		}
+		w.Write([]byte(`{"ok":true}`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.ID == "cors-reflect-origin" && urls.PathOf(f.URL) == "/api/only-get" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected GET Origin fallback reflect, findings %#v", res.Findings)
+	}
+}
+
 func TestSourceMapOriginalFile(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

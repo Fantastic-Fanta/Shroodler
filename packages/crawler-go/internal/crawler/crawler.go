@@ -153,6 +153,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	var pages []models.Page
 	var findings []models.Finding
 	var endpoints []models.JSEndpoint
+	var corsCandidates []string
 	rules := extractors.LoadSecretRules()
 
 	for len(queue) > 0 && len(pages) < cfg.MaxPages {
@@ -178,6 +179,15 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		pages = append(pages, page)
 		findings = append(findings, f...)
 		endpoints = append(endpoints, eps...)
+		if extractors.IsAPIIsh(res.URL, header(res.Headers, "content-type")) {
+			corsCandidates = append(corsCandidates, res.URL)
+		}
+		for _, e := range eps {
+			joined := resolve(res.URL, e.Endpoint)
+			if extractors.IsAPIPath(e.Endpoint) || extractors.IsAPIPath(joined) {
+				corsCandidates = append(corsCandidates, joined)
+			}
+		}
 		if cfg.Progress != nil {
 			cfg.Progress(len(pages), res.URL)
 		}
@@ -257,6 +267,8 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		ev := p
 		findings = append(findings, models.Finding{ID: "exposed-file", Severity: "high", Category: "exposed-file", URL: u, Description: "Backup-name mutation " + p + " is reachable", Evidence: &ev})
 	}
+
+	findings = append(findings, probeCORS(client, start, corsCandidates)...)
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	return &models.CrawlResult{
@@ -346,14 +358,63 @@ func fetchRetry(client *http.Client, raw, cookie string) fetchResult {
 	return last
 }
 
+func probeCORS(client *http.Client, start string, candidates []string) []models.Finding {
+	if !urls.IsLocal(start) {
+		return nil
+	}
+	seen := map[string]bool{}
+	n := 0
+	var out []models.Finding
+	for _, raw := range candidates {
+		if n >= extractors.MaxCORSProbes {
+			break
+		}
+		if raw == "" || !urls.SameOrigin(raw, start) || !urls.IsLocal(raw) {
+			continue
+		}
+		if extractors.IsStaticAsset(raw) {
+			continue
+		}
+		key := urls.CanonicalKey(raw)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		n++
+		out = append(out, extractors.CORSFindings(corsProbeHeaders(client, raw), raw)...)
+	}
+	return out
+}
+
+func corsProbeHeaders(client *http.Client, raw string) map[string]string {
+	opt := doRequest(client, http.MethodOptions, raw, "", map[string]string{
+		"Origin":                        extractors.AttackerOrigin,
+		"Access-Control-Request-Method": "GET",
+	})
+	if header(opt.Headers, "access-control-allow-origin") != "" {
+		return opt.Headers
+	}
+	got := doRequest(client, http.MethodGet, raw, "", map[string]string{
+		"Origin": extractors.AttackerOrigin,
+	})
+	return got.Headers
+}
+
 func doGet(client *http.Client, raw, cookie string) fetchResult {
-	req, err := http.NewRequest(http.MethodGet, raw, nil)
+	return doRequest(client, http.MethodGet, raw, cookie, nil)
+}
+
+func doRequest(client *http.Client, method, raw, cookie string, extra map[string]string) fetchResult {
+	req, err := http.NewRequest(method, raw, nil)
 	if err != nil {
 		return fetchResult{URL: raw}
 	}
 	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
 	if cookie != "" {
 		req.Header.Set("Cookie", cookie)
+	}
+	for k, v := range extra {
+		req.Header.Set(k, v)
 	}
 	resp, err := client.Do(req)
 	if err != nil {

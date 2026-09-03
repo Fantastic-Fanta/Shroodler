@@ -64,6 +64,10 @@ http
          <a href="/login">Login</a>
          <a href="/users">Users</a>
          <a href="/orders">Orders</a>
+         <a href="/api/cors-reflect">cors reflect</a>
+         <a href="/api/cors-star-creds">cors star creds</a>
+         <a href="/api/cors-star">cors star</a>
+         <a href="/api/cors-locked">cors locked</a>
          <script src="/static/gw.js"></script>
          </body></html>`,
       );
@@ -97,6 +101,33 @@ http
         "application/javascript",
         `fetch("/api/users"); fetch("/api/orders");`,
       );
+    }
+    if (u.pathname === "/api/cors-reflect") {
+      const origin = req.headers.origin || "";
+      return send(res, 200, "application/json", JSON.stringify({ cors: "reflect" }), {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      });
+    }
+    if (u.pathname === "/api/cors-star-creds") {
+      return send(res, 200, "application/json", JSON.stringify({ cors: "star-creds" }), {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      });
+    }
+    if (u.pathname === "/api/cors-star") {
+      return send(res, 200, "application/json", JSON.stringify({ cors: "star" }), {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      });
+    }
+    if (u.pathname === "/api/cors-locked") {
+      return send(res, 200, "application/json", JSON.stringify({ cors: "locked" }), {
+        "Access-Control-Allow-Origin": "https://app.example",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+      });
     }
     send(res, 404, "text/plain", "not found");
   })

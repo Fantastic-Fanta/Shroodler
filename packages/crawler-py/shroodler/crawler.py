@@ -20,6 +20,12 @@ from shroodler.auth import (
 )
 from shroodler.extractors.common_paths import probe_mutations, probe_paths
 from shroodler.extractors.cookies import extract_cookies
+from shroodler.extractors.cors import (
+    candidate_from_endpoint,
+    is_api_ish,
+    is_api_path,
+    probe_cors,
+)
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.js_endpoints import extract_js_endpoints
@@ -150,6 +156,7 @@ class Crawler:
         pages: list[Page] = []
         findings: list[Finding] = []
         js_endpoints: list = []
+        cors_candidates: list[str] = []
         family_counts: dict[str, int] = defaultdict(int)
         redirect_hits: dict[str, int] = defaultdict(int)
 
@@ -174,6 +181,12 @@ class Crawler:
             pages.append(page)
             findings.extend(page_findings)
             js_endpoints.extend(page_eps)
+            if is_api_ish(result.url, _content_type(result.headers)):
+                cors_candidates.append(result.url)
+            for ep in page_eps:
+                joined = candidate_from_endpoint(result.url, ep.endpoint)
+                if is_api_path(ep.endpoint) or is_api_path(joined):
+                    cors_candidates.append(joined)
             if self.progress:
                 self.progress(len(pages), result.url)
 
@@ -212,6 +225,7 @@ class Crawler:
         mut_pages, mut_findings = probe_mutations(origin_url, self.http, seen, discovered)
         pages.extend(mut_pages)
         findings.extend(mut_findings)
+        findings.extend(probe_cors(origin_url, self.http, cors_candidates))
 
         finished = _now()
         requests = getattr(self.http, "requests", 0)

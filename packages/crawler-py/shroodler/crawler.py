@@ -29,6 +29,7 @@ from shroodler.extractors.cors import (
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.graphql import probe_graphql
 from shroodler.extractors.headers import extract_headers
+from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.secrets import scan_text
@@ -434,6 +435,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
     headers, header_findings = extract_headers(result.headers, result.url)
     verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
     secret_findings = scan_text(result.text, result.url)
+    markup_findings = extract_html_markup(result.text, result.url)
     page = Page(
         url=result.url,
         status_code=result.status_code,
@@ -449,6 +451,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
         + header_findings
         + verbose_findings
         + secret_findings
+        + markup_findings
         + ep_findings
     )
     return page, all_f, endpoints

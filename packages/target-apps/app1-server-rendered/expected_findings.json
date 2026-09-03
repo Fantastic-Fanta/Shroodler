@@ -7,6 +7,8 @@
   "expected_findings": [
     { "id": "missing-csp", "url": "/login" },
     { "id": "insecure-cookie", "url": "/dashboard", "cookie": "session_id" },
+    { "id": "cookie-path-broad", "url": "/dashboard" },
+    { "id": "cookie-domain-broad", "url": "/dashboard" },
     { "id": "verbose-error", "url": "/error" },
     { "id": "exposed-file", "url": "/.git/config" },
     { "id": "exposed-file", "url": "/.git/HEAD" },
@@ -33,6 +35,10 @@
     { "id": "exposed-file", "url": "/.DS_Store" },
     { "id": "exposed-file", "url": "/wp-config.php.bak" },
     { "id": "exposed-file", "url": "/settings.bak" },
-    { "id": "exposed-file", "url": "/login.old" }
+    { "id": "exposed-file", "url": "/login.old" },
+    { "id": "cookie-path-broad", "url": "/about" },
+    { "id": "cookie-domain-broad", "url": "/about" },
+    { "id": "cookie-missing-host-prefix", "url": "/dashboard" },
+    { "id": "cookie-missing-secure-prefix", "url": "/dashboard" }
   ]
 }

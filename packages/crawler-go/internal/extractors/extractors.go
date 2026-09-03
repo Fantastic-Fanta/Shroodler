@@ -452,65 +452,6 @@ func ExtractHeaders(h map[string]string, pageURL string) (models.HeaderAnalysis,
 	return models.HeaderAnalysis{Present: present, Missing: missing}, findings
 }
 
-func ParseSetCookie(header string) *models.Cookie {
-	parts := strings.Split(header, ";")
-	if len(parts) == 0 || !strings.Contains(parts[0], "=") {
-		return nil
-	}
-	name := strings.TrimSpace(strings.SplitN(parts[0], "=", 2)[0])
-	if name == "" {
-		return nil
-	}
-	c := &models.Cookie{Name: name}
-	for _, p := range parts[1:] {
-		p = strings.TrimSpace(p)
-		low := strings.ToLower(p)
-		if low == "secure" {
-			c.Secure = true
-		} else if low == "httponly" {
-			c.HTTPOnly = true
-		} else if strings.HasPrefix(low, "samesite=") {
-			v := p[len("SameSite="):]
-			if i := strings.Index(p, "="); i >= 0 {
-				v = p[i+1:]
-			}
-			switch strings.ToLower(v) {
-			case "strict":
-				s := "Strict"
-				c.SameSite = &s
-			case "lax":
-				s := "Lax"
-				c.SameSite = &s
-			case "none":
-				s := "None"
-				c.SameSite = &s
-			}
-		}
-	}
-	return c
-}
-
-func ExtractCookies(headers []string, pageURL string) ([]models.Cookie, []models.Finding) {
-	var cookies []models.Cookie
-	var findings []models.Finding
-	for _, raw := range headers {
-		c := ParseSetCookie(raw)
-		if c == nil {
-			continue
-		}
-		cookies = append(cookies, *c)
-		if !c.Secure {
-			ev := c.Name
-			findings = append(findings, models.Finding{ID: "insecure-cookie", Severity: "medium", Category: "cookie", URL: pageURL, Description: "Cookie " + c.Name + " is missing the Secure flag", Evidence: &ev})
-		}
-		if !c.HTTPOnly {
-			ev := c.Name
-			findings = append(findings, models.Finding{ID: "cookie-not-httponly", Severity: "low", Category: "cookie", URL: pageURL, Description: "Cookie " + c.Name + " is missing HttpOnly", Evidence: &ev})
-		}
-	}
-	return cookies, findings
-}
-
 func ExtractVerbose(body, pageURL string, status int) []models.Finding {
 	if traceRe.MatchString(body) || (status >= 500 && strings.Contains(body, "File \"")) {
 		ev := body

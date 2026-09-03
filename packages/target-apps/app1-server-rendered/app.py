@@ -71,6 +71,17 @@ def dashboard():
     resp.set_cookie(
         "session_id",
         "sid-insecure-demo",
+        path="/",
+        secure=False,
+        httponly=True,
+        samesite="Lax",
+    )
+    # Over-scoped extra cookie: Path=/ and Domain wider than this host.
+    resp.set_cookie(
+        "prefs",
+        "1",
+        path="/",
+        domain="example.com",
         secure=False,
         httponly=True,
         samesite="Lax",

@@ -77,6 +77,14 @@ class StaticFetcher:
             return _error_result(url, exc)
         return _from_response(url, resp)
 
+    def post_form(self, url: str, data: dict[str, str]) -> FetchResult:
+        self.requests += 1
+        try:
+            resp = self.client.post(url, data=data)
+        except httpx.RequestError as exc:
+            return _error_result(url, exc)
+        return _from_response(url, resp)
+
 
 def _error_result(url: str, exc: httpx.RequestError) -> FetchResult:
     return FetchResult(

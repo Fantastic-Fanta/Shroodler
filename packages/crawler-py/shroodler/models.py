@@ -15,6 +15,7 @@ Category = Literal[
     "autocomplete",
     "payload",
     "scan-note",
+    "auth",
 ]
 Mode = Literal["static", "headless", "ingest"]
 StoppedReason = Literal["complete", "max-pages", "max-time"]

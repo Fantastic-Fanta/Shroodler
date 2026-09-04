@@ -191,11 +191,24 @@ def run(
 
                 for pack in loaded:
                     payload = render_payload(str(pack["payload"]), token=token)
-                    data = {name: payload for name in fields}
-                    try:
-                        resp = send(data)
-                    except httpx.HTTPError:
-                        continue
+                    if pack.get("raw_body"):
+                        if method != "POST":
+                            continue
+                        content_type = pack.get("content_type", "application/xml")
+                        try:
+                            resp = http.post(
+                                action,
+                                content=payload.encode("utf-8"),
+                                headers={"Content-Type": content_type},
+                            )
+                        except httpx.HTTPError:
+                            continue
+                    else:
+                        data = {name: payload for name in fields}
+                        try:
+                            resp = send(data)
+                        except httpx.HTTPError:
+                            continue
                     elapsed_ms = resp.elapsed.total_seconds() * 1000
                     redirected_to = " ".join(
                         [h.headers.get("location", "") for h in resp.history] + [str(resp.url)]

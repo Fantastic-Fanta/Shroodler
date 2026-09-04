@@ -361,6 +361,7 @@ func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchRe
 	headers, hf := extractors.ExtractHeaders(res.Headers, res.URL)
 	vf := extractors.ExtractVerbose(res.Body, res.URL, res.Status)
 	sf := extractors.ScanSecrets(res.Body, res.URL, rules)
+	jf := extractors.AuditJWTsInText(res.Body, res.URL)
 	mf := extractors.ExtractHTMLMarkup(res.Body, res.URL, rules)
 	var eps []models.JSEndpoint
 	ctype := strings.ToLower(header(res.Headers, "content-type"))
@@ -407,7 +408,7 @@ func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchRe
 	if page.Headers.Missing == nil {
 		page.Headers.Missing = []string{}
 	}
-	all := append(append(append(append(append(ff, cf...), hf...), vf...), sf...), mf...)
+	all := append(append(append(append(append(append(ff, cf...), hf...), vf...), sf...), jf...), mf...)
 	return page, all, eps
 }
 

@@ -33,6 +33,7 @@ from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.openapi import is_probe_url, probe_urls, urls_from_spec
+from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.secrets import scan_text
 from shroodler.extractors.sourcemap import (
     decode_data_url,
@@ -454,6 +455,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
     headers, header_findings = extract_headers(result.headers, result.url)
     verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
     secret_findings = scan_text(result.text, result.url)
+    jwt_findings = audit_jwts(result.text, result.url)
     markup_findings = extract_html_markup(result.text, result.url)
     page = Page(
         url=result.url,
@@ -470,6 +472,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
         + header_findings
         + verbose_findings
         + secret_findings
+        + jwt_findings
         + markup_findings
         + ep_findings
     )

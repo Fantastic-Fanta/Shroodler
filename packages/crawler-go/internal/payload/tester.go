@@ -46,6 +46,8 @@ type Pack struct {
 	Severity    string `yaml:"severity"`
 	Description string `yaml:"description"`
 	Match       Match  `yaml:"match"`
+	RawBody     bool   `yaml:"raw_body"`
+	ContentType string `yaml:"content_type"`
 }
 
 func (p Pack) findingID() string {
@@ -314,11 +316,24 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal 
 
 			for _, pack := range packs {
 				payloadStr := renderPayload(pack.Payload, token)
-				vals := url.Values{}
-				for _, name := range fields {
-					vals.Set(name, payloadStr)
+				var resp httpResp
+				var err error
+				if pack.RawBody {
+					if method != "POST" {
+						continue
+					}
+					ct := pack.ContentType
+					if ct == "" {
+						ct = "application/xml"
+					}
+					resp, err = fireRaw(client, action, payloadStr, ct)
+				} else {
+					vals := url.Values{}
+					for _, name := range fields {
+						vals.Set(name, payloadStr)
+					}
+					resp, err = fire(client, method, action, vals)
 				}
-				resp, err := fire(client, method, action, vals)
 				if err != nil {
 					continue
 				}
@@ -356,6 +371,15 @@ type httpResp struct {
 	redirectedTo string
 }
 
+func fireRaw(client *http.Client, action, body, contentType string) (httpResp, error) {
+	req, err := http.NewRequest(http.MethodPost, action, strings.NewReader(body))
+	if err != nil {
+		return httpResp{}, err
+	}
+	req.Header.Set("Content-Type", contentType)
+	return doTimed(client, req)
+}
+
 func fire(client *http.Client, method, action string, vals url.Values) (httpResp, error) {
 	var req *http.Request
 	var err error
@@ -379,6 +403,10 @@ func fire(client *http.Client, method, action string, vals url.Values) (httpResp
 	if err != nil {
 		return httpResp{}, err
 	}
+	return doTimed(client, req)
+}
+
+func doTimed(client *http.Client, req *http.Request) (httpResp, error) {
 	var hops []string
 	cc := *client
 	cc.CheckRedirect = func(r *http.Request, via []*http.Request) error {

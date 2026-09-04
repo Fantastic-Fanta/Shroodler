@@ -1,6 +1,7 @@
 package payload
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -190,9 +191,53 @@ func TestNewPacksLoadWithoutError(t *testing.T) {
 	for _, p := range packs {
 		ids[p.findingID()] = true
 	}
-	for _, id := range []string{"payload-ssrf", "payload-open-redirect", "payload-sql-time-blind"} {
+	for _, id := range []string{"payload-ssrf", "payload-open-redirect", "payload-sql-time-blind", "payload-xxe"} {
 		if !ids[id] {
 			t.Fatalf("missing pack %s", id)
 		}
+	}
+}
+
+func TestRawBodyPackSendsLiteralPayloadNotFormFields(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		ct := r.Header.Get("Content-Type")
+		if strings.Contains(string(body), "SYSTEM") && strings.Contains(string(body), "/etc/passwd") && strings.Contains(ct, "xml") {
+			w.Write([]byte("root:x:0:0:root:/root:/bin/sh\n"))
+			return
+		}
+		w.Write([]byte("<ok/>"))
+	}))
+	defer srv.Close()
+
+	packs, err := LoadPacks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := map[string]any{
+		"target": srv.URL + "/",
+		"pages": []any{
+			map[string]any{
+				"url": srv.URL + "/",
+				"forms": []any{
+					map[string]any{
+						"action": "/upload",
+						"method": "POST",
+						"fields": []any{map[string]any{"name": "q"}},
+					},
+				},
+			},
+		},
+	}
+	out, err := Run(doc, srv.Client(), packs, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]bool{}
+	for _, f := range out.Findings {
+		got[f.ID] = true
+	}
+	if !got["payload-xxe"] {
+		t.Fatalf("missing payload-xxe in %#v", out.Findings)
 	}
 }

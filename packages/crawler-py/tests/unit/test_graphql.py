@@ -58,7 +58,7 @@ def test_parse_schema_types_and_truncate():
     assert parse_schema_types("nope") == []
 
 
-def test_skips_non_local_origin():
+def test_skips_non_local_origin_without_allow_external():
     class Boom:
         def post_json(self, *args, **kwargs):
             raise AssertionError("must not probe off-local hosts")
@@ -68,7 +68,9 @@ def test_skips_non_local_origin():
 
     pages, findings, endpoints = probe_graphql("http://example.com/", Boom(), set())
     assert pages == []
-    assert findings == []
+    assert len(findings) == 1
+    assert findings[0].id == "graphql-probe-skipped"
+    assert findings[0].category == "scan-note"
     assert endpoints == []
 
 

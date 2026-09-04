@@ -335,7 +335,6 @@ func TestRefuseExternal(t *testing.T) {
 	}
 }
 
-
 func liveOK(url string) bool {
 	c := http.Client{Timeout: time.Second}
 	resp, err := c.Get(url)
@@ -701,7 +700,6 @@ func TestLiveApp3MaxTime(t *testing.T) {
 		t.Fatalf("stats %#v pages=%d", res.Stats, len(res.Pages))
 	}
 }
-
 
 func TestCORSProbe(t *testing.T) {
 	var options []string

@@ -257,10 +257,14 @@ class Crawler:
         mut_pages, mut_findings = probe_mutations(origin_url, self.http, seen, discovered)
         pages.extend(mut_pages)
         findings.extend(mut_findings)
-        findings.extend(probe_cors(origin_url, self.http, cors_candidates))
+        findings.extend(
+            probe_cors(origin_url, self.http, cors_candidates, allow_external=self.allow_external)
+        )
 
         if not self._budget_hit(t0, len(pages)):
-            gql_pages, gql_findings, gql_eps = probe_graphql(origin_url, self.http, seen)
+            gql_pages, gql_findings, gql_eps = probe_graphql(
+                origin_url, self.http, seen, allow_external=self.allow_external
+            )
             pages.extend(gql_pages)
             findings.extend(gql_findings)
             js_endpoints.extend(gql_eps)

@@ -14,6 +14,11 @@
     "js_endpoints"
   ],
   "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Version of this schema the document was produced against, e.g. \"1.1.0\". Absent on documents produced before this field existed; consumers should treat a missing value as \"1.0.0\". Bump the minor version for additive, backward-compatible changes (new optional field, new enum value) and the major version for breaking changes."
+    },
     "target": {
       "type": "string",
       "minLength": 1,
@@ -156,6 +161,7 @@
         },
         "category": {
           "type": "string",
+          "description": "\"payload\" covers all active payload-tester findings (SQLi/XSS/SSTI/path-traversal/SSRF/open-redirect); the specific vulnerability class is carried in the finding's \"id\" (e.g. payload-sql-error, payload-ssrf, payload-open-redirect), not a separate category value. \"scan-note\" is not a vulnerability; it is used to record that an active probe (e.g. CORS reflection, GraphQL introspection) was intentionally skipped, so consumers do not silently interpret an empty result as \"checked, nothing found\".",
           "enum": [
             "header",
             "cookie",
@@ -163,7 +169,9 @@
             "exposed-file",
             "js-endpoint",
             "verbose-error",
-            "autocomplete"
+            "autocomplete",
+            "payload",
+            "scan-note"
           ]
         },
         "url": { "type": "string", "minLength": 1 },

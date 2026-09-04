@@ -42,9 +42,9 @@ func RenderSARIF(doc map[string]any) string {
 				desc = id
 			}
 			rules = append(rules, map[string]any{
-				"id":                id,
-				"shortDescription":  map[string]any{"text": id},
-				"fullDescription":   map[string]any{"text": desc},
+				"id":               id,
+				"shortDescription": map[string]any{"text": id},
+				"fullDescription":  map[string]any{"text": desc},
 			})
 		}
 		uri := fmt.Sprint(f["url"])
@@ -61,8 +61,8 @@ func RenderSARIF(doc map[string]any) string {
 			msg = id
 		}
 		results = append(results, map[string]any{
-			"ruleId": id,
-			"level":  level,
+			"ruleId":  id,
+			"level":   level,
 			"message": map[string]any{"text": msg},
 			"locations": []any{
 				map[string]any{

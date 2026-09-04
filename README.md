@@ -98,4 +98,11 @@ External smoke (off by default, never part of `make verify`):
 .venv/bin/shroodler crawl https://httpbin.org/get --allow-external --depth 0 --output /tmp/ext.json
 ```
 
-See `docs/` for architecture, spec, test matrix, milestones, UI style, and proxy contract.
+See [`docs/cli-surface.md`](docs/cli-surface.md) for the full CLI command/flag
+reference, including what is and isn't wired into the desktop UI yet — start
+there before building GUI features so you don't duplicate what the CLI
+already does or miss a flag the UI silently drops.
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).

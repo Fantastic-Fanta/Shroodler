@@ -1,0 +1,40 @@
+# Server-side request forgery: value-controlled fields are pointed at cloud
+# instance-metadata endpoints. Matches require a metadata-shaped signature
+# in the response body that was NOT present in the baseline response, which
+# keeps false-positive risk low (these strings essentially never appear on
+# a normal page). Only useful against fields whose values are fetched
+# server-side (webhook/callback/image-url/import-url style parameters) --
+# a generic username/search field will simply not be vulnerable, not FP.
+- id: ssrf-aws-metadata
+  finding_id: payload-ssrf
+  payload: "http://169.254.169.254/latest/meta-data/"
+  severity: critical
+  description: Server-side request to a value-controlled URL reached the AWS instance metadata service
+  match:
+    any:
+      - body_contains: "ami-id"
+        new_only: true
+      - body_contains: "instance-id"
+        new_only: true
+      - body_contains: "iam/security-credentials"
+        new_only: true
+- id: ssrf-gcp-metadata
+  finding_id: payload-ssrf
+  payload: "http://metadata.google.internal/computeMetadata/v1/"
+  severity: critical
+  description: Server-side request to a value-controlled URL reached the GCP metadata service
+  match:
+    any:
+      - body_contains: "computemetadata/v1"
+        new_only: true
+- id: ssrf-azure-metadata
+  finding_id: payload-ssrf
+  payload: "http://169.254.169.254/metadata/instance?api-version=2021-02-01"
+  severity: critical
+  description: Server-side request to a value-controlled URL reached the Azure instance metadata service
+  match:
+    any:
+      - body_contains: "subscriptionid"
+        new_only: true
+      - body_contains: "\"compute\":"
+        new_only: true

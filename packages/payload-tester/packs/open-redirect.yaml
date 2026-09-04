@@ -1,0 +1,21 @@
+# Open redirect: a value-controlled field is pointed at an off-site marker
+# host. The tester inspects every hop of the redirect chain (httpx response
+# history) plus the final resolved URL for that marker host, so this only
+# fires when the application itself issued a redirect there -- reflecting
+# the string in a page body does not count.
+- id: open-redirect-external-host
+  finding_id: payload-open-redirect
+  payload: "https://{{MARKER_HOST}}/"
+  severity: medium
+  description: Value-controlled parameter caused the application to redirect to an attacker-controlled external host
+  match:
+    any:
+      - redirected_to_contains: "shroodler-oob-test.invalid"
+- id: open-redirect-protocol-relative
+  finding_id: payload-open-redirect
+  payload: "//{{MARKER_HOST}}/"
+  severity: medium
+  description: Protocol-relative payload caused a redirect to an attacker-controlled external host
+  match:
+    any:
+      - redirected_to_contains: "shroodler-oob-test.invalid"

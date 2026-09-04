@@ -196,7 +196,7 @@ def cmd_payload(args: argparse.Namespace) -> int:
     extra = [Path(x) for x in (getattr(args, "pack", None) or [])]
     doc = load_json(args.crawl_json)
     packs = tester.load_packs(extra=extra) if extra else tester.load_packs()
-    out = tester.run(doc, packs=packs)
+    out = tester.run(doc, packs=packs, allow_external=getattr(args, "allow_external", False))
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
     return 0
@@ -256,6 +256,11 @@ def build_parser() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     p.add_argument("-V", "--version", action="store_true", help="Print version and exit")
+    p.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print full tracebacks on error instead of a one-line message",
+    )
     sub = p.add_subparsers(dest="command", required=False)
 
     crawl = sub.add_parser("crawl", help="Crawl a target URL")
@@ -289,7 +294,8 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument(
         "--allow-external",
         action="store_true",
-        help="Allow crawling a non-local target (any host outside 127.0.0.1/localhost); off by default",
+        help="Allow crawling a non-local target (any host outside "
+        "127.0.0.1/localhost); off by default",
     )
     crawl.add_argument(
         "--header",
@@ -399,7 +405,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     payload = sub.add_parser(
         "payload",
-        help="Run YAML payload packs against crawl JSON (local targets only)",
+        help="Run YAML payload packs (SQLi/XSS/SSTI/path-traversal/SSRF/"
+        "open-redirect) against crawl JSON",
     )
     payload.add_argument("crawl_json")
     payload.add_argument("--output", "-o")
@@ -409,6 +416,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         metavar="PATH",
         help="Extra YAML pack file or directory (repeatable)",
+    )
+    payload.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow sending active payloads to non-local targets. "
+        "Only use against hosts you are authorized to test.",
     )
     payload.set_defaults(func=cmd_payload)
 
@@ -476,7 +489,10 @@ def main(argv: list[str] | None = None) -> None:
     try:
         code = args.func(args)
     except Exception as exc:
-        print(str(exc), file=sys.stderr)
+        if getattr(args, "debug", False):
+            raise
+        print(f"error: {exc}", file=sys.stderr)
+        print("(re-run with --debug for a full traceback)", file=sys.stderr)
         raise SystemExit(1) from exc
     raise SystemExit(code)
 

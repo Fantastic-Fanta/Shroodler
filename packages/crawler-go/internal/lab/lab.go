@@ -209,12 +209,12 @@ func BaselineFromDoc(doc map[string]any, name string, rules []Suppression) map[s
 		app = "local-app"
 	}
 	return map[string]any{
-		"target_app":          app,
-		"target":              target,
-		"expected_pages":      expectedPages,
-		"expected_forms":      orderedForms,
-		"expected_findings":   expectedFindings,
-		"expected_not_found":  []any{},
+		"target_app":         app,
+		"target":             target,
+		"expected_pages":     expectedPages,
+		"expected_forms":     orderedForms,
+		"expected_findings":  expectedFindings,
+		"expected_not_found": []any{},
 	}
 }
 

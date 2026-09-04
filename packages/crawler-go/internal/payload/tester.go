@@ -1,9 +1,11 @@
 package payload
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,10 +19,19 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+const (
+	MarkerHost    = "shroodler-oob-test.invalid"
+	baselineValue = "shroodler-baseline-probe"
+)
+
 type Clause struct {
-	StatusGte    *int   `yaml:"status_gte"`
-	BodyContains string `yaml:"body_contains"`
-	Reflected    bool   `yaml:"reflected"`
+	StatusGte           *int   `yaml:"status_gte"`
+	BodyContains        string `yaml:"body_contains"`
+	NewOnly             bool   `yaml:"new_only"`
+	Reflected           bool   `yaml:"reflected"`
+	ErrorStatusChanged  bool   `yaml:"error_status_changed"`
+	TimeDeltaGteMs      *int   `yaml:"time_delta_gte_ms"`
+	RedirectedToContain string `yaml:"redirected_to_contains"`
 }
 
 type Match struct {
@@ -138,43 +149,104 @@ func loadPackFile(path string) ([]Pack, error) {
 	return packs, nil
 }
 
-func clauseMatches(c Clause, status int, body, payload string) bool {
+type matchCtx struct {
+	elapsedMs        float64
+	haveElapsed      bool
+	redirectedTo     string
+	baselineStatus   int
+	haveBaseline     bool
+	baselineBody     string
+	baselineElapsed  float64
+	haveBaselineTime bool
+}
+
+func clauseMatches(c Clause, status int, body, payload string, ctx matchCtx) bool {
 	if c.StatusGte != nil && status >= *c.StatusGte {
 		return true
 	}
-	if c.BodyContains != "" && strings.Contains(strings.ToLower(body), strings.ToLower(c.BodyContains)) {
+	if c.ErrorStatusChanged && ctx.haveBaseline && status != ctx.baselineStatus && status >= 400 {
 		return true
 	}
+	if c.BodyContains != "" {
+		needle := strings.ToLower(c.BodyContains)
+		if strings.Contains(strings.ToLower(body), needle) {
+			if !(c.NewOnly && strings.Contains(strings.ToLower(ctx.baselineBody), needle)) {
+				return true
+			}
+		}
+	}
 	if c.Reflected && strings.Contains(body, payload) {
+		return true
+	}
+	if c.TimeDeltaGteMs != nil && ctx.haveElapsed && ctx.haveBaselineTime {
+		if ctx.elapsedMs-ctx.baselineElapsed >= float64(*c.TimeDeltaGteMs) {
+			return true
+		}
+	}
+	if c.RedirectedToContain != "" && strings.Contains(strings.ToLower(ctx.redirectedTo), strings.ToLower(c.RedirectedToContain)) {
 		return true
 	}
 	return false
 }
 
 func PackMatches(p Pack, status int, body, payload string) bool {
+	return packMatchesCtx(p, status, body, payload, matchCtx{})
+}
+
+func packMatchesCtx(p Pack, status int, body, payload string, ctx matchCtx) bool {
 	if len(p.Match.All) > 0 {
 		for _, c := range p.Match.All {
-			if !clauseMatches(c, status, body, payload) {
+			if !clauseMatches(c, status, body, payload, ctx) {
 				return false
 			}
 		}
 		return true
 	}
 	for _, c := range p.Match.Any {
-		if clauseMatches(c, status, body, payload) {
+		if clauseMatches(c, status, body, payload, ctx) {
 			return true
 		}
 	}
 	return false
 }
 
-func Run(crawl map[string]any, client *http.Client, packs []Pack) (Result, error) {
+func genToken() string {
+	const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789"
+	b := make([]byte, 10)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
+		if err != nil {
+			b[i] = alphabet[0]
+			continue
+		}
+		b[i] = alphabet[n.Int64()]
+	}
+	return "shrdlr" + string(b)
+}
+
+func renderPayload(raw, token string) string {
+	r := strings.NewReplacer("{{TOKEN}}", token, "{{MARKER_HOST}}", MarkerHost)
+	return r.Replace(raw)
+}
+
+func allowed(u string, allowExternal bool) bool {
+	return allowExternal || urls.IsLocal(u)
+}
+
+// Run sends every loaded pack's payload against each discovered form. When
+// allowExternal is false (the default), it refuses to touch anything that
+// isn't 127.0.0.1/localhost, mirroring the Python payload-tester and the
+// --allow-external flag on `shroodler crawl`.
+func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal bool) (Result, error) {
 	target, _ := crawl["target"].(string)
-	if !urls.IsLocal(target) {
-		return Result{}, fmt.Errorf("payload tester refuses non-local targets")
+	if !allowed(target, allowExternal) {
+		return Result{}, fmt.Errorf(
+			"payload tester refuses non-local targets without --allow-external " +
+				"(only scan hosts you are authorized to test)",
+		)
 	}
 	if client == nil {
-		client = &http.Client{Timeout: 5 * time.Second}
+		client = &http.Client{Timeout: 8 * time.Second}
 	}
 	if packs == nil {
 		var err error
@@ -185,11 +257,12 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack) (Result, error
 	}
 	out := Result{Target: target, Findings: []Finding{}}
 	seen := map[string]bool{}
+	token := genToken()
 	pages, _ := crawl["pages"].([]any)
 	for _, raw := range pages {
 		page, _ := raw.(map[string]any)
 		pageURL, _ := page["url"].(string)
-		if !urls.IsLocal(pageURL) {
+		if !allowed(pageURL, allowExternal) {
 			continue
 		}
 		forms, _ := page["forms"].([]any)
@@ -205,7 +278,7 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack) (Result, error
 					action = u.Scheme + "://" + u.Host + action
 				}
 			}
-			if !urls.IsLocal(action) {
+			if !allowed(action, allowExternal) {
 				continue
 			}
 			method, _ := form["method"].(string)
@@ -225,16 +298,35 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack) (Result, error
 			if len(fields) == 0 {
 				fields = []string{"q"}
 			}
+
+			baselineVals := url.Values{}
+			for _, name := range fields {
+				baselineVals.Set(name, baselineValue)
+			}
+			var ctx matchCtx
+			if bresp, err := fire(client, method, action, baselineVals); err == nil {
+				ctx.haveBaseline = true
+				ctx.baselineStatus = bresp.status
+				ctx.baselineBody = bresp.body
+				ctx.haveBaselineTime = true
+				ctx.baselineElapsed = bresp.elapsedMs
+			}
+
 			for _, pack := range packs {
+				payloadStr := renderPayload(pack.Payload, token)
 				vals := url.Values{}
 				for _, name := range fields {
-					vals.Set(name, pack.Payload)
+					vals.Set(name, payloadStr)
 				}
 				resp, err := fire(client, method, action, vals)
 				if err != nil {
 					continue
 				}
-				if !PackMatches(pack, resp.status, resp.body, pack.Payload) {
+				reqCtx := ctx
+				reqCtx.elapsedMs = resp.elapsedMs
+				reqCtx.haveElapsed = true
+				reqCtx.redirectedTo = resp.redirectedTo
+				if !packMatchesCtx(pack, resp.status, resp.body, payloadStr, reqCtx) {
 					continue
 				}
 				fid := pack.findingID()
@@ -243,7 +335,7 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack) (Result, error
 					continue
 				}
 				seen[key] = true
-				ev := pack.Payload
+				ev := payloadStr
 				if len(ev) > 80 {
 					ev = ev[:80]
 				}
@@ -258,8 +350,10 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack) (Result, error
 }
 
 type httpResp struct {
-	status int
-	body   string
+	status       int
+	body         string
+	elapsedMs    float64
+	redirectedTo string
 }
 
 func fire(client *http.Client, method, action string, vals url.Values) (httpResp, error) {
@@ -285,13 +379,31 @@ func fire(client *http.Client, method, action string, vals url.Values) (httpResp
 	if err != nil {
 		return httpResp{}, err
 	}
-	resp, err := client.Do(req)
+	var hops []string
+	cc := *client
+	cc.CheckRedirect = func(r *http.Request, via []*http.Request) error {
+		hops = append(hops, r.URL.String())
+		if len(via) >= 10 {
+			return http.ErrUseLastResponse
+		}
+		return nil
+	}
+	start := time.Now()
+	resp, err := cc.Do(req)
+	elapsed := float64(time.Since(start).Microseconds()) / 1000.0
 	if err != nil {
 		return httpResp{}, err
 	}
 	defer resp.Body.Close()
 	b, _ := io.ReadAll(io.LimitReader(resp.Body, 1_000_000))
-	return httpResp{status: resp.StatusCode, body: string(b)}, nil
+	redirectedTo := strings.Join(hops, " ")
+	if resp.Request != nil && resp.Request.URL != nil {
+		if redirectedTo != "" {
+			redirectedTo += " "
+		}
+		redirectedTo += resp.Request.URL.String()
+	}
+	return httpResp{status: resp.StatusCode, body: string(b), elapsedMs: elapsed, redirectedTo: redirectedTo}, nil
 }
 
 func Encode(r Result) []byte {

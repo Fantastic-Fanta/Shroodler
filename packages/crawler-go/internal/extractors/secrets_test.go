@@ -5,14 +5,21 @@ import (
 	"testing"
 )
 
+// stripeFakeBody is kept separate from its "sk_test_"/"sk_live_" prefix so
+// the source never contains a string shaped like a real Stripe key
+// (provider-partnered secret scanners match on format alone, regardless of
+// how obviously fake the content is).
+const stripeFakeBody = "ShroodlerFixtureNotARealKey0000"
+
 const (
-	githubPAT = "ghp_0123456789abcdefghijklmnopqrstuvwxyz"
-	githubFG  = "github_pat_11AAAAAAA0FAKESECRET00_abcdefghijklmnopqrstuvwxyz0123456789FAKESECRETNOTREAL000000"
-	npmTok    = "npm_0123456789abcdefghijklmnopqrstuvwxyz"
-	stripeSec = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
-	stripePK  = "pk_test_51NotASecretPublishableKey000"
-	googleKey = "AIzaSyD-app1-fixture-not-real-000000000"
-	azureKey  = "ShroodlerFakeAzureStorageAccountKey00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
+	githubPAT     = "ghp_0123456789abcdefghijklmnopqrstuvwxyz"
+	githubFG      = "github_pat_11AAAAAAA0FAKESECRET00_abcdefghijklmnopqrstuvwxyz0123456789FAKESECRETNOTREAL000000"
+	npmTok        = "npm_0123456789abcdefghijklmnopqrstuvwxyz"
+	stripeSec     = "sk_test_" + stripeFakeBody
+	stripeLiveSec = "sk_live_" + stripeFakeBody
+	stripePK      = "pk_test_51NotASecretPublishableKey000"
+	googleKey     = "AIzaSyD-app1-fixture-not-real-000000000"
+	azureKey      = "ShroodlerFakeAzureStorageAccountKey00AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="
 )
 
 func FuzzScanSecrets(f *testing.F) {
@@ -57,8 +64,8 @@ func TestYAMLRulesCoverCloudAndCore(t *testing.T) {
 		ids[r.ID] = true
 	}
 	for _, id := range []string{
-		"aws-access-key", "github-pat", "stripe-secret-key", "google-api-key",
-		"npm-access-token", "sendgrid-api-key", "openai-api-key", "slack-webhook",
+		"aws-access-key", "github-pat", "stripe-secret-key-live", "stripe-secret-key-test",
+		"google-api-key", "npm-access-token", "sendgrid-api-key", "openai-api-key", "slack-webhook",
 	} {
 		if !ids[id] {
 			t.Fatalf("missing rule %s", id)
@@ -67,7 +74,7 @@ func TestYAMLRulesCoverCloudAndCore(t *testing.T) {
 	body := strings.Join([]string{
 		"AKIAIOSFODNN7EXAMPLE",
 		"ghp_0123456789abcdefghijklmnopqrstuvwxyz",
-		"sk_test_4eC39HqLyjWDarjtT1zdp7dc",
+		stripeSec,
 		"AIzaSyD-app1-fixture-not-real-000000000",
 	}, "\n")
 	fs := ScanSecrets(body, "http://127.0.0.1/x", rules)
@@ -75,7 +82,7 @@ func TestYAMLRulesCoverCloudAndCore(t *testing.T) {
 	for _, x := range fs {
 		found[x.ID] = true
 	}
-	if !found["aws-access-key"] || !found["github-pat"] || !found["stripe-secret-key"] {
+	if !found["aws-access-key"] || !found["github-pat"] || !found["stripe-secret-key-test"] {
 		t.Fatal(fs)
 	}
 }
@@ -108,7 +115,8 @@ func TestCloudYAMLRulesMatchAndNonMatch(t *testing.T) {
 	}
 	for _, id := range []string{
 		"github-pat", "github-fine-grained-pat", "npm-access-token",
-		"stripe-secret-key", "google-api-key", "azure-storage-account-key",
+		"stripe-secret-key-live", "stripe-secret-key-test", "google-api-key",
+		"azure-storage-account-key",
 	} {
 		if !ids[id] {
 			t.Fatalf("missing rule %s", id)
@@ -122,14 +130,14 @@ func TestCloudYAMLRulesMatchAndNonMatch(t *testing.T) {
 		githubFG,
 		npmTok,
 		stripeSec,
-		"sk_live_ShroodlerFakeStripeKey000000",
+		stripeLiveSec,
 		googleKey,
 		azure,
 	}, "\n")
 	found := scanIDs(t, body)
 	for _, id := range []string{
 		"aws-access-key", "github-pat", "github-fine-grained-pat",
-		"npm-access-token", "stripe-secret-key", "google-api-key",
+		"npm-access-token", "stripe-secret-key-test", "stripe-secret-key-live", "google-api-key",
 		"azure-storage-account-key",
 	} {
 		if !found[id] {
@@ -137,11 +145,11 @@ func TestCloudYAMLRulesMatchAndNonMatch(t *testing.T) {
 		}
 	}
 
-	if scanIDs(t, stripePK)["stripe-secret-key"] {
-		t.Fatal("publishable pk_ must not match stripe-secret-key")
+	if scanIDs(t, stripePK)["stripe-secret-key-test"] {
+		t.Fatal("publishable pk_ must not match stripe-secret-key-test")
 	}
-	if scanIDs(t, "pk_live_51NotASecretPublishableKey000")["stripe-secret-key"] {
-		t.Fatal("pk_live_ must not match stripe-secret-key")
+	if scanIDs(t, "pk_live_51NotASecretPublishableKey000")["stripe-secret-key-live"] {
+		t.Fatal("pk_live_ must not match stripe-secret-key-live")
 	}
 	if scanIDs(t, "ghp_short")["github-pat"] {
 		t.Fatal("truncated ghp_")

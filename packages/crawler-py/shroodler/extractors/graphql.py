@@ -70,11 +70,26 @@ def probe_graphql(
     origin: str,
     fetcher: StaticFetcher,
     already: set[str],
+    allow_external: bool = False,
 ) -> tuple[list[Page], list[Finding], list[JsEndpoint]]:
     pages: list[Page] = []
     findings: list[Finding] = []
     endpoints: list[JsEndpoint] = []
-    if not is_loopback_or_local(origin):
+    if not is_loopback_or_local(origin) and not allow_external:
+        findings.append(
+            Finding(
+                id="graphql-probe-skipped",
+                severity="info",
+                category="scan-note",
+                url=origin,
+                description=(
+                    "Active GraphQL discovery/introspection probe was skipped "
+                    "because the target is not local and --allow-external was "
+                    "not passed."
+                ),
+                evidence=None,
+            )
+        )
         return pages, findings, endpoints
     base = origin.rstrip("/")
     for path in PROBE_PATHS:
@@ -94,7 +109,7 @@ def probe_graphql(
             )
         desc = f"GraphQL endpoint responds at {path}"
         types: list[str] = []
-        if is_loopback_or_local(url):
+        if is_loopback_or_local(url) or allow_external:
             types = parse_schema_types(_probe_introspection(fetcher, url))
         shown = format_types(types)
         if shown:

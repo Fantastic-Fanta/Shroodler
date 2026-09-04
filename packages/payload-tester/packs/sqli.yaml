@@ -1,20 +1,106 @@
+# SQL injection payloads.
+#
+# High-confidence error-based checks require either a >=500 status or a
+# specific DB error signature that was NOT already present in the baseline
+# response (new_only: true) -- this stops generic words like "sql" appearing
+# in unrelated page copy from matching.
+#
+# A plain status change (e.g. a WAF turning "'" into a 400/403) is a much
+# weaker signal -- it is common, unrelated noise from input validation, not
+# evidence of SQL injection -- so it gets its own low-severity finding
+# instead of being folded into the same "high" bucket as a real DB error.
+#
+# Time-based blind checks compare response latency against the baseline
+# latency for the same form/fields, so only an attacker-controlled delay
+# (not general server slowness) triggers a finding.
 - id: sqli-single-quote
   finding_id: payload-sql-error
   payload: "'"
   severity: high
-  description: Payload triggered a database-looking error
+  description: Single-quote payload triggered a database-shaped error response
   match:
     any:
       - status_gte: 500
-      - body_contains: sql
-      - body_contains: syntax error
+      - body_contains: "sql syntax"
+        new_only: true
+      - body_contains: "unclosed quotation mark"
+        new_only: true
+      - body_contains: "unterminated quoted string"
+        new_only: true
+      - body_contains: "sqlite3.operationalerror"
+        new_only: true
+      - body_contains: "pg::syntaxerror"
+        new_only: true
+      - body_contains: "ora-01756"
+        new_only: true
+      - body_contains: "microsoft ole db provider for sql server"
+        new_only: true
+      - body_contains: "you have an error in your sql syntax"
+        new_only: true
+- id: sqli-single-quote-status-change
+  finding_id: payload-sql-status-change
+  payload: "'"
+  severity: low
+  description: >-
+    Single-quote payload changed the response status with no confirmed DB
+    error signature. This is a weak, easily-false-positive signal (a WAF or
+    ordinary input validator rejecting a stray apostrophe looks identical) --
+    manually verify with a differential/boolean-based test before treating
+    this as SQL injection.
+  match:
+    any:
+      - error_status_changed: true
 - id: sqli-or-true
   finding_id: payload-sql-error
   payload: "' OR '1'='1"
   severity: high
-  description: Payload triggered a database-looking error
+  description: Boolean-true payload triggered a database-shaped error response
   match:
     any:
       - status_gte: 500
-      - body_contains: sql
-      - body_contains: syntax error
+      - body_contains: "sql syntax"
+        new_only: true
+      - body_contains: "sqlite3.operationalerror"
+        new_only: true
+      - body_contains: "unclosed quotation mark"
+        new_only: true
+- id: sqli-or-true-status-change
+  finding_id: payload-sql-status-change
+  payload: "' OR '1'='1"
+  severity: low
+  description: >-
+    Boolean-true payload changed the response status with no confirmed DB
+    error signature. Weak signal -- see sqli-single-quote-status-change.
+  match:
+    any:
+      - error_status_changed: true
+- id: sqli-time-blind-mysql
+  finding_id: payload-sql-time-blind
+  payload: "1' AND SLEEP(5)-- -"
+  severity: critical
+  description: >-
+    Time-based blind SQL injection (MySQL): response was delayed roughly 5s
+    longer than the baseline request, consistent with an executed SLEEP()
+  match:
+    any:
+      - time_delta_gte_ms: 4000
+- id: sqli-time-blind-postgres
+  finding_id: payload-sql-time-blind
+  payload: "1'; SELECT pg_sleep(5)-- -"
+  severity: critical
+  description: >-
+    Time-based blind SQL injection (PostgreSQL): response was delayed
+    roughly 5s longer than the baseline request, consistent with pg_sleep()
+  match:
+    any:
+      - time_delta_gte_ms: 4000
+- id: sqli-time-blind-mssql
+  finding_id: payload-sql-time-blind
+  payload: "1'; WAITFOR DELAY '0:0:5'-- -"
+  severity: critical
+  description: >-
+    Time-based blind SQL injection (MSSQL): response was delayed roughly 5s
+    longer than the baseline request, consistent with WAITFOR DELAY
+  match:
+    any:
+      - time_delta_gte_ms: 4000

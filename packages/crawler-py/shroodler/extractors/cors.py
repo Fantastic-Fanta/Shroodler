@@ -112,16 +112,32 @@ def probe_cors(
     origin: str,
     fetcher: StaticFetcher,
     candidates: list[str],
+    allow_external: bool = False,
 ) -> list[Finding]:
-    if not is_loopback_or_local(origin):
-        return []
+    if not is_loopback_or_local(origin) and not allow_external:
+        return [
+            Finding(
+                id="cors-probe-skipped",
+                severity="info",
+                category="scan-note",
+                url=origin,
+                description=(
+                    "Active CORS probe was skipped because the target is not "
+                    "local and --allow-external was not passed. An empty "
+                    "CORS result on a remote scan does not mean CORS is safe."
+                ),
+                evidence=None,
+            )
+        ]
     findings: list[Finding] = []
     seen: set[str] = set()
     n = 0
     for url in candidates:
         if n >= MAX_CORS_PROBES:
             break
-        if not url or not same_origin(url, origin) or not is_loopback_or_local(url):
+        if not url or not same_origin(url, origin):
+            continue
+        if not allow_external and not is_loopback_or_local(url):
             continue
         if is_static_asset(url):
             continue

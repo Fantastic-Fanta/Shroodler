@@ -3,6 +3,7 @@ name = "shroodler-cli"
 version = "0.1.0"
 description = "Shroodler command-line interface"
 requires-python = ">=3.11"
+license = "Apache-2.0"
 dependencies = []
 
 [project.scripts]
@@ -19,3 +20,9 @@ include = ["shroodler_cli*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]
+# importlib import mode avoids sys.modules name collisions when this
+# package's tests are collected in the same pytest invocation as another
+# package's identically-named test file (e.g. both cli/tests/test_cli.py
+# and crawler-py/tests/unit/test_cli.py) -- rootdir-relative import mode
+# would otherwise register both under the same "test_cli" module name.
+addopts = "--import-mode=importlib"

@@ -90,13 +90,39 @@ def test_all_severities_snapshot():
 def test_findings_sorted_by_severity():
     html = render_html(ALL_SEV)
     soup = BeautifulSoup(html, "lxml")
-    cells = [td.get_text() for td in soup.select("tbody tr td:first-child")]
+    cells = [td.get_text() for td in soup.select("#detail-findings tbody tr td:first-child")]
     assert cells == ["critical", "high", "medium", "low", "info"]
 
 
 def test_html_is_parseable():
     soup = BeautifulSoup(render_html(ALL_SEV), "lxml")
     assert soup.find("html") and soup.find("table")
+
+
+def test_html_groups_repeated_findings_into_a_summary():
+    doc = {
+        "target": "http://127.0.0.1:8081",
+        "crawler": {"name": "shroodler-py", "version": "0.1.0", "mode": "static"},
+        "pages": [{"url": f"http://127.0.0.1:8081/p{i}"} for i in range(5)],
+        "findings": [
+            {
+                "id": "missing-csp",
+                "severity": "medium",
+                "category": "header",
+                "url": f"http://127.0.0.1:8081/p{i}",
+                "description": "Missing Content-Security-Policy header",
+                "evidence": None,
+            }
+            for i in range(5)
+        ],
+    }
+    html = render_html(doc)
+    soup = BeautifulSoup(html, "lxml")
+    detail_rows = soup.select("#detail-findings tbody tr")
+    assert len(detail_rows) == 5  # every finding is still present in detail
+    summary_rows = soup.select("table:not(#detail-findings) tbody tr")
+    assert len(summary_rows) == 1  # but rolled up to one row in the summary
+    assert "5" in summary_rows[0].get_text()
 
 
 def test_csv_roundtrip():
@@ -119,9 +145,14 @@ def test_sarif_and_junit_from_findings():
     assert levels["c"] == "note"
     assert levels["a"] == "note"
     by_id = {r["ruleId"]: r for r in results}
-    assert by_id["b"]["locations"][0]["physicalLocation"]["artifactLocation"]["uri"] == (
-        "http://127.0.0.1:8081/"
-    )
+    # artifactLocation.uri must be relative (no scheme) so GitHub code-scanning's
+    # SARIF ingestion accepts it; the real live URL is preserved separately.
+    location = by_id["b"]["locations"][0]["physicalLocation"]["artifactLocation"]
+    assert location["uri"] == "127.0.0.1_8081/"
+    assert location["uriBaseId"] == "SCANTARGET"
+    assert by_id["b"]["properties"]["target_url"] == "http://127.0.0.1:8081/"
+    run = sarif["runs"][0]
+    assert run["originalUriBaseIds"]["SCANTARGET"]["uri"].startswith("http")
     empty = json.loads(render_sarif({"findings": []}))
     assert empty["runs"][0]["results"] == []
     assert isinstance(empty["runs"][0]["results"], list)

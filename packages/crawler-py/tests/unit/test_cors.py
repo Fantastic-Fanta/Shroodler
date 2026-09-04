@@ -78,12 +78,37 @@ def test_api_ish_skips_static():
     assert not is_api_ish("http://127.0.0.1/login", "text/html")
 
 
-def test_skips_non_local_origin():
+def test_skips_non_local_origin_without_allow_external():
     class Boom:
         def request(self, *args, **kwargs):
             raise AssertionError("must not probe off-local hosts")
 
-    assert probe_cors("http://example.com/", Boom(), ["http://example.com/api/x"]) == []
+    findings = probe_cors("http://example.com/", Boom(), ["http://example.com/api/x"])
+    assert len(findings) == 1
+    assert findings[0].id == "cors-probe-skipped"
+    assert findings[0].category == "scan-note"
+
+
+def test_allow_external_permits_non_local_origin():
+    calls = []
+
+    class Recorder:
+        def request(self, method, url, headers=None):
+            calls.append((method, url))
+
+            class Resp:
+                headers: dict[str, str] = {}
+
+            return Resp()
+
+    out = probe_cors(
+        "http://example.com/",
+        Recorder(),
+        ["http://example.com/api/x"],
+        allow_external=True,
+    )
+    assert out == []
+    assert calls, "expected the probe to actually fire when allow_external=True"
 
 
 def test_crawl_maps_each_cors_id(fx):

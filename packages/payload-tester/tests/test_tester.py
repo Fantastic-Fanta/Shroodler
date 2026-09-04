@@ -16,12 +16,16 @@ sys.path.insert(0, str(PACKAGES / "target-apps" / "app5-injectable"))
 
 from app import app as flask_app  # noqa: E402
 from tester import (  # noqa: E402
+    MARKER_HOST,
+    _clause_matches,
     _local,
+    gen_token,
     load_packs,
     main,
     pack_finding_id,
     pack_matches,
     packs_dir,
+    render_payload,
     run,
 )
 
@@ -168,3 +172,68 @@ def test_cli_refuses_non_local(tmp_path):
     )
     with pytest.raises(ValueError, match="non-local"):
         main([str(crawl)])
+
+
+def test_allow_external_bypasses_guard():
+    out = run({"target": "https://example.com/", "pages": []}, allow_external=True)
+    assert out == {"target": "https://example.com/", "findings": []}
+
+
+def test_cli_allow_external_flag(tmp_path):
+    crawl = tmp_path / "crawl.json"
+    crawl.write_text(
+        json.dumps({"target": "https://example.com/", "pages": []}),
+        encoding="utf-8",
+    )
+    outp = tmp_path / "out.json"
+    assert main([str(crawl), "--allow-external", "-o", str(outp)]) == 0
+    assert json.loads(outp.read_text(encoding="utf-8"))["findings"] == []
+
+
+def test_render_payload_token_and_marker():
+    token = gen_token()
+    assert token.startswith("shrdlr")
+    rendered = render_payload("<script>{{TOKEN}}</script>//{{MARKER_HOST}}/", token=token)
+    assert token in rendered
+    assert MARKER_HOST in rendered
+    assert "{{TOKEN}}" not in rendered
+
+
+def test_clause_new_only_avoids_pre_existing_text():
+    clause = {"body_contains": "boom", "new_only": True}
+    assert _clause_matches(clause, status=200, body="boom here", payload="x", baseline_body="")
+    assert not _clause_matches(
+        clause, status=200, body="boom here", payload="x", baseline_body="already had boom"
+    )
+
+
+def test_clause_error_status_changed():
+    clause = {"error_status_changed": True}
+    assert _clause_matches(clause, status=500, body="", payload="x", baseline_status=200)
+    assert not _clause_matches(clause, status=200, body="", payload="x", baseline_status=200)
+    assert not _clause_matches(clause, status=404, body="", payload="x", baseline_status=None)
+
+
+def test_clause_time_delta_and_redirect_marker():
+    time_clause = {"time_delta_gte_ms": 1000}
+    assert _clause_matches(
+        time_clause, status=200, body="", payload="x", elapsed_ms=1600, baseline_elapsed_ms=200
+    )
+    assert not _clause_matches(
+        time_clause, status=200, body="", payload="x", elapsed_ms=500, baseline_elapsed_ms=200
+    )
+    redirect_clause = {"redirected_to_contains": "evil.test"}
+    assert _clause_matches(
+        redirect_clause, status=200, body="", payload="x", redirected_to="https://evil.test/x"
+    )
+    assert not _clause_matches(
+        redirect_clause, status=200, body="", payload="x", redirected_to="https://example.com/x"
+    )
+
+
+def test_new_packs_load_without_error():
+    packs = load_packs()
+    ids = {pack_finding_id(p) for p in packs}
+    assert "payload-ssrf" in ids
+    assert "payload-open-redirect" in ids
+    assert "payload-sql-time-blind" in ids

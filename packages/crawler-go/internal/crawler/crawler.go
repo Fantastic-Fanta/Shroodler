@@ -316,17 +316,20 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		findings = append(findings, models.Finding{ID: "exposed-file", Severity: "high", Category: "exposed-file", URL: u, Description: "Backup-name mutation " + p + " is reachable", Evidence: &ev})
 	}
 
-	findings = append(findings, probeCORS(client, start, corsCandidates)...)
+	findings = append(findings, probeCORS(client, start, corsCandidates, cfg.AllowExternal)...)
 
-	if urls.IsLocal(start) && budgetHit(cfg, t0, len(pages)) == "" {
-		gPages, gFindings, gEps := probeGraphQL(client, start, seen)
-		pages = append(pages, gPages...)
-		findings = append(findings, gFindings...)
-		endpoints = append(endpoints, gEps...)
+	if budgetHit(cfg, t0, len(pages)) == "" {
+		if urls.IsLocal(start) || cfg.AllowExternal {
+			gPages, gFindings, gEps := probeGraphQL(client, start, seen)
+			pages = append(pages, gPages...)
+			findings = append(findings, gFindings...)
+			endpoints = append(endpoints, gEps...)
+		} else {
+			findings = append(findings, graphqlProbeSkippedFinding(start))
+		}
 	}
 
 	findings = append(findings, extractors.GhostRouteFindings(start, pages, endpoints)...)
-
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	return &models.CrawlResult{
@@ -425,9 +428,9 @@ func fetchRetry(client *http.Client, raw, cookie string, timeout time.Duration) 
 	return last
 }
 
-func probeCORS(client *http.Client, start string, candidates []string) []models.Finding {
-	if !urls.IsLocal(start) {
-		return nil
+func probeCORS(client *http.Client, start string, candidates []string, allowExternal bool) []models.Finding {
+	if !urls.IsLocal(start) && !allowExternal {
+		return []models.Finding{corsProbeSkippedFinding(start)}
 	}
 	seen := map[string]bool{}
 	n := 0
@@ -436,7 +439,10 @@ func probeCORS(client *http.Client, start string, candidates []string) []models.
 		if n >= extractors.MaxCORSProbes {
 			break
 		}
-		if raw == "" || !urls.SameOrigin(raw, start) || !urls.IsLocal(raw) {
+		if raw == "" || !urls.SameOrigin(raw, start) {
+			continue
+		}
+		if !allowExternal && !urls.IsLocal(raw) {
 			continue
 		}
 		if extractors.IsStaticAsset(raw) {
@@ -451,6 +457,29 @@ func probeCORS(client *http.Client, start string, candidates []string) []models.
 		out = append(out, extractors.CORSFindings(corsProbeHeaders(client, raw), raw)...)
 	}
 	return out
+}
+
+func corsProbeSkippedFinding(start string) models.Finding {
+	return models.Finding{
+		ID:       "cors-probe-skipped",
+		Severity: "info",
+		Category: "scan-note",
+		URL:      start,
+		Description: "Active CORS probe was skipped because the target is not local " +
+			"and --allow-external was not passed. An empty CORS result on a remote " +
+			"scan does not mean CORS is safe.",
+	}
+}
+
+func graphqlProbeSkippedFinding(start string) models.Finding {
+	return models.Finding{
+		ID:       "graphql-probe-skipped",
+		Severity: "info",
+		Category: "scan-note",
+		URL:      start,
+		Description: "Active GraphQL discovery/introspection probe was skipped because " +
+			"the target is not local and --allow-external was not passed.",
+	}
 }
 
 func corsProbeHeaders(client *http.Client, raw string) map[string]string {

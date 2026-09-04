@@ -19,9 +19,27 @@
   <h1>Shroodler report</h1>
   <p>Target: <code>{{ target }}</code></p>
   <p>Crawler: {{ crawler.name }} {{ crawler.version }} ({{ crawler.mode }})</p>
-  <p>{{ pages|length }} pages · {{ findings|length }} findings</p>
-  <h2>Findings</h2>
+  <p>{{ pages|length }} pages · {{ findings|length }} findings{% if grouped %} · {{ grouped|length }} distinct{% endif %}</p>
+  {% if grouped %}
+  <h2>Summary (by finding)</h2>
   <table>
+    <thead>
+      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+    {% for g in grouped %}
+      <tr>
+        <td class="{{ g.severity }}">{{ g.severity }}</td>
+        <td><code>{{ g.id }}</code></td>
+        <td>{{ g.count }}</td>
+        <td>{{ g.description }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  <h2>Findings (detail)</h2>
+  <table id="detail-findings">
     <thead>
       <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th></tr>
     </thead>

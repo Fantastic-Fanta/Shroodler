@@ -11,14 +11,25 @@
   pattern: 'npm_[A-Za-z0-9]{36}'
   severity: high
   description: npm access token
-- id: stripe-secret-key
-  pattern: 'sk_(?:live|test)_[A-Za-z0-9]{24,}'
+- id: stripe-secret-key-live
+  pattern: 'sk_live_[A-Za-z0-9]{24,}'
   severity: critical
-  description: Stripe secret key
+  description: Stripe LIVE secret key -- directly usable against real charges/customers
+- id: stripe-secret-key-test
+  pattern: 'sk_test_[A-Za-z0-9]{24,}'
+  severity: low
+  description: >-
+    Stripe TEST-mode secret key -- cannot move real money, but still worth
+    rotating/removing since it can reveal test-account data and indicates a
+    key-handling hygiene problem
 - id: google-api-key
   pattern: 'AIza[0-9A-Za-z\-_]{35}'
-  severity: high
-  description: Google API key
+  severity: medium
+  description: >-
+    Google API key. Many of these are intentionally public, referrer- or
+    app-restricted browser keys (Maps/Firebase client config) and are not
+    exploitable on their own -- check the Google Cloud Console API
+    restrictions for this key before escalating.
 - id: sendgrid-api-key
   pattern: 'SG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}'
   severity: high

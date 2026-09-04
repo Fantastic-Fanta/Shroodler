@@ -107,7 +107,7 @@ func TestRunYAMLPacksAgainstLocalForm(t *testing.T) {
 			},
 		},
 	}
-	out, err := Run(doc, srv.Client(), packs)
+	out, err := Run(doc, srv.Client(), packs, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,8 +125,74 @@ func TestRunYAMLPacksAgainstLocalForm(t *testing.T) {
 }
 
 func TestRunRefusesExternal(t *testing.T) {
-	_, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{})
+	_, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{}, false)
 	if err == nil {
 		t.Fatal("expected refuse")
+	}
+}
+
+func TestRunAllowExternalBypassesGuard(t *testing.T) {
+	out, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{}, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Findings) != 0 {
+		t.Fatalf("expected no findings for empty pages, got %#v", out.Findings)
+	}
+}
+
+func TestNewClauseTypes(t *testing.T) {
+	statusChanged := Clause{ErrorStatusChanged: true}
+	if !clauseMatches(statusChanged, 500, "", "x", matchCtx{haveBaseline: true, baselineStatus: 200}) {
+		t.Fatal("expected error_status_changed to match")
+	}
+	if clauseMatches(statusChanged, 200, "", "x", matchCtx{haveBaseline: true, baselineStatus: 200}) {
+		t.Fatal("error_status_changed should not match on unchanged status")
+	}
+
+	newOnly := Clause{BodyContains: "boom", NewOnly: true}
+	if !clauseMatches(newOnly, 200, "boom here", "x", matchCtx{baselineBody: ""}) {
+		t.Fatal("expected new_only body_contains to match when absent from baseline")
+	}
+	if clauseMatches(newOnly, 200, "boom here", "x", matchCtx{baselineBody: "already had boom"}) {
+		t.Fatal("new_only body_contains should not match when present in baseline")
+	}
+
+	delta := 1000
+	timeClause := Clause{TimeDeltaGteMs: &delta}
+	if !clauseMatches(timeClause, 200, "", "x", matchCtx{haveElapsed: true, elapsedMs: 1600, haveBaselineTime: true, baselineElapsed: 200}) {
+		t.Fatal("expected time_delta_gte_ms to match")
+	}
+
+	redirect := Clause{RedirectedToContain: "evil.test"}
+	if !clauseMatches(redirect, 200, "", "x", matchCtx{redirectedTo: "https://evil.test/x"}) {
+		t.Fatal("expected redirected_to_contains to match")
+	}
+}
+
+func TestRenderPayloadTokenAndMarker(t *testing.T) {
+	token := genToken()
+	if !strings.HasPrefix(token, "shrdlr") {
+		t.Fatalf("unexpected token shape: %s", token)
+	}
+	rendered := renderPayload("<script>{{TOKEN}}</script>//{{MARKER_HOST}}/", token)
+	if !strings.Contains(rendered, token) || !strings.Contains(rendered, MarkerHost) {
+		t.Fatalf("render did not substitute placeholders: %s", rendered)
+	}
+}
+
+func TestNewPacksLoadWithoutError(t *testing.T) {
+	packs, err := LoadPacks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ids := map[string]bool{}
+	for _, p := range packs {
+		ids[p.findingID()] = true
+	}
+	for _, id := range []string{"payload-ssrf", "payload-open-redirect", "payload-sql-time-blind"} {
+		if !ids[id] {
+			t.Fatalf("missing pack %s", id)
+		}
 	}
 }

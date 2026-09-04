@@ -5,6 +5,7 @@ import html
 import io
 import json
 from pathlib import Path
+from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -29,6 +30,32 @@ def _env() -> Environment:
     )
 
 
+def group_findings(findings: list[dict]) -> list[dict]:
+    """Roll up findings that share an id, for a scannable summary.
+
+    A single misconfigured header on a 400-page crawl otherwise produces
+    400 near-identical detail rows; this groups them by id so the report
+    stays usable at scale while the detail table below keeps every row.
+    """
+    groups: dict[str, dict] = {}
+    order: list[str] = []
+    for f in findings:
+        fid = f.get("id", "")
+        if fid not in groups:
+            groups[fid] = {
+                "id": fid,
+                "severity": f.get("severity", "info"),
+                "severity_rank": SEVERITY_RANK.get(f.get("severity", "info"), 9),
+                "description": f.get("description", ""),
+                "urls": [],
+            }
+            order.append(fid)
+        groups[fid]["urls"].append(f.get("url", ""))
+    out = [dict(groups[fid], count=len(groups[fid]["urls"])) for fid in order]
+    out.sort(key=lambda g: (g["severity_rank"], -g["count"]))
+    return out
+
+
 def render_html(doc: dict) -> str:
     findings = []
     for f in doc.get("findings", []):
@@ -41,6 +68,7 @@ def render_html(doc: dict) -> str:
         crawler=doc.get("crawler", {}),
         pages=doc.get("pages", []),
         findings=findings,
+        grouped=group_findings(findings),
     )
 
 
@@ -95,6 +123,24 @@ def format_evidence(value) -> str:
     return text
 
 
+def _sarif_artifact_uri(url: str) -> str:
+    """Turn a live HTTP(S) finding URL into a relative artifactLocation.uri.
+
+    GitHub code-scanning's SARIF ingestion expects artifactLocation.uri to be
+    relative (no scheme), since it is normally a path inside the repo. DAST
+    findings don't have a repo file, so we encode host+path as a relative
+    pseudo-path and record the real URL under uriBaseId "SCANTARGET" (see
+    the run-level originalUriBaseIds below) plus properties.target_url, per
+    the SARIF spec's documented pattern for non-file-based results.
+    """
+    parsed = urlparse(url)
+    if not parsed.scheme:
+        return url.lstrip("/") or "target"
+    host = (parsed.netloc or "target").replace(":", "_")
+    path = parsed.path or "/"
+    return f"{host}{path}".lstrip("/") or host
+
+
 def render_sarif(doc: dict, *, results: list[dict] | None = None) -> str:
     findings = results if results is not None else list(doc.get("findings") or [])
     crawler = doc.get("crawler") or {}
@@ -123,10 +169,14 @@ def render_sarif(doc: dict, *, results: list[dict] | None = None) -> str:
                 "locations": [
                     {
                         "physicalLocation": {
-                            "artifactLocation": {"uri": uri},
+                            "artifactLocation": {
+                                "uri": _sarif_artifact_uri(uri),
+                                "uriBaseId": "SCANTARGET",
+                            },
                         }
                     }
                 ],
+                "properties": {"target_url": uri},
             }
         )
     payload = {
@@ -140,6 +190,9 @@ def render_sarif(doc: dict, *, results: list[dict] | None = None) -> str:
                         "version": crawler.get("version") or "0.1.0",
                         "rules": rules,
                     }
+                },
+                "originalUriBaseIds": {
+                    "SCANTARGET": {"uri": (doc.get("target") or "about:blank") + "/"}
                 },
                 "results": sarif_results,
             }

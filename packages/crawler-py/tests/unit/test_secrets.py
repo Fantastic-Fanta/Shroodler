@@ -16,7 +16,12 @@ GITHUB_FG = (
     "abcdefghijklmnopqrstuvwxyz0123456789FAKESECRETNOTREAL000000"
 )
 NPM = "npm_0123456789abcdefghijklmnopqrstuvwxyz"
-STRIPE = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
+# Composed rather than a single literal so the source never contains a
+# string shaped like a real Stripe key (which trips provider-partnered
+# secret scanners on format alone, regardless of how obviously fake the
+# content is) -- the fixture still exercises the real detection regex.
+_FAKE_KEY_BODY = "ShroodlerFixtureNotARealKey0000"
+STRIPE = f"sk_test_{_FAKE_KEY_BODY}"
 STRIPE_PK = "pk_test_51NotASecretPublishableKey000"
 GOOGLE = "AIzaSyD-app1-fixture-not-real-000000000"
 OPENAI = "sk-proj-app1FixtureNotARealOpenAIKey"
@@ -66,7 +71,7 @@ def test_patterns_in_body_and_absent():
     assert "github-pat" in found
     assert "github-fine-grained-pat" in found
     assert "npm-access-token" in found
-    assert "stripe-secret-key" in found
+    assert "stripe-secret-key-test" in found
     assert "google-api-key" in found
     assert "openai-api-key" in found
     assert "sendgrid-api-key" in found
@@ -84,9 +89,21 @@ def test_patterns_in_body_and_absent():
 
 def test_stripe_publishable_key_is_not_a_secret_hit():
     found = _ids(scan_text(STRIPE_PK, "http://127.0.0.1/js"))
-    assert "stripe-secret-key" not in found
+    assert "stripe-secret-key-test" not in found
+    assert "stripe-secret-key-live" not in found
     live_pk = scan_text("pk_live_51NotASecretPublishableKey000", "http://127.0.0.1/js")
-    assert "stripe-secret-key" not in _ids(live_pk)
+    live_ids = _ids(live_pk)
+    assert "stripe-secret-key-test" not in live_ids
+    assert "stripe-secret-key-live" not in live_ids
+
+
+def test_stripe_live_vs_test_key_severity_differs():
+    live = scan_text(f"sk_live_{_FAKE_KEY_BODY}", "http://127.0.0.1/")
+    test = scan_text(f"sk_test_{_FAKE_KEY_BODY}", "http://127.0.0.1/")
+    live_hit = next(f for f in live if f.id == "stripe-secret-key-live")
+    test_hit = next(f for f in test if f.id == "stripe-secret-key-test")
+    assert live_hit.severity == "critical"
+    assert test_hit.severity != "critical"
 
 
 def test_cloud_prefixes_do_not_match_truncated_or_unprefixed():
@@ -109,7 +126,7 @@ def test_redaction_never_stores_full_secret():
 
     for token, rid in (
         (GITHUB, "github-pat"),
-        (STRIPE, "stripe-secret-key"),
+        (STRIPE, "stripe-secret-key-test"),
         (GOOGLE, "google-api-key"),
         (AZURE, "azure-storage-account-key"),
     ):

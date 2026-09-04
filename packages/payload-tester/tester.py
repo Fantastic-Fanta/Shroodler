@@ -1,11 +1,16 @@
 from __future__ import annotations
 
 import json
+import secrets
+import string
 from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
 import yaml
+
+MARKER_HOST = "shroodler-oob-test.invalid"
+BASELINE_VALUE = "shroodler-baseline-probe"
 
 
 def packs_dir() -> Path:
@@ -58,24 +63,64 @@ def _local(url: str) -> bool:
     return host in {"127.0.0.1", "localhost", "::1"} or host.endswith(".local")
 
 
-def _clause_matches(clause: dict, *, status: int, body: str, payload: str) -> bool:
+def gen_token(length: int = 10) -> str:
+    alphabet = string.ascii_lowercase + string.digits
+    return "shrdlr" + "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def render_payload(raw: str, *, token: str) -> str:
+    return raw.replace("{{TOKEN}}", token).replace("{{MARKER_HOST}}", MARKER_HOST)
+
+
+def _clause_matches(
+    clause: dict,
+    *,
+    status: int,
+    body: str,
+    payload: str,
+    elapsed_ms: float | None = None,
+    redirected_to: str = "",
+    baseline_status: int | None = None,
+    baseline_body: str = "",
+    baseline_elapsed_ms: float | None = None,
+) -> bool:
     if "status_gte" in clause and status >= int(clause["status_gte"]):
         return True
+    if clause.get("error_status_changed"):
+        if (
+            baseline_status is not None
+            and status != baseline_status
+            and status >= 400
+        ):
+            return True
     needle = clause.get("body_contains")
-    if needle is not None and str(needle).lower() in body.lower():
+    if needle is not None:
+        needle_l = str(needle).lower()
+        if needle_l in body.lower():
+            if clause.get("new_only") and needle_l in baseline_body.lower():
+                pass
+            else:
+                return True
+    if clause.get("reflected") and payload in body:
         return True
-    return bool(clause.get("reflected") and payload in body)
+    if "time_delta_gte_ms" in clause and elapsed_ms is not None and baseline_elapsed_ms is not None:
+        if (elapsed_ms - baseline_elapsed_ms) >= float(clause["time_delta_gte_ms"]):
+            return True
+    marker = clause.get("redirected_to_contains")
+    if marker is not None and str(marker).lower() in redirected_to.lower():
+        return True
+    return False
 
 
-def pack_matches(pack: dict, *, status: int, body: str, payload: str) -> bool:
+def pack_matches(pack: dict, *, status: int, body: str, payload: str, **ctx) -> bool:
     match = pack.get("match") or {}
     if "all" in match:
         clauses = match["all"] or []
         return bool(clauses) and all(
-            _clause_matches(c, status=status, body=body, payload=payload) for c in clauses
+            _clause_matches(c, status=status, body=body, payload=payload, **ctx) for c in clauses
         )
     clauses = match.get("any") or []
-    return any(_clause_matches(c, status=status, body=body, payload=payload) for c in clauses)
+    return any(_clause_matches(c, status=status, body=body, payload=payload, **ctx) for c in clauses)
 
 
 def _finding(pack: dict, action: str, payload: str) -> dict:
@@ -95,40 +140,76 @@ def run(
     *,
     client: httpx.Client | None = None,
     packs: list[dict] | None = None,
+    allow_external: bool = False,
 ) -> dict:
     target = crawl_doc.get("target", "")
-    if not _local(target):
-        raise ValueError("payload tester refuses non-local targets")
-    http = client or httpx.Client(timeout=5.0, follow_redirects=True)
+
+    def allowed(url: str) -> bool:
+        return allow_external or _local(url)
+
+    if not allowed(target):
+        raise ValueError(
+            "payload tester refuses non-local targets without --allow-external "
+            "(only scan hosts you are authorized to test)"
+        )
+    http = client or httpx.Client(timeout=8.0, follow_redirects=True)
     own = client is None
     findings = []
     seen: set[tuple[str, str]] = set()
     loaded = packs if packs is not None else load_packs()
+    token = gen_token()
     try:
         for page in crawl_doc.get("pages", []):
             url = page.get("url", "")
-            if not _local(url):
+            if not allowed(url):
                 continue
             for form in page.get("forms", []):
                 action = form.get("action") or url
                 if action.startswith("/"):
                     p = urlparse(url)
                     action = f"{p.scheme}://{p.netloc}{action}"
-                if not _local(action):
+                if not allowed(action):
                     continue
                 method = (form.get("method") or "GET").upper()
                 fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
                 if not fields:
                     fields = ["q"]
-                for pack in loaded:
-                    payload = str(pack["payload"])
-                    data = {name: payload for name in fields}
+
+                def send(values: dict) -> httpx.Response:
                     if method == "GET":
-                        resp = http.get(action, params=data)
-                    else:
-                        resp = http.post(action, data=data)
+                        return http.get(action, params=values)
+                    return http.post(action, data=values)
+
+                baseline_data = {name: BASELINE_VALUE for name in fields}
+                try:
+                    baseline_resp = send(baseline_data)
+                    baseline_status = baseline_resp.status_code
+                    baseline_body = baseline_resp.text
+                    baseline_elapsed_ms = baseline_resp.elapsed.total_seconds() * 1000
+                except httpx.HTTPError:
+                    baseline_status, baseline_body, baseline_elapsed_ms = None, "", None
+
+                for pack in loaded:
+                    payload = render_payload(str(pack["payload"]), token=token)
+                    data = {name: payload for name in fields}
+                    try:
+                        resp = send(data)
+                    except httpx.HTTPError:
+                        continue
+                    elapsed_ms = resp.elapsed.total_seconds() * 1000
+                    redirected_to = " ".join(
+                        [h.headers.get("location", "") for h in resp.history] + [str(resp.url)]
+                    )
                     if not pack_matches(
-                        pack, status=resp.status_code, body=resp.text, payload=payload
+                        pack,
+                        status=resp.status_code,
+                        body=resp.text,
+                        payload=payload,
+                        elapsed_ms=elapsed_ms,
+                        redirected_to=redirected_to,
+                        baseline_status=baseline_status,
+                        baseline_body=baseline_body,
+                        baseline_elapsed_ms=baseline_elapsed_ms,
                     ):
                         continue
                     key = (pack_finding_id(pack), action)
@@ -145,7 +226,9 @@ def run(
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
-    p = argparse.ArgumentParser()
+    p = argparse.ArgumentParser(
+        description="Send payload packs against forms discovered by a Shroodler crawl."
+    )
     p.add_argument("crawl_json")
     p.add_argument("--output", "-o")
     p.add_argument(
@@ -155,10 +238,20 @@ def main(argv: list[str] | None = None) -> int:
         metavar="PATH",
         help="Extra YAML pack file or directory (repeatable); merged with default packs/",
     )
+    p.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow sending active payloads to non-local targets. "
+        "Only use against hosts you are authorized to test.",
+    )
     args = p.parse_args(argv)
     doc = json.loads(Path(args.crawl_json).read_text(encoding="utf-8"))
     extra = [Path(x) for x in args.pack]
-    out = run(doc, packs=load_packs(extra=extra) if extra else None)
+    out = run(
+        doc,
+        packs=load_packs(extra=extra) if extra else None,
+        allow_external=args.allow_external,
+    )
     text = json.dumps(out, indent=2) + "\n"
     if args.output:
         Path(args.output).write_text(text, encoding="utf-8")

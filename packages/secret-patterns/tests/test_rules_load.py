@@ -30,7 +30,8 @@ def test_rules_are_loadable_yaml():
     assert "github-pat" in ids
     assert "github-fine-grained-pat" in ids
     assert "npm-access-token" in ids
-    assert "stripe-secret-key" in ids
+    assert "stripe-secret-key-live" in ids
+    assert "stripe-secret-key-test" in ids
     assert "google-api-key" in ids
     assert "azure-storage-account-key" in ids
 

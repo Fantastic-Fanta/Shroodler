@@ -14,8 +14,12 @@ GITHUB_FG = (
     "abcdefghijklmnopqrstuvwxyz0123456789FAKESECRETNOTREAL000000"
 )
 NPM = "npm_0123456789abcdefghijklmnopqrstuvwxyz"
-STRIPE_TEST = "sk_test_4eC39HqLyjWDarjtT1zdp7dc"
-STRIPE_LIVE = "sk_live_ShroodlerFakeStripeKey000000"
+# Composed rather than a single literal so the source never contains a
+# string shaped like a real Stripe key (provider-partnered secret scanners
+# match on format alone, regardless of how obviously fake the content is).
+_FAKE_KEY_BODY = "ShroodlerFakeStripeKey000000"
+STRIPE_TEST = f"sk_test_{_FAKE_KEY_BODY}"
+STRIPE_LIVE = f"sk_live_{_FAKE_KEY_BODY}"
 STRIPE_PK_TEST = "pk_test_51NotASecretPublishableKey000"
 STRIPE_PK_LIVE = "pk_live_51NotASecretPublishableKey000"
 GOOGLE = "AIzaSyD-app1-fixture-not-real-000000000"
@@ -59,11 +63,13 @@ def test_cloud_patterns_match_and_non_match():
     assert rx["npm-access-token"].search(NPM)
     assert not rx["npm-access-token"].search("npm_short")
 
-    assert rx["stripe-secret-key"].search(STRIPE_TEST)
-    assert rx["stripe-secret-key"].search(STRIPE_LIVE)
-    assert not rx["stripe-secret-key"].search(STRIPE_PK_TEST)
-    assert not rx["stripe-secret-key"].search(STRIPE_PK_LIVE)
-    assert not rx["stripe-secret-key"].search("sk_test_short")
+    assert rx["stripe-secret-key-test"].search(STRIPE_TEST)
+    assert not rx["stripe-secret-key-test"].search(STRIPE_LIVE)
+    assert rx["stripe-secret-key-live"].search(STRIPE_LIVE)
+    assert not rx["stripe-secret-key-live"].search(STRIPE_TEST)
+    assert not rx["stripe-secret-key-test"].search(STRIPE_PK_TEST)
+    assert not rx["stripe-secret-key-live"].search(STRIPE_PK_LIVE)
+    assert not rx["stripe-secret-key-test"].search("sk_test_short")
 
     assert rx["google-api-key"].search(GOOGLE)
     assert not rx["google-api-key"].search("AIzaSHORT")

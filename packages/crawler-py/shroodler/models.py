@@ -13,6 +13,8 @@ Category = Literal[
     "js-endpoint",
     "verbose-error",
     "autocomplete",
+    "payload",
+    "scan-note",
 ]
 Mode = Literal["static", "headless", "ingest"]
 StoppedReason = Literal["complete", "max-pages", "max-time"]

@@ -18,21 +18,22 @@ import (
 const version = "0.1.0"
 
 type Config struct {
-	Depth         int // -1 unbounded
-	IgnoreRobots  bool
-	AllowExternal bool
-	MaxPages      int
-	MaxTime       time.Duration // 0 unbounded
-	MaxRedirects  int
-	Progress      func(pages int, current string)
-	Proxy         string
-	Cookie        string
-	Seeds         []string
-	Cookies       []SeedCookie
-	Headers       []string
-	LoginRecipe   *LoginRecipe
-	Mode          string
-	NoSitemap     bool
+	Depth          int // -1 unbounded
+	IgnoreRobots   bool
+	AllowExternal  bool
+	MaxPages       int
+	MaxTime        time.Duration // 0 unbounded
+	MaxRedirects   int
+	Progress       func(pages int, current string)
+	Proxy          string
+	Cookie         string
+	Seeds          []string
+	Cookies        []SeedCookie
+	Headers        []string
+	LoginRecipe    *LoginRecipe
+	Mode           string
+	NoSitemap      bool
+	CheckRateLimit bool
 }
 
 type fetchResult struct {
@@ -330,6 +331,10 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}
 
 	findings = append(findings, extractors.GhostRouteFindings(start, pages, endpoints)...)
+
+	if cfg.CheckRateLimit {
+		findings = append(findings, checkRateLimits(client, start, pages)...)
+	}
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	return &models.CrawlResult{

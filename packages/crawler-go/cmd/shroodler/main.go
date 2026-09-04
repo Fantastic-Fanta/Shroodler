@@ -109,7 +109,7 @@ func run(args []string) int {
 
 func usage() {
 	fmt.Fprintln(os.Stderr, "Shroodler Go CLI — crawl, report, diff, payload-test, or drive the proxy.")
-	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--max-pages N] [--max-time SECONDS] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
+	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--max-pages N] [--max-time SECONDS] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--check-rate-limit] [--header 'Name: value'] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler ingest-sessions <sessions.jsonl> [--target url] [--output out.json] [--allow-external]")
 	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit|md] [--output out] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler diff <findings.json> <expected_findings.json> [--pages-only] [--gate] [--suppressions FILE] [--format text|junit|sarif]")
@@ -231,6 +231,8 @@ func cmdCrawl(args []string) int {
 			cfg.NoSitemap = true
 		case "--allow-external":
 			cfg.AllowExternal = true
+		case "--check-rate-limit":
+			cfg.CheckRateLimit = true
 		case "--header":
 			i++
 			cfg.Headers = append(cfg.Headers, args[i])

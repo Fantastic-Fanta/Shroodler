@@ -34,6 +34,7 @@ from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.openapi import is_probe_url, probe_urls, urls_from_spec
 from shroodler.extractors.jwt_audit import audit_text as audit_jwts
+from shroodler.extractors.rate_limit import check_rate_limits
 from shroodler.extractors.secrets import scan_text
 from shroodler.extractors.sourcemap import (
     decode_data_url,
@@ -96,6 +97,7 @@ class Crawler:
         proxy: str | None = None,
         extra_seeds: list[str] | None = None,
         no_sitemap: bool = False,
+        check_rate_limit: bool = False,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -112,6 +114,7 @@ class Crawler:
         self.proxy = proxy
         self.extra_seeds = extra_seeds or []
         self.no_sitemap = no_sitemap
+        self.check_rate_limit = check_rate_limit
         self._cookie_args = cookies or []
         self._cookie_jar = cookie_jar
         self._storage_state = storage_state
@@ -271,6 +274,9 @@ class Crawler:
             js_endpoints.extend(gql_eps)
 
         findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
+
+        if self.check_rate_limit:
+            findings.extend(check_rate_limits(self.http, origin_url, pages))
 
         if stopped == "complete":
             later = self._budget_hit(t0, len(pages))

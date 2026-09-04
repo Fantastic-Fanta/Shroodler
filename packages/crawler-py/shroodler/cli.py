@@ -76,6 +76,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         proxy=getattr(args, "proxy", None),
         extra_seeds=extra_seeds,
         no_sitemap=bool(getattr(args, "no_sitemap", False)),
+        check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
     )
     doc = result.to_dict()
     validate_crawl(doc)
@@ -296,6 +297,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Allow crawling a non-local target (any host outside "
         "127.0.0.1/localhost); off by default",
+    )
+    crawl.add_argument(
+        "--check-rate-limit",
+        action="store_true",
+        help="Fire repeated bad-credential requests at discovered login/auth "
+        "forms to check for missing rate limiting. Off by default: this "
+        "sends real repeated requests with real consequences (lockouts, "
+        "alerting) -- only use against targets you're authorized to load-test.",
     )
     crawl.add_argument(
         "--header",

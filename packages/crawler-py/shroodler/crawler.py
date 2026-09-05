@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 from time import monotonic, sleep
 from urllib.parse import urljoin, urlparse
 
+import httpx
+
 from shroodler import __version__
 from shroodler.auth import (
     CookieSpec,
@@ -36,6 +38,11 @@ from shroodler.extractors.openapi import is_probe_url, probe_urls, urls_from_spe
 from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.rate_limit import check_rate_limits
 from shroodler.extractors.secrets import scan_text
+from shroodler.session_checks import (
+    check_logout_invalidation,
+    check_session_fixation,
+    session_cookies,
+)
 from shroodler.extractors.sourcemap import (
     decode_data_url,
     extract_from_source_map,
@@ -119,6 +126,7 @@ class Crawler:
         self._cookie_jar = cookie_jar
         self._storage_state = storage_state
         self._login_recipe_path = login_recipe
+        self._session_findings: list[Finding] = []
         extra_headers = parse_header_lines(headers)
         self.http = StaticFetcher(user_agent=user_agent, proxy=proxy, extra_headers=extra_headers)
         if mode == "headless":
@@ -274,6 +282,7 @@ class Crawler:
             js_endpoints.extend(gql_eps)
 
         findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
+        findings.extend(self._session_findings)
 
         if self.check_rate_limit:
             findings.extend(check_rate_limits(self.http, origin_url, pages))
@@ -366,7 +375,24 @@ class Crawler:
             if login_fn is not None:
                 login_fn(recipe)
                 return
+        try:
+            self.http.client.get(seed)
+        except httpx.HTTPError:
+            pass
+        pre_cookies = session_cookies(self.http.client)
         run_login_httpx(self.http.client, recipe)
+        post_cookies = session_cookies(self.http.client)
+        self._session_findings.extend(check_session_fixation(pre_cookies, post_cookies, seed))
+        if recipe.logout_url and post_cookies:
+            stale_header = "; ".join(f"{k}={v}" for k, v in post_cookies.items())
+            self._session_findings.extend(
+                check_logout_invalidation(
+                    logout_url=recipe.logout_url,
+                    logout_method=recipe.logout_method,
+                    protected_url=recipe.protected_url or seed,
+                    stale_cookie_header=stale_header,
+                )
+            )
 
     def _budget_hit(self, t0: float, n_pages: int) -> str | None:
         if self.max_time is not None and (monotonic() - t0) >= self.max_time:

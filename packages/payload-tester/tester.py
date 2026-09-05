@@ -68,8 +68,26 @@ def gen_token(length: int = 10) -> str:
     return "shrdlr" + "".join(secrets.choice(alphabet) for _ in range(length))
 
 
-def render_payload(raw: str, *, token: str) -> str:
-    return raw.replace("{{TOKEN}}", token).replace("{{MARKER_HOST}}", MARKER_HOST)
+def build_marker_host(token: str, oob_host: str | None) -> str:
+    """The host used for {{MARKER_HOST}} this run.
+
+    Without --oob-host, this is a non-resolving placeholder: still useful
+    for checks that observe success locally (e.g. an open-redirect
+    Location header echoing it back), but nothing on the internet will
+    ever actually reach it. With --oob-host, it's a fresh random
+    subdomain of a real, reachable server the caller controls (their own
+    Interactsh instance, a public oast.* service, or any box that logs
+    incoming requests) -- so a payload marked "blind" can genuinely prove
+    a callback happened, once the caller checks their own server's logs
+    for this run's token.
+    """
+    if oob_host:
+        return f"{token}.{oob_host}"
+    return MARKER_HOST
+
+
+def render_payload(raw: str, *, token: str, marker_host: str = MARKER_HOST) -> str:
+    return raw.replace("{{TOKEN}}", token).replace("{{MARKER_HOST}}", marker_host)
 
 
 def _clause_matches(
@@ -83,6 +101,7 @@ def _clause_matches(
     baseline_status: int | None = None,
     baseline_body: str = "",
     baseline_elapsed_ms: float | None = None,
+    marker_host: str = MARKER_HOST,
 ) -> bool:
     if "status_gte" in clause and status >= int(clause["status_gte"]):
         return True
@@ -107,8 +126,10 @@ def _clause_matches(
         if (elapsed_ms - baseline_elapsed_ms) >= float(clause["time_delta_gte_ms"]):
             return True
     marker = clause.get("redirected_to_contains")
-    if marker is not None and str(marker).lower() in redirected_to.lower():
-        return True
+    if marker is not None:
+        needle = str(marker).replace("{{MARKER_HOST}}", marker_host).lower()
+        if needle in redirected_to.lower():
+            return True
     return False
 
 
@@ -141,6 +162,7 @@ def run(
     client: httpx.Client | None = None,
     packs: list[dict] | None = None,
     allow_external: bool = False,
+    oob_host: str | None = None,
 ) -> dict:
     target = crawl_doc.get("target", "")
 
@@ -152,12 +174,22 @@ def run(
             "payload tester refuses non-local targets without --allow-external "
             "(only scan hosts you are authorized to test)"
         )
-    http = client or httpx.Client(timeout=8.0, follow_redirects=True)
+    # follow_redirects=False is deliberate: a payload can put an arbitrary,
+    # attacker-influenced URL in a Location header (that's exactly what the
+    # open-redirect packs test for), and this tool must never actually
+    # connect to it -- both because that host may not exist/respond (which
+    # previously made httpx raise and silently swallow the whole check via
+    # the except below) and because blindly chasing a payload-controlled
+    # redirect is not something a scanner should do. Redirect detection
+    # reads the immediate Location header of the single response instead.
+    http = client or httpx.Client(timeout=8.0, follow_redirects=False)
     own = client is None
     findings = []
+    oob_probes = []
     seen: set[tuple[str, str]] = set()
     loaded = packs if packs is not None else load_packs()
     token = gen_token()
+    marker_host = build_marker_host(token, oob_host)
     try:
         for page in crawl_doc.get("pages", []):
             url = page.get("url", "")
@@ -190,7 +222,21 @@ def run(
                     baseline_status, baseline_body, baseline_elapsed_ms = None, "", None
 
                 for pack in loaded:
-                    payload = render_payload(str(pack["payload"]), token=token)
+                    payload = render_payload(
+                        str(pack["payload"]), token=token, marker_host=marker_host
+                    )
+                    if pack.get("blind") and oob_host:
+                        oob_probes.append(
+                            {
+                                "pack": pack_finding_id(pack),
+                                "url": action,
+                                "marker_host": marker_host,
+                                "note": (
+                                    "Check your OOB server's logs for a hit on "
+                                    f"{marker_host} to confirm this fired."
+                                ),
+                            }
+                        )
                     if pack.get("raw_body"):
                         if method != "POST":
                             continue
@@ -210,9 +256,7 @@ def run(
                         except httpx.HTTPError:
                             continue
                     elapsed_ms = resp.elapsed.total_seconds() * 1000
-                    redirected_to = " ".join(
-                        [h.headers.get("location", "") for h in resp.history] + [str(resp.url)]
-                    )
+                    redirected_to = resp.headers.get("location", "")
                     if not pack_matches(
                         pack,
                         status=resp.status_code,
@@ -223,6 +267,7 @@ def run(
                         baseline_status=baseline_status,
                         baseline_body=baseline_body,
                         baseline_elapsed_ms=baseline_elapsed_ms,
+                        marker_host=marker_host,
                     ):
                         continue
                     key = (pack_finding_id(pack), action)
@@ -233,7 +278,7 @@ def run(
     finally:
         if own:
             http.close()
-    return {"target": target, "findings": findings}
+    return {"target": target, "findings": findings, "oob_probes": oob_probes}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -257,6 +302,16 @@ def main(argv: list[str] | None = None) -> int:
         help="Allow sending active payloads to non-local targets. "
         "Only use against hosts you are authorized to test.",
     )
+    p.add_argument(
+        "--oob-host",
+        metavar="HOST",
+        help="Your own out-of-band collaborator-style server (self-hosted "
+        "Interactsh, an oast.* instance, or any host you control that logs "
+        "incoming requests). A fresh random subdomain of it is used as "
+        "{{MARKER_HOST}} in payloads each run. Shroodler cannot poll your "
+        "server for you -- for 'blind' packs, check its logs afterward for "
+        "the token printed in --output's oob_probes list.",
+    )
     args = p.parse_args(argv)
     doc = json.loads(Path(args.crawl_json).read_text(encoding="utf-8"))
     extra = [Path(x) for x in args.pack]
@@ -264,6 +319,7 @@ def main(argv: list[str] | None = None) -> int:
         doc,
         packs=load_packs(extra=extra) if extra else None,
         allow_external=args.allow_external,
+        oob_host=args.oob_host,
     )
     text = json.dumps(out, indent=2) + "\n"
     if args.output:

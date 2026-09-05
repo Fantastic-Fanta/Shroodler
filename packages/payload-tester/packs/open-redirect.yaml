@@ -2,7 +2,9 @@
 # host. The tester inspects every hop of the redirect chain (httpx response
 # history) plus the final resolved URL for that marker host, so this only
 # fires when the application itself issued a redirect there -- reflecting
-# the string in a page body does not count.
+# the string in a page body does not count. This is detected entirely
+# locally (via the app's own HTTP response) -- it does not require
+# --oob-host, though the marker host is your real one if you passed it.
 - id: open-redirect-external-host
   finding_id: payload-open-redirect
   payload: "https://{{MARKER_HOST}}/"
@@ -10,7 +12,7 @@
   description: Value-controlled parameter caused the application to redirect to an attacker-controlled external host
   match:
     any:
-      - redirected_to_contains: "shroodler-oob-test.invalid"
+      - redirected_to_contains: "{{MARKER_HOST}}"
 - id: open-redirect-protocol-relative
   finding_id: payload-open-redirect
   payload: "//{{MARKER_HOST}}/"
@@ -18,4 +20,4 @@
   description: Protocol-relative payload caused a redirect to an attacker-controlled external host
   match:
     any:
-      - redirected_to_contains: "shroodler-oob-test.invalid"
+      - redirected_to_contains: "{{MARKER_HOST}}"

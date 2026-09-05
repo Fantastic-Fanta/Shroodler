@@ -50,12 +50,14 @@ def test_is_login_shaped_detects_password_field():
 
 
 def test_is_login_shaped_detects_action_hint():
-    form = Form(action="/api/authenticate", method="POST", fields=[FormField(name="q", type="text", hidden=False)])
+    field = FormField(name="q", type="text", hidden=False)
+    form = Form(action="/api/authenticate", method="POST", fields=[field])
     assert is_login_shaped(form)
 
 
 def test_is_login_shaped_false_for_unrelated_form():
-    form = Form(action="/search", method="GET", fields=[FormField(name="q", type="text", hidden=False)])
+    field = FormField(name="q", type="text", hidden=False)
+    form = Form(action="/search", method="GET", fields=[field])
     assert not is_login_shaped(form)
 
 
@@ -76,7 +78,8 @@ def test_no_finding_when_429_seen():
 
 
 def test_no_finding_when_lockout_keyword_present():
-    results = [_fr(200)] * 3 + [_fr(200, "Account temporarily locked, try again later")] + [_fr(200)] * 2
+    lockout = _fr(200, "Account temporarily locked, try again later")
+    results = [_fr(200)] * 3 + [lockout] + [_fr(200)] * 2
     fetcher = _FakeFetcher(results)
     findings = check_form_rate_limit(fetcher, "http://127.0.0.1/login", _login_form(), attempts=6)
     assert findings == []
@@ -100,7 +103,8 @@ def test_no_finding_on_transport_error():
 
 
 def test_check_rate_limits_skips_non_login_forms_and_dedupes_actions():
-    other_form = Form(action="/search", method="GET", fields=[FormField(name="q", type="text", hidden=False)])
+    q_field = FormField(name="q", type="text", hidden=False)
+    other_form = Form(action="/search", method="GET", fields=[q_field])
     login_form_a = _login_form("/login")
     login_form_b = _login_form("/login")  # same action, seen on two pages
     pages = [

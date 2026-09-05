@@ -33,16 +33,11 @@ from shroodler.extractors.graphql import probe_graphql
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
+from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.links import extract_css_urls, extract_links
 from shroodler.extractors.openapi import is_probe_url, probe_urls, urls_from_spec
-from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.rate_limit import check_rate_limits
 from shroodler.extractors.secrets import scan_text
-from shroodler.session_checks import (
-    check_logout_invalidation,
-    check_session_fixation,
-    session_cookies,
-)
 from shroodler.extractors.sourcemap import (
     decode_data_url,
     extract_from_source_map,
@@ -58,6 +53,11 @@ from shroodler.robots import (
     is_pagination_trap,
     load_robots,
     pagination_family,
+)
+from shroodler.session_checks import (
+    check_logout_invalidation,
+    check_session_fixation,
+    session_cookies,
 )
 from shroodler.sitemap import parse_robots_sitemaps, parse_sitemap_xml
 from shroodler.urls import (

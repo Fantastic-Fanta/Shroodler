@@ -108,7 +108,7 @@ func TestRunYAMLPacksAgainstLocalForm(t *testing.T) {
 			},
 		},
 	}
-	out, err := Run(doc, srv.Client(), packs, false)
+	out, err := Run(doc, srv.Client(), packs, false, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -126,14 +126,14 @@ func TestRunYAMLPacksAgainstLocalForm(t *testing.T) {
 }
 
 func TestRunRefusesExternal(t *testing.T) {
-	_, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{}, false)
+	_, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{}, false, "")
 	if err == nil {
 		t.Fatal("expected refuse")
 	}
 }
 
 func TestRunAllowExternalBypassesGuard(t *testing.T) {
-	out, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{}, true)
+	out, err := Run(map[string]any{"target": "https://example.com/", "pages": []any{}}, nil, []Pack{}, true, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestRenderPayloadTokenAndMarker(t *testing.T) {
 	if !strings.HasPrefix(token, "shrdlr") {
 		t.Fatalf("unexpected token shape: %s", token)
 	}
-	rendered := renderPayload("<script>{{TOKEN}}</script>//{{MARKER_HOST}}/", token)
+	rendered := renderPayload("<script>{{TOKEN}}</script>//{{MARKER_HOST}}/", token, MarkerHost)
 	if !strings.Contains(rendered, token) || !strings.Contains(rendered, MarkerHost) {
 		t.Fatalf("render did not substitute placeholders: %s", rendered)
 	}
@@ -229,7 +229,7 @@ func TestRawBodyPackSendsLiteralPayloadNotFormFields(t *testing.T) {
 			},
 		},
 	}
-	out, err := Run(doc, srv.Client(), packs, false)
+	out, err := Run(doc, srv.Client(), packs, false, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -239,5 +239,202 @@ func TestRawBodyPackSendsLiteralPayloadNotFormFields(t *testing.T) {
 	}
 	if !got["payload-xxe"] {
 		t.Fatalf("missing payload-xxe in %#v", out.Findings)
+	}
+}
+
+func TestBuildMarkerHostWithoutOobHostIsThePlaceholder(t *testing.T) {
+	if got := buildMarkerHost("shrdlrabc123", ""); got != MarkerHost {
+		t.Fatalf("expected placeholder, got %s", got)
+	}
+}
+
+func TestBuildMarkerHostWithOobHostBuildsASubdomain(t *testing.T) {
+	got := buildMarkerHost("shrdlrabc123", "collab.example.com")
+	want := "shrdlrabc123.collab.example.com"
+	if got != want {
+		t.Fatalf("expected %s, got %s", want, got)
+	}
+}
+
+func openRedirectServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = r.ParseForm()
+		next := r.FormValue("next")
+		if strings.HasPrefix(next, "http://") || strings.HasPrefix(next, "https://") || strings.HasPrefix(next, "//") {
+			loc := next
+			if strings.HasPrefix(loc, "//") {
+				loc = "https:" + loc
+			}
+			w.Header().Set("Location", loc)
+			w.WriteHeader(302)
+			return
+		}
+		w.Write([]byte("ok"))
+	}))
+}
+
+func openRedirectDoc(origin string) map[string]any {
+	return map[string]any{
+		"target": origin + "/",
+		"pages": []any{
+			map[string]any{
+				"url": origin + "/",
+				"forms": []any{
+					map[string]any{
+						"action": "/go",
+						"method": "POST",
+						"fields": []any{map[string]any{"name": "next"}},
+					},
+				},
+			},
+		},
+	}
+}
+
+// Regression test: the old redirect-following client tried to actually
+// connect to the marker host to chase the chain. The default marker lives
+// under the reserved ".invalid" TLD, which never resolves -- that raised
+// inside the HTTP client and was silently swallowed by the caller's
+// `if err != nil { continue }`, skipping the check entirely. This must
+// fire even with no --oob-host.
+func TestOpenRedirectDetectedWithoutOobHost(t *testing.T) {
+	srv := openRedirectServer(t)
+	defer srv.Close()
+
+	packs, err := LoadPacks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := Run(openRedirectDoc(srv.URL), srv.Client(), packs, false, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range out.Findings {
+		if f.ID == "payload-open-redirect" {
+			found = true
+			if !strings.Contains(f.Evidence, MarkerHost) {
+				t.Fatalf("expected evidence to reference marker host, got %s", f.Evidence)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("expected payload-open-redirect, got %#v", out.Findings)
+	}
+}
+
+func TestOobHostFlowsIntoDynamicRedirectMatch(t *testing.T) {
+	srv := openRedirectServer(t)
+	defer srv.Close()
+
+	packs, err := LoadPacks()
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := Run(openRedirectDoc(srv.URL), srv.Client(), packs, false, "collab.example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, f := range out.Findings {
+		if f.ID == "payload-open-redirect" {
+			if !strings.Contains(f.Evidence, "collab.example.com") {
+				t.Fatalf("expected evidence to reference oob-host, got %s", f.Evidence)
+			}
+			return
+		}
+	}
+	t.Fatalf("expected payload-open-redirect, got %#v", out.Findings)
+}
+
+func TestBlindPackLogsOobProbeWhenOobHostGiven(t *testing.T) {
+	dir := t.TempDir()
+	extra := filepath.Join(dir, "blind.yaml")
+	if err := os.WriteFile(extra, []byte(
+		"- id: blind-probe\n"+
+			"  finding_id: payload-blind-probe\n"+
+			"  blind: true\n"+
+			"  payload: 'http://{{MARKER_HOST}}/x'\n"+
+			"  severity: medium\n",
+	), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	packs, err := LoadPacks(extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var blindOnly []Pack
+	for _, p := range packs {
+		if p.ID == "blind-probe" {
+			blindOnly = append(blindOnly, p)
+		}
+	}
+	doc := map[string]any{
+		"target": "http://127.0.0.1:1/",
+		"pages": []any{
+			map[string]any{
+				"url": "http://127.0.0.1:1/",
+				"forms": []any{
+					map[string]any{
+						"action": "/whatever",
+						"method": "GET",
+						"fields": []any{map[string]any{"name": "q"}},
+					},
+				},
+			},
+		},
+	}
+	out, err := Run(doc, nil, blindOnly, false, "collab.example.com")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out.OobProbes) != 1 {
+		t.Fatalf("expected 1 oob probe, got %#v", out.OobProbes)
+	}
+	if !strings.HasSuffix(out.OobProbes[0].MarkerHost, ".collab.example.com") {
+		t.Fatalf("unexpected marker host: %s", out.OobProbes[0].MarkerHost)
+	}
+	if out.OobProbes[0].URL != "http://127.0.0.1:1/whatever" {
+		t.Fatalf("unexpected url: %s", out.OobProbes[0].URL)
+	}
+}
+
+func TestBlindPackLogsNothingWithoutOobHost(t *testing.T) {
+	dir := t.TempDir()
+	extra := filepath.Join(dir, "blind.yaml")
+	if err := os.WriteFile(extra, []byte(
+		"- id: blind-probe\n"+
+			"  finding_id: payload-blind-probe\n"+
+			"  blind: true\n"+
+			"  payload: 'http://{{MARKER_HOST}}/x'\n"+
+			"  severity: medium\n",
+	), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	packs, err := LoadPacks(extra)
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc := map[string]any{
+		"target": "http://127.0.0.1:1/",
+		"pages": []any{
+			map[string]any{
+				"url": "http://127.0.0.1:1/",
+				"forms": []any{
+					map[string]any{
+						"action": "/whatever",
+						"method": "GET",
+						"fields": []any{map[string]any{"name": "q"}},
+					},
+				},
+			},
+		},
+	}
+	out, err := Run(doc, nil, packs, false, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out.OobProbes) != 0 {
+		t.Fatalf("expected no oob probes, got %#v", out.OobProbes)
 	}
 }

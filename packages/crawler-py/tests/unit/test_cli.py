@@ -80,6 +80,11 @@ def test_payload_and_proxy_parse():
     assert args.crawl_json == "scan.json"
     assert args.output == "hits.json"
     assert args.pack == ["extra.yaml"]
+    assert args.oob_host is None
+    args = p.parse_args(
+        ["payload", "scan.json", "--oob-host", "collab.example.com"]
+    )
+    assert args.oob_host == "collab.example.com"
     args = p.parse_args(["proxy", "start", "--record", "sess.jsonl"])
     assert args.proxy_args == ["start", "--record", "sess.jsonl"]
     text = p.format_help()

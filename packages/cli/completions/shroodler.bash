@@ -31,7 +31,7 @@ _shroodler_flags_for() {
             echo "--target --output --allow-external"
             ;;
         payload)
-            echo "--output --pack --allow-external"
+            echo "--output --pack --allow-external --oob-host"
             ;;
         authz-diff)
             echo "--output --cookie --header --no-anon-check --allow-external"

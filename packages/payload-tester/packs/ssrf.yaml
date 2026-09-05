@@ -38,3 +38,20 @@
         new_only: true
       - body_contains: "\"compute\":"
         new_only: true
+# Blind confirmation: proves the field triggers a server-side fetch AT ALL,
+# even when nothing about the metadata endpoints above applies (wrong cloud,
+# metadata service blocked, or the response is never shown to the caller).
+# This is genuinely blind -- Shroodler cannot see whether the target
+# actually made the request, only whether *you* see it hit your own server.
+# Pass --oob-host to point the marker at a real server you control, then
+# check its logs for the token recorded in this run's oob_probes list.
+- id: ssrf-oob-marker
+  finding_id: payload-ssrf-blind
+  blind: true
+  payload: "http://{{MARKER_HOST}}/ssrf-probe/{{TOKEN}}"
+  severity: medium
+  description: >-
+    Value-controlled field was pointed at an out-of-band marker host to
+    confirm whether this parameter triggers a server-side HTTP fetch at
+    all. Without --oob-host this payload is still sent but is
+    unverifiable.

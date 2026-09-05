@@ -159,8 +159,9 @@ def audit_jwt(token: str, url: str) -> list[Finding]:
                         category="secret",
                         url=url,
                         description=(
-                            f"JWT expiry is unusually far in the future ({exp.date().isoformat()}); "
-                            "a leaked long-lived token stays usable for a long time."
+                            "JWT expiry is unusually far in the future "
+                            f"({exp.date().isoformat()}); a leaked long-lived token "
+                            "stays usable for a long time."
                         ),
                         evidence=ev,
                     )

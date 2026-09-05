@@ -31,7 +31,8 @@ def test_session_checks_are_skipped_with_a_notice_in_headless_mode(fx, tmp_path)
     fx.on("GET", "/secret", lambda req: (200, {}, b"<p>secret</p>"))
 
     recipe = tmp_path / "recipe.json"
-    recipe.write_text(json.dumps({"url": fx.origin + "/login", "fields": {"user": "ok"}}), encoding="utf-8")
+    recipe_body = {"url": fx.origin + "/login", "fields": {"user": "ok"}}
+    recipe.write_text(json.dumps(recipe_body), encoding="utf-8")
 
     result = crawl_url(
         fx.origin + "/",

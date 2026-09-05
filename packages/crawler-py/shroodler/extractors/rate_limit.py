@@ -98,7 +98,8 @@ def check_form_rate_limit(
         # ones 403/423) -- treat that as a throttling/lockout signal.
         return []
 
-    ev = f"{attempts} requests, all status {statuses[0] if statuses else '?'}, no lockout/CAPTCHA signal"
+    last_status = statuses[0] if statuses else "?"
+    ev = f"{attempts} requests, all status {last_status}, no lockout/CAPTCHA signal"
     return [
         Finding(
             id="missing-rate-limit",
@@ -115,7 +116,9 @@ def check_form_rate_limit(
     ]
 
 
-def check_rate_limits(fetcher, origin: str, pages, *, attempts: int = DEFAULT_ATTEMPTS) -> list[Finding]:
+def check_rate_limits(
+    fetcher, origin: str, pages, *, attempts: int = DEFAULT_ATTEMPTS
+) -> list[Finding]:
     findings: list[Finding] = []
     seen_actions: set[str] = set()
     for page in pages:

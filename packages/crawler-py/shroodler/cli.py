@@ -187,8 +187,8 @@ def cmd_ingest(args: argparse.Namespace) -> int:
 
 
 def cmd_authz_diff(args: argparse.Namespace) -> int:
-    from shroodler.authz_diff import run as authz_diff_run
     from shroodler.auth import parse_cookie_pairs, parse_header_lines
+    from shroodler.authz_diff import run as authz_diff_run
 
     higher_doc = load_json(args.higher_crawl_json)
     cookie_pairs = parse_cookie_pairs(list(getattr(args, "cookie", None) or []))
@@ -287,7 +287,12 @@ def cmd_payload(args: argparse.Namespace) -> int:
     extra = [Path(x) for x in (getattr(args, "pack", None) or [])]
     doc = load_json(args.crawl_json)
     packs = tester.load_packs(extra=extra) if extra else tester.load_packs()
-    out = tester.run(doc, packs=packs, allow_external=getattr(args, "allow_external", False))
+    out = tester.run(
+        doc,
+        packs=packs,
+        allow_external=getattr(args, "allow_external", False),
+        oob_host=getattr(args, "oob_host", None),
+    )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
     return 0
@@ -537,6 +542,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow sending active payloads to non-local targets. "
         "Only use against hosts you are authorized to test.",
     )
+    payload.add_argument(
+        "--oob-host",
+        metavar="HOST",
+        help="Your own out-of-band collaborator-style server (self-hosted "
+        "Interactsh, an oast.* instance, or any host you control that logs "
+        "incoming requests). A fresh random subdomain of it is used as "
+        "{{MARKER_HOST}} in payloads each run. Shroodler cannot poll your "
+        "server for you -- for 'blind' packs, check its logs afterward for "
+        "the token printed in the output's oob_probes list.",
+    )
     payload.set_defaults(func=cmd_payload)
 
     authz = sub.add_parser(
@@ -565,7 +580,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         metavar="'Name: value'",
-        help="Extra header for the lower-privilege session, e.g. an Authorization bearer token (repeatable)",
+        help="Extra header for the lower-privilege session, e.g. an "
+        "Authorization bearer token (repeatable)",
     )
     authz.add_argument(
         "--no-anon-check",
@@ -596,12 +612,15 @@ def build_parser() -> argparse.ArgumentParser:
         help="Record and list local scan history (for trend diffing over time)",
     )
     history_sub = history.add_subparsers(dest="history_command", required=True)
-    hrecord = history_sub.add_parser("record", help="Save a scan's findings JSON into local history")
+    hrecord = history_sub.add_parser(
+        "record", help="Save a scan's findings JSON into local history"
+    )
     hrecord.add_argument("findings")
     hrecord.add_argument("--label", help="Extra label appended to the stored scan's id")
     hrecord.add_argument(
         "--history-dir",
-        help="Override the history directory (default ~/.shroodler/history or $SHROODLER_HISTORY_DIR)",
+        help="Override the history directory (default ~/.shroodler/history "
+        "or $SHROODLER_HISTORY_DIR)",
     )
     hrecord.set_defaults(func=cmd_history_record)
     hlist = history_sub.add_parser("list", help="List recorded scans")

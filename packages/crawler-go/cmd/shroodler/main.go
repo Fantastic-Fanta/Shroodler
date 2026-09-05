@@ -116,7 +116,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "shroodler baseline <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler expected <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "  expected is an alias of baseline; expected_not_found is left empty — add negatives by hand")
-	fmt.Fprintln(os.Stderr, "shroodler payload <crawl.json> [--output out.json] [--pack PATH] [--allow-external]")
+	fmt.Fprintln(os.Stderr, "shroodler payload <crawl.json> [--output out.json] [--pack PATH] [--allow-external] [--oob-host HOST]")
 	fmt.Fprintln(os.Stderr, "shroodler proxy [shroodler-proxy args...]")
 	fmt.Fprintln(os.Stderr, "shroodler version")
 }
@@ -422,6 +422,7 @@ func cmdPayload(args []string) int {
 	var outPath string
 	var extra []string
 	var allowExternal bool
+	var oobHost string
 	for i := 1; i < len(args); i++ {
 		switch args[i] {
 		case "--output", "-o":
@@ -436,6 +437,11 @@ func cmdPayload(args []string) int {
 			}
 		case "--allow-external":
 			allowExternal = true
+		case "--oob-host":
+			i++
+			if i < len(args) {
+				oobHost = args[i]
+			}
 		}
 	}
 	doc := loadJSON(path)
@@ -444,7 +450,7 @@ func cmdPayload(args []string) int {
 		fmt.Fprintln(os.Stderr, err)
 		return 1
 	}
-	res, err := payload.Run(doc, nil, packs, allowExternal)
+	res, err := payload.Run(doc, nil, packs, allowExternal, oobHost)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 1

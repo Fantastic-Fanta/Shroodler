@@ -24,8 +24,24 @@ def _is_success(status: int) -> bool:
     return 200 <= status < 300
 
 
-def _is_denied(status: int) -> bool:
-    return status in (401, 403) or status in (301, 302, 303, 307, 308)
+_LOGIN_REDIRECT_HINTS = ("login", "signin", "sign-in", "log-in", "auth", "session/new")
+
+
+def _is_denied(status: int, location: str = "") -> bool:
+    """A response counts as "denied" only when it's an explicit 401/403, or
+    a redirect that specifically looks like a bounce to a login/auth page.
+
+    A bare 3xx is NOT enough on its own -- ordinary trailing-slash, HTTPS
+    upgrade, or locale redirects are common on pages that have nothing to
+    do with authorization, and treating every redirect as a denial turns
+    the anonymous control probe into a false-positive generator.
+    """
+    if status in (401, 403):
+        return True
+    if status in (301, 302, 303, 307, 308):
+        loc = location.lower()
+        return any(hint in loc for hint in _LOGIN_REDIRECT_HINTS)
+    return False
 
 
 def run(
@@ -72,7 +88,9 @@ def run(
                     anon_resp = http.get(url, headers={k: v for k, v in lower_headers.items() if k != "Cookie"})
                 except httpx.HTTPError:
                     anon_resp = None
-                if anon_resp is not None and _is_denied(anon_resp.status_code):
+                if anon_resp is not None and _is_denied(
+                    anon_resp.status_code, anon_resp.headers.get("location", "")
+                ):
                     findings.append(
                         Finding(
                             id="authz-broken-access-control",

@@ -374,6 +374,20 @@ class Crawler:
             login_fn = getattr(self.fetcher, "login", None)
             if login_fn is not None:
                 login_fn(recipe)
+                self._session_findings.append(
+                    Finding(
+                        id="session-checks-skipped-headless",
+                        severity="info",
+                        category="scan-note",
+                        url=seed,
+                        description=(
+                            "Session-fixation and logout-invalidation checks were "
+                            "skipped: they only run in --mode static. A clean result "
+                            "here does not mean those checks passed -- they did not run."
+                        ),
+                        evidence=None,
+                    )
+                )
                 return
         try:
             self.http.client.get(seed)

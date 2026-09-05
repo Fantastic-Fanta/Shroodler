@@ -154,6 +154,12 @@ check for missing rate limiting. Off by default: this sends real repeated
 requests with real consequences (lockouts, alerting) against a live
 target.
 .TP
+.B \-\-no\-check\-rate\-limit
+Force rate-limit probing off, even if
+.B \-\-profile
+.B aggressive
+would otherwise enable it.
+.TP
 .BI \-\-header " 'Name: value'"
 Extra request header, repeatable.
 .TP

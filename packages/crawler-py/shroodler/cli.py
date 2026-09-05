@@ -402,7 +402,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="Fire repeated bad-credential requests at discovered login/auth "
         "forms to check for missing rate limiting. Off by default: this "
         "sends real repeated requests with real consequences (lockouts, "
-        "alerting) -- only use against targets you're authorized to load-test.",
+        "alerting) -- only use against targets you're authorized to load-test. "
+        "Pass --no-check-rate-limit to force it off even under --profile aggressive.",
+    )
+    crawl.add_argument(
+        "--no-check-rate-limit",
+        dest="check_rate_limit",
+        action="store_false",
+        help=argparse.SUPPRESS,
     )
     crawl.add_argument(
         "--header",
@@ -679,11 +686,16 @@ def _apply_profile(parser: argparse.ArgumentParser, name: str) -> None:
 
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
+    # Apply ~/.shroodlerrc defaults first, then an explicit --profile on top
+    # of it, so a profile picked on the command line always wins over the
+    # rc file's defaults for the same setting. An explicit flag on the
+    # command line still wins over both, since parser.set_defaults() never
+    # overrides a value the user actually typed.
+    rc = load_rc()
+    _apply_rc(parser, rc)
     profile_name = _profile_from_argv(list(argv if argv is not None else sys.argv[1:]))
     if profile_name:
         _apply_profile(parser, profile_name)
-    rc = load_rc()
-    _apply_rc(parser, rc)
     args = parser.parse_args(argv)
     if getattr(args, "version", False) and not getattr(args, "command", None):
         raise SystemExit(cmd_version())

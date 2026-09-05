@@ -35,11 +35,17 @@
     <?xml version="1.0"?>
     <!DOCTYPE data [<!ENTITY xxe SYSTEM "file:///c:/windows/system32/drivers/etc/hosts">]>
     <data>&xxe;</data>
+  # "127.0.0.1"/"localhost" alone are common words a generic XML-parser
+  # error page could also contain; require the Windows hosts file's own
+  # boilerplate comment text too so a real file read is confirmed, not
+  # just "the response changed and happens to mention localhost".
   match:
     all:
       - body_contains: "127.0.0.1"
         new_only: true
       - body_contains: "localhost"
+        new_only: true
+      - body_contains: "for Windows"
         new_only: true
 - id: xxe-parameter-entity-oob-marker
   finding_id: payload-xxe-parameter-entity

@@ -64,3 +64,36 @@ def test_dedupes_repeated_urls(fx):
     doc = _doc(fx.origin, [fx.origin + "/dup", fx.origin + "/dup"])
     out = run(doc, cookie_header="session=x", check_anonymous=False)
     assert len(out["findings"]) == 1
+
+
+def test_login_redirect_counts_as_denied(fx):
+    fx.on(
+        "GET",
+        "/account",
+        lambda inc: (200, {}, b"account page")
+        if "session=admin-or-user" in inc.cookies
+        else (302, {"Location": "/login"}, b""),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/account"])
+    out = run(doc, cookie_header="session=admin-or-user")
+    ids = {f["id"] for f in out["findings"]}
+    assert "authz-broken-access-control" in ids
+
+
+def test_ordinary_redirect_is_not_treated_as_denied(fx):
+    # A ubiquitous trailing-slash-style redirect that has nothing to do
+    # with authorization must not be mistaken for an access-control wall --
+    # it should fall through to the weaker "verify manually" signal rather
+    # than the high-severity broken-access-control finding.
+    fx.on(
+        "GET",
+        "/reports",
+        lambda inc: (200, {}, b"report list")
+        if "session=admin-or-user" in inc.cookies
+        else (302, {"Location": "/reports/"}, b""),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/reports"])
+    out = run(doc, cookie_header="session=admin-or-user")
+    ids = {f["id"] for f in out["findings"]}
+    assert "authz-broken-access-control" not in ids
+    assert "authz-still-accessible" in ids

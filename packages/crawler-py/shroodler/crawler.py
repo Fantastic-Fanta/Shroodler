@@ -50,6 +50,7 @@ from shroodler.extractors.sourcemap import (
     source_mapping_url,
 )
 from shroodler.extractors.subresource import extract_subresource_findings
+from shroodler.extractors.tls import check_tls
 from shroodler.extractors.verbose import extract_verbose_errors
 from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats, Finding, JsEndpoint, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
@@ -325,6 +326,7 @@ class Crawler:
 
         findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
         findings.extend(self._session_findings)
+        findings.extend(check_tls(origin_url))
 
         if self.check_rate_limit:
             findings.extend(check_rate_limits(self.http, origin_url, pages))

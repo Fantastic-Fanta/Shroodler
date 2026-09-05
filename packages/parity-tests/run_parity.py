@@ -25,7 +25,7 @@ def path_set(doc: dict) -> set[str]:
 #: than gated behind a flag so the check actually runs by default instead of
 #: being invisible to users who'd never think to enable it. If shroodler-go
 #: gains this check, remove it from here rather than leaving a stale exclusion.
-PYTHON_ONLY_CATEGORIES = {"subresource"}
+PYTHON_ONLY_CATEGORIES = {"subresource", "tls"}
 
 
 def finding_set(doc: dict) -> set[tuple[str, str, str]]:

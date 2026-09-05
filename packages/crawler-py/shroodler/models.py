@@ -18,6 +18,7 @@ Category = Literal[
     "auth",
     "waf-challenge",
     "subresource",
+    "tls",
 ]
 Mode = Literal["static", "headless", "ingest"]
 StoppedReason = Literal["complete", "max-pages", "max-time"]

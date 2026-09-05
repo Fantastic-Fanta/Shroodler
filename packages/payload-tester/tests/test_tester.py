@@ -355,6 +355,21 @@ def test_new_packs_load_without_error():
     assert "payload-command-injection-blind" in ids
     assert "payload-crlf-header-injection" in ids
     assert "payload-crlf-reflected" in ids
+    assert "payload-lfi" in ids
+    assert "payload-lfi-rce" in ids
+
+
+def test_lfi_packs_match_string_never_appears_in_the_payload_itself():
+    # Same regression discipline as the command-injection arithmetic
+    # markers: the rot13/base64 match needle must not be literally present
+    # in the raw payload text, or a match would just prove reflection.
+    packs = [p for p in load_packs() if pack_finding_id(p) in {"payload-lfi", "payload-lfi-rce"}]
+    assert len(packs) == 2
+    for pack in packs:
+        payload = str(pack["payload"]).lower()
+        for clause in pack["match"]["any"]:
+            needle = str(clause["body_contains"]).lower()
+            assert needle not in payload, f"{pack['id']}: needle {needle!r} is in the raw payload"
 
 
 def test_command_injection_timing_packs_are_medium_confidence_single_sample():

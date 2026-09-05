@@ -7,6 +7,30 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **TLS certificate checks** (`packages/crawler-py/shroodler/extractors/
+  tls.py`, new `tls` finding category, Python-only for now). Runs once per
+  crawl against an `https://` target's origin, independent of the crawl's
+  own httpx client (which already refuses to connect at all over a truly
+  broken cert, since it verifies by default) -- opens its own
+  verification-disabled connection specifically to report on *why* a cert
+  is broken: expired, expiring within 30 days, self-signed (issuer equals
+  subject), or hostname mismatch (checked against SAN, falling back to CN
+  only when no SAN exists, per RFC 6125). Uses the `cryptography` library
+  (new dependency) to parse the certificate deterministically rather than
+  classifying by matching OpenSSL/Python's own verification-error
+  *message* text, which is not stable across OpenSSL/Python versions --
+  exactly the kind of fragile proxy-for-truth the command-injection fix
+  above was about. Excluded from `packages/parity-tests/run_parity.py`'s
+  comparison the same way the `subresource` category is.
+- **New `lfi.yaml` payload pack**: PHP stream-wrapper-based local/remote
+  file inclusion, distinct from the existing plain path-traversal pack
+  because it targets an `include()`/`require()` sink rather than a
+  file-read sink. `php://filter/read=string.rot13/resource=/etc/passwd`
+  proves inclusion happened via a rot13'd match signature ("ebbg:k:0:0")
+  that cannot appear from the target merely reflecting the raw payload
+  text back (same discipline as the command-injection arithmetic markers
+  above); `data://` with a base64 payload that computes `7*13` at runtime
+  proves full RCE the same way, when `allow_url_include` is enabled.
 - **New active-payload packs: OS command injection and CRLF/HTTP header
   injection.** Pure YAML additions (`packs/command-injection.yaml`,
   `packs/crlf-injection.yaml`) consumed by both engines' existing generic

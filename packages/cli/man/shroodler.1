@@ -182,10 +182,14 @@ would otherwise enable it.
 .B \-\-check\-idor
 For crawled URLs with a purely-numeric path segment or query value,
 replay adjacent IDs (n-1, n+1) using the crawl's own session and flag
-ones returning a same-shaped JSON object (possible broken object-level
-authorization). Off by default: this makes real extra GET requests for
-IDs never organically discovered, potentially reading another user's
-data on a vulnerable target. JSON API responses only.
+ones returning a same-shaped JSON object. This is a lead worth manually
+confirming, not a proven IDOR: a single session cannot tell whether the
+adjacent ID belongs to a different account or is simply another of the
+current account's own sequentially-allocated records, so expect noise on
+targets where that's common. Off by default: this makes real extra GET
+requests for IDs never organically discovered, potentially reading
+another user's data on a vulnerable target, and a GET is not guaranteed
+side-effect-free on every API. JSON API responses only.
 .TP
 .BI \-\-header " 'Name: value'"
 Extra request header, repeatable.

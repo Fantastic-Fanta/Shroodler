@@ -104,7 +104,7 @@ func sessionBaseName(name string) string {
 	return name
 }
 
-func isSessionCookie(name string) bool {
+func IsSessionCookie(name string) bool {
 	base := strings.ToLower(sessionBaseName(name))
 	if sessionExact[base] {
 		return true
@@ -183,7 +183,7 @@ func ExtractCookies(headers []string, pageURL string) ([]models.Cookie, []models
 			}
 			pathNorm = &n
 		}
-		session := isSessionCookie(c.Name)
+		session := IsSessionCookie(c.Name)
 		if session && pathNorm != nil && *pathNorm == "/" {
 			findings = append(findings, cookieFinding("cookie-path-broad", "info", pageURL, c.Name, "Session cookie "+c.Name+" is scoped to Path=/"))
 		}

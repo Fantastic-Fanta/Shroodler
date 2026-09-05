@@ -23,6 +23,9 @@ type LoginRecipe struct {
 	Method        string            `json:"method"`
 	Fields        map[string]string `json:"fields"`
 	IncludeHidden *bool             `json:"include_hidden"`
+	LogoutURL     string            `json:"logout_url"`
+	LogoutMethod  string            `json:"logout_method"`
+	ProtectedURL  string            `json:"protected_url"`
 }
 
 type cookieJSON struct {
@@ -150,7 +153,32 @@ func LoadLoginRecipe(path string) (*LoginRecipe, error) {
 	if r.Method == "" {
 		r.Method = "POST"
 	}
+	if r.LogoutMethod == "" {
+		r.LogoutMethod = "GET"
+	}
 	return &r, nil
+}
+
+// resolveOne resolves a recipe URL that may be relative (against seed) or
+// already absolute, mirroring Python's auth.py::_resolve_one.
+func resolveOne(raw, seed string) string {
+	if raw == "" {
+		return raw
+	}
+	if !strings.Contains(raw, "://") {
+		return originJoin(seed, raw)
+	}
+	return raw
+}
+
+// resolveRecipeURL resolves url/logout_url/protected_url against seed,
+// mirroring Python's auth.py::resolve_recipe_url.
+func resolveRecipeURL(recipe LoginRecipe, seed string) LoginRecipe {
+	resolved := recipe
+	resolved.URL = resolveOne(recipe.URL, seed)
+	resolved.LogoutURL = resolveOne(recipe.LogoutURL, seed)
+	resolved.ProtectedURL = resolveOne(recipe.ProtectedURL, seed)
+	return resolved
 }
 
 func applySeedCookies(jar http.CookieJar, start string, cookies []SeedCookie) {

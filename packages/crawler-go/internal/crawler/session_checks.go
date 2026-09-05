@@ -3,29 +3,77 @@ package crawler
 import (
 	"io"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shroodler/crawler-go/internal/extractors"
 	"github.com/shroodler/crawler-go/internal/models"
 )
 
-// sessionCookiesFromJar mirrors Python's session_checks.py::session_cookies:
-// the session-shaped cookies (by name) the jar currently holds for seedURL's
-// origin, as a name->value map.
-func sessionCookiesFromJar(jar http.CookieJar, seedURL *url.URL) map[string]string {
-	out := map[string]string{}
-	if jar == nil || seedURL == nil {
-		return out
+// cookieRecorder mirrors Python's session_checks.py::session_cookies /
+// httpx's client.cookies: it accumulates every cookie ever seen on a
+// Set-Cookie response for this crawl's client, with NO per-URL domain/path
+// scoping. That matters: a Go http.CookieJar's Cookies(u) only returns
+// cookies whose Path/Domain match u, so if a real app scopes its session
+// cookie narrower than the crawl's seed URL (or the login endpoint is on a
+// different path/host than the seed), jar-based lookup would silently see
+// nothing -- while Python's flat dict sees it regardless of scope. This
+// recorder matches Python's looser (and, since it's what both engines'
+// tests are written against, the "correct" for parity) semantics directly,
+// by snooping every response's Set-Cookie headers as they go by.
+type cookieRecorder struct {
+	mu      sync.Mutex
+	cookies map[string]string
+}
+
+func newCookieRecorder() *cookieRecorder {
+	return &cookieRecorder{cookies: map[string]string{}}
+}
+
+func (r *cookieRecorder) record(resp *http.Response) {
+	if resp == nil {
+		return
 	}
-	for _, c := range jar.Cookies(seedURL) {
-		if extractors.IsSessionCookie(c.Name) {
-			out[c.Name] = c.Value
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, c := range resp.Cookies() {
+		r.cookies[c.Name] = c.Value
+	}
+}
+
+// sessionCookies returns a snapshot (a fresh copy) of the session-shaped
+// cookies seen so far, by name.
+func (r *cookieRecorder) sessionCookies() map[string]string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := map[string]string{}
+	for name, value := range r.cookies {
+		if extractors.IsSessionCookie(name) {
+			out[name] = value
 		}
 	}
 	return out
+}
+
+// cookieRecordingTransport wraps a RoundTripper to feed every response
+// through a cookieRecorder, independent of the client's Jar.
+type cookieRecordingTransport struct {
+	base http.RoundTripper
+	rec  *cookieRecorder
+}
+
+func (t *cookieRecordingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
+	}
+	resp, err := base.RoundTrip(req)
+	if err == nil && t.rec != nil {
+		t.rec.record(resp)
+	}
+	return resp, err
 }
 
 // checkSessionFixation mirrors session_checks.py::check_session_fixation.

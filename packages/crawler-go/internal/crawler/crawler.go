@@ -102,9 +102,13 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	if ua == "" {
 		ua = defaultUserAgent
 	}
+	cookieRecorder := newCookieRecorder()
 	client.Transport = &countingTransport{
-		base: &headerTransport{base: transport, extra: ParseHeaders(cfg.Headers), userAgent: ua},
-		n:    &nreq,
+		base: &headerTransport{
+			base:  &cookieRecordingTransport{base: transport, rec: cookieRecorder},
+			extra: ParseHeaders(cfg.Headers), userAgent: ua,
+		},
+		n: &nreq,
 	}
 	if cfg.Cookie != "" {
 		for _, part := range strings.Split(cfg.Cookie, ";") {
@@ -136,28 +140,20 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 					"not mean those checks passed -- they did not run.",
 			})
 		} else {
-			seedURL, seedErr := url.Parse(start)
-			if seedErr == nil {
-				_, _, _ = get(client, start) // warm a pre-auth session cookie, if any; error ignored
-			}
-			var preCookies map[string]string
-			if seedErr == nil {
-				preCookies = sessionCookiesFromJar(jar, seedURL)
-			}
+			_, _, _ = get(client, start) // warm a pre-auth session cookie, if any; error ignored
+			preCookies := cookieRecorder.sessionCookies()
 			runLogin(client, recipe, start)
-			if seedErr == nil {
-				postCookies := sessionCookiesFromJar(jar, seedURL)
-				sessionFindings = append(sessionFindings, checkSessionFixation(preCookies, postCookies, start)...)
-				if recipe.LogoutURL != "" && len(postCookies) > 0 {
-					protectedURL := recipe.ProtectedURL
-					if protectedURL == "" {
-						protectedURL = start
-					}
-					staleHeader := cookieHeaderFromMap(postCookies)
-					sessionFindings = append(sessionFindings, checkLogoutInvalidation(
-						recipe.LogoutURL, recipe.LogoutMethod, protectedURL, staleHeader, 8*time.Second,
-					)...)
+			postCookies := cookieRecorder.sessionCookies()
+			sessionFindings = append(sessionFindings, checkSessionFixation(preCookies, postCookies, start)...)
+			if recipe.LogoutURL != "" && len(postCookies) > 0 {
+				protectedURL := recipe.ProtectedURL
+				if protectedURL == "" {
+					protectedURL = start
 				}
+				staleHeader := cookieHeaderFromMap(postCookies)
+				sessionFindings = append(sessionFindings, checkLogoutInvalidation(
+					recipe.LogoutURL, recipe.LogoutMethod, protectedURL, staleHeader, 8*time.Second,
+				)...)
 			}
 		}
 	}

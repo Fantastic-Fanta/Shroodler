@@ -18,6 +18,30 @@ from shroodler.validate import validate_crawl
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# `--profile NAME` bundles for `crawl`. Applied as parser defaults (see
+# _apply_profile) so an explicit flag on the command line still wins over
+# the profile's value -- these are starting points, not hard overrides.
+PROFILES: dict[str, dict[str, object]] = {
+    "safe": {
+        "depth": 3,
+        "max_pages": 100,
+        "max_time": 60.0,
+        "check_rate_limit": False,
+    },
+    "balanced": {
+        "depth": 5,
+        "max_pages": 400,
+        "max_time": 0.0,
+        "check_rate_limit": False,
+    },
+    "aggressive": {
+        "depth": -1,
+        "max_pages": 2000,
+        "max_time": 0.0,
+        "check_rate_limit": True,
+    },
+}
+
 
 def _as_str_list(value: object) -> list[str]:
     if value is None:
@@ -315,6 +339,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Examples:\n"
             "  shroodler crawl http://127.0.0.1:8081 -o out.json\n"
             "  shroodler crawl https://example.com --allow-external -o out.json\n"
+            "  shroodler crawl http://127.0.0.1:8081 --profile aggressive -o out.json\n"
             "  shroodler report out.json --format html -o out.html\n"
             "  shroodler payload out.json -o hits.json\n"
             "  shroodler proxy start --record /tmp/sess.jsonl\n"
@@ -332,6 +357,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     crawl = sub.add_parser("crawl", help="Crawl a target URL")
     crawl.add_argument("url")
+    crawl.add_argument(
+        "--profile",
+        choices=sorted(PROFILES),
+        help="Apply a bundle of sane defaults (depth/max-pages/max-time/"
+        "check-rate-limit) for a scan style; individual flags on the command "
+        "line still override the profile's values. See PROFILES in cli.py.",
+    )
     crawl.add_argument("--mode", choices=["static", "headless"], default="static")
     crawl.add_argument("--depth", type=int, default=5, help="Max depth; -1 for unbounded")
     crawl.add_argument(
@@ -625,8 +657,31 @@ def _apply_rc(parser: argparse.ArgumentParser, rc: dict) -> None:
                 sub.set_defaults(**updates)
 
 
+def _profile_from_argv(argv: list[str]) -> str | None:
+    for i, a in enumerate(argv):
+        if a == "--profile" and i + 1 < len(argv):
+            return argv[i + 1]
+        if a.startswith("--profile="):
+            return a.split("=", 1)[1]
+    return None
+
+
+def _apply_profile(parser: argparse.ArgumentParser, name: str) -> None:
+    preset = PROFILES.get(name)
+    if not preset:
+        return
+    parser.set_defaults(**preset)
+    for action in parser._actions:
+        if isinstance(action, argparse._SubParsersAction):
+            for sub in action.choices.values():
+                sub.set_defaults(**preset)
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
+    profile_name = _profile_from_argv(list(argv if argv is not None else sys.argv[1:]))
+    if profile_name:
+        _apply_profile(parser, profile_name)
     rc = load_rc()
     _apply_rc(parser, rc)
     args = parser.parse_args(argv)

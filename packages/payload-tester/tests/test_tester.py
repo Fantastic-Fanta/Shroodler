@@ -113,6 +113,54 @@ def test_get_only_page_with_no_form_is_fuzzed_via_page_params(query_reflect_orig
     assert hits[0]["url"] == query_reflect_origin + "/search"
 
 
+@pytest.fixture
+def counting_reflect_origin():
+    hits = {"n": 0}
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        hits["n"] += 1
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        body = f"<p>results for {q}</p>".encode()
+        start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        return [body]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}", hits
+    httpd.shutdown()
+
+
+def test_page_with_form_and_own_query_params_is_not_double_tested(counting_reflect_origin, tmp_path):
+    # A page crawled at .../search?q=x that ALSO has a <form action="/search">
+    # extracted from its HTML targets the same underlying path once you
+    # ignore the query string. Sending every payload to both would double
+    # request volume/side effects for zero extra coverage -- the synthetic
+    # params-based target must be skipped when a real form already covers
+    # the same path.
+    origin_url, hits = counting_reflect_origin
+    packs = load_packs(extra=[_reflect_pack(tmp_path)])
+    doc = {
+        "target": origin_url + "/",
+        "pages": [
+            {
+                "url": origin_url + "/search?q=x",
+                "params": ["q"],
+                "forms": [{"action": "/search", "method": "GET", "fields": [{"name": "q"}]}],
+            }
+        ],
+    }
+    out = run(doc, packs=[p for p in packs if p["id"] == "reflect-probe"])
+    found = [f for f in out["findings"] if f["id"] == "payload-reflect-probe"]
+    assert len(found) == 1
+    # baseline + 1 payload request for the single (deduped) target, not 2x.
+    assert hits["n"] == 2
+
+
 def test_page_with_neither_params_nor_forms_produces_no_findings(tmp_path):
     packs = load_packs(extra=[_reflect_pack(tmp_path)])
     doc = {

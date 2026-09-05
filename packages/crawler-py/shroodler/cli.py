@@ -191,6 +191,52 @@ def cmd_baseline(args: argparse.Namespace) -> int:
     return 0
 
 
+def _history_dir(args: argparse.Namespace) -> Path:
+    from shroodler.history import default_history_dir
+
+    override = getattr(args, "history_dir", None)
+    return Path(override) if override else default_history_dir()
+
+
+def cmd_history_record(args: argparse.Namespace) -> int:
+    from shroodler.history import record_scan
+
+    doc = load_json(args.findings)
+    path = record_scan(doc, _history_dir(args), label=getattr(args, "label", None))
+    print(str(path))
+    return 0
+
+
+def cmd_history_list(args: argparse.Namespace) -> int:
+    from shroodler.history import list_scans
+
+    entries = list_scans(_history_dir(args), target=getattr(args, "target", None))
+    if getattr(args, "format", "text") == "json":
+        print(json.dumps(entries, indent=2))
+        return 0
+    if not entries:
+        print("no recorded scans")
+        return 0
+    for e in entries:
+        print(f"{e['id']}  {e['scanned_at']}  {e['findings']:>4} findings  {e['target']}")
+    return 0
+
+
+def cmd_trend(args: argparse.Namespace) -> int:
+    from shroodler.history import load_scan, render_trend_text, trend_diff
+
+    history_dir = _history_dir(args)
+    older = load_scan(history_dir, args.older)
+    newer = load_scan(history_dir, args.newer)
+    trend = trend_diff(older, newer)
+    if getattr(args, "format", "text") == "json":
+        text = json.dumps(trend, indent=2) + "\n"
+    else:
+        text = render_trend_text(trend)
+    _write(text, args.output)
+    return 0
+
+
 def _payload_tester_dir() -> Path:
     env = os.environ.get("SHROODLER_PAYLOAD_DIR")
     if env:
@@ -505,6 +551,42 @@ def build_parser() -> argparse.ArgumentParser:
         help="Arguments passed to shroodler-proxy",
     )
     proxy.set_defaults(func=cmd_proxy)
+
+    history = sub.add_parser(
+        "history",
+        help="Record and list local scan history (for trend diffing over time)",
+    )
+    history_sub = history.add_subparsers(dest="history_command", required=True)
+    hrecord = history_sub.add_parser("record", help="Save a scan's findings JSON into local history")
+    hrecord.add_argument("findings")
+    hrecord.add_argument("--label", help="Extra label appended to the stored scan's id")
+    hrecord.add_argument(
+        "--history-dir",
+        help="Override the history directory (default ~/.shroodler/history or $SHROODLER_HISTORY_DIR)",
+    )
+    hrecord.set_defaults(func=cmd_history_record)
+    hlist = history_sub.add_parser("list", help="List recorded scans")
+    hlist.add_argument("--target", help="Only show scans for this exact target URL")
+    hlist.add_argument("--format", choices=["text", "json"], default="text")
+    hlist.add_argument("--history-dir")
+    hlist.set_defaults(func=cmd_history_list)
+
+    trend = sub.add_parser(
+        "trend",
+        help="Diff findings between two recorded (or arbitrary) scans",
+        description=(
+            "Unlike `diff` (which gates against a static checked-in baseline), "
+            "`trend` compares any two scans -- typically two entries from "
+            "`shroodler history list` -- and reports findings introduced and "
+            "resolved between them."
+        ),
+    )
+    trend.add_argument("older", help="Older scan: a history id, or a path to a findings JSON file")
+    trend.add_argument("newer", help="Newer scan: a history id, or a path to a findings JSON file")
+    trend.add_argument("--format", choices=["text", "json"], default="text")
+    trend.add_argument("--output", "-o")
+    trend.add_argument("--history-dir")
+    trend.set_defaults(func=cmd_trend)
 
     version = sub.add_parser("version", help="Print version")
     version.set_defaults(func=cmd_version)

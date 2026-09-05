@@ -19,9 +19,30 @@ def test_detect_challenge_ignores_plain_cf_ray_on_normal_page():
     assert finding is None
 
 
-def test_detect_challenge_fires_on_small_cf_ray_response():
+def test_detect_challenge_ignores_cf_ray_even_on_a_small_200_response():
+    # Small 200 API responses are the norm on Cloudflare-fronted sites (JSON
+    # endpoints, redirects, minimal templated pages) -- cf-ray alone must not
+    # reclassify them as a challenge regardless of size.
     finding = detect_challenge({"cf-ray": "abc123-SJC"}, "short body", 200)
+    assert finding is None
+
+
+def test_detect_challenge_fires_on_cf_ray_with_block_status():
+    finding = detect_challenge({"cf-ray": "abc123-SJC"}, "short body", 403)
     assert finding is not None
+
+
+def test_detect_challenge_ignores_recaptcha_widget_on_ordinary_signup_form():
+    # reCAPTCHA/hCaptcha/Turnstile/DataDome are routinely embedded by site
+    # owners on ordinary forms as a proactive anti-abuse control -- the tag
+    # alone, on a normal 200 response, is not evidence of a block page.
+    body = '<form><div class="g-recaptcha" data-sitekey="x"></div></form>'
+    assert detect_challenge({}, body, 200) is None
+
+
+def test_detect_challenge_fires_on_recaptcha_tag_with_block_status():
+    body = '<form><div class="g-recaptcha" data-sitekey="x"></div></form>'
+    assert detect_challenge({}, body, 403) is not None
 
 
 def test_crawl_flags_challenge_page_and_skips_content_extraction(fx):

@@ -199,6 +199,11 @@
           "minimum": 0,
           "description": "Number of pages recorded in pages[]"
         },
+        "pages_challenged": {
+          "type": "number",
+          "minimum": 0,
+          "description": "Number of distinct URLs where a waf-challenge finding fired -- these pages were not meaningfully inspected (forms/secrets/JS-endpoints/etc. were not extracted from them). Absent on documents produced before this field existed; treat a missing value as 0. A high ratio of this against pages_crawled means the scan's other findings substantially understate the target's real attack surface."
+        },
         "requests": {
           "type": "number",
           "minimum": 0,

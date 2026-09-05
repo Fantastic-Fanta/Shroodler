@@ -23,9 +23,32 @@ func TestDetectChallengeIgnoresPlainCFRayOnNormalPage(t *testing.T) {
 	}
 }
 
-func TestDetectChallengeFiresOnSmallCFRayResponse(t *testing.T) {
+func TestDetectChallengeIgnoresCFRayEvenOnSmall200Response(t *testing.T) {
+	// Small 200 API responses are the norm on Cloudflare-fronted sites; cf-ray
+	// alone must not reclassify them as a challenge regardless of size.
 	f := DetectChallenge(map[string]string{"cf-ray": "abc123-SJC"}, "short body", 200)
+	if f != nil {
+		t.Fatalf("cf-ray alone on a 200 response should not fire, got %#v", f)
+	}
+}
+
+func TestDetectChallengeFiresOnCFRayWithBlockStatus(t *testing.T) {
+	f := DetectChallenge(map[string]string{"cf-ray": "abc123-SJC"}, "short body", 403)
 	if f == nil {
-		t.Fatal("expected a challenge finding for small cf-ray response")
+		t.Fatal("expected a challenge finding for cf-ray + 403")
+	}
+}
+
+func TestDetectChallengeIgnoresRecaptchaWidgetOnOrdinaryForm(t *testing.T) {
+	body := `<form><div class="g-recaptcha" data-sitekey="x"></div></form>`
+	if f := DetectChallenge(map[string]string{}, body, 200); f != nil {
+		t.Fatalf("recaptcha tag on a normal 200 form should not fire, got %#v", f)
+	}
+}
+
+func TestDetectChallengeFiresOnRecaptchaTagWithBlockStatus(t *testing.T) {
+	body := `<form><div class="g-recaptcha" data-sitekey="x"></div></form>`
+	if f := DetectChallenge(map[string]string{}, body, 403); f == nil {
+		t.Fatal("expected a challenge finding for recaptcha tag + 403")
 	}
 }

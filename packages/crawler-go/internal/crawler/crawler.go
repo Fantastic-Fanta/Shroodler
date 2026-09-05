@@ -362,19 +362,27 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}
 
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
+	dedupedFindings := dedupeF(findings)
+	challengedURLs := map[string]bool{}
+	for _, f := range dedupedFindings {
+		if f.Category == "waf-challenge" {
+			challengedURLs[f.URL] = true
+		}
+	}
 	return &models.CrawlResult{
 		Target:         start,
 		ScanStartedAt:  started,
 		ScanFinishedAt: finished,
 		Crawler:        models.CrawlerInfo{Name: "shroodler-go", Version: version, Mode: mode},
 		Pages:          pages,
-		Findings:       dedupeF(findings),
+		Findings:       dedupedFindings,
 		JSEndpoints:    endpoints,
 		Stats: &models.CrawlStats{
-			PagesCrawled:  len(pages),
-			Requests:      nreq,
-			ElapsedMs:     time.Since(t0).Milliseconds(),
-			StoppedReason: stopped,
+			PagesCrawled:    len(pages),
+			PagesChallenged: len(challengedURLs),
+			Requests:        nreq,
+			ElapsedMs:       time.Since(t0).Milliseconds(),
+			StoppedReason:   stopped,
 		},
 	}, nil
 }
@@ -409,6 +417,12 @@ func probeSoft404Baseline(client *http.Client, root string, t0 time.Time, maxTim
 	return soft404Baseline{valid: true, status: res.Status, length: len(res.Body), hash: hex.EncodeToString(sum[:])}
 }
 
+// minLengthForWindow: below this baseline body size, a fixed byte-count
+// tolerance window would cover a large fraction of the whole page, silently
+// suppressing genuinely different small pages -- require an exact hash
+// match instead.
+const minLengthForWindow = 200
+
 func isSoft404(baseline soft404Baseline, res fetchResult) bool {
 	if !baseline.valid || baseline.status != res.Status {
 		return false
@@ -417,7 +431,7 @@ func isSoft404(baseline soft404Baseline, res fetchResult) bool {
 	if hex.EncodeToString(sum[:]) == baseline.hash {
 		return true
 	}
-	if baseline.length == 0 {
+	if baseline.length < minLengthForWindow {
 		return false
 	}
 	delta := len(res.Body) - baseline.length
@@ -425,9 +439,6 @@ func isSoft404(baseline soft404Baseline, res fetchResult) bool {
 		delta = -delta
 	}
 	window := baseline.length / 50 // 2%
-	if window < 24 {
-		window = 24
-	}
 	return delta <= window
 }
 

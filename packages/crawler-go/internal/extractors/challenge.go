@@ -11,6 +11,14 @@ import (
 // challenge. Its only job is to stop the crawler from silently treating a
 // WAF/bot-mitigation interstitial as real page content (a false negative: a
 // "clean" scan against a challenge-fronted target currently means nothing).
+//
+// Both header and "weak" body signatures are common on ordinary, non-blocked
+// traffic (cf-ray is stamped on every Cloudflare-proxied response; reCAPTCHA/
+// hCaptcha/Turnstile/DataDome are routinely embedded by site owners on normal
+// login/signup forms as a deliberate anti-abuse control, not only on block
+// pages) -- so neither counts as a hit unless paired with a 403/503 status.
+// Only "strong" body phrases (the interstitial's own wording, e.g.
+// Cloudflare's "Just a moment...") are specific enough to fire standalone.
 
 type headerSignature struct {
 	name, needle, vendor string
@@ -33,17 +41,26 @@ type bodySignature struct {
 	vendor  string
 }
 
-var challengeBodySignatures = []bodySignature{
+// Fire on their own, any status: these are the interstitial page's own
+// wording, not a widget/tag that a site might embed on an ordinary page.
+var challengeStrongBodySignatures = []bodySignature{
 	{regexp.MustCompile(`(?i)just a moment`), "Cloudflare"},
 	{regexp.MustCompile(`(?i)checking your browser before accessing`), "Cloudflare"},
 	{regexp.MustCompile(`(?i)id=["']challenge-form["']`), "Cloudflare"},
+	{regexp.MustCompile(`(?i)access denied.{0,80}akamai`), "Akamai"},
+	{regexp.MustCompile(`(?i)sucuri.{0,40}(firewall|website firewall)`), "Sucuri"},
+}
+
+// Only count as a hit paired with a 403/503 status: these are widgets/tags
+// vendors' own SDKs tell site owners to embed directly on normal forms
+// (login, signup, contact) as a proactive anti-abuse control, so seeing the
+// tag alone is not evidence this particular response is a block page.
+var challengeWeakBodySignatures = []bodySignature{
 	{regexp.MustCompile(`(?i)cf-turnstile|cf_chl_opt`), "Cloudflare Turnstile"},
 	{regexp.MustCompile(`(?i)hcaptcha`), "hCaptcha"},
 	{regexp.MustCompile(`(?i)g-recaptcha|recaptcha/api`), "reCAPTCHA"},
 	{regexp.MustCompile(`(?i)perimeterx|_pxCaptcha|px-captcha`), "PerimeterX"},
 	{regexp.MustCompile(`(?i)datadome`), "DataDome"},
-	{regexp.MustCompile(`(?i)access denied.{0,80}akamai`), "Akamai"},
-	{regexp.MustCompile(`(?i)sucuri.{0,40}(firewall|website firewall)`), "Sucuri"},
 }
 
 func challengeHeader(h map[string]string, name string) string {
@@ -68,8 +85,8 @@ func matchChallengeHeaders(headers map[string]string) string {
 	return ""
 }
 
-func matchChallengeBody(body string) string {
-	for _, sig := range challengeBodySignatures {
+func matchChallengeBody(sigs []bodySignature, body string) string {
+	for _, sig := range sigs {
 		if sig.pattern.MatchString(body) {
 			return sig.vendor
 		}
@@ -77,18 +94,25 @@ func matchChallengeBody(body string) string {
 	return ""
 }
 
+func isBlockStatus(status int) bool {
+	return status == 403 || status == 503
+}
+
 // DetectChallenge returns a finding if this response looks like a
 // WAF/bot-mitigation challenge/interstitial page rather than real target
-// content. Header signatures alone (e.g. a plain cf-ray header on an
-// otherwise normal 200 response, which Cloudflare adds to all proxied
-// traffic) are not sufficient on their own -- only header signatures paired
-// with a small/error-shaped response, or a body-content signature, count.
+// content. Only a "strong" body signature fires on its own; a bare header
+// signature or a "weak" body signature only counts as a hit paired with a
+// 403/503 status.
 func DetectChallenge(headers map[string]string, body string, status int) *models.Finding {
-	if vendor := matchChallengeBody(body); vendor != "" {
+	if vendor := matchChallengeBody(challengeStrongBodySignatures, body); vendor != "" {
 		return challengeFinding(vendor, status)
 	}
-	if vendor := matchChallengeHeaders(headers); vendor != "" {
-		if status == 403 || status == 503 || len(body) < 4000 {
+	if isBlockStatus(status) {
+		vendor := matchChallengeBody(challengeWeakBodySignatures, body)
+		if vendor == "" {
+			vendor = matchChallengeHeaders(headers)
+		}
+		if vendor != "" {
 			return challengeFinding(vendor, status)
 		}
 	}
@@ -101,11 +125,11 @@ func challengeFinding(vendor string, status int) *models.Finding {
 		"links from this page. Passive/active checks against this URL were not " +
 		"meaningfully performed. This is a detection-only signal: Shroodler does " +
 		"not attempt to solve or bypass challenges. If this is unexpected on an " +
-		"authorized scan, ask the target's operator to allowlist the scanner's " +
-		"source IP/User-Agent."
+		"authorized scan, try --user-agent to rule out UA-based blocking, or ask " +
+		"the target's operator to allowlist the scanner's source IP/User-Agent."
 	return &models.Finding{
 		ID:          "waf-challenge-detected",
-		Severity:    "high",
+		Severity:    "medium",
 		Category:    "waf-challenge",
 		Description: desc,
 	}

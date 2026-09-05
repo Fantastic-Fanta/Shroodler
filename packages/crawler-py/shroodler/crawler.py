@@ -21,7 +21,11 @@ from shroodler.auth import (
     run_login_httpx,
 )
 from shroodler.extractors.challenge import detect_challenge
-from shroodler.extractors.common_paths import probe_mutations, probe_paths
+from shroodler.extractors.common_paths import (
+    probe_mutations,
+    probe_paths,
+    probe_soft_404_baseline,
+)
 from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.cors import (
     candidate_from_endpoint,
@@ -257,12 +261,17 @@ class Crawler:
                     continue
                 queue.append((link, depth + 1))
 
+        # Fingerprinted once and shared by both probe phases below, so a
+        # site's "not found" page is judged against a single consistent
+        # baseline rather than two independently-fetched ones.
+        soft_404_baseline = probe_soft_404_baseline(origin_url, self.http)
         extra_pages, extra_findings = probe_paths(
             origin_url,
             self.http,
             seen,
             remaining=self.max_pages - len(pages),
             deadline=(t0 + self.max_time) if self.max_time is not None else None,
+            baseline=soft_404_baseline,
         )
         pages.extend(extra_pages)
         findings.extend(extra_findings)
@@ -274,6 +283,7 @@ class Crawler:
             discovered,
             remaining=self.max_pages - len(pages),
             deadline=(t0 + self.max_time) if self.max_time is not None else None,
+            baseline=soft_404_baseline,
         )
         pages.extend(mut_pages)
         findings.extend(mut_findings)
@@ -304,16 +314,21 @@ class Crawler:
         requests = getattr(self.http, "requests", 0)
         if self.fetcher is not self.http:
             requests += getattr(self.fetcher, "requests", 0)
+        deduped_findings = _dedupe_findings(findings)
+        pages_challenged = len(
+            {f.url for f in deduped_findings if f.category == "waf-challenge"}
+        )
         return CrawlResult(
             target=seed,
             scan_started_at=started,
             scan_finished_at=finished,
             crawler=CrawlerInfo(name="shroodler-py", version=__version__, mode=self.mode),
             pages=pages,
-            findings=_dedupe_findings(findings),
+            findings=deduped_findings,
             js_endpoints=_dedupe_endpoints(js_endpoints),
             stats=CrawlStats(
                 pages_crawled=len(pages),
+                pages_challenged=pages_challenged,
                 requests=requests,
                 elapsed_ms=int((monotonic() - t0) * 1000),
                 stopped_reason=stopped,

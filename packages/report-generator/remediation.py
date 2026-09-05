@@ -60,6 +60,8 @@ _BY_ID: dict[str, str] = {
     "logout-not-invalidated": "Invalidate the session server-side on logout, not just by clearing the client cookie.",
     "authz-diff": "This URL returned success for a lower-privileged session that replayed a higher-privileged crawl; enforce authorization checks server-side per-object, not just per-route.",
     "idor-adjacent-id-accessible": "First confirm the adjacent ID actually belongs to a different account (not just another of your own records); if so, enforce an object-level authorization check on this endpoint instead of trusting that any valid session may access any ID.",
+    "oauth-missing-state": "Add a random, unguessable state parameter to the authorization request and verify it matches on the callback, to prevent CSRF against the OAuth flow.",
+    "oauth-implicit-flow": "Migrate off the implicit flow (response_type=token) to the authorization code flow with PKCE; the implicit flow exposes the access token in the URL fragment.",
 }
 
 # Category fallback for ids not listed above (new payload/secret pack ids

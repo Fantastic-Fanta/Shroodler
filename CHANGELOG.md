@@ -7,6 +7,22 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **New OAuth 2.0/OIDC authorization-request checks, in both engines.**
+  `packages/crawler-py/shroodler/extractors/oauth.py` /
+  `packages/crawler-go/internal/extractors/oauth.go`: purely passive
+  (inspects a crawled URL's own query string, no extra requests). An
+  "authorization request" is identified per RFC 6749 s4.1.1 by the
+  presence of both `response_type` and `client_id` -- the two
+  spec-required parameters for that request type, so there's no
+  false-positive risk in deciding whether a URL even is one. Flags a
+  missing/empty `state` param (`oauth-missing-state`, medium -- CSRF risk
+  on the redirect callback) and `response_type=token`
+  (`oauth-implicit-flow`, low -- the deprecated implicit flow, which
+  exposes the access token in the URL fragment). Implemented in both
+  engines rather than excluded from `run_parity.py`'s comparison, since
+  it's simple enough (pure query-string parsing, no TLS/crypto library
+  needed) to keep behaviorally identical instead of adding another
+  Python-only category.
 - **Fixes from pentester review of `--check-idor`.** A same-shaped JSON
   object under the same session cannot, by itself, distinguish a real
   IDOR from the requesting session's own neighboring record (sequential

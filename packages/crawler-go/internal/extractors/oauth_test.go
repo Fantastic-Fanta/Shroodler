@@ -57,6 +57,75 @@ func TestCheckOAuthAuthorizeURLMissingStateWithPKCEIsDowngraded(t *testing.T) {
 	}
 }
 
+func TestCheckOAuthAuthorizeURLMissingStateWithPlainPKCEStaysMedium(t *testing.T) {
+	// "plain" sends the verifier itself as the challenge -- it doesn't
+	// hide anything the way S256 does, so it must not earn the same
+	// downgrade as a real S256 challenge.
+	findings := CheckOAuthAuthorizeURL(
+		"https://idp.example/authorize?response_type=code&client_id=abc" +
+			"&code_challenge=abc123&code_challenge_method=plain",
+	)
+	var hit *models.Finding
+	for i := range findings {
+		if findings[i].ID == "oauth-missing-state" {
+			hit = &findings[i]
+		}
+	}
+	if hit == nil {
+		t.Fatal("expected oauth-missing-state to still fire")
+	}
+	if hit.Severity != "medium" {
+		t.Fatalf("expected medium severity with plain (non-S256) PKCE, got %s", hit.Severity)
+	}
+}
+
+func TestCheckOAuthAuthorizeURLMissingStateWithCodeChallengeButNoMethodStaysMedium(t *testing.T) {
+	// code_challenge_method defaults to "plain" per RFC 7636 when absent.
+	findings := CheckOAuthAuthorizeURL(
+		"https://idp.example/authorize?response_type=code&client_id=abc&code_challenge=abc123",
+	)
+	var hit *models.Finding
+	for i := range findings {
+		if findings[i].ID == "oauth-missing-state" {
+			hit = &findings[i]
+		}
+	}
+	if hit == nil {
+		t.Fatal("expected oauth-missing-state to still fire")
+	}
+	if hit.Severity != "medium" {
+		t.Fatalf("expected medium severity, got %s", hit.Severity)
+	}
+}
+
+func TestCheckOAuthAuthorizeURLHybridFlowIsFlaggedAsImplicit(t *testing.T) {
+	// OIDC hybrid flow: response_type is space-separated and "token"
+	// being one of several values still exposes a token in the fragment.
+	findings := CheckOAuthAuthorizeURL(
+		"https://idp.example/authorize?response_type=code+token&client_id=abc&state=xyz",
+	)
+	found := false
+	for _, f := range findings {
+		if f.ID == "oauth-implicit-flow" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected oauth-implicit-flow for response_type=code token (hybrid)")
+	}
+}
+
+func TestCheckOAuthAuthorizeURLHybridCodeIDTokenWithoutBareTokenIsNotFlagged(t *testing.T) {
+	findings := CheckOAuthAuthorizeURL(
+		"https://idp.example/authorize?response_type=code+id_token&client_id=abc&state=xyz",
+	)
+	for _, f := range findings {
+		if f.ID == "oauth-implicit-flow" {
+			t.Fatal("response_type=code id_token (no bare token) must not trigger oauth-implicit-flow")
+		}
+	}
+}
+
 func TestCheckOAuthAuthorizeURLWithState(t *testing.T) {
 	findings := CheckOAuthAuthorizeURL("https://idp.example/authorize?response_type=code&client_id=abc&state=xyz123")
 	for _, f := range findings {

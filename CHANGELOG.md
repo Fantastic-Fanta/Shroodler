@@ -7,6 +7,21 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Two more OAuth check refinements, found on a second pass.** (1)
+  `oauth-missing-state`'s PKCE downgrade now requires
+  `code_challenge_method=S256` specifically, not just any
+  `code_challenge` value -- RFC 7636's "plain" method (the default when
+  the method param is omitted) sends the verifier itself as the
+  challenge and doesn't hide anything in transit/logs the way S256 does,
+  so it doesn't earn the same downgrade. (2) `oauth-implicit-flow` now
+  checks whether `"token"` appears as one of the space-separated members
+  of `response_type` (`strings.Fields`/`.split()`), not exact string
+  equality -- OIDC's hybrid flow (`response_type=code token`,
+  `code id_token token`, ...) still returns an access token in the
+  redirect fragment, and exact equality against the whole value only
+  ever caught the pure implicit-flow case, missing every hybrid variant.
+  Both fixes landed identically in `extractors/oauth.py` and
+  `extractors/oauth.go`.
 - **Fixes to the OAuth checks' Python/Go parity, found while re-verifying
   round 4 by hand.** Python's `parse_qs` (default `keep_blank_values=False`)
   silently drops a blank occurrence of a repeated query param --

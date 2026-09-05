@@ -37,6 +37,7 @@ from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.graphql import probe_graphql
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.html_markup import extract_html_markup
+from shroodler.extractors.idor import probe_idor
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.links import extract_css_urls, extract_links
@@ -112,6 +113,7 @@ class Crawler:
         extra_seeds: list[str] | None = None,
         no_sitemap: bool = False,
         check_rate_limit: bool = False,
+        check_idor: bool = False,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -129,6 +131,7 @@ class Crawler:
         self.extra_seeds = extra_seeds or []
         self.no_sitemap = no_sitemap
         self.check_rate_limit = check_rate_limit
+        self.check_idor = check_idor
         self._cookie_args = cookies or []
         self._cookie_jar = cookie_jar
         self._storage_state = storage_state
@@ -330,6 +333,9 @@ class Crawler:
 
         if self.check_rate_limit:
             findings.extend(check_rate_limits(self.http, origin_url, pages))
+
+        if self.check_idor:
+            findings.extend(probe_idor(self.http, pages))
 
         if stopped == "complete":
             later = self._budget_hit(t0, len(pages))

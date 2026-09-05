@@ -7,6 +7,26 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`--check-idor` (Python-only, off by default): same-session
+  ID-sequence probing.** For a crawled URL with a purely-numeric path
+  segment or query value, replays adjacent IDs (n-1, n+1) using the
+  crawl's own session (`packages/crawler-py/shroodler/extractors/
+  idor.py`) and flags one that returns a genuine 2xx with the same
+  top-level JSON key shape as the original -- distinct from the existing
+  `authz-diff` (which replays a *higher-privileged* crawl's URLs under a
+  *lower-privileged* session; this is same-privilege, adjacent-object
+  access). Scoped deliberately narrowly to avoid the false-positive traps
+  earlier reviews caught: JSON API responses only (HTML/other content
+  types are skipped rather than guessed at via fuzzy body-length
+  heuristics), and a synthetic not-found-shaped ID is probed first as a
+  baseline -- if the target doesn't distinguish valid from invalid IDs by
+  status/shape at all (e.g. it returns 200 for everything), the check
+  can't prove anything and skips rather than reporting a finding neither
+  status code nor response shape actually supports. Off by default (like
+  `--check-rate-limit`) because it makes real extra GET requests for IDs
+  that were never organically discovered, which could read another
+  user's data on a genuinely vulnerable target -- an authorized-testing
+  judgment call, not a parity concern this time.
 - **TLS checks: real chain-trust validation, handshake-failure signal, and
   an IP-SAN false-positive fix.** A pentester review of the TLS checks
   found the disabled-verification design meant an untrusted-CA/broken

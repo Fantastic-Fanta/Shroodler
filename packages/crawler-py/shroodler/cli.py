@@ -102,6 +102,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         extra_seeds=extra_seeds,
         no_sitemap=bool(getattr(args, "no_sitemap", False)),
         check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
+        check_idor=bool(getattr(args, "check_idor", False)),
         **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
@@ -417,6 +418,19 @@ def build_parser() -> argparse.ArgumentParser:
         dest="check_rate_limit",
         action="store_false",
         help=argparse.SUPPRESS,
+    )
+    crawl.add_argument(
+        "--check-idor",
+        action="store_true",
+        help="For crawled URLs with a purely-numeric path segment or query "
+        "value, replay adjacent IDs (n-1, n+1) using the crawl's own "
+        "session and flag ones that return a same-shaped JSON object "
+        "(possible broken object-level authorization/IDOR). Off by "
+        "default: this makes real extra GET requests for IDs that were "
+        "not organically discovered, potentially reading another user's "
+        "data if the target is in fact vulnerable -- only use against "
+        "targets you're authorized to test this way. JSON API responses "
+        "only; HTML/other content types are skipped.",
     )
     crawl.add_argument(
         "--header",

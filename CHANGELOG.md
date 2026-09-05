@@ -7,6 +7,31 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **WAF/bot-mitigation challenge detection** (Python + Go): the crawler now
+  recognizes Cloudflare/Akamai/PerimeterX/DataDome/CAPTCHA challenge and
+  interstitial pages instead of silently crawling them as real content --
+  a page that trips a challenge signature gets a high-severity
+  `waf-challenge` finding and is excluded from form/secret/JS-endpoint/
+  verbose-error/markup extraction (header/cookie extraction still runs,
+  since those describe the real HTTP exchange). Detection only: Shroodler
+  never attempts to solve or bypass a challenge. New `waf-challenge`
+  finding category (schema bump).
+- **`--user-agent`** on `shroodler crawl` (Python + Go): the User-Agent was
+  previously unconfigurable from the CLI in both engines (Go didn't even
+  thread it through as a parameter -- every request hardcoded the literal
+  `Shroodler/0.1.0` string). Some targets serve different content, or block
+  requests outright, based on User-Agent.
+- **Soft-404 baseline for common-path/backup-mutation probing** (Python +
+  Go): apps that return HTTP 200 with a branded/templated "not found" page
+  for any unknown path were flooding `probe_paths`/`probe_mutations` with
+  false-positive `exposed-file` hits. The crawler now fingerprints one
+  known-nonexistent path per scan and suppresses wordlist hits that match
+  its status/body.
+- **Fixed a budget-bypass bug** in the Python crawler: `probe_mutations`
+  (backup-suffix mutation probing) ignored `--max-pages`/`--max-time`
+  entirely, unlike `probe_paths` which already respected both -- a crawl
+  could run well past its configured budget during this phase. Go was not
+  affected (its mutation loop already checked the budget per-request).
 - **`--oob-host`** on `shroodler payload`: point `{{MARKER_HOST}}` at your
   own collaborator-style server (self-hosted Interactsh, an `oast.*`
   instance, or any host you control that logs requests) instead of the

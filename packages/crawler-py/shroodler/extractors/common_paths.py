@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import hashlib
+import uuid
+from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 from time import monotonic
 from urllib.parse import urlparse
 
+from shroodler.extractors.challenge import detect_challenge
 from shroodler.extractors.secrets import scan_text
 from shroodler.models import Finding, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
@@ -125,6 +129,47 @@ def mutation_paths(discovered: list[str]) -> list[str]:
     return out
 
 
+@dataclass(frozen=True)
+class Soft404Baseline:
+    status_code: int
+    length: int
+    body_hash: str
+
+
+def probe_soft_404_baseline(origin: str, fetcher: StaticFetcher) -> Soft404Baseline | None:
+    """Fetch a known-nonexistent path once to fingerprint this site's "not
+    found" response. Many apps return HTTP 200 with a branded/templated
+    error page for any unknown path instead of a real 404, which would
+    otherwise flood `probe_paths`/`probe_mutations` with false-positive
+    `exposed-file` hits (every wordlist entry "exists")."""
+    marker = f"__shroodler_nonexistent_{uuid.uuid4().hex[:16]}__"
+    url = origin.rstrip("/") + "/" + marker
+    result = fetcher.fetch(url)
+    if not result.text and result.status_code == 0:
+        return None
+    return Soft404Baseline(
+        status_code=result.status_code,
+        length=len(result.text or ""),
+        body_hash=hashlib.sha256((result.text or "").encode("utf-8", "ignore")).hexdigest(),
+    )
+
+
+def _is_soft_404(baseline: Soft404Baseline | None, result: FetchResult) -> bool:
+    if baseline is None or baseline.status_code != result.status_code:
+        return False
+    body = result.text or ""
+    if hashlib.sha256(body.encode("utf-8", "ignore")).hexdigest() == baseline.body_hash:
+        return True
+    # Same status and near-identical length (templated page with a few
+    # dynamic bytes, e.g. a timestamp or nonce) -- conservative window to
+    # avoid merging genuinely different small pages.
+    if baseline.length > 0:
+        delta = abs(len(body) - baseline.length)
+        if delta <= max(24, int(baseline.length * 0.02)):
+            return True
+    return False
+
+
 def _record_hit(
     url: str,
     path: str,
@@ -163,6 +208,7 @@ def probe_paths(
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []
+    baseline = probe_soft_404_baseline(origin, fetcher)
     for path in load_paths():
         if remaining is not None and len(pages) >= remaining:
             break
@@ -173,7 +219,11 @@ def probe_paths(
         if key in already:
             continue
         result: FetchResult = fetcher.fetch(url)
-        if result.status_code != 200:
+        if result.status_code != 200 or _is_soft_404(baseline, result):
+            continue
+        challenge = detect_challenge(result.headers, result.text, result.status_code)
+        if challenge:
+            findings.append(challenge.model_copy(update={"url": url}))
             continue
         _record_hit(
             url,
@@ -192,16 +242,27 @@ def probe_mutations(
     fetcher: StaticFetcher,
     already: set[str],
     discovered: list[str],
+    remaining: int | None = None,
+    deadline: float | None = None,
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []
+    baseline = probe_soft_404_baseline(origin, fetcher)
     for path in mutation_paths(discovered):
+        if remaining is not None and len(pages) >= remaining:
+            break
+        if deadline is not None and monotonic() >= deadline:
+            break
         url = origin.rstrip("/") + path
         key = canonical_key(url)
         if key in already:
             continue
         result: FetchResult = fetcher.fetch(url)
-        if result.status_code != 200:
+        if result.status_code != 200 or _is_soft_404(baseline, result):
+            continue
+        challenge = detect_challenge(result.headers, result.text, result.status_code)
+        if challenge:
+            findings.append(challenge.model_copy(update={"url": url}))
             continue
         _record_hit(
             url,

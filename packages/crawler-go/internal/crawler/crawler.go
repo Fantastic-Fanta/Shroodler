@@ -2,6 +2,9 @@ package crawler
 
 import (
 	"bytes"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,6 +20,12 @@ import (
 
 const version = "0.1.0"
 
+// defaultUserAgent is sent when Config.UserAgent is empty. It self-identifies
+// the scanner (courtesy to the target operator and their logs/WAF), and can
+// be overridden with --user-agent for targets that serve different content
+// or block requests based on User-Agent.
+const defaultUserAgent = "Shroodler/0.1.0 (+https://shroodler.local)"
+
 type Config struct {
 	Depth          int // -1 unbounded
 	IgnoreRobots   bool
@@ -30,6 +39,7 @@ type Config struct {
 	Seeds          []string
 	Cookies        []SeedCookie
 	Headers        []string
+	UserAgent      string
 	LoginRecipe    *LoginRecipe
 	Mode           string
 	NoSitemap      bool
@@ -86,8 +96,12 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		}
 		transport.Proxy = http.ProxyURL(pu)
 	}
+	ua := cfg.UserAgent
+	if ua == "" {
+		ua = defaultUserAgent
+	}
 	client.Transport = &countingTransport{
-		base: &headerTransport{base: transport, extra: ParseHeaders(cfg.Headers)},
+		base: &headerTransport{base: transport, extra: ParseHeaders(cfg.Headers), userAgent: ua},
 		n:    &nreq,
 	}
 	if cfg.Cookie != "" {
@@ -268,6 +282,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}
 
 	root := strings.TrimRight(origin(start), "/")
+	baseline := probeSoft404Baseline(client, root, t0, cfg.MaxTime)
 	for _, p := range extractors.LoadCommonPaths() {
 		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
 			if stopped == "complete" {
@@ -281,7 +296,12 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			continue
 		}
 		res := fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
-		if res.Status != 200 {
+		if res.Status != 200 || isSoft404(baseline, res) {
+			continue
+		}
+		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status); challenge != nil {
+			challenge.URL = u
+			findings = append(findings, *challenge)
 			continue
 		}
 		seen[key] = true
@@ -308,7 +328,12 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			continue
 		}
 		res := fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
-		if res.Status != 200 {
+		if res.Status != 200 || isSoft404(baseline, res) {
+			continue
+		}
+		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status); challenge != nil {
+			challenge.URL = u
+			findings = append(findings, *challenge)
 			continue
 		}
 		seen[key] = true
@@ -360,10 +385,76 @@ type errString string
 
 func (e errString) Error() string { return string(e) }
 
+// soft404Baseline fingerprints a site's "not found" response for an
+// obviously-nonexistent path. Many apps return HTTP 200 with a branded/
+// templated error page for any unknown path instead of a real 404, which
+// would otherwise flood the common-path/mutation probes with false-positive
+// exposed-file hits (every wordlist entry "exists").
+type soft404Baseline struct {
+	valid  bool
+	status int
+	length int
+	hash   string
+}
+
+func probeSoft404Baseline(client *http.Client, root string, t0 time.Time, maxTime time.Duration) soft404Baseline {
+	buf := make([]byte, 8)
+	_, _ = rand.Read(buf)
+	marker := root + "/__shroodler_nonexistent_" + hex.EncodeToString(buf) + "__"
+	res := fetchRetry(client, marker, "", remainingTimeout(t0, maxTime))
+	if res.Status == 0 {
+		return soft404Baseline{}
+	}
+	sum := sha256.Sum256([]byte(res.Body))
+	return soft404Baseline{valid: true, status: res.Status, length: len(res.Body), hash: hex.EncodeToString(sum[:])}
+}
+
+func isSoft404(baseline soft404Baseline, res fetchResult) bool {
+	if !baseline.valid || baseline.status != res.Status {
+		return false
+	}
+	sum := sha256.Sum256([]byte(res.Body))
+	if hex.EncodeToString(sum[:]) == baseline.hash {
+		return true
+	}
+	if baseline.length == 0 {
+		return false
+	}
+	delta := len(res.Body) - baseline.length
+	if delta < 0 {
+		delta = -delta
+	}
+	window := baseline.length / 50 // 2%
+	if window < 24 {
+		window = 24
+	}
+	return delta <= window
+}
+
 func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchResult) (models.Page, []models.Finding, []models.JSEndpoint) {
-	forms, ff := extractors.ExtractForms(res.Body, res.URL)
 	cookies, cf := extractors.ExtractCookies(res.SetCookies, res.URL)
 	headers, hf := extractors.ExtractHeaders(res.Headers, res.URL)
+	if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status); challenge != nil {
+		challenge.URL = res.URL
+		page := models.Page{
+			URL:        res.URL,
+			StatusCode: res.Status,
+			Forms:      []models.Form{},
+			Params:     urls.QueryNames(res.URL),
+			Cookies:    cookies,
+			Headers:    headers,
+			JSFiles:    []string{},
+		}
+		if page.Cookies == nil {
+			page.Cookies = []models.Cookie{}
+		}
+		if page.Params == nil {
+			page.Params = []string{}
+		}
+		all := append([]models.Finding{*challenge}, append(cf, hf...)...)
+		return page, all, []models.JSEndpoint{}
+	}
+	forms, ff := extractors.ExtractForms(res.Body, res.URL)
 	vf := extractors.ExtractVerbose(res.Body, res.URL, res.Status)
 	sf := extractors.ScanSecrets(res.Body, res.URL, rules)
 	jf := extractors.AuditJWTsInText(res.Body, res.URL)
@@ -511,7 +602,6 @@ func doRequest(client *http.Client, method, raw, cookie string, extra map[string
 	if err != nil {
 		return fetchResult{URL: raw}
 	}
-	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
 	if cookie != "" {
 		req.Header.Set("Cookie", cookie)
 	}
@@ -593,8 +683,9 @@ func (t *countingTransport) RoundTrip(req *http.Request) (*http.Response, error)
 }
 
 type headerTransport struct {
-	base  http.RoundTripper
-	extra map[string]string
+	base      http.RoundTripper
+	extra     map[string]string
+	userAgent string
 }
 
 func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
@@ -602,10 +693,13 @@ func (t *headerTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if base == nil {
 		base = http.DefaultTransport
 	}
-	if t == nil || len(t.extra) == 0 {
+	if t == nil || (len(t.extra) == 0 && t.userAgent == "") {
 		return base.RoundTrip(req)
 	}
 	clone := req.Clone(req.Context())
+	if t.userAgent != "" {
+		clone.Header.Set("User-Agent", t.userAgent)
+	}
 	for k, v := range t.extra {
 		clone.Header.Set(k, v)
 	}
@@ -758,7 +852,6 @@ func doJSONPost(client *http.Client, raw, body string) fetchResult {
 	if err != nil {
 		return fetchResult{URL: raw}
 	}
-	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
 	req.Header.Set("Content-Type", "application/json")
 	resp, err := client.Do(req)
 	if err != nil {

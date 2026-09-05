@@ -20,6 +20,7 @@ from shroodler.auth import (
     resolve_recipe_url,
     run_login_httpx,
 )
+from shroodler.extractors.challenge import detect_challenge
 from shroodler.extractors.common_paths import probe_mutations, probe_paths
 from shroodler.extractors.cookies import extract_cookies
 from shroodler.extractors.cors import (
@@ -266,7 +267,14 @@ class Crawler:
         pages.extend(extra_pages)
         findings.extend(extra_findings)
         discovered = [urlparse(p.url).path for p in pages]
-        mut_pages, mut_findings = probe_mutations(origin_url, self.http, seen, discovered)
+        mut_pages, mut_findings = probe_mutations(
+            origin_url,
+            self.http,
+            seen,
+            discovered,
+            remaining=self.max_pages - len(pages),
+            deadline=(t0 + self.max_time) if self.max_time is not None else None,
+        )
         pages.extend(mut_pages)
         findings.extend(mut_findings)
         findings.extend(
@@ -444,7 +452,8 @@ class Crawler:
         self, result: FetchResult
     ) -> tuple[Page, list[Finding], list[JsEndpoint]]:
         page, findings, endpoints = page_from_fetch(result)
-        if result.text and (
+        is_challenge = any(f.category == "waf-challenge" for f in findings)
+        if not is_challenge and result.text and (
             "javascript" in _content_type(result.headers) or result.url.endswith(".js")
         ):
             map_eps, map_findings = self._from_source_map(result.url, result.text)
@@ -477,6 +486,27 @@ class Crawler:
 
 
 def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEndpoint]]:
+    cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
+    headers, header_findings = extract_headers(result.headers, result.url)
+
+    challenge = detect_challenge(result.headers, result.text, result.status_code)
+    if challenge:
+        # This page is a WAF/bot-mitigation interstitial, not real target
+        # content. Keep header/cookie extraction (those describe the actual
+        # HTTP exchange) but skip everything that would otherwise parse the
+        # challenge HTML as if it were the site -- forms, secrets, JS
+        # endpoints, verbose errors, markup checks would all be noise or
+        # false positives here.
+        page = Page(
+            url=result.url,
+            status_code=result.status_code,
+            params=query_param_names(result.url),
+            cookies=cookies,
+            headers=headers,
+        )
+        challenge = challenge.model_copy(update={"url": result.url})
+        return page, [challenge, *cookie_findings, *header_findings], []
+
     js_files: list[str] = []
     forms = []
     form_findings: list[Finding] = []
@@ -497,8 +527,6 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
             forms, form_findings = extract_forms(result.text, result.url)
         if is_js or is_html:
             endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
-    cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
-    headers, header_findings = extract_headers(result.headers, result.url)
     verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
     secret_findings = scan_text(result.text, result.url)
     jwt_findings = audit_jwts(result.text, result.url)

@@ -161,7 +161,7 @@
         },
         "category": {
           "type": "string",
-          "description": "\"payload\" covers all active payload-tester findings (SQLi/XSS/SSTI/path-traversal/SSRF/open-redirect/XXE); the specific vulnerability class is carried in the finding's \"id\" (e.g. payload-sql-error, payload-ssrf, payload-open-redirect), not a separate category value. \"scan-note\" is not a vulnerability; it is used to record that an active probe (e.g. CORS reflection, GraphQL introspection) was intentionally skipped, so consumers do not silently interpret an empty result as \"checked, nothing found\". \"auth\" covers authentication/session/authorization findings that aren't a single HTTP header or cookie -- missing rate limiting, session fixation, logout not invalidating the session, and cross-session/IDOR access -- again disambiguated by the finding's \"id\".",
+          "description": "\"payload\" covers all active payload-tester findings (SQLi/XSS/SSTI/path-traversal/SSRF/open-redirect/XXE); the specific vulnerability class is carried in the finding's \"id\" (e.g. payload-sql-error, payload-ssrf, payload-open-redirect), not a separate category value. \"scan-note\" is not a vulnerability; it is used to record that an active probe (e.g. CORS reflection, GraphQL introspection) was intentionally skipped, so consumers do not silently interpret an empty result as \"checked, nothing found\". \"auth\" covers authentication/session/authorization findings that aren't a single HTTP header or cookie -- missing rate limiting, session fixation, logout not invalidating the session, and cross-session/IDOR access -- again disambiguated by the finding's \"id\". \"waf-challenge\" flags a response that looks like a WAF/bot-mitigation challenge or interstitial page (Cloudflare, Akamai, PerimeterX, DataDome, a CAPTCHA wall, etc.) rather than real target content; when present, other checks against that same URL were not meaningfully performed.",
           "enum": [
             "header",
             "cookie",
@@ -172,7 +172,8 @@
             "autocomplete",
             "payload",
             "scan-note",
-            "auth"
+            "auth",
+            "waf-challenge"
           ]
         },
         "url": { "type": "string", "minLength": 1 },

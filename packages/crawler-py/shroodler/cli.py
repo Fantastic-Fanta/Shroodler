@@ -13,6 +13,7 @@ from shroodler.baseline import document_to_baseline
 from shroodler.config import load_rc
 from shroodler.crawler import crawl_url
 from shroodler.diffcmd import diff_outcome, load_json
+from shroodler.robots import DEFAULT_UA
 from shroodler.suppress import filter_findings, load_suppressions
 from shroodler.validate import validate_crawl
 
@@ -101,6 +102,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         extra_seeds=extra_seeds,
         no_sitemap=bool(getattr(args, "no_sitemap", False)),
         check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
+        **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
     validate_crawl(doc)
@@ -439,6 +441,12 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument(
         "--login-recipe",
         help="JSON {url, method, fields} posted once before crawling (merges hidden fields)",
+    )
+    crawl.add_argument(
+        "--user-agent",
+        help="Override the User-Agent sent on every crawl request (default: "
+        f"{DEFAULT_UA!r}). Some targets serve different content, or block "
+        "requests entirely, based on User-Agent.",
     )
     crawl.add_argument("--proxy", help="HTTP proxy URL, e.g. http://127.0.0.1:8888")
     crawl.add_argument(

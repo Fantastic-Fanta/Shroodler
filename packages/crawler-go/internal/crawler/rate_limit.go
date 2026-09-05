@@ -66,7 +66,6 @@ func doPostForm(client *http.Client, raw string, vals url.Values) fetchResult {
 }
 
 func doRequestObj(client *http.Client, req *http.Request, raw string) fetchResult {
-	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
 	resp, err := client.Do(req)
 	if err != nil {
 		return fetchResult{URL: raw}

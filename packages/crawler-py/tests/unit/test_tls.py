@@ -23,13 +23,24 @@ def _make_cert(
     not_valid_after: datetime.datetime | None = None,
     self_signed: bool = True,
 ):
+    """Build a leaf cert. When self_signed=False, it's signed by a
+    freshly-generated, throwaway CA instead of by its own key -- issuer !=
+    subject, exercising the "not every non-self-signed cert is a CA cert
+    a real client would trust" distinction (this fixture's CA is never
+    added to any trust store, so it's still untrusted, just not
+    *self*-signed -- the two are different conditions)."""
     now = datetime.datetime.now(datetime.timezone.utc)
     not_valid_before = not_valid_before or (now - datetime.timedelta(days=1))
     not_valid_after = not_valid_after or (now + datetime.timedelta(days=365))
     key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
-    subject = issuer = x509.Name(
-        [x509.NameAttribute(NameOID.COMMON_NAME, common_name)]
-    )
+    subject = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, common_name)])
+    if self_signed:
+        issuer = subject
+        signing_key = key
+    else:
+        ca_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+        issuer = x509.Name([x509.NameAttribute(NameOID.COMMON_NAME, "throwaway-test-ca")])
+        signing_key = ca_key
     builder = (
         x509.CertificateBuilder()
         .subject_name(subject)
@@ -49,7 +60,7 @@ def _make_cert(
             x509.SubjectAlternativeName(san_entries),
             critical=False,
         )
-    cert = builder.sign(key, hashes.SHA256())
+    cert = builder.sign(signing_key, hashes.SHA256())
     return key, cert
 
 
@@ -153,6 +164,36 @@ def test_self_signed_cert_is_flagged(tls_server):
     findings = check_tls(f"https://127.0.0.1:{server.port}/")
     ids = {f.id for f in findings}
     assert "tls-cert-self-signed" in ids
+
+
+def test_ca_signed_cert_is_not_flagged_self_signed(tls_server):
+    # A leaf signed by a (throwaway, untrusted) separate CA has
+    # issuer != subject -- it must not trip the self-signed check, even
+    # though this fixture's CA was never added to any trust store and the
+    # cert is therefore still untrusted overall (see
+    # test_untrusted_chain_is_flagged_when_not_otherwise_explained below).
+    server = tls_server(ip_san=["127.0.0.1"], self_signed=False)
+    findings = check_tls(f"https://127.0.0.1:{server.port}/")
+    assert "tls-cert-self-signed" not in {f.id for f in findings}
+
+
+def test_untrusted_chain_is_flagged_when_not_otherwise_explained(tls_server):
+    # A CA-signed (not self-signed) leaf from a CA nothing trusts still
+    # fails real client verification -- this is the gap cert.issuer ==
+    # cert.subject alone can't see, since issuer != subject here.
+    server = tls_server(ip_san=["127.0.0.1"], self_signed=False)
+    findings = check_tls(f"https://127.0.0.1:{server.port}/")
+    ids = {f.id for f in findings}
+    assert "tls-untrusted-chain" in ids
+    assert "tls-cert-self-signed" not in ids
+
+
+def test_untrusted_chain_not_duplicated_when_already_self_signed(tls_server):
+    # Avoid firing a second, less-specific finding for a cert the
+    # self-signed check already fully explains.
+    server = tls_server(ip_san=["127.0.0.1"])
+    findings = check_tls(f"https://127.0.0.1:{server.port}/")
+    assert "tls-untrusted-chain" not in {f.id for f in findings}
 
 
 def test_hostname_mismatch_is_flagged(tls_server):

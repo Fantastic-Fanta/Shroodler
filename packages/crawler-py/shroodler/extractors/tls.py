@@ -46,22 +46,81 @@ def _finding(fid: str, severity: str, target_url: str, description: str, evidenc
 
 
 def fetch_leaf_certificate(host: str, port: int, timeout: float = _CONNECT_TIMEOUT):
-    """Return the peer's leaf certificate, or None if the TCP/TLS handshake
-    itself fails (host down, port closed, protocol mismatch -- none of
-    which is this module's concern; the crawl's own connection attempt
-    will have already surfaced that separately)."""
+    """Return the peer's leaf certificate, or None if the TCP connection
+    itself never happens (host down, port closed/filtered -- not this
+    module's concern; the crawl's own connection attempt will have
+    already surfaced that separately). A TLS-level failure *after* the
+    TCP connect succeeds (protocol/cipher mismatch) is different: that is
+    itself security-relevant, so it's reported via handshake_failure_hint
+    below rather than being silently swallowed the same way."""
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     try:
         with socket.create_connection((host, port), timeout=timeout) as sock:
-            with ctx.wrap_socket(sock, server_hostname=host) as ssock:
-                der = ssock.getpeercert(binary_form=True)
-    except (OSError, ssl.SSLError):
+            try:
+                with ctx.wrap_socket(sock, server_hostname=host) as ssock:
+                    der = ssock.getpeercert(binary_form=True)
+            except ssl.SSLError:
+                return None
+    except OSError:
         return None
     if not der:
         return None
     return x509.load_der_x509_certificate(der)
+
+
+def handshake_failure_hint(host: str, port: int, timeout: float = _CONNECT_TIMEOUT) -> str | None:
+    """If fetch_leaf_certificate() returned None, distinguish "never got a
+    TCP connection" (not our concern) from "TCP connected but the TLS
+    handshake itself failed" (e.g. the server only offers a protocol/cipher
+    this client refuses) -- the latter is worth a low-severity lead even
+    though this module doesn't attempt to identify which weak
+    protocol/cipher specifically, to avoid the same kind of unstable
+    error-message classification the self-signed/expired checks
+    deliberately avoid elsewhere in this module."""
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    try:
+        with socket.create_connection((host, port), timeout=timeout) as sock:
+            try:
+                with ctx.wrap_socket(sock, server_hostname=host):
+                    return None
+            except ssl.SSLError as e:
+                return str(e)
+    except OSError:
+        return None
+
+
+def chain_trust_failure(host: str, port: int, timeout: float = _CONNECT_TIMEOUT) -> str | None:
+    """Attempt a REAL, verified handshake (system trust store, hostname
+    checking on) and return the failure reason if verification fails, or
+    None if it succeeds or the failure is connection-level, not cert-trust
+    (those cases are either fine or already handled by
+    fetch_leaf_certificate/handshake_failure_hint above).
+
+    This is what actually answers "would a normal client trust this cert,"
+    which cert.issuer == cert.subject alone cannot: an untrusted internal
+    CA or a broken chain has issuer != subject (so isn't flagged
+    self-signed) but is still not something a browser would accept. The
+    raw exception text is used only as human-readable evidence, never to
+    classify *which* problem occurred -- that would reintroduce the
+    unstable-string-matching risk this module's docstring already
+    describes avoiding.
+    """
+    ctx = ssl.create_default_context()
+    try:
+        with socket.create_connection((host, port), timeout=timeout) as sock:
+            try:
+                with ctx.wrap_socket(sock, server_hostname=host):
+                    return None
+            except ssl.SSLCertVerificationError as e:
+                return str(e.verify_message or e)
+            except ssl.SSLError:
+                return None
+    except OSError:
+        return None
 
 
 def _sans(cert: x509.Certificate) -> list[str]:
@@ -138,12 +197,29 @@ def check_tls(target_url: str) -> list[Finding]:
 
     cert = fetch_leaf_certificate(host, port)
     if cert is None:
+        # Distinguish "never got a TLS handshake at all" (connection
+        # refused/timed out/filtered -- not this module's concern) from
+        # "TCP connected but the TLS handshake itself failed" (a protocol/
+        # cipher-suite mismatch, which is itself worth a lead even though
+        # this module doesn't attempt to pin down which one).
+        reason = handshake_failure_hint(host, port)
+        if reason:
+            return [
+                _finding(
+                    "tls-handshake-failed",
+                    "low",
+                    target_url,
+                    f"TLS handshake with {host}:{port} failed: {reason}",
+                    reason,
+                )
+            ]
         return []
 
     findings: list[Finding] = []
     now = datetime.now(timezone.utc)
     not_after = cert.not_valid_after_utc
-    if not_after < now:
+    expired = not_after < now
+    if expired:
         findings.append(
             _finding(
                 "tls-cert-expired",
@@ -165,7 +241,8 @@ def check_tls(target_url: str) -> list[Finding]:
             )
         )
 
-    if cert.issuer == cert.subject:
+    self_signed = cert.issuer == cert.subject
+    if self_signed:
         findings.append(
             _finding(
                 "tls-cert-self-signed",
@@ -176,7 +253,8 @@ def check_tls(target_url: str) -> list[Finding]:
             )
         )
 
-    if not hostname_matches(host, cert):
+    hostname_ok = hostname_matches(host, cert)
+    if not hostname_ok:
         # Evidence is diagnostic only (hostname_matches() above already
         # made the real IP-vs-DNS-SAN decision) -- show whatever names the
         # cert actually carries so a report reader can see why it doesn't
@@ -196,5 +274,25 @@ def check_tls(target_url: str) -> list[Finding]:
                 ", ".join(names) or "none",
             )
         )
+
+    # Disabled-verification checks above answer specific, deterministic
+    # questions (expired? self-signed? hostname mismatch?) but a cert can
+    # fail real client trust for other reasons entirely -- an untrusted
+    # internal CA, a broken/incomplete chain, a revoked intermediate.
+    # Skip this when one of the more specific findings above already
+    # explains why a normal client would refuse the cert, so this doesn't
+    # emit a second, less-specific finding for the same underlying cert.
+    if not expired and not self_signed and hostname_ok:
+        reason = chain_trust_failure(host, port)
+        if reason:
+            findings.append(
+                _finding(
+                    "tls-untrusted-chain",
+                    "high",
+                    target_url,
+                    f"TLS certificate for {host} is not trusted by a standard client: {reason}",
+                    reason,
+                )
+            )
 
     return findings

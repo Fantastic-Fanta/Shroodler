@@ -46,6 +46,10 @@ def run(bin_path: Path, target: str, dest: Path) -> dict:
     return json.loads(dest.read_text(encoding="utf-8"))
 
 
+def _categories_present(doc: dict) -> set[str]:
+    return {f.get("category") for f in doc.get("findings", [])}
+
+
 def compare(py_doc: dict, go_doc: dict) -> list[str]:
     """Compare page paths and finding id+path pairs.
 
@@ -59,6 +63,17 @@ def compare(py_doc: dict, go_doc: dict) -> list[str]:
         only_py = finding_set(py_doc) - finding_set(go_doc)
         only_go = finding_set(go_doc) - finding_set(py_doc)
         errs.append(f"finding mismatch only_py={sorted(only_py)} only_go={sorted(only_go)}")
+    # PYTHON_ONLY_CATEGORIES is excluded from finding_set() above on the
+    # assumption that shroodler-go never emits it -- if that assumption
+    # goes stale (Go gains the check but this list isn't updated), a real
+    # behavioral divergence in that category would otherwise be silently
+    # unchecked forever instead of failing loudly once, right here.
+    go_only_categories = _categories_present(go_doc) & PYTHON_ONLY_CATEGORIES
+    if go_only_categories:
+        errs.append(
+            f"shroodler-go now emits categories assumed Python-only: {sorted(go_only_categories)} "
+            "-- remove them from PYTHON_ONLY_CATEGORIES so they're actually compared"
+        )
     return errs
 
 

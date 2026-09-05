@@ -25,6 +25,9 @@ class LoginRecipe:
     method: str = "POST"
     fields: dict[str, str] = field(default_factory=dict)
     include_hidden: bool = True
+    logout_url: str | None = None
+    logout_method: str = "GET"
+    protected_url: str | None = None
 
 
 def parse_header_lines(lines: list[str] | None) -> dict[str, str]:
@@ -71,11 +74,16 @@ def load_login_recipe(path: str) -> LoginRecipe:
     fields = data.get("fields") or {}
     if not isinstance(fields, dict):
         raise ValueError("login recipe fields must be an object")
+    logout_url = data.get("logout_url")
+    protected_url = data.get("protected_url")
     return LoginRecipe(
         url=str(data["url"]),
         method=str(data.get("method") or "POST"),
         fields={str(k): str(v) for k, v in fields.items()},
         include_hidden=bool(data.get("include_hidden", True)),
+        logout_url=str(logout_url) if logout_url else None,
+        logout_method=str(data.get("logout_method") or "GET"),
+        protected_url=str(protected_url) if protected_url else None,
     )
 
 
@@ -132,15 +140,24 @@ def cookies_from_netscape(text: str, default_domain: str = "") -> list[CookieSpe
     return out
 
 
-def resolve_recipe_url(recipe: LoginRecipe, seed: str) -> LoginRecipe:
-    url = recipe.url
+def _resolve_one(url: str | None, seed: str) -> str | None:
+    if not url:
+        return url
     if "://" not in url:
-        url = urljoin(seed if "://" in seed else "http://" + seed, url)
+        return urljoin(seed if "://" in seed else "http://" + seed, url)
+    return url
+
+
+def resolve_recipe_url(recipe: LoginRecipe, seed: str) -> LoginRecipe:
+    url = _resolve_one(recipe.url, seed) or recipe.url
     return LoginRecipe(
         url=url,
         method=recipe.method,
         fields=dict(recipe.fields),
         include_hidden=recipe.include_hidden,
+        logout_url=_resolve_one(recipe.logout_url, seed),
+        logout_method=recipe.logout_method,
+        protected_url=_resolve_one(recipe.protected_url, seed),
     )
 
 

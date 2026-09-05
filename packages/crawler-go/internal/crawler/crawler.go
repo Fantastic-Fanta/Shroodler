@@ -6,10 +6,12 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -211,9 +213,25 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		if res.Status != 200 && extractors.IsOpenAPIProbePath(urls.PathOf(it.u)) {
 			continue
 		}
-		page, f, eps := pageFrom(res, rules, func(u string) fetchResult {
+		fetchForSourceMap := func(u string) fetchResult {
 			return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
-		})
+		}
+		page, f, eps := pageFrom(res, rules, fetchForSourceMap)
+		if hasFindingCategory(f, "waf-challenge") && extractors.HasChallengeCookie(res.SetCookies) {
+			// The challenge response itself set a cookie the vendor's flow
+			// normally checks for on the next request (e.g. Cloudflare's
+			// cf_clearance) -- the client's cookie jar already has it, so
+			// one same-URL retry may already be enough to get past a
+			// transient challenge. Still detection-only: this never solves
+			// anything, it just avoids treating a one-off hiccup as a
+			// durable block.
+			retryRes := fetchPage(it.u)
+			retryPage, retryF, retryEps := pageFrom(retryRes, rules, fetchForSourceMap)
+			if !hasFindingCategory(retryF, "waf-challenge") {
+				page, f, eps = retryPage, retryF, retryEps
+				res = retryRes
+			}
+		}
 		pages = append(pages, page)
 		findings = append(findings, f...)
 		endpoints = append(endpoints, eps...)
@@ -299,7 +317,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		if res.Status != 200 || isSoft404(baseline, res) {
 			continue
 		}
-		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status); challenge != nil {
+		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status, res.SetCookies); challenge != nil {
 			challenge.URL = u
 			findings = append(findings, *challenge)
 			continue
@@ -331,7 +349,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		if res.Status != 200 || isSoft404(baseline, res) {
 			continue
 		}
-		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status); challenge != nil {
+		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status, res.SetCookies); challenge != nil {
 			challenge.URL = u
 			findings = append(findings, *challenge)
 			continue
@@ -364,10 +382,15 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	finished := time.Now().UTC().Format("2006-01-02T15:04:05Z")
 	dedupedFindings := dedupeF(findings)
 	challengedURLs := map[string]bool{}
+	var challengeHits []models.Finding
 	for _, f := range dedupedFindings {
 		if f.Category == "waf-challenge" {
 			challengedURLs[f.URL] = true
+			challengeHits = append(challengeHits, f)
 		}
+	}
+	if sitewide := sitewideChallengeFinding(start, len(challengedURLs), len(pages), challengeHits); sitewide != nil {
+		dedupedFindings = append(dedupedFindings, *sitewide)
 	}
 	return &models.CrawlResult{
 		Target:         start,
@@ -442,10 +465,71 @@ func isSoft404(baseline soft404Baseline, res fetchResult) bool {
 	return delta <= window
 }
 
+const (
+	sitewideChallengeMinPages = 3
+	sitewideChallengeMinRatio = 0.3
+)
+
+// sitewideChallengeFinding: a single challenged page and a target that's
+// WAF-fronted site-wide look identical per-URL -- same category, same
+// severity. When a big enough share of the crawl was challenged, add one
+// summary finding so a report reader can tell "ignore this one URL" from
+// "this whole scan's other findings substantially understate the target's
+// real surface".
+func sitewideChallengeFinding(start string, pagesChallenged, totalPages int, hits []models.Finding) *models.Finding {
+	if totalPages == 0 || pagesChallenged < sitewideChallengeMinPages {
+		return nil
+	}
+	if float64(pagesChallenged)/float64(totalPages) < sitewideChallengeMinRatio {
+		return nil
+	}
+	vendorSet := map[string]bool{}
+	for _, f := range hits {
+		if f.Evidence != nil && *f.Evidence != "" {
+			vendorSet[*f.Evidence] = true
+		}
+	}
+	vendors := make([]string, 0, len(vendorSet))
+	for v := range vendorSet {
+		vendors = append(vendors, v)
+	}
+	sort.Strings(vendors)
+	vendorText := "a WAF/bot-mitigation vendor"
+	if len(vendors) > 0 {
+		vendorText = strings.Join(vendors, ", ")
+	}
+	desc := fmt.Sprintf(
+		"%d of %d crawled pages were WAF/bot-mitigation-challenged (%s) -- "+
+			"this target appears to be challenged site-wide, not just on one "+
+			"page. This scan's other findings substantially understate the "+
+			"target's real attack surface. Try --user-agent, or ask the "+
+			"target's operator to allowlist the scanner before re-running.",
+		pagesChallenged, totalPages, vendorText,
+	)
+	ev := fmt.Sprintf("%d/%d pages challenged", pagesChallenged, totalPages)
+	return &models.Finding{
+		ID:          "waf-challenge-sitewide",
+		Severity:    "high",
+		Category:    "waf-challenge",
+		URL:         start,
+		Description: desc,
+		Evidence:    &ev,
+	}
+}
+
+func hasFindingCategory(findings []models.Finding, category string) bool {
+	for _, f := range findings {
+		if f.Category == category {
+			return true
+		}
+	}
+	return false
+}
+
 func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchResult) (models.Page, []models.Finding, []models.JSEndpoint) {
 	cookies, cf := extractors.ExtractCookies(res.SetCookies, res.URL)
 	headers, hf := extractors.ExtractHeaders(res.Headers, res.URL)
-	if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status); challenge != nil {
+	if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status, res.SetCookies); challenge != nil {
 		challenge.URL = res.URL
 		page := models.Page{
 			URL:        res.URL,

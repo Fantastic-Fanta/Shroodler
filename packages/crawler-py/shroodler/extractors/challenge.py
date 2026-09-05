@@ -54,6 +54,22 @@ _WEAK_BODY_SIGNATURES: tuple[tuple[re.Pattern[str], str], ...] = (
     (re.compile(r"datadome", re.I), "DataDome"),
 )
 
+# Cookies vendors' own challenge/bot-mitigation flow sets on the response to a
+# challenge -- a useful signal, but (like the weak body tags above) some of
+# these can also appear on ordinary non-blocked traffic from the same vendor,
+# so cookie matches are gated on a 403/503 status too, same tier as "weak".
+_COOKIE_SIGNATURES: tuple[tuple[str, str], ...] = (
+    ("cf_clearance", "Cloudflare"),
+    ("__cf_bm", "Cloudflare"),
+    ("cf_chl_", "Cloudflare"),
+    ("incap_ses_", "Imperva Incapsula"),
+    ("visid_incap_", "Imperva Incapsula"),
+    ("ak_bmsc", "Akamai"),
+    ("_abck", "Akamai"),
+    ("bm_sz", "Akamai"),
+    ("datadome", "DataDome"),
+)
+
 
 def _match_headers(headers: dict[str, str]) -> str | None:
     lowered = {k.lower(): v for k, v in headers.items()}
@@ -73,25 +89,55 @@ def _match_body(patterns: tuple[tuple[re.Pattern[str], str], ...], body: str) ->
     return None
 
 
+def _cookie_name(set_cookie: str) -> str:
+    return set_cookie.split("=", 1)[0].strip().lower()
+
+
+def _match_cookies(set_cookies: list[str]) -> str | None:
+    names = [_cookie_name(c) for c in set_cookies]
+    for prefix, vendor in _COOKIE_SIGNATURES:
+        if any(name.startswith(prefix) for name in names):
+            return vendor
+    return None
+
+
+def has_challenge_cookie(set_cookies: list[str]) -> bool:
+    """Whether this response's Set-Cookie headers include a known challenge/
+    bot-mitigation cookie (e.g. Cloudflare's `cf_clearance`). Used to decide
+    whether a single same-URL retry is worth attempting: these cookies are
+    typically set *on the response to the challenge itself*, so a follow-up
+    request through the same cookie jar may already satisfy it -- still
+    detection-only, this never solves the challenge itself."""
+    return _match_cookies(set_cookies) is not None
+
+
 def detect_challenge(
-    headers: dict[str, str], body: str, status_code: int
+    headers: dict[str, str],
+    body: str,
+    status_code: int,
+    set_cookies: list[str] | None = None,
 ) -> Finding | None:
     """Return a finding if this response looks like a WAF/bot-mitigation
     challenge/interstitial page rather than real target content.
 
     Only a "strong" body signature (the interstitial's own wording) fires on
     its own. A bare header signature (e.g. `cf-ray`, present on *all*
-    Cloudflare-proxied traffic) or a "weak" body signature (a CAPTCHA/
+    Cloudflare-proxied traffic), a "weak" body signature (a CAPTCHA/
     bot-mitigation widget tag that site owners routinely embed on ordinary
-    forms) only counts as a hit when paired with a 403/503 status -- neither
-    is specific enough to mean "this response IS the block page" on its own.
+    forms), or a challenge-issuance cookie only counts as a hit when paired
+    with a 403/503 status -- none of those alone is specific enough to mean
+    "this response IS the block page".
     """
     body = body or ""
     vendor = _match_body(_STRONG_BODY_SIGNATURES, body)
     if vendor:
         return _make_finding(vendor, status_code)
     if status_code in _BLOCK_STATUSES:
-        vendor = _match_body(_WEAK_BODY_SIGNATURES, body) or _match_headers(headers)
+        vendor = (
+            _match_body(_WEAK_BODY_SIGNATURES, body)
+            or _match_headers(headers)
+            or _match_cookies(set_cookies or [])
+        )
         if vendor:
             return _make_finding(vendor, status_code)
     return None
@@ -114,5 +160,5 @@ def _make_finding(vendor: str, status_code: int) -> Finding:
             "target's operator to allowlist the scanner's source IP/"
             f"User-Agent (HTTP status was {status_code})."
         ),
-        evidence=None,
+        evidence=vendor,
     )

@@ -1311,3 +1311,92 @@ func TestDefaultUserAgentIsSentWhenUnset(t *testing.T) {
 		t.Fatalf("expected default identifying User-Agent, got %q", seen)
 	}
 }
+
+func TestChallengeRecoversAfterCookiePriming(t *testing.T) {
+	var rootHits int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		rootHits++
+		if rootHits == 1 {
+			http.SetCookie(w, &http.Cookie{Name: "cf_clearance", Value: "abc"})
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Just a moment..."))
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte("<html><body>real content</body></html>"))
+	}))
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rootHits != 2 {
+		t.Fatalf("expected exactly one retry to / (2 requests total), got %d", rootHits)
+	}
+	for _, f := range res.Findings {
+		if f.Category == "waf-challenge" {
+			t.Fatalf("challenge should have been recovered by the retry, got %#v", f)
+		}
+	}
+	if len(res.Pages) != 1 || res.Pages[0].StatusCode != 200 {
+		t.Fatalf("expected the retried (real) page to be recorded: %#v", res.Pages)
+	}
+}
+
+func TestChallengeStaysReportedWhenRetryAlsoFails(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &http.Cookie{Name: "cf_clearance", Value: "abc"})
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte("Just a moment..."))
+	}))
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.Category == "waf-challenge" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected a waf-challenge finding when the retry also fails")
+	}
+}
+
+func TestSitewideChallengeEscalation(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/":
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte(`<a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>`))
+		default:
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Just a moment..."))
+		}
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.ID == "waf-challenge-sitewide" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected a waf-challenge-sitewide finding when most pages are challenged")
+	}
+	if res.Stats == nil || res.Stats.PagesChallenged < 3 {
+		t.Fatalf("expected pages_challenged >= 3, got %#v", res.Stats)
+	}
+}

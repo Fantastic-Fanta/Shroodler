@@ -7,6 +7,29 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Challenge-cookie signature tier + single-retry recovery** (Python + Go):
+  known challenge-issuance cookies (`cf_clearance`, `__cf_bm`, `incap_ses_*`,
+  `ak_bmsc`, `_abck`, DataDome, etc.) are now a detection signal too (gated
+  on a 403/503 status, same tier as the existing "weak" body/header
+  signatures). When a challenge response sets one of these cookies, the
+  crawler now retries that single URL exactly once through the same cookie
+  jar before finalizing the finding -- these cookies are typically issued
+  *on* the challenge response itself, so a transient challenge often
+  clears on the very next request. Still detection-only: this never
+  solves or bypasses anything, it just avoids treating a one-off hiccup
+  as a durable block. The `waf-challenge` finding's `evidence` field now
+  carries the matched vendor name.
+- **Site-wide challenge escalation**: a single challenged page and a
+  target that's WAF-fronted across most of the site used to look
+  identical in the output (same category, no distinguishing signal). A
+  new `waf-challenge-sitewide` (high-severity) finding fires when at
+  least 3 pages and at least 30% of the crawl were challenged, naming the
+  vendor(s) involved, so a report reader can tell "ignore this one URL"
+  from "this scan's other findings substantially understate the target's
+  real surface."
+- **Docs**: the `--check-rate-limit` man page entry now cross-references
+  `waf-challenge`/`--user-agent`, since repeated rate-limit-probe requests
+  can themselves trip a WAF mid-scan.
 - **WAF/bot-mitigation challenge detection** (Python + Go): the crawler now
   recognizes Cloudflare/Akamai/PerimeterX/DataDome/CAPTCHA challenge and
   interstitial pages instead of silently crawling them as real content --

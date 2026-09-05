@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from shroodler.crawler import crawl_url
-from shroodler.extractors.challenge import detect_challenge
+from shroodler.extractors.challenge import detect_challenge, has_challenge_cookie
 
 
 def test_detect_challenge_from_body_marker():
@@ -45,6 +45,22 @@ def test_detect_challenge_fires_on_recaptcha_tag_with_block_status():
     assert detect_challenge({}, body, 403) is not None
 
 
+def test_detect_challenge_fires_on_clearance_cookie_with_block_status():
+    finding = detect_challenge({}, "short body", 403, ["cf_clearance=abc; Path=/"])
+    assert finding is not None
+    assert finding.evidence == "Cloudflare"
+
+
+def test_detect_challenge_ignores_clearance_cookie_on_200():
+    finding = detect_challenge({}, "short body", 200, ["cf_clearance=abc; Path=/"])
+    assert finding is None
+
+
+def test_has_challenge_cookie():
+    assert has_challenge_cookie(["cf_clearance=abc; Path=/"])
+    assert not has_challenge_cookie(["session=abc123; Path=/"])
+
+
 def test_crawl_flags_challenge_page_and_skips_content_extraction(fx):
     fx.html(
         "/",
@@ -82,6 +98,49 @@ def test_soft_404_suppresses_templated_not_found_page(fx):
     assert "/.git/HEAD" in exposed
     assert "/.env" not in exposed
     assert "/backup.sql.bak" not in exposed
+
+
+def test_challenge_recovers_after_cookie_priming(fx):
+    hits = {"n": 0}
+
+    def handler(_incoming):
+        hits["n"] += 1
+        if hits["n"] == 1:
+            return (
+                503,
+                {"Content-Type": "text/html", "Set-Cookie": "cf_clearance=abc; Path=/"},
+                b"Just a moment...",
+            )
+        return (200, {"Content-Type": "text/html"}, b"<html><body>real content</body></html>")
+
+    fx.on("GET", "/", handler)
+    result = crawl_url(fx.origin + "/", depth=0)
+    assert hits["n"] == 2
+    assert not [f for f in result.findings if f.category == "waf-challenge"]
+    page = next(p for p in result.pages if p.url == fx.origin + "/")
+    assert page.status_code == 200
+
+
+def test_challenge_stays_reported_when_retry_also_fails(fx):
+    def handler(_incoming):
+        return (
+            503,
+            {"Content-Type": "text/html", "Set-Cookie": "cf_clearance=abc; Path=/"},
+            b"Just a moment...",
+        )
+
+    fx.on("GET", "/", handler)
+    result = crawl_url(fx.origin + "/", depth=0)
+    assert any(f.category == "waf-challenge" for f in result.findings)
+
+
+def test_sitewide_challenge_escalation(fx):
+    fx.html("/", '<a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>')
+    for path in ("/a", "/b", "/c"):
+        fx.html(path, "Just a moment...", status=503)
+    result = crawl_url(fx.origin + "/", depth=1)
+    assert any(f.id == "waf-challenge-sitewide" for f in result.findings)
+    assert result.stats.pages_challenged >= 3
 
 
 def test_probe_mutations_respects_remaining_page_budget(fx):

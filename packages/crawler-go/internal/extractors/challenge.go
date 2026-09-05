@@ -63,6 +63,52 @@ var challengeWeakBodySignatures = []bodySignature{
 	{regexp.MustCompile(`(?i)datadome`), "DataDome"},
 }
 
+type cookieSignature struct {
+	prefix, vendor string
+}
+
+// Cookies vendors' own challenge/bot-mitigation flow sets on the response to
+// a challenge -- gated on a 403/503 status too, same tier as "weak" body
+// signatures, since some of these can also appear on ordinary traffic.
+var challengeCookieSignatures = []cookieSignature{
+	{"cf_clearance", "Cloudflare"},
+	{"__cf_bm", "Cloudflare"},
+	{"cf_chl_", "Cloudflare"},
+	{"incap_ses_", "Imperva Incapsula"},
+	{"visid_incap_", "Imperva Incapsula"},
+	{"ak_bmsc", "Akamai"},
+	{"_abck", "Akamai"},
+	{"bm_sz", "Akamai"},
+	{"datadome", "DataDome"},
+}
+
+func cookieName(setCookie string) string {
+	name, _, _ := strings.Cut(setCookie, "=")
+	return strings.ToLower(strings.TrimSpace(name))
+}
+
+func matchChallengeCookies(setCookies []string) string {
+	for _, raw := range setCookies {
+		name := cookieName(raw)
+		for _, sig := range challengeCookieSignatures {
+			if strings.HasPrefix(name, sig.prefix) {
+				return sig.vendor
+			}
+		}
+	}
+	return ""
+}
+
+// HasChallengeCookie reports whether these Set-Cookie values include a known
+// challenge/bot-mitigation cookie (e.g. Cloudflare's cf_clearance). Used to
+// decide whether a single same-URL retry is worth attempting: these cookies
+// are typically set on the response to the challenge itself, so a follow-up
+// request through the same cookie jar may already satisfy it -- still
+// detection-only, this never solves the challenge itself.
+func HasChallengeCookie(setCookies []string) bool {
+	return matchChallengeCookies(setCookies) != ""
+}
+
 func challengeHeader(h map[string]string, name string) string {
 	for k, v := range h {
 		if strings.EqualFold(k, name) {
@@ -101,9 +147,9 @@ func isBlockStatus(status int) bool {
 // DetectChallenge returns a finding if this response looks like a
 // WAF/bot-mitigation challenge/interstitial page rather than real target
 // content. Only a "strong" body signature fires on its own; a bare header
-// signature or a "weak" body signature only counts as a hit paired with a
-// 403/503 status.
-func DetectChallenge(headers map[string]string, body string, status int) *models.Finding {
+// signature, a "weak" body signature, or a challenge-issuance cookie only
+// counts as a hit paired with a 403/503 status.
+func DetectChallenge(headers map[string]string, body string, status int, setCookies []string) *models.Finding {
 	if vendor := matchChallengeBody(challengeStrongBodySignatures, body); vendor != "" {
 		return challengeFinding(vendor, status)
 	}
@@ -111,6 +157,9 @@ func DetectChallenge(headers map[string]string, body string, status int) *models
 		vendor := matchChallengeBody(challengeWeakBodySignatures, body)
 		if vendor == "" {
 			vendor = matchChallengeHeaders(headers)
+		}
+		if vendor == "" {
+			vendor = matchChallengeCookies(setCookies)
 		}
 		if vendor != "" {
 			return challengeFinding(vendor, status)
@@ -127,10 +176,12 @@ func challengeFinding(vendor string, status int) *models.Finding {
 		"not attempt to solve or bypass challenges. If this is unexpected on an " +
 		"authorized scan, try --user-agent to rule out UA-based blocking, or ask " +
 		"the target's operator to allowlist the scanner's source IP/User-Agent."
+	ev := vendor
 	return &models.Finding{
 		ID:          "waf-challenge-detected",
 		Severity:    "medium",
 		Category:    "waf-challenge",
 		Description: desc,
+		Evidence:    &ev,
 	}
 }

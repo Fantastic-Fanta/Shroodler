@@ -166,7 +166,12 @@ you are authorized to test.
 Fire repeated bad-credential requests at discovered login/auth forms to
 check for missing rate limiting. Off by default: this sends real repeated
 requests with real consequences (lockouts, alerting) against a live
-target.
+target. Repeated requests to the same endpoint can also trip a WAF/
+bot-mitigation challenge on the target mid-scan \(em see the
+.B waf-challenge
+finding category and
+.B \-\-user\-agent
+below if that happens.
 .TP
 .B \-\-no\-check\-rate\-limit
 Force rate-limit probing off, even if

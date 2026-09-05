@@ -20,6 +20,7 @@ SAN directly off the DER bytes is deterministic and version-independent.
 
 from __future__ import annotations
 
+import ipaddress
 import socket
 import ssl
 from datetime import datetime, timezone
@@ -71,6 +72,21 @@ def _sans(cert: x509.Certificate) -> list[str]:
     return list(ext.value.get_values_for_type(x509.DNSName))
 
 
+def _san_ip_addresses(cert: x509.Certificate) -> list[str]:
+    try:
+        ext = cert.extensions.get_extension_for_class(x509.SubjectAlternativeName)
+    except x509.ExtensionNotFound:
+        return []
+    return [str(ip) for ip in ext.value.get_values_for_type(x509.IPAddress)]
+
+
+def _as_ip_literal(host: str) -> str | None:
+    try:
+        return str(ipaddress.ip_address(host))
+    except ValueError:
+        return None
+
+
 def _common_names(cert: x509.Certificate) -> list[str]:
     return [
         attr.value
@@ -82,10 +98,21 @@ def _common_names(cert: x509.Certificate) -> list[str]:
 def hostname_matches(host: str, cert: x509.Certificate) -> bool:
     """RFC 6125-style match: exact or a single-label leftmost wildcard.
 
+    An IP-literal host (Shroodler's own default posture is scanning
+    127.0.0.1/localhost) is matched exactly against the cert's
+    iPAddress SAN entries instead -- RFC 6125 ss.1.7.2 requires IP
+    addresses to be carried as iPAddress SANs, never as dNSName strings
+    or the CN, and forbids wildcarding for them, so this deliberately
+    does not fall through to the DNS-name matching below (a cert with no
+    matching IP SAN is a mismatch regardless of what its CN/DNS SANs say).
+
     SAN DNS names take precedence per RFC 6125/CA-Browser-Forum baseline
     requirements; the CN is only consulted when there is no SAN at all
     (a legacy-cert shape, but a real one browsers also fall back for).
     """
+    ip_literal = _as_ip_literal(host)
+    if ip_literal is not None:
+        return ip_literal in _san_ip_addresses(cert)
     host = host.lower().rstrip(".")
     names = _sans(cert) or _common_names(cert)
     for name in names:
@@ -150,7 +177,16 @@ def check_tls(target_url: str) -> list[Finding]:
         )
 
     if not hostname_matches(host, cert):
-        names = _sans(cert) or _common_names(cert)
+        # Evidence is diagnostic only (hostname_matches() above already
+        # made the real IP-vs-DNS-SAN decision) -- show whatever names the
+        # cert actually carries so a report reader can see why it doesn't
+        # cover this host, even when that's a DNS name and the host is an
+        # IP literal.
+        names = (
+            (_san_ip_addresses(cert) or _sans(cert) or _common_names(cert))
+            if _as_ip_literal(host) is not None
+            else (_sans(cert) or _common_names(cert))
+        )
         findings.append(
             _finding(
                 "tls-hostname-mismatch",

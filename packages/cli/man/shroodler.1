@@ -1,0 +1,263 @@
+.TH SHROODLER 1 "2026-09-05" "shroodler 0.2.0" "Shroodler Manual"
+.SH NAME
+shroodler \- web attack-surface mapping and payload-testing toolkit
+.SH SYNOPSIS
+.B shroodler
+[\fB\-V\fR|\fB\-\-version\fR] [\fB\-\-debug\fR]
+\fICOMMAND\fR [\fIARGS\fR...]
+.SH DESCRIPTION
+.B shroodler
+crawls a web target, extracts passive security-relevant findings (headers,
+cookies, secrets, CORS, GraphQL/OpenAPI discovery, JWT hygiene), optionally
+runs active payload packs against discovered forms (SQLi, XSS, SSTI,
+path-traversal, SSRF, open-redirect, XXE), and renders results as JSON,
+HTML, CSV, SARIF, or JUnit. It refuses to touch any host outside
+127.0.0.1/localhost unless
+.B \-\-allow\-external
+is passed, and every finding is validated against a shared JSON schema so
+its output can be consumed by other tools (CI pipelines, the bundled
+report generator, or a future UI).
+.PP
+This CLI is the full product surface; the desktop app shells out to the
+same commands. See
+.I docs/cli-surface.md
+in the project repository for exactly what is and isn't wired into the
+desktop UI yet.
+.SH GLOBAL OPTIONS
+.TP
+.B \-V\fR, \fB\-\-version
+Print the version and exit.
+.TP
+.B \-\-debug
+Print full tracebacks on error instead of a one-line message.
+.SH COMMANDS
+.TP
+.B crawl \fIURL\fR
+Crawl a target URL. See
+.B CRAWL OPTIONS
+below.
+.TP
+.B diff \fIFINDINGS\fR \fIEXPECTED\fR
+Compare a crawl's findings JSON against a checked-in
+.I expected_findings.json
+baseline. With
+.BR \-\-gate ,
+exits non-zero only on findings not present in the baseline (CI mode);
+without it, also fails on baseline findings that are missing from the
+current scan.
+.TP
+.B report \fIFINDINGS\fR
+Render a findings JSON document as
+.BR html ", " csv ", " json ", " sarif ", " junit ", or " md / markdown
+(\fB\-\-format\fR).
+.TP
+\fBbaseline\fR \fIFINDINGS\fR, \fBexpected\fR \fIFINDINGS\fR
+Write an
+.I expected_findings.json
+baseline from a scan (maps pages/forms/findings to their
+expected_* shape). Both names run the same command;
+.B expected_not_found
+negatives are left empty for you to add by hand.
+.TP
+.B ingest\-sessions \fISESSIONS.JSONL\fR
+Turn a captured proxy session (JSON Lines) into a findings document, as if
+it had been crawled directly.
+.TP
+.B payload \fICRAWL.JSON\fR
+Run the bundled YAML payload packs (SQLi, XSS, SSTI, path-traversal, SSRF,
+open-redirect, XXE) against every form in a crawl's output.
+.B \-\-allow\-external
+is required to target a non-local host;
+.B \-\-pack
+adds extra pack files or directories.
+.TP
+.B authz\-diff \fIHIGHER_CRAWL.JSON\fR
+Replay every page URL from a crawl done under one session (e.g. an admin
+account) using a second, lower-privileged session's
+.B \-\-cookie
+/\fB\-\-header\fR. Flags a URL as broken access control if the lower-priv
+session can still reach it while an anonymous request to the same URL was
+denied.
+.TP
+.B proxy \fIARGS...\fR
+Forward arguments to the
+.B shroodler\-proxy
+intercepting-proxy binary (start, ca, replay).
+.TP
+\fBhistory record\fR \fIFINDINGS.JSON\fR, \fBhistory list\fR
+Save a scan into local history (default
+.IR ~/.shroodler/history ,
+override with
+.B \-\-history\-dir
+or
+.BR $SHROODLER_HISTORY_DIR ),
+or list what has been recorded.
+.TP
+.B trend \fIOLDER\fR \fINEWER\fR
+Diff findings between two scans (by history id or file path), reporting
+which finding (id, url) pairs were introduced or resolved between them.
+Unlike
+.BR diff ,
+this compares two arbitrary scans rather than gating against a static
+baseline.
+.TP
+.B version
+Print the version and exit.
+.SH CRAWL OPTIONS
+.TP
+.BI \-\-profile " NAME"
+Apply a bundle of sane defaults for depth/max-pages/max-time/
+check-rate-limit:
+.BR safe ", " balanced " (default-equivalent), or " aggressive .
+Any flag given explicitly on the command line still overrides the
+profile's value for that setting.
+.TP
+.BI \-\-mode " MODE"
+.B static
+(default) or
+.B headless
+(real browser, for SPAs).
+.TP
+.BI \-\-depth " N"
+Maximum crawl depth;
+.B \-1
+for unbounded.
+.TP
+.BI \-\-max\-pages " N"
+Stop starting new fetches after this many pages (default 400).
+.TP
+.BI \-\-max\-time " SECONDS"
+Wall-clock budget for the crawl; 0 means no limit.
+.TP
+\fB\-\-output\fR, \fB\-o\fR \fIFILE\fR
+Write output to
+.I FILE
+instead of stdout.
+.TP
+.BI \-\-format " FORMAT"
+.BR json " (default), " html ", " csv ", " sarif ", or " junit .
+.TP
+.B \-\-ignore\-robots
+Ignore robots.txt disallow rules.
+.TP
+.B \-\-no\-sitemap
+Skip robots.txt Sitemap: and /sitemap.xml discovery seeds.
+.TP
+.B \-\-allow\-external
+Allow crawling a non-local target (any host outside
+127.0.0.1/localhost). Off by default \(em only use this against hosts
+you are authorized to test.
+.TP
+.B \-\-check\-rate\-limit
+Fire repeated bad-credential requests at discovered login/auth forms to
+check for missing rate limiting. Off by default: this sends real repeated
+requests with real consequences (lockouts, alerting) against a live
+target.
+.TP
+.BI \-\-header " 'Name: value'"
+Extra request header, repeatable.
+.TP
+.BI \-\-cookie " name=value"
+Cookie applied before the crawl, repeatable.
+.TP
+.BI \-\-cookie\-jar " FILE"
+Netscape cookies.txt, JSON cookie list, or Playwright storageState.
+.TP
+.BI \-\-storage\-state " FILE"
+Playwright storageState JSON (cookies only).
+.TP
+.BI \-\-login\-recipe " FILE"
+JSON
+.RI { url ", " method ", " fields }
+posted once before crawling; merges hidden form fields. May also declare
+.BR logout_url / logout_method / protected_url
+to enable session-fixation and logout-invalidation checks.
+.TP
+.BI \-\-proxy " URL"
+Route crawl traffic through an HTTP proxy, e.g. the bundled
+.BR shroodler\-proxy .
+.TP
+.BI \-\-seed " URL"
+Extra same-origin URL to enqueue, repeatable.
+.TP
+.BI \-\-seed\-from " FILE"
+Seed URLs from a captured proxy session JSONL.
+.TP
+.BI \-\-cookies\-from " FILE"
+Cookies from a captured proxy session JSONL.
+.SH FILES
+.TP
+.I ~/.shroodlerrc
+Optional YAML file of default flag values, loaded before command-line
+parsing (command-line flags always win).
+.TP
+.I ~/.shroodler/history/
+Default local scan-history store used by
+.B history
+and
+.BR trend .
+.TP
+.I schema/finding.schema.json
+The JSON Schema every crawl/payload output document is validated against.
+.SH EXIT STATUS
+.TP
+.B 0
+Success.
+.TP
+.B 1
+Runtime error (network failure, bad input file, refused non-local target
+without \fB\-\-allow\-external\fR). Re-run with
+.B \-\-debug
+for a full traceback.
+.TP
+.B 2
+Usage error (missing/invalid arguments), or no command given.
+.SH EXAMPLES
+Crawl a local target and write JSON:
+.RS
+.EX
+shroodler crawl http://127.0.0.1:8081 -o out.json
+.EE
+.RE
+.PP
+Crawl a remote target you're authorized to test, aggressively:
+.RS
+.EX
+shroodler crawl https://example.com --allow-external --profile aggressive -o out.json
+.EE
+.RE
+.PP
+Render an HTML report:
+.RS
+.EX
+shroodler report out.json --format html -o out.html
+.EE
+.RE
+.PP
+Run the active payload packs against discovered forms:
+.RS
+.EX
+shroodler payload out.json -o hits.json
+.EE
+.RE
+.PP
+Gate CI on new findings vs. a checked-in baseline:
+.RS
+.EX
+shroodler diff out.json expected_findings.json --gate
+.EE
+.RE
+.PP
+Track a scan over time:
+.RS
+.EX
+shroodler history record out.json --label nightly
+shroodler trend <older-id> <newer-id>
+.EE
+.RE
+.SH SEE ALSO
+.BR shroodler\-go (1),
+.BR shroodler\-proxy (1)
+.SH BUGS
+Report issues at
+.B https://github.com/Fantastic\-Fanta/Shroodler/issues .

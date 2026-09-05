@@ -57,47 +57,66 @@ def check_oauth_authorize_url(url: str) -> list[Finding]:
 
     state = _first(qs, "state")
     if not state.strip():
-        has_pkce = _first(qs, "code_challenge") != ""
+        # RFC 7636 defaults code_challenge_method to "plain" when absent,
+        # and "plain" sends the verifier itself as the challenge -- it
+        # doesn't hide anything in transit/logs the way S256 does, so
+        # only an explicit S256 challenge earns the full downgrade;
+        # "plain" (or a present-but-unhashed challenge) is real PKCE
+        # syntactically but weak enough that this stays at medium rather
+        # than being treated as equivalent to a proper S256 challenge.
+        code_challenge = _first(qs, "code_challenge")
+        has_strong_pkce = code_challenge != "" and _first(qs, "code_challenge_method") == "S256"
         findings.append(
             _finding(
                 "oauth-missing-state",
-                # PKCE (code_challenge) binds the authorization code to
-                # the client that started the flow and is widely
+                # PKCE (code_challenge=S256) binds the authorization code
+                # to the client that started the flow and is widely
                 # considered adequate CSRF mitigation on its own in
                 # modern implementations, so this is downgraded (not
                 # dropped -- state alongside PKCE is still recommended
                 # defense-in-depth per the OAuth Security BCP) rather
                 # than treated as the same risk as no CSRF protection at
                 # all.
-                "low" if has_pkce else "medium",
+                "low" if has_strong_pkce else "medium",
                 url,
                 (
                     "OAuth/OIDC authorization request has no state parameter, though "
-                    "code_challenge (PKCE) is present -- PKCE mitigates most of the CSRF "
+                    "code_challenge=S256 (PKCE) is present -- PKCE mitigates most of the CSRF "
                     "risk state normally addresses, but state alongside it is still "
                     "recommended defense-in-depth"
-                    if has_pkce
+                    if has_strong_pkce
                     else
-                    "OAuth/OIDC authorization request has no state parameter and no PKCE "
-                    "(code_challenge), which is what normally protects the redirect callback "
-                    "against CSRF (an attacker tricking a victim into completing the "
-                    "attacker's own OAuth flow)"
+                    "OAuth/OIDC authorization request has no state parameter and no S256 PKCE "
+                    "challenge, which is what normally protects the redirect callback against "
+                    "CSRF (an attacker tricking a victim into completing the attacker's own "
+                    "OAuth flow)"
+                    + (
+                        " (a code_challenge is present but its method isn't S256, "
+                        "which doesn't provide the same protection)"
+                        if code_challenge
+                        else ""
+                    )
                 ),
                 url,
             )
         )
 
+    # OIDC's hybrid flow allows a space-separated response_type
+    # ("code token", "code id_token token", ...) -- any member being
+    # "token" still returns an access token in the redirect fragment, so
+    # exact string equality against the whole value would miss every
+    # hybrid-flow variant and only catch the pure implicit-flow case.
     response_type = _first(qs, "response_type")
-    if response_type == "token":
+    if "token" in response_type.split():
         findings.append(
             _finding(
                 "oauth-implicit-flow",
                 "low",
                 url,
-                "OAuth response_type=token (implicit flow) returns the access token "
-                "directly in the redirect URI fragment, exposed to browser history/referrer "
-                "leakage/redirector logs; OAuth 2.1 and current best practice deprecate it in "
-                "favor of the authorization code flow (+ PKCE)",
+                "OAuth response_type includes \"token\" (implicit or hybrid flow), which "
+                "returns an access token directly in the redirect URI fragment, exposed to "
+                "browser history/referrer leakage/redirector logs; OAuth 2.1 and current best "
+                "practice deprecate this in favor of the authorization code flow (+ PKCE)",
                 response_type,
             )
         )

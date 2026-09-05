@@ -25,7 +25,8 @@ def test_flags_session_fixation_when_cookie_unchanged_by_login(fx, tmp_path):
     fx.on("GET", "/secret", lambda req: (200, {}, b"<p>secret</p>"))
 
     recipe = tmp_path / "recipe.json"
-    recipe.write_text(json.dumps({"url": fx.origin + "/login", "fields": {"user": "ok"}}), encoding="utf-8")
+    recipe_body = {"url": fx.origin + "/login", "fields": {"user": "ok"}}
+    recipe.write_text(json.dumps(recipe_body), encoding="utf-8")
 
     result = crawl_url(fx.origin + "/", depth=1, ignore_robots=True, login_recipe=str(recipe))
     ids = {f.id for f in result.findings}
@@ -52,7 +53,8 @@ def test_no_session_fixation_when_login_rotates_cookie(fx, tmp_path):
     fx.on("GET", "/secret", lambda req: (200, {}, b"<p>secret</p>"))
 
     recipe = tmp_path / "recipe.json"
-    recipe.write_text(json.dumps({"url": fx.origin + "/login", "fields": {"user": "ok"}}), encoding="utf-8")
+    recipe_body = {"url": fx.origin + "/login", "fields": {"user": "ok"}}
+    recipe.write_text(json.dumps(recipe_body), encoding="utf-8")
 
     result = crawl_url(fx.origin + "/", depth=1, ignore_robots=True, login_recipe=str(recipe))
     ids = {f.id for f in result.findings}

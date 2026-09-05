@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from shroodler.history import (
     list_scans,
     load_scan,

@@ -85,7 +85,8 @@ def run(
 
             if check_anonymous:
                 try:
-                    anon_resp = http.get(url, headers={k: v for k, v in lower_headers.items() if k != "Cookie"})
+                    anon_headers = {k: v for k, v in lower_headers.items() if k != "Cookie"}
+                    anon_resp = http.get(url, headers=anon_headers)
                 except httpx.HTTPError:
                     anon_resp = None
                 if anon_resp is not None and _is_denied(

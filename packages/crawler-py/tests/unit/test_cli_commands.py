@@ -159,6 +159,19 @@ def test_cmd_payload_empty_local(tmp_path):
     body = json.loads(out.read_text(encoding="utf-8"))
     assert body["findings"] == []
     assert body["target"] == "http://127.0.0.1:9/"
+    assert body["oob_probes"] == []
+
+
+def test_cmd_payload_passes_oob_host_through(tmp_path):
+    crawl = tmp_path / "c.json"
+    crawl.write_text('{"target":"http://127.0.0.1:9/","pages":[]}', encoding="utf-8")
+    out = tmp_path / "p.json"
+    ns = argparse.Namespace(
+        crawl_json=str(crawl), output=str(out), pack=[], oob_host="collab.example.com"
+    )
+    assert cmd_payload(ns) == 0
+    body = json.loads(out.read_text(encoding="utf-8"))
+    assert body["oob_probes"] == []
 
 
 def test_cmd_payload_refuses_external(tmp_path):

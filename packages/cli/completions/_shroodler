@@ -101,6 +101,7 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '*--pack[Extra YAML pack file or directory]:file:_files' \
             '--allow-external[Allow sending payloads to a non-local target]' \
+            '--oob-host[Your own collaborator-style server for blind SSRF/XXE checks]:host' \
             '1:crawl json:_files'
           ;;
         authz-diff)

@@ -44,7 +44,9 @@ def test_no_finding_when_lower_priv_denied(fx):
     fx.on(
         "GET",
         "/admin/only",
-        lambda inc: (200, {}, b"secret") if "session=real-admin" in inc.cookies else (403, {}, b"nope"),
+        lambda inc: (200, {}, b"secret")
+        if "session=real-admin" in inc.cookies
+        else (403, {}, b"nope"),
     )
     doc = _doc(fx.origin, [fx.origin + "/admin/only"])
     out = run(doc, cookie_header="session=not-admin")

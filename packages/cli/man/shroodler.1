@@ -70,6 +70,20 @@ open-redirect, XXE) against every form in a crawl's output.
 is required to target a non-local host;
 .B \-\-pack
 adds extra pack files or directories.
+.RS
+.TP
+.BI \-\-oob\-host " HOST"
+Your own out-of-band collaborator-style server (self-hosted Interactsh, an
+oast.* instance, or any host you control that logs incoming requests). A
+fresh random subdomain of it is used as
+.B {{MARKER_HOST}}
+in payloads each run. Shroodler cannot poll your server for you -- for
+.B blind
+packs (currently the parameter-entity XXE and OOB SSRF payloads), check
+its logs afterward for the token recorded in the output's
+.B oob_probes
+list.
+.RE
 .TP
 .B authz\-diff \fIHIGHER_CRAWL.JSON\fR
 Replay every page URL from a crawl done under one session (e.g. an admin

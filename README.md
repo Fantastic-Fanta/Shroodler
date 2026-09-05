@@ -60,6 +60,8 @@ make bins        # shroodler-go + shroodler-proxy
 .venv/bin/shroodler report out.json --format html --output out.html
 .venv/bin/shroodler diff out.json packages/target-apps/app1-server-rendered/expected_findings.json
 .venv/bin/shroodler payload out.json -o hits.json
+# Point blind checks (XXE parameter-entity, OOB SSRF) at your own collaborator server
+.venv/bin/shroodler payload out.json --oob-host collab.example.com -o hits.json
 .venv/bin/shroodler version
 
 # Baseline-in-git for any local app (fail CI on new findings)

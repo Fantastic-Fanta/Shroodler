@@ -19,6 +19,7 @@ from tester import (  # noqa: E402
     MARKER_HOST,
     _clause_matches,
     _local,
+    build_marker_host,
     gen_token,
     load_packs,
     main,
@@ -91,7 +92,11 @@ def test_packs_are_yaml_not_hardcoded():
         data = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert isinstance(data, list)
         for item in data:
-            assert "payload" in item and "match" in item
+            assert "payload" in item
+            # "blind" packs (e.g. OOB-only SSRF/XXE markers) have no local
+            # match clause at all -- success can only be confirmed by
+            # checking the caller's own --oob-host server logs.
+            assert "match" in item or item.get("blind")
             assert "id" in item
             assert "severity" in item
 
@@ -176,7 +181,7 @@ def test_cli_refuses_non_local(tmp_path):
 
 def test_allow_external_bypasses_guard():
     out = run({"target": "https://example.com/", "pages": []}, allow_external=True)
-    assert out == {"target": "https://example.com/", "findings": []}
+    assert out == {"target": "https://example.com/", "findings": [], "oob_probes": []}
 
 
 def test_cli_allow_external_flag(tmp_path):
@@ -274,3 +279,146 @@ def test_raw_body_pack_sends_literal_payload_not_form_fields(xxe_origin):
     out = run(doc)
     ids = {f["id"] for f in out["findings"]}
     assert "payload-xxe" in ids
+
+
+def test_build_marker_host_without_oob_host_is_the_placeholder():
+    assert build_marker_host("shrdlrabc123", None) == MARKER_HOST
+    assert build_marker_host("shrdlrabc123", "") == MARKER_HOST
+
+
+def test_build_marker_host_with_oob_host_builds_a_subdomain():
+    assert build_marker_host("shrdlrabc123", "collab.example.com") == (
+        "shrdlrabc123.collab.example.com"
+    )
+
+
+@pytest.fixture
+def open_redirect_origin():
+    def handler(environ, start_response):
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+        body = environ["wsgi.input"].read(length).decode("utf-8", "replace")
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(body)
+        target = qs.get("next", [""])[0]
+        if target.startswith("http://") or target.startswith("https://") or target.startswith("//"):
+            loc = target if not target.startswith("//") else "https:" + target
+            start_response("302 Found", [("Location", loc)])
+            return [b""]
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [b"ok"]
+
+    httpd = make_server("127.0.0.1", 0, handler)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+def test_open_redirect_detected_without_oob_host(open_redirect_origin):
+    # Regression test: with follow_redirects=True (the old default), httpx
+    # would try to actually connect to the marker host to chase the
+    # redirect chain. The default placeholder lives under the reserved
+    # ".invalid" TLD, which never resolves -- that raised inside httpx and
+    # was swallowed by `except httpx.HTTPError: continue`, silently
+    # skipping the check entirely. This must fire even with no --oob-host.
+    doc = {
+        "target": open_redirect_origin + "/",
+        "pages": [
+            {
+                "url": open_redirect_origin + "/",
+                "forms": [
+                    {"action": "/go", "method": "POST", "fields": [{"name": "next"}]}
+                ],
+            }
+        ],
+    }
+    out = run(doc)
+    hit = next(f for f in out["findings"] if f["id"] == "payload-open-redirect")
+    assert MARKER_HOST in hit["evidence"]
+
+
+def test_oob_host_flows_into_dynamic_redirect_match(open_redirect_origin):
+    # open-redirect's match clause references {{MARKER_HOST}} -- confirm it
+    # resolves to the real --oob-host-derived subdomain, not the static
+    # placeholder, when one is supplied, and that the redirect-detection
+    # logic (entirely local, no server-side polling) still fires.
+    doc = {
+        "target": open_redirect_origin + "/",
+        "pages": [
+            {
+                "url": open_redirect_origin + "/",
+                "forms": [
+                    {"action": "/go", "method": "POST", "fields": [{"name": "next"}]}
+                ],
+            }
+        ],
+    }
+    out = run(doc, oob_host="collab.example.com")
+    hit = next(f for f in out["findings"] if f["id"] == "payload-open-redirect")
+    assert "collab.example.com" in hit["evidence"]
+
+
+def test_blind_pack_logs_oob_probe_when_oob_host_given(tmp_path):
+    extra = tmp_path / "blind.yaml"
+    extra.write_text(
+        "- id: blind-probe\n"
+        "  finding_id: payload-blind-probe\n"
+        "  blind: true\n"
+        "  payload: 'http://{{MARKER_HOST}}/x'\n"
+        "  severity: medium\n",
+        encoding="utf-8",
+    )
+    doc = {
+        "target": "http://127.0.0.1:1/",
+        "pages": [
+            {
+                "url": "http://127.0.0.1:1/",
+                "forms": [{"action": "/whatever", "method": "GET", "fields": [{"name": "q"}]}],
+            }
+        ],
+    }
+    packs = load_packs(extra=[extra])
+    # No live server needed to observe the probe log -- it's recorded
+    # before the (failing, since nothing is listening) request is even
+    # attempted is not required; the pack is blind so the tester only
+    # needs to *send* it, and does so before checking the outcome.
+    out = run(doc, packs=[p for p in packs if p["id"] == "blind-probe"], oob_host="collab.example.com")
+    probes = [p for p in out["oob_probes"] if p["pack"] == "payload-blind-probe"]
+    assert len(probes) == 1
+    assert probes[0]["marker_host"].endswith(".collab.example.com")
+    assert probes[0]["url"] == "http://127.0.0.1:1/whatever"
+
+
+def test_blind_pack_logs_nothing_without_oob_host(tmp_path):
+    extra = tmp_path / "blind.yaml"
+    extra.write_text(
+        "- id: blind-probe\n"
+        "  finding_id: payload-blind-probe\n"
+        "  blind: true\n"
+        "  payload: 'http://{{MARKER_HOST}}/x'\n"
+        "  severity: medium\n",
+        encoding="utf-8",
+    )
+    doc = {
+        "target": "http://127.0.0.1:1/",
+        "pages": [
+            {
+                "url": "http://127.0.0.1:1/",
+                "forms": [{"action": "/whatever", "method": "GET", "fields": [{"name": "q"}]}],
+            }
+        ],
+    }
+    packs = load_packs(extra=[extra])
+    out = run(doc, packs=[p for p in packs if p["id"] == "blind-probe"])
+    assert out["oob_probes"] == []
+
+
+def test_cli_oob_host_flag(tmp_path):
+    crawl = tmp_path / "crawl.json"
+    crawl.write_text(json.dumps({"target": "http://127.0.0.1:1/", "pages": []}), encoding="utf-8")
+    outp = tmp_path / "out.json"
+    assert main([str(crawl), "--oob-host", "collab.example.com", "-o", str(outp)]) == 0
+    body = json.loads(outp.read_text(encoding="utf-8"))
+    assert body["oob_probes"] == []

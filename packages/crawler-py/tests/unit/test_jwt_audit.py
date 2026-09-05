@@ -8,6 +8,8 @@ import time
 
 from shroodler.extractors.jwt_audit import audit_jwt, audit_text, crack_weak_secret, find_jwts
 
+STRONG_SECRET = "a-genuinely-random-64-char-secret-nobody-would-guess-ever-12345"
+
 
 def _b64(d: dict) -> str:
     return base64.urlsafe_b64encode(json.dumps(d).encode()).rstrip(b"=").decode()
@@ -33,7 +35,7 @@ def test_crack_weak_secret_finds_known_secret():
 
 
 def test_crack_weak_secret_returns_none_for_strong_secret():
-    tok = _sign({"alg": "HS256"}, {"sub": "1"}, "a-genuinely-random-64-char-secret-nobody-would-guess-ever-12345")
+    tok = _sign({"alg": "HS256"}, {"sub": "1"}, STRONG_SECRET)
     assert crack_weak_secret(tok) is None
 
 
@@ -52,7 +54,7 @@ def test_audit_jwt_flags_alg_none():
 
 
 def test_audit_jwt_flags_missing_exp():
-    tok = _sign({"alg": "HS256"}, {"sub": "1"}, "a-genuinely-random-64-char-secret-nobody-would-guess-ever-12345")
+    tok = _sign({"alg": "HS256"}, {"sub": "1"}, STRONG_SECRET)
     findings = audit_jwt(tok, "http://127.0.0.1/")
     ids = {f.id for f in findings}
     assert "jwt-missing-exp" in ids
@@ -63,7 +65,7 @@ def test_audit_jwt_flags_long_expiry():
     tok = _sign(
         {"alg": "HS256"},
         {"sub": "1", "exp": far_future},
-        "a-genuinely-random-64-char-secret-nobody-would-guess-ever-12345",
+        STRONG_SECRET,
     )
     findings = audit_jwt(tok, "http://127.0.0.1/")
     ids = {f.id for f in findings}
@@ -93,7 +95,7 @@ def test_audit_jwt_clean_token_has_no_findings():
     tok = _sign(
         {"alg": "HS256"},
         {"sub": "1", "exp": soon},
-        "a-genuinely-random-64-char-secret-nobody-would-guess-ever-12345",
+        STRONG_SECRET,
     )
     assert audit_jwt(tok, "http://127.0.0.1/") == []
 

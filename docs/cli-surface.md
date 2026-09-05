@@ -47,6 +47,11 @@ at all today — no way to trigger `payload`, choose packs, or view
 | `--pack PATH` (repeatable) | load extra YAML pack file/dir alongside the bundled SQLi/XSS/SSTI/path-traversal/SSRF/open-redirect/XXE packs |
 | `--allow-external` | required to send active payloads to a non-local target |
 | `-o/--output` | write findings JSON |
+| `--oob-host HOST` | point `{{MARKER_HOST}}` at your own collaborator-style server (self-hosted Interactsh, an `oast.*` instance, or any host you control that logs requests) instead of the non-resolving default placeholder. Enables genuine blind-vuln checks (`blind: true` packs — parameter-entity XXE, OOB SSRF) that are otherwise unverifiable; Shroodler cannot poll your server for you, so check its logs against the token in the output's `oob_probes` list. |
+
+A UI equivalent would need a place to enter/save an OOB host (probably a
+project-level setting, not per-scan) and a way to surface `oob_probes`
+distinctly from `findings` — they're "sent, unverified" not "confirmed."
 
 ## `shroodler authz-diff <higher-priv-crawl.json>`
 

@@ -5,6 +5,35 @@ All notable changes to Shroodler are documented here. Format loosely follows
 not yet made a versioned PyPI release, so entries below are grouped by the
 work that produced them rather than tags.
 
+## Unreleased
+
+- **`--oob-host`** on `shroodler payload`: point `{{MARKER_HOST}}` at your
+  own collaborator-style server (self-hosted Interactsh, an `oast.*`
+  instance, or any host you control that logs requests) instead of the
+  non-resolving default placeholder. New `blind: true` pack flag for
+  checks Shroodler cannot verify itself (parameter-entity XXE, OOB SSRF) --
+  it sends the payload and records the token/URL/pack in the output's
+  `oob_probes` list for you to correlate against your own server's logs
+  afterward. Python + Go parity.
+- **Fixed a real, previously-silent bug** in open-redirect detection: the
+  payload tester followed redirects by default, which meant it tried to
+  actually connect to the (often non-existent or attacker-controlled)
+  redirect target to chase the chain. When that target didn't
+  resolve/respond -- including the tool's own default marker host, which
+  lives under the reserved `.invalid` TLD and can never resolve -- the
+  connection error was silently swallowed, skipping the check entirely.
+  Payload requests no longer follow redirects; the Location header is read
+  directly from the single response instead. Python + Go.
+- Post-review bug fixes from a harsh re-review of the feature-expansion
+  round below: `authz-diff` no longer treats a bare 3xx redirect as
+  "denied" (was manufacturing false positives on ordinary redirects);
+  `--profile` now wins over `~/.shroodlerrc`; added `--no-check-rate-limit`
+  to force that flag off even under `--profile aggressive`; the JWT audit
+  no longer embeds the actual cracked secret in report output (Python +
+  Go); session-fixation/logout checks emit a `scan-note` when skipped in
+  `--mode headless` instead of silently no-op'ing; tightened the
+  Windows-hosts XXE signature.
+
 ## 0.2.0 -- Post-review hardening + CLI feature expansion
 
 New detection and workflow capabilities, on top of the hardening pass

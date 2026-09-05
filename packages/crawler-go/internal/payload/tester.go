@@ -48,6 +48,7 @@ type Pack struct {
 	Match       Match  `yaml:"match"`
 	RawBody     bool   `yaml:"raw_body"`
 	ContentType string `yaml:"content_type"`
+	Blind       bool   `yaml:"blind"`
 }
 
 func (p Pack) findingID() string {
@@ -66,9 +67,17 @@ type Finding struct {
 	Evidence    string `json:"evidence"`
 }
 
+type OobProbe struct {
+	Pack       string `json:"pack"`
+	URL        string `json:"url"`
+	MarkerHost string `json:"marker_host"`
+	Note       string `json:"note"`
+}
+
 type Result struct {
-	Target   string    `json:"target"`
-	Findings []Finding `json:"findings"`
+	Target    string     `json:"target"`
+	Findings  []Finding  `json:"findings"`
+	OobProbes []OobProbe `json:"oob_probes"`
 }
 
 func PacksDir() string {
@@ -160,6 +169,7 @@ type matchCtx struct {
 	baselineBody     string
 	baselineElapsed  float64
 	haveBaselineTime bool
+	markerHost       string
 }
 
 func clauseMatches(c Clause, status int, body, payload string, ctx matchCtx) bool {
@@ -185,8 +195,15 @@ func clauseMatches(c Clause, status int, body, payload string, ctx matchCtx) boo
 			return true
 		}
 	}
-	if c.RedirectedToContain != "" && strings.Contains(strings.ToLower(ctx.redirectedTo), strings.ToLower(c.RedirectedToContain)) {
-		return true
+	if c.RedirectedToContain != "" {
+		mh := ctx.markerHost
+		if mh == "" {
+			mh = MarkerHost
+		}
+		needle := strings.ReplaceAll(c.RedirectedToContain, "{{MARKER_HOST}}", mh)
+		if strings.Contains(strings.ToLower(ctx.redirectedTo), strings.ToLower(needle)) {
+			return true
+		}
 	}
 	return false
 }
@@ -226,8 +243,23 @@ func genToken() string {
 	return "shrdlr" + string(b)
 }
 
-func renderPayload(raw, token string) string {
-	r := strings.NewReplacer("{{TOKEN}}", token, "{{MARKER_HOST}}", MarkerHost)
+// buildMarkerHost is the host used for {{MARKER_HOST}} this run. Without
+// an OOB host, this is a non-resolving placeholder: still useful for
+// checks that observe success locally (e.g. an open-redirect Location
+// header echoing it back), but nothing on the internet will ever actually
+// reach it. With one, it's a fresh random subdomain of a real, reachable
+// server the caller controls -- so a "blind" pack can genuinely prove a
+// callback happened, once the caller checks their own server's logs for
+// this run's token.
+func buildMarkerHost(token, oobHost string) string {
+	if oobHost != "" {
+		return token + "." + oobHost
+	}
+	return MarkerHost
+}
+
+func renderPayload(raw, token, markerHost string) string {
+	r := strings.NewReplacer("{{TOKEN}}", token, "{{MARKER_HOST}}", markerHost)
 	return r.Replace(raw)
 }
 
@@ -239,7 +271,7 @@ func allowed(u string, allowExternal bool) bool {
 // allowExternal is false (the default), it refuses to touch anything that
 // isn't 127.0.0.1/localhost, mirroring the Python payload-tester and the
 // --allow-external flag on `shroodler crawl`.
-func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal bool) (Result, error) {
+func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal bool, oobHost string) (Result, error) {
 	target, _ := crawl["target"].(string)
 	if !allowed(target, allowExternal) {
 		return Result{}, fmt.Errorf(
@@ -257,9 +289,10 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal 
 			return Result{}, err
 		}
 	}
-	out := Result{Target: target, Findings: []Finding{}}
+	out := Result{Target: target, Findings: []Finding{}, OobProbes: []OobProbe{}}
 	seen := map[string]bool{}
 	token := genToken()
+	markerHost := buildMarkerHost(token, oobHost)
 	pages, _ := crawl["pages"].([]any)
 	for _, raw := range pages {
 		page, _ := raw.(map[string]any)
@@ -315,7 +348,13 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal 
 			}
 
 			for _, pack := range packs {
-				payloadStr := renderPayload(pack.Payload, token)
+				payloadStr := renderPayload(pack.Payload, token, markerHost)
+				if pack.Blind && oobHost != "" {
+					out.OobProbes = append(out.OobProbes, OobProbe{
+						Pack: pack.findingID(), URL: action, MarkerHost: markerHost,
+						Note: "Check your OOB server's logs for a hit on " + markerHost + " to confirm this fired.",
+					})
+				}
 				var resp httpResp
 				var err error
 				if pack.RawBody {
@@ -341,6 +380,7 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal 
 				reqCtx.elapsedMs = resp.elapsedMs
 				reqCtx.haveElapsed = true
 				reqCtx.redirectedTo = resp.redirectedTo
+				reqCtx.markerHost = markerHost
 				if !packMatchesCtx(pack, resp.status, resp.body, payloadStr, reqCtx) {
 					continue
 				}
@@ -407,14 +447,18 @@ func fire(client *http.Client, method, action string, vals url.Values) (httpResp
 }
 
 func doTimed(client *http.Client, req *http.Request) (httpResp, error) {
-	var hops []string
+	// Never follow redirects here: a payload can put an arbitrary,
+	// attacker-influenced URL in a Location header (that's exactly what
+	// the open-redirect packs test for), and this tool must never
+	// actually connect to it. Returning ErrUseLastResponse makes the
+	// client hand back the 3xx response itself instead of chasing it --
+	// previously the client tried to follow it, and a marker host that
+	// doesn't resolve/respond (including the default, non-resolving
+	// placeholder) made this fail with a connection error that got
+	// silently swallowed by the caller, skipping the whole check.
 	cc := *client
 	cc.CheckRedirect = func(r *http.Request, via []*http.Request) error {
-		hops = append(hops, r.URL.String())
-		if len(via) >= 10 {
-			return http.ErrUseLastResponse
-		}
-		return nil
+		return http.ErrUseLastResponse
 	}
 	start := time.Now()
 	resp, err := cc.Do(req)
@@ -424,13 +468,7 @@ func doTimed(client *http.Client, req *http.Request) (httpResp, error) {
 	}
 	defer resp.Body.Close()
 	b, _ := io.ReadAll(io.LimitReader(resp.Body, 1_000_000))
-	redirectedTo := strings.Join(hops, " ")
-	if resp.Request != nil && resp.Request.URL != nil {
-		if redirectedTo != "" {
-			redirectedTo += " "
-		}
-		redirectedTo += resp.Request.URL.String()
-	}
+	redirectedTo := resp.Header.Get("Location")
 	return httpResp{status: resp.StatusCode, body: string(b), elapsedMs: elapsed, redirectedTo: redirectedTo}, nil
 }
 

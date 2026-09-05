@@ -50,3 +50,30 @@ def test_all_profiles_produce_valid_parse():
         _apply_profile(p, name)
         args = p.parse_args(["crawl", "http://127.0.0.1:1", "--profile", name])
         assert args.profile == name
+
+
+def test_no_check_rate_limit_overrides_aggressive_profile():
+    p = build_parser()
+    _apply_profile(p, "aggressive")
+    assert PROFILES["aggressive"]["check_rate_limit"] is True
+    args = p.parse_args(["crawl", "http://127.0.0.1:1", "--no-check-rate-limit"])
+    assert args.check_rate_limit is False
+
+
+def test_check_rate_limit_defaults_false_without_any_profile():
+    p = build_parser()
+    args = p.parse_args(["crawl", "http://127.0.0.1:1"])
+    assert args.check_rate_limit is False
+
+
+def test_profile_wins_over_rc_file():
+    from shroodler.cli import _apply_rc
+
+    p = build_parser()
+    _apply_rc(p, {"depth": 2})
+    _apply_profile(p, "aggressive")
+    args = p.parse_args(["crawl", "http://127.0.0.1:1"])
+    # aggressive's depth (-1) must win over the rc file's depth (2) -- a
+    # profile picked explicitly on the command line should not be
+    # silently overridden by a static config file.
+    assert args.depth == PROFILES["aggressive"]["depth"]

@@ -77,6 +77,17 @@ def test_audit_jwt_flags_weak_secret():
     assert "jwt-weak-secret" in ids
 
 
+def test_audit_jwt_weak_secret_does_not_leak_recovered_value():
+    # The finding must not embed the cracked secret in cleartext -- this
+    # ends up in JSON/HTML/SARIF/JUnit reports that circulate far more
+    # widely than the vulnerable app itself.
+    tok = _sign({"alg": "HS256"}, {"sub": "1", "exp": 9999999999}, "changeme")
+    findings = audit_jwt(tok, "http://127.0.0.1/")
+    hit = next(f for f in findings if f.id == "jwt-weak-secret")
+    assert "changeme" not in hit.description
+    assert "changeme" not in (hit.evidence or "")
+
+
 def test_audit_jwt_clean_token_has_no_findings():
     soon = int(time.time()) + 3600
     tok = _sign(

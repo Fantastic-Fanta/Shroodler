@@ -170,7 +170,13 @@ def audit_jwt(token: str, url: str) -> list[Finding]:
 
     secret = crack_weak_secret(token)
     if secret is not None:
-        shown = secret if secret else "(empty string)"
+        # Deliberately do NOT include the recovered secret itself: this
+        # finding (and its evidence) ends up in JSON/HTML/SARIF/JUnit
+        # reports that circulate far more widely than the vulnerable app
+        # (tickets, CI logs, archived scans) -- printing a live signing
+        # secret there would itself be a leak. Re-run the crack manually
+        # (see crack_weak_secret) if you need the actual value.
+        shown = "(empty string)" if secret == "" else f"{len(secret)}-character common secret"
         findings.append(
             Finding(
                 id="jwt-weak-secret",
@@ -178,9 +184,9 @@ def audit_jwt(token: str, url: str) -> list[Finding]:
                 category="secret",
                 url=url,
                 description=(
-                    f"JWT signature was reproduced using a common weak secret ({shown!r}) "
-                    "from a short built-in wordlist -- an attacker can forge arbitrary "
-                    "tokens for this application."
+                    f"JWT signature was reproduced using a {shown} from a short "
+                    "built-in wordlist -- an attacker can forge arbitrary tokens "
+                    "for this application."
                 ),
                 evidence=ev,
             )

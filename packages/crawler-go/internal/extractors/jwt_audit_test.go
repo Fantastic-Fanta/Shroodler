@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 )
@@ -112,6 +113,24 @@ func TestAuditJWTFlagsWeakSecret(t *testing.T) {
 	if !found {
 		t.Fatalf("expected jwt-weak-secret, got %#v", findings)
 	}
+}
+
+func TestAuditJWTWeakSecretDoesNotLeakRecoveredValue(t *testing.T) {
+	tok := signJWT(map[string]any{"alg": "HS256"}, map[string]any{"sub": "1", "exp": 9999999999}, "changeme")
+	findings := AuditJWT(tok, "http://127.0.0.1/")
+	for _, f := range findings {
+		if f.ID != "jwt-weak-secret" {
+			continue
+		}
+		if strings.Contains(f.Description, "changeme") {
+			t.Fatalf("description leaks recovered secret: %s", f.Description)
+		}
+		if f.Evidence != nil && strings.Contains(*f.Evidence, "changeme") {
+			t.Fatalf("evidence leaks recovered secret: %s", *f.Evidence)
+		}
+		return
+	}
+	t.Fatalf("expected jwt-weak-secret, got %#v", findings)
 }
 
 func TestAuditJWTCleanTokenHasNoFindings(t *testing.T) {

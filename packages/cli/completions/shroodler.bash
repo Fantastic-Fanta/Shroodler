@@ -16,7 +16,7 @@ _shroodler_commands="crawl diff report baseline expected ingest-sessions payload
 _shroodler_flags_for() {
     case "$1" in
         crawl)
-            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --header --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --seed-from --cookies-from"
+            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --header --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --seed-from --cookies-from"
             ;;
         diff)
             echo "--pages-only --gate --suppressions --format --output"

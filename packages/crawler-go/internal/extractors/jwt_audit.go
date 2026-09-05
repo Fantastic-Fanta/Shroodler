@@ -176,15 +176,18 @@ func AuditJWT(token, pageURL string) []models.Finding {
 		}
 	}
 
+	// Deliberately do NOT include the recovered secret itself: this finding
+	// (and its evidence) ends up in JSON/HTML/SARIF/JUnit reports that
+	// circulate far more widely than the vulnerable app (tickets, CI logs,
+	// archived scans) -- printing a live signing secret there would itself
+	// be a leak. Re-run CrackWeakJWTSecret manually if you need the value.
 	if secret, ok := CrackWeakJWTSecret(token); ok {
-		shown := secret
-		if shown == "" {
-			shown = "(empty string)"
-		} else {
-			shown = strconv.Quote(shown)
+		shown := "(empty string)"
+		if secret != "" {
+			shown = strconv.Itoa(len(secret)) + "-character common secret"
 		}
-		desc := "JWT signature was reproduced using a common weak secret (" + shown +
-			") from a short built-in wordlist -- an attacker can forge arbitrary " +
+		desc := "JWT signature was reproduced using a " + shown +
+			" from a short built-in wordlist -- an attacker can forge arbitrary " +
 			"tokens for this application."
 		out = append(out, models.Finding{
 			ID: "jwt-weak-secret", Severity: "critical", Category: "secret",

@@ -53,6 +53,7 @@ _shroodler() {
             '--no-sitemap[Skip sitemap discovery]' \
             '--allow-external[Allow crawling a non-local target]' \
             '--check-rate-limit[Probe login forms for missing rate limiting]' \
+            '--no-check-rate-limit[Force rate-limit probing off, overriding a --profile]' \
             '*--header[Extra request header]:header' \
             '*--cookie[Cookie name=value]:cookie' \
             '--cookie-jar[Cookie jar file]:file:_files' \

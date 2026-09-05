@@ -425,12 +425,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="For crawled URLs with a purely-numeric path segment or query "
         "value, replay adjacent IDs (n-1, n+1) using the crawl's own "
         "session and flag ones that return a same-shaped JSON object "
-        "(possible broken object-level authorization/IDOR). Off by "
-        "default: this makes real extra GET requests for IDs that were "
-        "not organically discovered, potentially reading another user's "
-        "data if the target is in fact vulnerable -- only use against "
-        "targets you're authorized to test this way. JSON API responses "
-        "only; HTML/other content types are skipped.",
+        "(a lead worth manually confirming, not a proven IDOR -- a "
+        "single session can't tell whether the adjacent ID belongs to a "
+        "different account or is just another of the current account's "
+        "own sequentially-allocated records; expect noise on targets "
+        "where that's common). Off by default: this makes up to 4 real "
+        "extra GET requests per candidate (up to 25 candidates) for IDs "
+        "that were not organically discovered -- potentially reading "
+        "another user's data, and a GET is not guaranteed side-effect-free "
+        "on every API (e.g. marking something as viewed) -- only use "
+        "against targets you're authorized to test this way. JSON API "
+        "responses only; HTML/other content types are skipped.",
     )
     crawl.add_argument(
         "--header",

@@ -7,6 +7,27 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixes from pentester review of `--check-idor`.** A same-shaped JSON
+  object under the same session cannot, by itself, distinguish a real
+  IDOR from the requesting session's own neighboring record (sequential
+  IDs are frequently allocated in a batch to one account) -- the finding
+  is now `medium` severity (was `high`) with a description that says so
+  explicitly and asks for manual ownership confirmation, rather than
+  reading as a proven vulnerability. Also fixed a real bug: candidate
+  dedup was keyed on the whole URL, so a URL with more than one numeric
+  position (e.g. `/users/5/orders/123`, or `?account=1&order=456`) kept
+  only the first one found and silently dropped the rest, fuzzing the
+  wrong parameter; now keyed per numeric position. Query candidates also
+  skip a denylist of common non-ID numeric params (`page`, `limit`,
+  `year`, ...) that would otherwise generate reliable false positives
+  (every page of a paginated list has the same JSON shape). Zero-padded
+  IDs (`/orders/007`) now preserve their width when building adjacent
+  candidates instead of silently renormalizing to `/orders/6`, which
+  could 404 a legacy zero-padded route for a formatting reason unrelated
+  to authorization. The fixed not-found-baseline offset's real limitation
+  (weakest on huge/Snowflake-style ID spaces, where `id + offset` may
+  itself be a valid, differently-owned object) is now documented in the
+  module rather than silently assumed away.
 - **`--check-idor` (Python-only, off by default): same-session
   ID-sequence probing.** For a crawled URL with a purely-numeric path
   segment or query value, replays adjacent IDs (n-1, n+1) using the

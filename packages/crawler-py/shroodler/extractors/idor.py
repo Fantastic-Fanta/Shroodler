@@ -26,6 +26,31 @@ elsewhere in this codebase:
    with the same top-level JSON key shape as the original. A 4xx/redirect
    response, or a 200 whose body key-shape matches the not-found
    baseline instead, is not evidence of anything and does not fire.
+
+Known, inherent limitations (documented rather than "fixed" because they
+follow from the single-session design, not from a bug):
+
+- Matching JSON key SHAPE (not values or ownership) cannot tell a real
+  IDOR apart from the current session's own neighboring record --
+  sequential IDs are frequently allocated in a batch to one account (a
+  user's several orders placed back-to-back). Every finding here is a
+  *lead to manually confirm ownership on*, not a proof, and is scored
+  medium rather than high for exactly that reason.
+- The not-found-baseline offset (_NOT_FOUND_OFFSET) is a fixed additive
+  constant. On a small/low-cardinality ID space it's a safe bet to be
+  unused; on a huge multi-tenant target (millions of rows, or
+  Snowflake-style near-2^63 IDs) `original_value + offset` may itself
+  land on a real, differently-owned object, making the baseline
+  ineffective and causing this check to skip a candidate it otherwise
+  could have tested. This makes the check weakest on exactly the large,
+  high-value targets where it would matter most -- a conservative
+  failure mode (skip rather than false-positive), but worth knowing "no
+  finding" isn't a clean bill of health there.
+- Query candidates skip a fixed denylist of common non-ID numeric params
+  (page, limit, year, ...; see _NON_ID_QUERY_PARAMS) to cut down on
+  fuzzing pagination/date-range controls, but it's a denylist, not an
+  allowlist, so an unusual pagination param name not on the list can
+  still slip through.
 """
 
 from __future__ import annotations
@@ -40,6 +65,38 @@ from shroodler.modes.static import StaticFetcher
 _NUMERIC_SEGMENT = re.compile(r"^\d+$")
 _MAX_CANDIDATES = 25
 _NOT_FOUND_OFFSET = 987_654_321
+
+# Query params that are very commonly numeric but never an object
+# reference -- probing them just fuzzes pagination/date-range controls
+# (every page of a paginated list is the same JSON shape, so this would
+# otherwise be a reliable false-positive generator with zero relation to
+# authorization). Not exhaustive; a denylist over an allowlist because a
+# real object-id param name is far more varied than this fixed set.
+_NON_ID_QUERY_PARAMS = frozenset(
+    {
+        "page",
+        "pagenum",
+        "pagenumber",
+        "limit",
+        "offset",
+        "per_page",
+        "perpage",
+        "page_size",
+        "pagesize",
+        "size",
+        "count",
+        "year",
+        "month",
+        "day",
+        "width",
+        "height",
+        "w",
+        "h",
+        "zoom",
+        "version",
+        "v",
+    }
+)
 
 
 def _is_json(content_type: str) -> bool:
@@ -64,12 +121,31 @@ def _content_type(headers: dict[str, str]) -> str:
 
 
 class _Candidate:
-    __slots__ = ("original_url", "build_url", "original_value")
+    __slots__ = ("original_url", "build_url", "original_value", "dedup_key")
 
-    def __init__(self, original_url: str, build_url, original_value: int):
+    def __init__(self, original_url: str, build_url, original_value: int, dedup_key: str):
         self.original_url = original_url
         self.build_url = build_url
         self.original_value = original_value
+        # Distinct per numeric position on the URL, NOT just original_url --
+        # a URL can carry more than one numeric path segment/query value
+        # (e.g. /users/5/orders/123, or ?account=1&order=456), and each is
+        # a separate, independently-interesting candidate. Deduping on
+        # original_url alone would keep only the first one found and
+        # silently drop the rest, fuzzing the wrong parameter.
+        self.dedup_key = dedup_key
+
+
+def _format_like(original: str, new_value: int) -> str:
+    """Re-serialize new_value preserving the original segment's zero-padding
+    width, if any (e.g. "007" -> 6 must become "006", not "6" -- some
+    legacy ID schemes require exact width, and losing it would 404 the
+    adjacent candidate for a formatting reason having nothing to do with
+    authorization, a false negative rather than the intended test)."""
+    rendered = str(new_value)
+    if len(original) > len(rendered):
+        return rendered.zfill(len(original))
+    return rendered
 
 
 def _path_candidates(url: str):
@@ -79,12 +155,12 @@ def _path_candidates(url: str):
         if not _NUMERIC_SEGMENT.match(seg):
             continue
 
-        def build(new_value: int, _i=i, _segments=list(segments), _parsed=parsed) -> str:
+        def build(new_value: int, _i=i, _segments=list(segments), _parsed=parsed, _seg=seg) -> str:
             new_segments = list(_segments)
-            new_segments[_i] = str(new_value)
+            new_segments[_i] = _format_like(_seg, new_value)
             return urlunparse(_parsed._replace(path="/".join(new_segments)))
 
-        yield _Candidate(url, build, int(seg))
+        yield _Candidate(url, build, int(seg), dedup_key=f"{url}#path:{i}")
 
 
 def _query_candidates(url: str):
@@ -93,13 +169,17 @@ def _query_candidates(url: str):
     for i, (key, value) in enumerate(pairs):
         if not _NUMERIC_SEGMENT.match(value):
             continue
+        if key.lower() in _NON_ID_QUERY_PARAMS:
+            continue
 
-        def build(new_value: int, _i=i, _pairs=list(pairs), _parsed=parsed, _key=key) -> str:
+        def build(
+            new_value: int, _i=i, _pairs=list(pairs), _parsed=parsed, _key=key, _value=value
+        ) -> str:
             new_pairs = list(_pairs)
-            new_pairs[_i] = (_key, str(new_value))
+            new_pairs[_i] = (_key, _format_like(_value, new_value))
             return urlunparse(_parsed._replace(query=urlencode(new_pairs)))
 
-        yield _Candidate(url, build, int(value))
+        yield _Candidate(url, build, int(value), dedup_key=f"{url}#query:{key}:{i}")
 
 
 def find_id_candidates(pages: list[Page]):
@@ -109,9 +189,9 @@ def find_id_candidates(pages: list[Page]):
         if count >= _MAX_CANDIDATES:
             break
         for candidate in list(_path_candidates(page.url)) + list(_query_candidates(page.url)):
-            if candidate.original_url in seen:
+            if candidate.dedup_key in seen:
                 continue
-            seen.add(candidate.original_url)
+            seen.add(candidate.dedup_key)
             count += 1
             yield candidate
             if count >= _MAX_CANDIDATES:
@@ -154,13 +234,25 @@ def probe_idor(fetcher: StaticFetcher, pages: list[Page]) -> list[Finding]:
             findings.append(
                 Finding(
                     id="idor-adjacent-id-accessible",
-                    severity="high",
+                    # medium, not high: this proves the same session can
+                    # read a same-shaped adjacent resource, but a single
+                    # session has no way to know whether id+/-1 actually
+                    # belongs to a DIFFERENT owner or is simply another
+                    # one of the current account's own records (sequential
+                    # IDs are frequently allocated in batches to one
+                    # account) -- that ambiguity is inherent to a
+                    # single-session probe, not something this check can
+                    # resolve on its own, so it's flagged as a lead to
+                    # manually confirm ownership on, not a proven finding.
+                    severity="medium",
                     category="auth",
                     url=candidate.original_url,
                     description=(
                         f"Adjacent ID {adjacent_id} returned a same-shaped JSON object using "
-                        f"the same session that accessed {candidate.original_value} -- possible "
-                        "broken object-level authorization"
+                        f"the same session that accessed {candidate.original_value} -- manually "
+                        "confirm the adjacent ID belongs to a different owner/account before "
+                        "treating this as a confirmed IDOR (sequential IDs are often the same "
+                        "account's own records)"
                     ),
                     evidence=adjacent_url,
                 )

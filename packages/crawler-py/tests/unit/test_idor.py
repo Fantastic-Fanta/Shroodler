@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-from shroodler.extractors.idor import find_id_candidates, probe_idor
+from shroodler.extractors.idor import _format_like, find_id_candidates, probe_idor
 from shroodler.models import Page
 from shroodler.modes.static import StaticFetcher
 
@@ -24,6 +24,86 @@ def test_finds_numeric_path_and_query_candidates():
     ]
     urls = {c.original_url for c in find_id_candidates(pages)}
     assert urls == {"http://x/orders/123", "http://x/view?id=456"}
+
+
+def test_format_like_preserves_zero_padding():
+    # "/orders/007" -> id-1 must stay "006", not become "6" -- some
+    # legacy ID schemes require exact width, and losing it would 404 the
+    # adjacent candidate for a formatting reason unrelated to authz,
+    # a false negative rather than the intended test.
+    assert _format_like("007", 6) == "006"
+    assert _format_like("007", 8) == "008"
+
+
+def test_format_like_does_not_truncate_when_new_value_is_wider():
+    # Original had no meaningful padding to preserve (008 -> the not-found
+    # baseline offset makes a much longer number); zfill only pads, never
+    # truncates, so the real value is never silently corrupted.
+    assert _format_like("8", 987654329) == "987654329"
+
+
+def test_idor_preserves_zero_padded_id_width_end_to_end(fx):
+    origin = fx.origin
+    _json_route(fx, "/orders/007", {"id": 7, "total": 42})
+    _json_route(fx, "/orders/006", {"id": 6, "total": 17})
+    _json_route(fx, "/orders/008", {"id": 8, "total": 99})
+    _json_route(fx, "/orders/987654336", {"error": "not found"}, status=404)
+
+    fetcher = StaticFetcher()
+    try:
+        pages = [Page(url=f"{origin}/orders/007", status_code=200)]
+        findings = probe_idor(fetcher, pages)
+    finally:
+        fetcher.close()
+    urls_hit = {f.evidence for f in findings}
+    assert f"{origin}/orders/006" in urls_hit
+    assert f"{origin}/orders/008" in urls_hit
+
+
+def test_idor_finding_is_medium_severity_with_ownership_caveat(fx):
+    # Downgraded from an earlier "high": a single-session probe cannot
+    # tell whether the adjacent ID belongs to a different account or is
+    # just another of the current account's own records, so this must
+    # read as a lead to confirm, not a proven finding.
+    origin = fx.origin
+    _json_route(fx, "/orders/123", {"id": 123, "total": 42})
+    _json_route(fx, "/orders/122", {"id": 122, "total": 17})
+    _json_route(fx, "/orders/987654444", {"error": "not found"}, status=404)
+
+    fetcher = StaticFetcher()
+    try:
+        pages = [Page(url=f"{origin}/orders/123", status_code=200)]
+        findings = probe_idor(fetcher, pages)
+    finally:
+        fetcher.close()
+    hit = next(f for f in findings if f.id == "idor-adjacent-id-accessible")
+    assert hit.severity == "medium"
+    assert "confirm" in hit.description.lower()
+
+
+def test_finds_every_numeric_position_not_just_the_first():
+    # Regression test: dedup used to be keyed on the whole original_url,
+    # so a URL with more than one numeric position (a tenant/collection id
+    # AND the actual object id) silently kept only the first one found and
+    # dropped the rest -- fuzzing the wrong parameter.
+    pages = [Page(url="http://x/users/5/orders/123", status_code=200)]
+    values = {c.original_value for c in find_id_candidates(pages)}
+    assert values == {5, 123}
+
+
+def test_finds_every_query_param_not_just_the_first():
+    pages = [Page(url="http://x/view?account=1&order=456", status_code=200)]
+    values = {c.original_value for c in find_id_candidates(pages)}
+    assert values == {1, 456}
+
+
+def test_pagination_style_query_params_are_not_treated_as_ids():
+    pages = [
+        Page(url="http://x/list?page=2", status_code=200),
+        Page(url="http://x/list?year=2024", status_code=200),
+        Page(url="http://x/list?limit=50&offset=10", status_code=200),
+    ]
+    assert list(find_id_candidates(pages)) == []
 
 
 def test_idor_fires_when_adjacent_id_returns_same_shaped_json(fx):

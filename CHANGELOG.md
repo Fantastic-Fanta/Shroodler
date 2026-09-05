@@ -7,6 +7,25 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixed real bugs in the Go authz-diff/session-checks port** found by a
+  pentester critique of the initial port: (1) session-cookie lookup used
+  `jar.Cookies(seedURL)`, which applies Go's cookiejar domain/path
+  matching -- a cookie scoped narrower than the seed URL (or set by a
+  different endpoint) was silently invisible to both checks, unlike
+  Python's unscoped `client.cookies`. Replaced with a response-wide
+  cookie recorder (a thin RoundTripper) that matches Python's actual
+  semantics. (2) The login submission didn't follow redirects, unlike
+  Python's explicit `follow_redirects=True` override for that one
+  request -- a login flow with an SSO/interstitial hop before the
+  cookie-rotating response would falsely trigger `session-fixation`.
+  Fixed by giving just the submit request its own redirect-following
+  policy. (3) A malformed `logout_url`/`protected_url` (wrong JSON type)
+  aborted the whole crawl instead of just disabling the affected check,
+  unlike Python's always-succeeds coercion -- now decoded leniently. (4)
+  `resolveOne` used naive origin-rooted path replacement instead of real
+  relative-URL resolution, so a non-rooted relative `logout_url`/
+  `protected_url` (e.g. `"logout"` under `/account/login`) could resolve
+  to the wrong path -- now uses proper RFC 3986 resolution.
 - **Go parity: `authz-diff`, session-fixation, logout-invalidation.** These
   were Python-only since 0.2.0. `shroodler-go` now has a full `authz-diff`
   subcommand (same flags/output shape as Python: `--cookie`, `--header`,

@@ -1513,6 +1513,91 @@ func TestFlagsSessionFixationWhenCookieUnchangedByLogin(t *testing.T) {
 	}
 }
 
+func TestSessionFixationDetectedEvenWithNarrowerCookiePathThanSeed(t *testing.T) {
+	// Regression test: the session cookie is scoped to Path=/account, a
+	// narrower path than the crawl's seed ("/"). A jar.Cookies(seedURL)-
+	// based lookup would never see this cookie for the seed URL at all
+	// (Go's cookiejar path-matching requires the cookie's path to be a
+	// prefix of the request path, which /account is not for a request to
+	// "/") -- session-fixation must still fire, matching Python's flat
+	// (unscoped) client.cookies semantics.
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !strings.Contains(r.Header.Get("Cookie"), "sessionid=") {
+			w.Header().Set("Set-Cookie", "sessionid=fixed-value-123; Path=/account")
+		}
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		// Vulnerable: login succeeds but does NOT rotate the session cookie.
+		loginHandler(w, r, "")
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20,
+		LoginRecipe: &crawler.LoginRecipe{URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFindingID(res.Findings, "session-fixation") {
+		t.Fatalf("expected session-fixation despite narrower cookie path, got %#v", res.Findings)
+	}
+}
+
+func TestNoSessionFixationWhenLoginRotatesCookieAfterASsoRedirectHop(t *testing.T) {
+	// Regression test: the login submission redirects through an
+	// intermediate hop before the response that actually rotates the
+	// session cookie. runLogin's submit request must follow redirects
+	// (matching Python's follow_redirects=True override for this one
+	// request) or it would stop at the first 302 and never observe the
+	// rotated cookie, producing a session-fixation false positive.
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !strings.Contains(r.Header.Get("Cookie"), "sessionid=") {
+			w.Header().Set("Set-Cookie", "sessionid=pre-auth-value; Path=/")
+		}
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.Write([]byte(`<form method="POST" action="/login"><input name="user"></form>`))
+			return
+		}
+		// First hop: redirect onward, no cookie rotation yet.
+		w.Header().Set("Location", "/sso-step2")
+		w.WriteHeader(http.StatusFound)
+	})
+	mux.HandleFunc("/sso-step2", func(w http.ResponseWriter, r *http.Request) {
+		// Second hop: this is the response that actually rotates the cookie.
+		w.Header().Set("Set-Cookie", "sessionid=post-auth-rotated; Path=/")
+		w.Header().Set("Location", "/")
+		w.WriteHeader(http.StatusFound)
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20,
+		LoginRecipe: &crawler.LoginRecipe{URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasFindingID(res.Findings, "session-fixation") {
+		t.Fatalf("did not expect session-fixation (cookie rotates on the second redirect hop), got %#v", res.Findings)
+	}
+}
+
 func TestNoSessionFixationWhenLoginRotatesCookie(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

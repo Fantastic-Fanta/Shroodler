@@ -23,9 +23,35 @@ type LoginRecipe struct {
 	Method        string            `json:"method"`
 	Fields        map[string]string `json:"fields"`
 	IncludeHidden *bool             `json:"include_hidden"`
-	LogoutURL     string            `json:"logout_url"`
-	LogoutMethod  string            `json:"logout_method"`
-	ProtectedURL  string            `json:"protected_url"`
+	LogoutURL     string            `json:"-"`
+	LogoutMethod  string            `json:"-"`
+	ProtectedURL  string            `json:"-"`
+}
+
+// rawLoginRecipe decodes logout_url/logout_method/protected_url leniently
+// (as json.RawMessage rather than string) so a malformed value in one of
+// these newer, optional fields degrades to "field absent" (disabling just
+// the session-fixation/logout-invalidation checks that depend on it)
+// instead of a hard parse error that aborts the whole crawl -- mirroring
+// Python's auth.py::load_login_recipe, which always coerces successfully
+// via str(x) if x else None and never raises on these fields.
+type rawLoginRecipe struct {
+	LogoutURL    json.RawMessage `json:"logout_url"`
+	LogoutMethod json.RawMessage `json:"logout_method"`
+	ProtectedURL json.RawMessage `json:"protected_url"`
+}
+
+func lenientOptionalString(raw json.RawMessage) string {
+	if len(raw) == 0 {
+		return ""
+	}
+	var s string
+	if err := json.Unmarshal(raw, &s); err == nil {
+		return s
+	}
+	// Not a JSON string (a number, object, array, bool, or malformed
+	// value) -- treat as absent rather than failing the whole parse.
+	return ""
 }
 
 type cookieJSON struct {
@@ -153,6 +179,12 @@ func LoadLoginRecipe(path string) (*LoginRecipe, error) {
 	if r.Method == "" {
 		r.Method = "POST"
 	}
+	var raw rawLoginRecipe
+	if json.Unmarshal(b, &raw) == nil {
+		r.LogoutURL = lenientOptionalString(raw.LogoutURL)
+		r.ProtectedURL = lenientOptionalString(raw.ProtectedURL)
+		r.LogoutMethod = lenientOptionalString(raw.LogoutMethod)
+	}
 	if r.LogoutMethod == "" {
 		r.LogoutMethod = "GET"
 	}
@@ -160,15 +192,32 @@ func LoadLoginRecipe(path string) (*LoginRecipe, error) {
 }
 
 // resolveOne resolves a recipe URL that may be relative (against seed) or
-// already absolute, mirroring Python's auth.py::_resolve_one.
+// already absolute, mirroring Python's auth.py::_resolve_one (a plain
+// urljoin(seed, raw)). Deliberately uses real RFC 3986 relative resolution
+// (url.ResolveReference), not originJoin's simpler "treat as origin-rooted
+// path" behavior -- a non-rooted relative value like "logout" needs to
+// resolve against seed's directory (e.g. "/account/login" -> "/account/
+// logout"), which a naive path replacement gets wrong.
 func resolveOne(raw, seed string) string {
 	if raw == "" {
 		return raw
 	}
-	if !strings.Contains(raw, "://") {
+	if strings.Contains(raw, "://") {
+		return raw
+	}
+	base := seed
+	if !strings.Contains(base, "://") {
+		base = "http://" + base
+	}
+	baseURL, err := url.Parse(base)
+	if err != nil {
 		return originJoin(seed, raw)
 	}
-	return raw
+	refURL, err := url.Parse(raw)
+	if err != nil {
+		return originJoin(seed, raw)
+	}
+	return baseURL.ResolveReference(refURL).String()
 }
 
 // resolveRecipeURL resolves url/logout_url/protected_url against seed,
@@ -248,7 +297,17 @@ func runLogin(client *http.Client, recipe LoginRecipe, seed string) {
 	if req == nil {
 		return
 	}
-	resp, err := client.Do(req)
+	// The login submission specifically follows redirects (mirroring
+	// Python's run_login_httpx, which overrides the client's normal
+	// follow_redirects=False just for this request) -- real login flows
+	// commonly bounce through an SSO/interstitial hop before landing on
+	// the page that actually rotates the session cookie, and stopping at
+	// the first 3xx would miss that. Sharing the same Transport/Jar as
+	// the main client keeps cookies/proxy/TLS config consistent; only the
+	// redirect policy differs for this one request.
+	loginClient := *client
+	loginClient.CheckRedirect = nil
+	resp, err := loginClient.Do(req)
 	if err != nil {
 		return
 	}

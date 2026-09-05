@@ -10,11 +10,11 @@
   --color-paper-2: oklch(26% 0 0);
   --color-paper-3: oklch(31% 0 0);
   --color-sunken: oklch(17% 0 0);
-  --color-ink: oklch(85% 0 0);
-  --color-ink-2: oklch(66% 0 0);
-  --color-ink-3: oklch(53% 0 0);
-  --color-rule: oklch(34% 0 0);
-  --color-rule-2: oklch(30% 0 0);
+  --color-ink: oklch(88% 0 0);
+  --color-ink-2: oklch(72% 0 0);
+  --color-ink-3: oklch(61% 0 0);
+  --color-rule: oklch(40% 0 0);
+  --color-rule-2: oklch(35% 0 0);
   --color-accent: oklch(74% 0.112 305);
   --color-accent-strong: oklch(80% 0.11 305);
   --color-accent-ink: oklch(18% 0.02 305);
@@ -27,13 +27,9 @@
   --color-critical: oklch(68% 0.18 22);
   --color-critical-tint: oklch(68% 0.18 22 / 0.14);
   --color-high: oklch(74% 0.14 48);
-  --color-high-tint: oklch(74% 0.14 48 / 0.14);
   --color-medium: oklch(82% 0.12 88);
-  --color-medium-tint: oklch(82% 0.12 88 / 0.14);
   --color-low: oklch(72% 0.1 240);
-  --color-low-tint: oklch(72% 0.1 240 / 0.14);
   --color-info: oklch(62% 0.012 70);
-  --color-info-tint: oklch(62% 0.012 70 / 0.14);
 
   --font-display: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
   --font-body: -apple-system, "Segoe UI", system-ui, Roboto, sans-serif;
@@ -44,13 +40,10 @@
   --space-xs: 0.5rem;
   --space-sm: 0.75rem;
   --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2.5rem;
 
   --text-xs: 0.875rem;
   --text-sm: 0.9375rem;
   --text-md: 1rem;
-  --text-lg: 1.0625rem;
 
   --chrome-tab: 2.25rem;
   --chrome-cmd: 3rem;
@@ -61,31 +54,12 @@
   --row-h: 1.875rem;
 
   --radius-control: 4px;
-  --radius-none: 0;
 
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
-  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms;
-  --dur-short: 220ms;
 
-  --z-base: 1;
-  --z-raised: 10;
-  --z-dropdown: 100;
-  --z-sticky: 200;
+  --z-sticky: 10;
+  --z-raised: 100;
+  --z-dropdown: 250;
   --z-modal: 400;
-
-  --bg-base: var(--color-paper);
-  --bg-raised: var(--color-paper-2);
-  --bg-sunken: var(--color-sunken);
-  --bg-hover: var(--color-paper-3);
-  --border: var(--color-rule);
-  --text-primary: var(--color-ink);
-  --text-muted: var(--color-ink-2);
-  --accent: var(--color-accent);
-  --sev-critical: var(--color-critical);
-  --sev-high: var(--color-high);
-  --sev-medium: var(--color-medium);
-  --sev-low: var(--color-low);
-  --sev-info: var(--color-info);
 }

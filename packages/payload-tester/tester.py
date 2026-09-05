@@ -63,6 +63,11 @@ def _local(url: str) -> bool:
     return host in {"127.0.0.1", "localhost", "::1"} or host.endswith(".local")
 
 
+def _path_only(url: str) -> str:
+    p = urlparse(url)
+    return f"{p.scheme}://{p.netloc}{p.path}"
+
+
 def gen_token(length: int = 10) -> str:
     alphabet = string.ascii_lowercase + string.digits
     return "shrdlr" + "".join(secrets.choice(alphabet) for _ in range(length))
@@ -197,19 +202,32 @@ def run(
                 continue
             targets = list(page.get("forms", []))
             # Both crawlers already extract query-parameter names for every
-            # page (OpenAPI/GraphQL discovery and plain query-string
-            # parsing all populate Page.params), but that data went unused
-            # here -- a bare GET endpoint with no surrounding <form> (the
-            # common case for API-style targets) got zero fuzzing even
-            # though its real parameter names were sitting in the crawl
-            # JSON. Treat the page itself as a synthetic GET-only "form"
-            # so it flows through the exact same baseline/pack/dedup path
-            # as a real form below.
+            # page (plain query-string parsing populates Page.params), but
+            # that data went unused here -- a bare GET endpoint with no
+            # surrounding <form> (the common case for API-style targets)
+            # got zero fuzzing even though its real parameter names were
+            # sitting in the crawl JSON. Treat the page itself as a
+            # synthetic GET-only "form" so it flows through the exact same
+            # baseline/pack/dedup path as a real form below -- but only
+            # when no existing form already targets the same underlying
+            # path (ignoring query string): a page whose own URL has a
+            # query string AND has a <form> extracted from its HTML with
+            # an action resolving to that same path would otherwise get
+            # the same endpoint sent every payload twice, doubling request
+            # volume/side effects for no extra coverage.
             params = [p for p in page.get("params", []) if p]
             if params:
-                targets.append(
-                    {"action": url, "method": "GET", "fields": [{"name": p} for p in params]}
-                )
+                existing_paths = set()
+                for form in targets:
+                    action = form.get("action") or url
+                    if action.startswith("/"):
+                        p = urlparse(url)
+                        action = f"{p.scheme}://{p.netloc}{action}"
+                    existing_paths.add(_path_only(action))
+                if _path_only(url) not in existing_paths:
+                    targets.append(
+                        {"action": url, "method": "GET", "fields": [{"name": p} for p in params]}
+                    )
             for form in targets:
                 action = form.get("action") or url
                 if action.startswith("/"):

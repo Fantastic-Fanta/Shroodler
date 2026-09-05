@@ -16,7 +16,13 @@ work that produced them rather than tags.
   though its real parameter names were already sitting in the crawl
   JSON. The tester now also treats each page's own URL as a synthetic
   GET-only "form" when `params` is non-empty, reusing the exact same
-  baseline/pack-matching/dedup path as a real form.
+  baseline/pack-matching/dedup path as a real form. Fixed in the same
+  change: a page whose own URL carries a query string *and* has a real
+  `<form>` extracted from its HTML targeting the same underlying path
+  (query string aside) would otherwise get every payload sent twice --
+  the synthetic target is now skipped when an existing form already
+  covers that path, so request volume/side effects don't double for
+  zero extra coverage.
 - **Fixed real bugs in the Go authz-diff/session-checks port** found by a
   pentester critique of the initial port: (1) session-cookie lookup used
   `jar.Cookies(seedURL)`, which applies Go's cookiejar domain/path

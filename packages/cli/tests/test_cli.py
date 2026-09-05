@@ -9,7 +9,7 @@ def test_version(capsys):
     with pytest.raises(SystemExit) as ex:
         main(["version"])
     assert ex.value.code == 0
-    assert "shroodler 0.1.0" in capsys.readouterr().out
+    assert "shroodler 0.2.0" in capsys.readouterr().out
 
 
 def test_help_lists_product_commands():

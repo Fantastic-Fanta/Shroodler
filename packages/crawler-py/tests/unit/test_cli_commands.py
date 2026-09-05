@@ -204,7 +204,7 @@ def test_main_version_and_no_command(capsys):
     with pytest.raises(SystemExit) as ex:
         main(["version"])
     assert ex.value.code == 0
-    assert "shroodler 0.1.0" in capsys.readouterr().out
+    assert "shroodler 0.2.0" in capsys.readouterr().out
     with pytest.raises(SystemExit) as ex:
         main(["-V"])
     assert ex.value.code == 0

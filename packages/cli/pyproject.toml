@@ -1,13 +1,35 @@
 [project]
 name = "shroodler-cli"
-version = "0.1.0"
-description = "Shroodler command-line interface"
+version = "0.2.0"
+description = "Web attack-surface mapping CLI (Shroodler) -- crawl, report, diff baselines, payload-test, and drive the intercepting proxy from one command"
 requires-python = ">=3.11"
 license = "Apache-2.0"
-dependencies = []
+authors = [{ name = "The Shroodler Authors" }]
+keywords = ["security", "pentest", "appsec", "crawler", "web-security", "cli"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Information Technology",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Security",
+]
+# This package is a thin, friendly-named wrapper around the "shroodler"
+# package (packages/crawler-py), which holds the actual crawler/CLI
+# implementation and its own "shroodler" console script. Installing both
+# together (as `make bootstrap` does) is intentional -- this one is the
+# name meant for `pip install shroodler-cli` from a registry.
+dependencies = ["shroodler"]
 
 [project.scripts]
 shroodler = "shroodler_cli.main:main"
+
+[project.urls]
+Homepage = "https://github.com/Fantastic-Fanta/Shroodler"
+Repository = "https://github.com/Fantastic-Fanta/Shroodler"
+Changelog = "https://github.com/Fantastic-Fanta/Shroodler/blob/main/CHANGELOG.md"
 
 [build-system]
 requires = ["setuptools>=68"]

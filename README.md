@@ -10,10 +10,15 @@ By default everything only touches local targets (127.0.0.1/localhost); pass
 ## Quickstart
 
 ```bash
-make up          # start target apps on 127.0.0.1:8081–8084
-make cli         # build/install the CLI and Go binaries, print their paths
-make verify      # lint + unit + integration tests
+make up            # start target apps on 127.0.0.1:8081–8084
+make install-cli    # build the CLI/Go binaries and put shroodler, shroodler-go, shroodler-proxy on your PATH
+make verify         # lint + unit + integration tests
 ```
+
+The rest of this README assumes `shroodler` is on your `PATH` after
+`make install-cli` (symlinked into `~/.local/bin`). No install? Prefix every
+command with `.venv/bin/` (Python) or `packages/crawler-go/` /
+`packages/proxy-go/` (Go binaries) instead.
 
 ## Features
 
@@ -48,50 +53,46 @@ make verify      # lint + unit + integration tests
 ## Command line
 
 ```bash
-make bootstrap   # .venv + `shroodler` console script
-make bins        # shroodler-go + shroodler-proxy
-
 # Crawl and report
-.venv/bin/shroodler crawl http://127.0.0.1:8081 --output out.json
-.venv/bin/shroodler crawl http://127.0.0.1:8081 --login-recipe packages/target-apps/app1-server-rendered/login-recipe.json --output authed.json
-.venv/bin/shroodler crawl http://127.0.0.1:8082 --mode headless --output spa.json
-.venv/bin/shroodler report out.json --format html --output out.html
+shroodler crawl http://127.0.0.1:8081 --output out.json
+shroodler crawl http://127.0.0.1:8081 --login-recipe packages/target-apps/app1-server-rendered/login-recipe.json --output authed.json
+shroodler crawl http://127.0.0.1:8082 --mode headless --output spa.json
+shroodler report out.json --format html --output out.html
 
 # Active payloads (SQLi/XSS/SSTI/path-traversal/SSRF/open-redirect/XXE)
-.venv/bin/shroodler payload out.json -o hits.json
-.venv/bin/shroodler payload out.json --oob-host collab.example.com -o hits.json   # blind checks
+shroodler payload out.json -o hits.json
+shroodler payload out.json --oob-host collab.example.com -o hits.json   # blind checks
 
 # Baseline-in-git for any local app (fail CI on new findings)
-.venv/bin/shroodler baseline out.json -o expected_findings.json --name my-app
-.venv/bin/shroodler diff out.json expected_findings.json --gate   # plus optional .shroodlerignore
-.venv/bin/shroodler report out.json --format sarif -o results.sarif
-.venv/bin/shroodler report out.json --format junit -o results.xml
+shroodler baseline out.json -o expected_findings.json --name my-app
+shroodler diff out.json expected_findings.json --gate   # plus optional .shroodlerignore
+shroodler report out.json --format sarif -o results.sarif
+shroodler report out.json --format junit -o results.xml
 
 # Authz diff: replay a privileged session's URLs as a lower-priv session
-.venv/bin/shroodler authz-diff higher-priv-crawl.json --cookie session=abc123
+shroodler authz-diff higher-priv-crawl.json --cookie session=abc123
 
 # History and trend
-.venv/bin/shroodler history record out.json --name my-app
-.venv/bin/shroodler history list
-.venv/bin/shroodler trend <scan-a> <scan-b>
+shroodler history record out.json --name my-app
+shroodler history list
+shroodler trend <scan-a> <scan-b>
 
-# Go crawler (same subcommands)
-packages/crawler-go/shroodler-go crawl http://127.0.0.1:8081 --output out.json
+# Go crawler (same subcommands, faster)
+shroodler-go crawl http://127.0.0.1:8081 --output out.json
 
 # Intercepting proxy (traffic you route through it)
-.venv/bin/shroodler proxy ca generate
-.venv/bin/shroodler proxy start --record /tmp/sess.jsonl
+shroodler proxy ca generate
+shroodler proxy start --record /tmp/sess.jsonl
 curl -x http://127.0.0.1:8888 http://127.0.0.1:8081/
-packages/crawler-go/shroodler-go crawl http://127.0.0.1:8081 --proxy http://127.0.0.1:8888 --output out.json
-packages/crawler-go/shroodler-go ingest-sessions /tmp/sess.jsonl --target http://127.0.0.1:8081 --output from-proxy.json
-packages/crawler-go/shroodler-go crawl http://127.0.0.1:8081 --cookies-from /tmp/sess.jsonl --seed-from /tmp/sess.jsonl
+shroodler-go crawl http://127.0.0.1:8081 --proxy http://127.0.0.1:8888 --output out.json
+shroodler-go ingest-sessions /tmp/sess.jsonl --target http://127.0.0.1:8081 --output from-proxy.json
+shroodler-go crawl http://127.0.0.1:8081 --cookies-from /tmp/sess.jsonl --seed-from /tmp/sess.jsonl
 
-# Put shroodler, shroodler-go, shroodler-proxy on PATH
-make install-cli   # symlinks into ~/.local/bin; also prints completion/man-page paths
+# Shell completion and man page (also printed by `make install-cli`)
 source packages/cli/completions/shroodler.bash   # bash completion
 man packages/cli/man/shroodler.1                 # man page
 
-.venv/bin/shroodler version
+shroodler version
 ```
 
 `make down` stops the target apps. `make cover` runs coverage (Python fails
@@ -100,7 +101,7 @@ under 90%; Go prints internal-package percents).
 External smoke test (off by default, never part of `make verify`):
 
 ```bash
-.venv/bin/shroodler crawl https://httpbin.org/get --allow-external --depth 0 --output /tmp/ext.json
+shroodler crawl https://httpbin.org/get --allow-external --depth 0 --output /tmp/ext.json
 ```
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.

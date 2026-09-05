@@ -14,8 +14,8 @@ PACKAGES = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PACKAGES / "payload-tester"))
 sys.path.insert(0, str(PACKAGES / "target-apps" / "app5-injectable"))
 
-from app import app as flask_app  # noqa: E402
-from tester import (  # noqa: E402
+from app import app as flask_app
+from tester import (
     MARKER_HOST,
     _clause_matches,
     _local,
@@ -351,6 +351,107 @@ def test_new_packs_load_without_error():
     assert "payload-open-redirect" in ids
     assert "payload-sql-time-blind" in ids
     assert "payload-xxe" in ids
+    assert "payload-command-injection" in ids
+    assert "payload-command-injection-blind" in ids
+    assert "payload-crlf-header-injection" in ids
+    assert "payload-crlf-reflected" in ids
+
+
+def test_command_injection_timing_packs_use_a_five_second_threshold():
+    # These packs are only ever proven via wall-clock timing, so no live
+    # fixture can assert them without actually sleeping several seconds per
+    # variant; assert the pack shape instead (severity/clause), matching
+    # how time_delta_gte_ms itself is unit-tested above rather than
+    # end-to-end.
+    packs = [p for p in load_packs() if pack_finding_id(p) == "payload-command-injection-blind"]
+    assert len(packs) >= 4
+    for pack in packs:
+        clauses = pack["match"]["any"]
+        assert any(c.get("time_delta_gte_ms", 0) >= 5000 for c in clauses)
+        assert pack["severity"] == "high"
+
+
+@pytest.fixture
+def header_validating_origin():
+    """A modern, spec-compliant server that rejects control chars in headers.
+
+    Simulates the common case (Werkzeug, Go net/http, etc. all behave this
+    way) so the CRLF header-injection pack's expected result on a safe
+    target is "no finding", not a crash.
+    """
+
+    def handler(environ, start_response):
+        from urllib.parse import parse_qs
+
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+        body = environ["wsgi.input"].read(length).decode("utf-8", "replace")
+        qs = parse_qs(body)
+        target = qs.get("next", [""])[0]
+        try:
+            start_response("302 Found", [("Location", "/" + target)])
+            return [b""]
+        except ValueError:
+            start_response("500 Internal Server Error", [("Content-Type", "text/plain")])
+            return [b"rejected"]
+
+    httpd = make_server("127.0.0.1", 0, handler)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+def test_crlf_header_pack_is_a_clean_miss_against_a_safe_target(header_validating_origin):
+    doc = {
+        "target": header_validating_origin + "/",
+        "pages": [
+            {
+                "url": header_validating_origin + "/",
+                "forms": [
+                    {"action": "/go", "method": "POST", "fields": [{"name": "next"}]}
+                ],
+            }
+        ],
+    }
+    out = run(doc)
+    ids = {f["id"] for f in out["findings"]}
+    assert "payload-crlf-header-injection" not in ids
+
+
+@pytest.fixture
+def crlf_reflect_origin():
+    def handler(environ, start_response):
+        from urllib.parse import parse_qs
+
+        length = int(environ.get("CONTENT_LENGTH") or 0)
+        body = environ["wsgi.input"].read(length).decode("utf-8", "replace")
+        qs = parse_qs(body)
+        q = qs.get("q", [""])[0]
+        start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        return [f"<p>no rows for {q}</p>".encode()]
+
+    httpd = make_server("127.0.0.1", 0, handler)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+def test_crlf_reflected_raw_fires_on_naive_string_concatenation(crlf_reflect_origin):
+    doc = {
+        "target": crlf_reflect_origin + "/",
+        "pages": [
+            {
+                "url": crlf_reflect_origin + "/",
+                "forms": [{"action": "/search", "method": "POST", "fields": [{"name": "q"}]}],
+            }
+        ],
+    }
+    out = run(doc)
+    ids = {f["id"] for f in out["findings"]}
+    assert "payload-crlf-reflected" in ids
 
 
 @pytest.fixture

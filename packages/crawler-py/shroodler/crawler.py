@@ -49,6 +49,7 @@ from shroodler.extractors.sourcemap import (
     parse_source_map,
     source_mapping_url,
 )
+from shroodler.extractors.subresource import extract_subresource_findings
 from shroodler.extractors.verbose import extract_verbose_errors
 from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats, Finding, JsEndpoint, Page
 from shroodler.modes.static import FetchResult, StaticFetcher
@@ -110,6 +111,7 @@ class Crawler:
         extra_seeds: list[str] | None = None,
         no_sitemap: bool = False,
         check_rate_limit: bool = False,
+        check_subresources: bool = False,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -127,6 +129,7 @@ class Crawler:
         self.extra_seeds = extra_seeds or []
         self.no_sitemap = no_sitemap
         self.check_rate_limit = check_rate_limit
+        self.check_subresources = check_subresources
         self._cookie_args = cookies or []
         self._cookie_jar = cookie_jar
         self._storage_state = storage_state
@@ -491,7 +494,9 @@ class Crawler:
     def _page_from_result(
         self, result: FetchResult, t0: float | None = None
     ) -> tuple[Page, list[Finding], list[JsEndpoint], FetchResult]:
-        page, findings, endpoints = page_from_fetch(result)
+        page, findings, endpoints = page_from_fetch(
+            result, check_subresources=self.check_subresources
+        )
         is_challenge = any(f.category == "waf-challenge" for f in findings)
         if (
             is_challenge
@@ -508,7 +513,9 @@ class Crawler:
             # downstream decision (redirects, spec/link discovery) sees the
             # real page instead of the stale challenge response.
             retry_result = self.fetcher.fetch(result.url)
-            retry_page, retry_findings, retry_endpoints = page_from_fetch(retry_result)
+            retry_page, retry_findings, retry_endpoints = page_from_fetch(
+                retry_result, check_subresources=self.check_subresources
+            )
             if not any(f.category == "waf-challenge" for f in retry_findings):
                 return retry_page, retry_findings, retry_endpoints, retry_result
         if not is_challenge and result.text and (
@@ -543,7 +550,9 @@ class Crawler:
         return extract_from_source_map(js_url, obj)
 
 
-def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEndpoint]]:
+def page_from_fetch(
+    result: FetchResult, *, check_subresources: bool = False
+) -> tuple[Page, list[Finding], list[JsEndpoint]]:
     cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
     headers, header_findings = extract_headers(result.headers, result.url)
 
@@ -591,6 +600,9 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
     secret_findings = scan_text(result.text, result.url)
     jwt_findings = audit_jwts(result.text, result.url)
     markup_findings = extract_html_markup(result.text, result.url)
+    subresource_findings = (
+        extract_subresource_findings(result.text, result.url) if check_subresources else []
+    )
     page = Page(
         url=result.url,
         status_code=result.status_code,
@@ -608,6 +620,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
         + secret_findings
         + jwt_findings
         + markup_findings
+        + subresource_findings
         + ep_findings
     )
     return page, all_f, endpoints

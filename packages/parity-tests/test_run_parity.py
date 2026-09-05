@@ -49,3 +49,16 @@ def test_python_only_category_excluded_from_comparison():
     py_doc = _doc([doc])
     go_doc = _doc([])
     assert compare(py_doc, go_doc) == []
+
+
+def test_go_emitting_a_python_only_category_fails_loudly():
+    # If shroodler-go ever starts emitting something tagged with a
+    # category this script assumes is Python-only, that must fail the
+    # gate instead of silently staying unchecked -- see the
+    # PYTHON_ONLY_CATEGORIES comment.
+    py_doc = _doc([])
+    go_doc = _doc(
+        [{"id": "sri-missing", "url": "http://x/", "severity": "low", "category": "subresource"}]
+    )
+    errs = compare(py_doc, go_doc)
+    assert any("Python-only" in e for e in errs)

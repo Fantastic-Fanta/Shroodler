@@ -7,6 +7,33 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **TLS checks: real chain-trust validation, handshake-failure signal, and
+  an IP-SAN false-positive fix.** A pentester review of the TLS checks
+  found the disabled-verification design meant an untrusted-CA/broken
+  chain cert (issuer != subject, so not "self-signed", but still nothing
+  a normal client would trust) reported clean; `check_tls` now also
+  attempts one real, verified handshake (system trust store) and emits
+  `tls-untrusted-chain` when that fails for a reason none of the other,
+  more specific checks already explain (skipped when the cert is already
+  known expired/self-signed/hostname-mismatched, so this never fires a
+  second, less-specific finding for the same cert). A TLS handshake that
+  fails after the TCP connection succeeds (e.g. a protocol/cipher the
+  client refuses) now also gets a low-severity `tls-handshake-failed`
+  lead instead of being silently collapsed into "not applicable" the same
+  way a boring connection-refused is. Also fixed, and this one really
+  matters given Shroodler's own default posture of scanning
+  127.0.0.1/localhost: `hostname_matches()` only ever checked `x509.DNSName`
+  SAN entries, so a certificate correctly issued for an IP address (which
+  RFC 6125 requires as an `iPAddress` SAN, never a DNS name or the CN)
+  was always misreported as `tls-hostname-mismatch` -- a real false
+  positive against exactly the target shape this tool scans by default.
+- **`packages/parity-tests/run_parity.py` now fails loudly if
+  shroodler-go starts emitting a category on `PYTHON_ONLY_CATEGORIES`.**
+  That exclusion list is how the always-on `subresource`/`tls` checks
+  avoid being compared against an engine that doesn't implement them yet;
+  without this guard, the exclusion would keep silently hiding a real
+  Python/Go divergence forever if Go ever gained one of those categories
+  without this list being updated.
 - **TLS certificate checks** (`packages/crawler-py/shroodler/extractors/
   tls.py`, new `tls` finding category, Python-only for now). Runs once per
   crawl against an `https://` target's origin, independent of the crawl's

@@ -49,6 +49,8 @@ _BY_ID: dict[str, str] = {
     "tls-cert-expiring-soon": "Renew this certificate before it expires; automate renewal (e.g. ACME/Let's Encrypt) to avoid this recurring.",
     "tls-cert-self-signed": "Replace with a certificate from a trusted CA; a self-signed cert can't be verified by normal clients without manual trust.",
     "tls-hostname-mismatch": "Issue a certificate that actually covers this hostname (correct SAN entries), or fix the DNS/routing sending traffic here.",
+    "tls-untrusted-chain": "Issue a certificate from a CA in standard trust stores, and ensure the server sends its full intermediate chain.",
+    "tls-handshake-failed": "Investigate the TLS handshake failure -- often an obsolete protocol/cipher configuration a modern client refuses to negotiate.",
     "waf-challenge": "Informational: a WAF/bot-mitigation challenge was detected, not a vulnerability by itself.",
     "waf-challenge-sitewide": "Allowlist the scanner's IP/UA with the WAF operator; most of this scan was blocked, not clean.",
     "verbose-error": "Turn off debug/verbose error pages in production; log stack traces server-side only.",

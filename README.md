@@ -1,13 +1,22 @@
 # Shroodler
 
 Web attack-surface mapping toolkit. Crawl a site, throw active payloads at it,
-scan for secrets, and report the findings. Target apps live in this repo and
-are intentionally vulnerable — do not "fix" them.
+scan for secrets, and report the findings. Test fixtures live in the
+[Shroodler-Tests](https://github.com/Fantastic-Fanta/Shroodler-Tests) submodule
+under `packages/target-apps` and are intentionally vulnerable — do not "fix"
+them.
 
 By default everything only touches local targets (127.0.0.1/localhost); pass
 `--allow-external` to scan a remote host you're authorized to test.
 
 ## Quickstart
+
+Clone with submodules (or run `git submodule update --init --recursive` after
+a plain clone — `make up`/`make bootstrap` also do this for you):
+
+```bash
+git clone --recurse-submodules https://github.com/Fantastic-Fanta/Shroodler.git
+```
 
 ```bash
 make up            # start target apps on 127.0.0.1:8081–8084

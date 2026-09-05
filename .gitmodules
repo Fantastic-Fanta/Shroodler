@@ -1,0 +1,3 @@
+[submodule "packages/target-apps"]
+	path = packages/target-apps
+	url = https://github.com/Fantastic-Fanta/Shroodler-Tests.git

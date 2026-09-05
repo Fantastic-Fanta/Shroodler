@@ -7,6 +7,7 @@ PIP := $(VENV)/bin/pip
 DOCKER := $(shell test -e /Applications/Docker.app/Contents/Resources/bin/docker && echo yes || echo no)
 
 bootstrap:
+	@git submodule update --init --recursive
 	@test -x "$(PY)" || python3 -m venv "$(VENV)"
 	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]" -e "$(ROOT)packages/cli"
 	@$(VENV)/bin/playwright install chromium
@@ -62,6 +63,7 @@ verify: lint test-unit
 	@echo "verify ok"
 
 up:
+	@git submodule update --init --recursive
 ifeq ($(DOCKER),yes)
 	docker compose up -d --build
 else

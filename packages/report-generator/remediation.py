@@ -59,6 +59,7 @@ _BY_ID: dict[str, str] = {
     "session-fixation": "Issue a new session identifier on login instead of reusing the pre-auth session.",
     "logout-not-invalidated": "Invalidate the session server-side on logout, not just by clearing the client cookie.",
     "authz-diff": "This URL returned success for a lower-privileged session that replayed a higher-privileged crawl; enforce authorization checks server-side per-object, not just per-route.",
+    "idor-adjacent-id-accessible": "Enforce an object-level authorization check on this endpoint (verify the requesting session actually owns/may access this specific ID), not just that some valid session is present.",
 }
 
 # Category fallback for ids not listed above (new payload/secret pack ids

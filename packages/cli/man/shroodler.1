@@ -179,6 +179,14 @@ Force rate-limit probing off, even if
 .B aggressive
 would otherwise enable it.
 .TP
+.B \-\-check\-idor
+For crawled URLs with a purely-numeric path segment or query value,
+replay adjacent IDs (n-1, n+1) using the crawl's own session and flag
+ones returning a same-shaped JSON object (possible broken object-level
+authorization). Off by default: this makes real extra GET requests for
+IDs never organically discovered, potentially reading another user's
+data on a vulnerable target. JSON API responses only.
+.TP
 .BI \-\-header " 'Name: value'"
 Extra request header, repeatable.
 .TP

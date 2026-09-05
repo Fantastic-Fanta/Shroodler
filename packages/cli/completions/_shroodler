@@ -54,6 +54,7 @@ _shroodler() {
             '--allow-external[Allow crawling a non-local target]' \
             '--check-rate-limit[Probe login forms for missing rate limiting]' \
             '--no-check-rate-limit[Force rate-limit probing off, overriding a --profile]' \
+            '--check-idor[Replay adjacent numeric IDs in the same session to check for IDOR]' \
             '*--header[Extra request header]:header' \
             '--user-agent[Override the User-Agent sent on every crawl request]:user-agent' \
             '*--cookie[Cookie name=value]:cookie' \

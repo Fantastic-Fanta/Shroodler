@@ -86,3 +86,29 @@ def test_payload_and_proxy_parse():
     assert "payload" in text
     assert "proxy" in text
     assert "version" in text
+
+
+def test_authz_diff_parses():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "authz-diff",
+            "admin.json",
+            "-o",
+            "hits.json",
+            "--cookie",
+            "session=user",
+            "--header",
+            "X-Trace: 1",
+        ]
+    )
+    assert args.higher_crawl_json == "admin.json"
+    assert args.output == "hits.json"
+    assert args.cookie == ["session=user"]
+    assert args.header == ["X-Trace: 1"]
+    assert args.no_anon_check is False
+    assert args.allow_external is False
+    args = p.parse_args(["authz-diff", "admin.json", "--no-anon-check", "--allow-external"])
+    assert args.no_anon_check is True
+    assert args.allow_external is True
+    assert "authz-diff" in p.format_help()

@@ -20,7 +20,7 @@ from shroodler.auth import (
     resolve_recipe_url,
     run_login_httpx,
 )
-from shroodler.extractors.challenge import detect_challenge
+from shroodler.extractors.challenge import detect_challenge, has_challenge_cookie
 from shroodler.extractors.common_paths import (
     probe_mutations,
     probe_paths,
@@ -315,9 +315,11 @@ class Crawler:
         if self.fetcher is not self.http:
             requests += getattr(self.fetcher, "requests", 0)
         deduped_findings = _dedupe_findings(findings)
-        pages_challenged = len(
-            {f.url for f in deduped_findings if f.category == "waf-challenge"}
-        )
+        challenge_hits = [f for f in deduped_findings if f.category == "waf-challenge"]
+        pages_challenged = len({f.url for f in challenge_hits})
+        sitewide = _sitewide_challenge_finding(seed, pages_challenged, len(pages), challenge_hits)
+        if sitewide:
+            deduped_findings.append(sitewide)
         return CrawlResult(
             target=seed,
             scan_started_at=started,
@@ -468,6 +470,17 @@ class Crawler:
     ) -> tuple[Page, list[Finding], list[JsEndpoint]]:
         page, findings, endpoints = page_from_fetch(result)
         is_challenge = any(f.category == "waf-challenge" for f in findings)
+        if is_challenge and has_challenge_cookie(result.set_cookies):
+            # The challenge response itself set a cookie the vendor's flow
+            # normally checks for on the next request (e.g. Cloudflare's
+            # cf_clearance) -- the client's cookie jar already has it, so one
+            # same-URL retry may already be enough to get past a *transient*
+            # challenge. Still detection-only: this never solves anything,
+            # it just avoids treating a one-off hiccup as a durable block.
+            retry_result = self.fetcher.fetch(result.url)
+            retry_page, retry_findings, retry_endpoints = page_from_fetch(retry_result)
+            if not any(f.category == "waf-challenge" for f in retry_findings):
+                return retry_page, retry_findings, retry_endpoints
         if not is_challenge and result.text and (
             "javascript" in _content_type(result.headers) or result.url.endswith(".js")
         ):
@@ -504,7 +517,9 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
     cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
     headers, header_findings = extract_headers(result.headers, result.url)
 
-    challenge = detect_challenge(result.headers, result.text, result.status_code)
+    challenge = detect_challenge(
+        result.headers, result.text, result.status_code, result.set_cookies
+    )
     if challenge:
         # This page is a WAF/bot-mitigation interstitial, not real target
         # content. Keep header/cookie extraction (those describe the actual
@@ -566,6 +581,41 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
         + ep_findings
     )
     return page, all_f, endpoints
+
+
+_SITEWIDE_CHALLENGE_MIN_PAGES = 3
+_SITEWIDE_CHALLENGE_MIN_RATIO = 0.3
+
+
+def _sitewide_challenge_finding(
+    seed: str, pages_challenged: int, total_pages: int, challenge_hits: list[Finding]
+) -> Finding | None:
+    """A single challenged page and a target that's WAF-fronted site-wide
+    look identical per-URL -- same category, same severity. When a big
+    enough share of the crawl was challenged, add one summary finding so a
+    report reader can tell "ignore this one URL" from "this whole scan's
+    other findings substantially understate the target's real surface"."""
+    if total_pages == 0 or pages_challenged < _SITEWIDE_CHALLENGE_MIN_PAGES:
+        return None
+    if pages_challenged / total_pages < _SITEWIDE_CHALLENGE_MIN_RATIO:
+        return None
+    vendors = sorted({f.evidence for f in challenge_hits if f.evidence})
+    vendor_text = ", ".join(vendors) if vendors else "a WAF/bot-mitigation vendor"
+    return Finding(
+        id="waf-challenge-sitewide",
+        severity="high",
+        category="waf-challenge",
+        url=seed,
+        description=(
+            f"{pages_challenged} of {total_pages} crawled pages were "
+            f"WAF/bot-mitigation-challenged ({vendor_text}) -- this target "
+            "appears to be challenged site-wide, not just on one page. This "
+            "scan's other findings substantially understate the target's "
+            "real attack surface. Try --user-agent, or ask the target's "
+            "operator to allowlist the scanner before re-running."
+        ),
+        evidence=f"{pages_challenged}/{total_pages} pages challenged",
+    )
 
 
 def _dedupe_findings(findings: list[Finding]) -> list[Finding]:

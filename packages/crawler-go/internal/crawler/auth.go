@@ -220,7 +220,6 @@ func runLogin(client *http.Client, recipe LoginRecipe, seed string) {
 	if req == nil {
 		return
 	}
-	req.Header.Set("User-Agent", "Shroodler/0.1.0 (+https://shroodler.local)")
 	resp, err := client.Do(req)
 	if err != nil {
 		return

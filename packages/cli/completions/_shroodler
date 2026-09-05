@@ -55,6 +55,7 @@ _shroodler() {
             '--check-rate-limit[Probe login forms for missing rate limiting]' \
             '--no-check-rate-limit[Force rate-limit probing off, overriding a --profile]' \
             '*--header[Extra request header]:header' \
+            '--user-agent[Override the User-Agent sent on every crawl request]:user-agent' \
             '*--cookie[Cookie name=value]:cookie' \
             '--cookie-jar[Cookie jar file]:file:_files' \
             '--storage-state[Playwright storageState JSON]:file:_files' \

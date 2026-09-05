@@ -1210,3 +1210,104 @@ func TestTinyCrawlEmitsStats(t *testing.T) {
 		t.Fatalf("stats %#v", stats)
 	}
 }
+
+func TestCrawlFlagsChallengePageAndSkipsContentExtraction(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Server", "cloudflare")
+		w.WriteHeader(http.StatusServiceUnavailable)
+		w.Write([]byte(`<html><body>Just a moment...<form action="/login">` +
+			`<input name="u"></form>AKIAABCDEFGHIJKLMNOP</body></html>`))
+	}))
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var challenge *models.Finding
+	for i := range res.Findings {
+		if res.Findings[i].Category == "waf-challenge" {
+			challenge = &res.Findings[i]
+		}
+		if res.Findings[i].Category == "secret" {
+			t.Fatalf("secret should not have been extracted from a challenge page: %#v", res.Findings[i])
+		}
+	}
+	if challenge == nil {
+		t.Fatal("expected a waf-challenge finding")
+	}
+	if challenge.URL != srv.URL+"/" {
+		t.Fatalf("challenge finding URL = %q", challenge.URL)
+	}
+	if len(res.Pages) != 1 || len(res.Pages[0].Forms) != 0 {
+		t.Fatalf("challenge page should not have parsed forms: %#v", res.Pages)
+	}
+}
+
+func TestSoft404SuppressesTemplatedNotFoundPage(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/":
+			w.Header().Set("Content-Type", "text/html")
+			w.Write([]byte("<p>home</p>"))
+		case "/.git/HEAD":
+			w.Write([]byte(strings.Repeat("ref: refs/heads/main\n", 50)))
+		default:
+			// Templated "not found" page served with 200 for any other path.
+			w.Write([]byte("<html><body>Nothing to see here, sorry about that!</body></html>"))
+		}
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 500})
+	if err != nil {
+		t.Fatal(err)
+	}
+	exposed := map[string]bool{}
+	for _, f := range res.Findings {
+		if f.ID == "exposed-file" && f.Evidence != nil {
+			exposed[*f.Evidence] = true
+		}
+	}
+	if !exposed["/.git/HEAD"] {
+		t.Fatal("expected /.git/HEAD to still be flagged as a real hit")
+	}
+	if exposed["/.env"] || exposed["/backup.sql.bak"] {
+		t.Fatalf("templated 200 not-found page should have been suppressed: %#v", exposed)
+	}
+}
+
+func TestUserAgentOverride(t *testing.T) {
+	var seen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = r.Header.Get("User-Agent")
+		w.Write([]byte("ok"))
+	}))
+	defer srv.Close()
+	_, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 1,
+		UserAgent: "my-custom-agent/1.0",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if seen != "my-custom-agent/1.0" {
+		t.Fatalf("User-Agent = %q, want my-custom-agent/1.0", seen)
+	}
+}
+
+func TestDefaultUserAgentIsSentWhenUnset(t *testing.T) {
+	var seen string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		seen = r.Header.Get("User-Agent")
+		w.Write([]byte("ok"))
+	}))
+	defer srv.Close()
+	_, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(seen, "Shroodler") {
+		t.Fatalf("expected default identifying User-Agent, got %q", seen)
+	}
+}

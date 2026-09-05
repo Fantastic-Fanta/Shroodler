@@ -177,6 +177,10 @@ would otherwise enable it.
 .BI \-\-header " 'Name: value'"
 Extra request header, repeatable.
 .TP
+.BI \-\-user\-agent " STRING"
+Override the User-Agent sent on every crawl request. Some targets serve
+different content, or block requests entirely, based on User-Agent.
+.TP
 .BI \-\-cookie " name=value"
 Cookie applied before the crawl, repeatable.
 .TP

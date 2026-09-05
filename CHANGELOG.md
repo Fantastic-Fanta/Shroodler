@@ -7,6 +7,16 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`payload` now fuzzes GET endpoints with no `<form>` using `Page.params`.**
+  Both crawlers have populated `Page.params` (query-parameter names) for
+  every page for a while -- via OpenAPI/GraphQL discovery and plain
+  query-string parsing -- but `payload-tester` only ever iterated
+  `page.forms`, so a bare `GET /search?q=...` with no surrounding HTML
+  form (the common shape for API-style targets) got zero fuzzing even
+  though its real parameter names were already sitting in the crawl
+  JSON. The tester now also treats each page's own URL as a synthetic
+  GET-only "form" when `params` is non-empty, reusing the exact same
+  baseline/pack-matching/dedup path as a real form.
 - **Fixed real bugs in the Go authz-diff/session-checks port** found by a
   pentester critique of the initial port: (1) session-cookie lookup used
   `jar.Cookies(seedURL)`, which applies Go's cookiejar domain/path

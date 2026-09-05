@@ -63,6 +63,66 @@ def _search_doc(origin: str) -> dict:
     }
 
 
+@pytest.fixture
+def query_reflect_origin():
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        body = f"<p>results for {q}</p>".encode()
+        start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        return [body]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+def _reflect_pack(tmp_path, marker: str = "SHROODLER_MARKER_XYZ") -> Path:
+    extra = tmp_path / "reflect.yaml"
+    extra.write_text(
+        "- id: reflect-probe\n"
+        "  finding_id: payload-reflect-probe\n"
+        f"  payload: '{marker}'\n"
+        "  severity: medium\n"
+        "  match:\n"
+        "    any:\n"
+        f"      - body_contains: '{marker}'\n",
+        encoding="utf-8",
+    )
+    return extra
+
+
+def test_get_only_page_with_no_form_is_fuzzed_via_page_params(query_reflect_origin, tmp_path):
+    # Page.params is populated today by both crawlers (OpenAPI/GraphQL
+    # discovery, plain query-string parsing) for pages that never had a
+    # <form> around them -- this must actually get fuzzed, not silently
+    # ignored because there's no form to hang the fields off of.
+    packs = load_packs(extra=[_reflect_pack(tmp_path)])
+    doc = {
+        "target": query_reflect_origin + "/",
+        "pages": [{"url": query_reflect_origin + "/search", "params": ["q"], "forms": []}],
+    }
+    out = run(doc, packs=[p for p in packs if p["id"] == "reflect-probe"])
+    hits = [f for f in out["findings"] if f["id"] == "payload-reflect-probe"]
+    assert len(hits) == 1
+    assert hits[0]["url"] == query_reflect_origin + "/search"
+
+
+def test_page_with_neither_params_nor_forms_produces_no_findings(tmp_path):
+    packs = load_packs(extra=[_reflect_pack(tmp_path)])
+    doc = {
+        "target": "http://127.0.0.1:1/",
+        "pages": [{"url": "http://127.0.0.1:1/about", "params": [], "forms": []}],
+    }
+    out = run(doc, packs=[p for p in packs if p["id"] == "reflect-probe"])
+    assert out["findings"] == []
+
+
 def test_refuses_external():
     with pytest.raises(ValueError, match="non-local"):
         run({"target": "https://example.com/", "pages": []})

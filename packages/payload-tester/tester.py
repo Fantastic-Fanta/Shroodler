@@ -195,7 +195,22 @@ def run(
             url = page.get("url", "")
             if not allowed(url):
                 continue
-            for form in page.get("forms", []):
+            targets = list(page.get("forms", []))
+            # Both crawlers already extract query-parameter names for every
+            # page (OpenAPI/GraphQL discovery and plain query-string
+            # parsing all populate Page.params), but that data went unused
+            # here -- a bare GET endpoint with no surrounding <form> (the
+            # common case for API-style targets) got zero fuzzing even
+            # though its real parameter names were sitting in the crawl
+            # JSON. Treat the page itself as a synthetic GET-only "form"
+            # so it flows through the exact same baseline/pack/dedup path
+            # as a real form below.
+            params = [p for p in page.get("params", []) if p]
+            if params:
+                targets.append(
+                    {"action": url, "method": "GET", "fields": [{"name": p} for p in params]}
+                )
+            for form in targets:
                 action = form.get("action") or url
                 if action.startswith("/"):
                     p = urlparse(url)

@@ -162,6 +162,26 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_authz_diff(args: argparse.Namespace) -> int:
+    from shroodler.authz_diff import run as authz_diff_run
+    from shroodler.auth import parse_cookie_pairs, parse_header_lines
+
+    higher_doc = load_json(args.higher_crawl_json)
+    cookie_pairs = parse_cookie_pairs(list(getattr(args, "cookie", None) or []))
+    cookie_header = "; ".join(f"{c.name}={c.value}" for c in cookie_pairs)
+    extra_headers = parse_header_lines(list(getattr(args, "header", None) or []))
+    out = authz_diff_run(
+        higher_doc,
+        cookie_header=cookie_header,
+        extra_headers=extra_headers,
+        check_anonymous=not bool(getattr(args, "no_anon_check", False)),
+        allow_external=bool(getattr(args, "allow_external", False)),
+    )
+    text = json.dumps(out, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
 def cmd_baseline(args: argparse.Namespace) -> int:
     doc = load_json(args.findings)
     rules = load_suppressions(args.suppressions)
@@ -433,6 +453,47 @@ def build_parser() -> argparse.ArgumentParser:
         "Only use against hosts you are authorized to test.",
     )
     payload.set_defaults(func=cmd_payload)
+
+    authz = sub.add_parser(
+        "authz-diff",
+        help="Replay a privileged crawl's pages under a second (lower-priv) "
+        "session to find broken access control / IDOR candidates",
+        description=(
+            "Takes a crawl JSON produced under one session (e.g. an admin "
+            "account) and re-requests every page URL in it using a second "
+            "session's --cookie/--header. A URL still reachable under the "
+            "lower-privilege session is flagged; if it was also denied "
+            "anonymously, that's a strong broken-access-control signal."
+        ),
+    )
+    authz.add_argument("higher_crawl_json")
+    authz.add_argument("--output", "-o")
+    authz.add_argument(
+        "--cookie",
+        action="append",
+        default=[],
+        metavar="name=value",
+        help="Cookie for the lower-privilege session to replay with (repeatable)",
+    )
+    authz.add_argument(
+        "--header",
+        action="append",
+        default=[],
+        metavar="'Name: value'",
+        help="Extra header for the lower-privilege session, e.g. an Authorization bearer token (repeatable)",
+    )
+    authz.add_argument(
+        "--no-anon-check",
+        action="store_true",
+        help="Skip the anonymous control request; report every URL the lower-priv "
+        "session can reach instead of only ones also denied anonymously",
+    )
+    authz.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow replaying against a non-local target; off by default",
+    )
+    authz.set_defaults(func=cmd_authz_diff)
 
     proxy = sub.add_parser(
         "proxy",

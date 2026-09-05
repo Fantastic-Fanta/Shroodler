@@ -17,24 +17,15 @@ flowchart LR
     PY[crawler-py]
     GO[crawler-go]
   end
-  subgraph desktop [Desktop]
-    UI[Tauri + Svelte]
-    GO2[shroodler-go sidecar]
-    PY2[Python headless sidecar]
-    PX[shroodler-proxy sidecar]
-  end
+  PX[shroodler-proxy]
   PY --> JSON[(finding.schema.json)]
   GO --> JSON
   JSON --> RG[report-generator]
-  UI --> GO2
-  UI --> PY2
-  UI --> PX
-  GO2 -->|"--proxy / cookies / seeds"| PX
-  GO2 --> A1
+  GO -->|"--proxy / cookies / seeds"| PX
+  GO --> A1
   PY -->|"--proxy / cookies / seeds"| PX
   PY --> A1
   PX -->|intercepts routed traffic| A1
-  PX -->|session JSONL| GO2
 ```
 
 ## Quickstart
@@ -47,7 +38,7 @@ make cli         # install the Python CLI, build Go binaries, print paths
 
 ## Command line
 
-The CLI is the full product surface (the desktop app shells out to the same commands).
+The CLI is the full product surface.
 
 ```bash
 make bootstrap   # .venv + `shroodler` console script
@@ -90,9 +81,6 @@ make install-cli   # symlinks into ~/.local/bin; also prints completion/man-page
 source packages/cli/completions/shroodler.bash   # bash
 # zsh: add packages/cli/completions to your $fpath, then `autoload -Uz compinit && compinit`
 man packages/cli/man/shroodler.1
-
-# Desktop (Tauri)
-cd packages/desktop-app && npm install && npm run tauri dev
 ```
 
 `make down` stops target apps.
@@ -104,11 +92,6 @@ External smoke (off by default, never part of `make verify`):
 ```bash
 .venv/bin/shroodler crawl https://httpbin.org/get --allow-external --depth 0 --output /tmp/ext.json
 ```
-
-See [`docs/cli-surface.md`](docs/cli-surface.md) for the full CLI command/flag
-reference, including what is and isn't wired into the desktop UI yet — start
-there before building GUI features so you don't duplicate what the CLI
-already does or miss a flag the UI silently drops.
 
 See [CHANGELOG.md](CHANGELOG.md) for release notes.
 

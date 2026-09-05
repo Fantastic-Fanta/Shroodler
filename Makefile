@@ -1,4 +1,4 @@
-.PHONY: verify up down lint test test-unit test-integration bootstrap bins desktop-test cover cli install-cli
+.PHONY: verify up down lint test test-unit test-integration bootstrap bins cover cli install-cli
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 VENV := $(ROOT).venv
@@ -35,18 +35,12 @@ lint: bootstrap
 	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests packages/cli
 	cd packages/crawler-go && gofmt -l . | { ! grep .; }
 
-desktop-test: bins
-	cd packages/desktop-app && node --test tests/*.mjs
-	cd packages/desktop-app/src-tauri && cargo test -q
-
 test-unit: bootstrap bins
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit -q
 	cd packages/secret-patterns && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/report-generator && "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/crawler-go && go test ./...
 	cd packages/proxy-go && go test ./...
-	cd packages/desktop-app && node --test tests/*.mjs
-	cd packages/desktop-app/src-tauri && cargo test -q
 	cd packages/payload-tester && PYTHONPATH="$(ROOT)packages/payload-tester" "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/cli && "$(ROOT).venv/bin/pytest" tests -q
 

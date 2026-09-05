@@ -103,6 +103,8 @@ reference, including what is and isn't wired into the desktop UI yet — start
 there before building GUI features so you don't duplicate what the CLI
 already does or miss a flag the UI silently drops.
 
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
+
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).

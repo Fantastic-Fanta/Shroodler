@@ -32,6 +32,7 @@ type Clause struct {
 	ErrorStatusChanged  bool   `yaml:"error_status_changed"`
 	TimeDeltaGteMs      *int   `yaml:"time_delta_gte_ms"`
 	RedirectedToContain string `yaml:"redirected_to_contains"`
+	HeaderContains      string `yaml:"header_contains"`
 }
 
 type Match struct {
@@ -170,6 +171,7 @@ type matchCtx struct {
 	baselineElapsed  float64
 	haveBaselineTime bool
 	markerHost       string
+	headers          http.Header
 }
 
 func clauseMatches(c Clause, status int, body, payload string, ctx matchCtx) bool {
@@ -203,6 +205,21 @@ func clauseMatches(c Clause, status int, body, payload string, ctx matchCtx) boo
 		needle := strings.ReplaceAll(c.RedirectedToContain, "{{MARKER_HOST}}", mh)
 		if strings.Contains(strings.ToLower(ctx.redirectedTo), strings.ToLower(needle)) {
 			return true
+		}
+	}
+	if c.HeaderContains != "" {
+		// Scans every response header VALUE (not just Location): a real
+		// HTTP response-splitting bug lands the injected text in whatever
+		// header net/http's own parser splits it into, often an extra
+		// header line rather than the one the vulnerable field was
+		// originally building -- see crlf-injection.yaml's comment.
+		needle := strings.ToLower(c.HeaderContains)
+		for _, values := range ctx.headers {
+			for _, v := range values {
+				if strings.Contains(strings.ToLower(v), needle) {
+					return true
+				}
+			}
 		}
 	}
 	return false
@@ -381,6 +398,7 @@ func Run(crawl map[string]any, client *http.Client, packs []Pack, allowExternal 
 				reqCtx.haveElapsed = true
 				reqCtx.redirectedTo = resp.redirectedTo
 				reqCtx.markerHost = markerHost
+				reqCtx.headers = resp.headers
 				if !packMatchesCtx(pack, resp.status, resp.body, payloadStr, reqCtx) {
 					continue
 				}
@@ -409,6 +427,7 @@ type httpResp struct {
 	body         string
 	elapsedMs    float64
 	redirectedTo string
+	headers      http.Header
 }
 
 func fireRaw(client *http.Client, action, body, contentType string) (httpResp, error) {
@@ -469,7 +488,10 @@ func doTimed(client *http.Client, req *http.Request) (httpResp, error) {
 	defer resp.Body.Close()
 	b, _ := io.ReadAll(io.LimitReader(resp.Body, 1_000_000))
 	redirectedTo := resp.Header.Get("Location")
-	return httpResp{status: resp.StatusCode, body: string(b), elapsedMs: elapsed, redirectedTo: redirectedTo}, nil
+	return httpResp{
+		status: resp.StatusCode, body: string(b), elapsedMs: elapsed,
+		redirectedTo: redirectedTo, headers: resp.Header,
+	}, nil
 }
 
 func Encode(r Result) []byte {

@@ -179,19 +179,6 @@ Force rate-limit probing off, even if
 .B aggressive
 would otherwise enable it.
 .TP
-.B \-\-check\-subresources
-Flag cross-origin
-.BR <script> / <link>
-tags missing a Subresource Integrity
-.RI ( integrity= )
-attribute, and HTTPS pages loading
-.B http://
-subresources (mixed content). Passive and side-effect-free, but
-Python-only
-.RI ( shroodler\-go
-does not implement this) and off by default so a default crawl's
-findings stay identical between the two engines.
-.TP
 .BI \-\-header " 'Name: value'"
 Extra request header, repeatable.
 .TP

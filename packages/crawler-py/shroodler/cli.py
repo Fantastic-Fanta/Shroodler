@@ -102,7 +102,6 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         extra_seeds=extra_seeds,
         no_sitemap=bool(getattr(args, "no_sitemap", False)),
         check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
-        check_subresources=bool(getattr(args, "check_subresources", False)),
         **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
@@ -418,15 +417,6 @@ def build_parser() -> argparse.ArgumentParser:
         dest="check_rate_limit",
         action="store_false",
         help=argparse.SUPPRESS,
-    )
-    crawl.add_argument(
-        "--check-subresources",
-        action="store_true",
-        help="Flag cross-origin <script>/<link> tags missing Subresource "
-        "Integrity, and HTTPS pages loading http:// subresources (mixed "
-        "content). Python-only (shroodler-go does not implement this yet) "
-        "and off by default so it doesn't change parity with the Go "
-        "crawler's default output; passive and side-effect-free otherwise.",
     )
     crawl.add_argument(
         "--header",

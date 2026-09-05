@@ -357,18 +357,44 @@ def test_new_packs_load_without_error():
     assert "payload-crlf-reflected" in ids
 
 
-def test_command_injection_timing_packs_use_a_five_second_threshold():
+def test_command_injection_timing_packs_are_medium_confidence_single_sample():
     # These packs are only ever proven via wall-clock timing, so no live
     # fixture can assert them without actually sleeping several seconds per
     # variant; assert the pack shape instead (severity/clause), matching
     # how time_delta_gte_ms itself is unit-tested above rather than
-    # end-to-end.
+    # end-to-end. Severity is medium (not high): a single unconfirmed
+    # timing sample can false-positive on ordinary network/GC jitter, so
+    # it shouldn't carry the same confidence as the arithmetic marker-echo
+    # packs below, which can't be faked by plain reflection.
     packs = [p for p in load_packs() if pack_finding_id(p) == "payload-command-injection-blind"]
     assert len(packs) >= 4
     for pack in packs:
         clauses = pack["match"]["any"]
-        assert any(c.get("time_delta_gte_ms", 0) >= 5000 for c in clauses)
-        assert pack["severity"] == "high"
+        assert any(c.get("time_delta_gte_ms", 0) >= 3000 for c in clauses)
+        assert pack["severity"] == "medium"
+
+
+def test_command_injection_marker_echo_requires_evaluation_not_reflection():
+    # Regression test for a real bug caught in review: an earlier version
+    # of this pack matched on the payload's own literal text being echoed
+    # back, which is indistinguishable from ordinary input reflection
+    # (fires on any endpoint that echoes user input, executed or not).
+    # The fix uses shell arithmetic ($((...))) so the match string can
+    # only appear if a shell actually evaluated the expression -- assert
+    # that invariant holds for every marker-echo pack in this file, not
+    # just eyeball it in the YAML.
+    packs = [p for p in load_packs() if pack_finding_id(p) == "payload-command-injection"]
+    assert len(packs) >= 5
+    for pack in packs:
+        payload = str(pack["payload"])
+        clauses = pack["match"]["any"]
+        needles = [str(c["body_contains"]).lower() for c in clauses if "body_contains" in c]
+        assert needles, f"{pack['id']} has no body_contains clause"
+        for needle in needles:
+            assert needle not in payload.lower(), (
+                f"{pack['id']}: match needle {needle!r} is literally present in the "
+                "unexecuted payload text -- this would fire on plain reflection"
+            )
 
 
 @pytest.fixture
@@ -417,6 +443,54 @@ def test_crlf_header_pack_is_a_clean_miss_against_a_safe_target(header_validatin
     out = run(doc)
     ids = {f["id"] for f in out["findings"]}
     assert "payload-crlf-header-injection" not in ids
+
+
+@pytest.fixture
+def header_splitting_origin():
+    """Simulates a genuinely vulnerable server: the injected marker lands
+    in an *extra* header, not stuffed inside Location's own value.
+
+    A real HTTP/1.1 client (h11, net/http) treats a literal CRLF as an
+    actual header terminator -- once the bytes hit the wire, the client's
+    parser splits them into a separate header/cookie line, it doesn't
+    matter that the vulnerable app only meant to write one Location value.
+    wsgiref itself refuses to let this handler emit real control chars
+    (see header_validating_origin above), so this fixture instead returns
+    the *already-split* shape a successful injection would produce on the
+    wire, to prove header_contains catches it wherever it lands -- this
+    is exactly the case redirected_to_contains (Location-only) missed.
+    """
+
+    def handler(environ, start_response):
+        start_response(
+            "302 Found",
+            [("Location", "/shrdlr"), ("X-Shrdlr-Crlf-Marker", "shrdlr_crlf_9f2a1c")],
+        )
+        return [b""]
+
+    httpd = make_server("127.0.0.1", 0, handler)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    yield f"http://127.0.0.1:{port}"
+    httpd.shutdown()
+
+
+def test_crlf_header_pack_catches_marker_in_any_response_header(header_splitting_origin):
+    doc = {
+        "target": header_splitting_origin + "/",
+        "pages": [
+            {
+                "url": header_splitting_origin + "/",
+                "forms": [
+                    {"action": "/go", "method": "POST", "fields": [{"name": "next"}]}
+                ],
+            }
+        ],
+    }
+    out = run(doc)
+    hit = next(f for f in out["findings"] if f["id"] == "payload-crlf-header-injection")
+    assert "shrdlr_crlf_9f2a1c" in hit["evidence"]
 
 
 @pytest.fixture

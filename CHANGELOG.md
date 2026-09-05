@@ -7,6 +7,25 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixes to the OAuth checks' Python/Go parity, found while re-verifying
+  round 4 by hand.** Python's `parse_qs` (default `keep_blank_values=False`)
+  silently drops a blank occurrence of a repeated query param --
+  `?state=&state=real` became just `{"state": ["real"]}`, hiding the
+  blank first value entirely -- while Go's `net/url.Values.Get` returns
+  the first value in the raw list (`""`) regardless. The two engines
+  would have disagreed on whether `oauth-missing-state` fires for that
+  URL. Python now parses with `keep_blank_values=True` and does its own
+  explicit non-empty check, matching Go's semantics exactly (first
+  occurrence decides, blank or not). Separately, Go's authorization-request
+  detection used `q.Has("client_id")` (presence only) while Python
+  required a non-empty value -- `?client_id=&response_type=code` was an
+  authorization request to Go but not to Python; Go now also requires
+  `q.Get("client_id") != ""`. Also added PKCE-awareness to
+  `oauth-missing-state` in both engines: `code_challenge` present
+  downgrades the finding to `low` (PKCE is widely considered adequate
+  CSRF mitigation on its own in modern implementations) instead of
+  treating every state-less request as the same risk as no CSRF
+  protection at all.
 - **New OAuth 2.0/OIDC authorization-request checks, in both engines.**
   `packages/crawler-py/shroodler/extractors/oauth.py` /
   `packages/crawler-go/internal/extractors/oauth.go`: purely passive

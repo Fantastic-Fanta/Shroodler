@@ -27,32 +27,67 @@ def _finding(fid: str, severity: str, url: str, description: str, evidence: str)
     )
 
 
+def _parse_qs(url: str) -> dict[str, list[str]]:
+    # keep_blank_values=True + an explicit non-empty check below, rather
+    # than relying on "key in qs" with the default keep_blank_values=False:
+    # the default silently DROPS a blank occurrence of a repeated param
+    # (?state=&state=real becomes {"state": ["real"]}, hiding the blank
+    # first value entirely) instead of keeping it and reporting the first
+    # one like Go's net/url.Values.Get does -- a real Python/Go parity
+    # divergence caught in review, since the two engines would then
+    # disagree on whether oauth-missing-state fires for that URL.
+    return parse_qs(urlparse(url).query, keep_blank_values=True)
+
+
+def _first(qs: dict[str, list[str]], key: str) -> str:
+    values = qs.get(key) or [""]
+    return values[0]
+
+
 def is_authorization_request(url: str) -> bool:
-    qs = parse_qs(urlparse(url).query)
-    return "response_type" in qs and "client_id" in qs
+    qs = _parse_qs(url)
+    return _first(qs, "response_type") != "" and _first(qs, "client_id") != ""
 
 
 def check_oauth_authorize_url(url: str) -> list[Finding]:
     if not is_authorization_request(url):
         return []
-    qs = parse_qs(urlparse(url).query)
+    qs = _parse_qs(url)
     findings: list[Finding] = []
 
-    state = qs.get("state", [""])[0]
+    state = _first(qs, "state")
     if not state.strip():
+        has_pkce = _first(qs, "code_challenge") != ""
         findings.append(
             _finding(
                 "oauth-missing-state",
-                "medium",
+                # PKCE (code_challenge) binds the authorization code to
+                # the client that started the flow and is widely
+                # considered adequate CSRF mitigation on its own in
+                # modern implementations, so this is downgraded (not
+                # dropped -- state alongside PKCE is still recommended
+                # defense-in-depth per the OAuth Security BCP) rather
+                # than treated as the same risk as no CSRF protection at
+                # all.
+                "low" if has_pkce else "medium",
                 url,
-                "OAuth/OIDC authorization request has no state parameter, which is what "
-                "normally protects the redirect callback against CSRF (an attacker tricking "
-                "a victim into completing the attacker's own OAuth flow)",
+                (
+                    "OAuth/OIDC authorization request has no state parameter, though "
+                    "code_challenge (PKCE) is present -- PKCE mitigates most of the CSRF "
+                    "risk state normally addresses, but state alongside it is still "
+                    "recommended defense-in-depth"
+                    if has_pkce
+                    else
+                    "OAuth/OIDC authorization request has no state parameter and no PKCE "
+                    "(code_challenge), which is what normally protects the redirect callback "
+                    "against CSRF (an attacker tricking a victim into completing the "
+                    "attacker's own OAuth flow)"
+                ),
                 url,
             )
         )
 
-    response_type = qs.get("response_type", [""])[0]
+    response_type = _first(qs, "response_type")
     if response_type == "token":
         findings.append(
             _finding(

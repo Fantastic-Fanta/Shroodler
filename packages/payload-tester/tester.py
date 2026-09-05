@@ -107,6 +107,7 @@ def _clause_matches(
     baseline_body: str = "",
     baseline_elapsed_ms: float | None = None,
     marker_host: str = MARKER_HOST,
+    response_headers: httpx.Headers | None = None,
 ) -> bool:
     if "status_gte" in clause and status >= int(clause["status_gte"]):
         return True
@@ -134,6 +135,17 @@ def _clause_matches(
     if marker is not None:
         needle = str(marker).replace("{{MARKER_HOST}}", marker_host).lower()
         if needle in redirected_to.lower():
+            return True
+    header_needle = clause.get("header_contains")
+    if header_needle is not None and response_headers is not None:
+        # Checks every response header VALUE (not just Location), because
+        # a real HTTP response-splitting bug lands the injected text in
+        # whichever header the client's own HTTP parser happens to split
+        # it into (often an extra Set-Cookie/X-* line, not the header the
+        # vulnerable field was originally building) -- redirected_to_contains
+        # alone only ever sees Location and would miss that.
+        needle = str(header_needle).lower()
+        if any(needle in str(v).lower() for v in response_headers.values()):
             return True
     return False
 
@@ -301,6 +313,7 @@ def run(
                         baseline_body=baseline_body,
                         baseline_elapsed_ms=baseline_elapsed_ms,
                         marker_host=marker_host,
+                        response_headers=resp.headers,
                     ):
                         continue
                     key = (pack_finding_id(pack), action)

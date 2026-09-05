@@ -3,106 +3,153 @@
 # Two independent detection strategies, mirroring the sqli.yaml pattern:
 #
 # 1. Marker echo -- a shell metacharacter chains a second command that
-#    prints a fixed, distinctive string. If that string comes back in the
-#    response body (and wasn't already there for the plain baseline value,
-#    new_only: true), the input reached a shell unescaped. One entry per
-#    common separator/shell so a scanner isn't blind to whichever style the
-#    target's shell/language happens to parse.
-# 2. Blind timing -- the same separators followed by a multi-second sleep.
-#    A response that took meaningfully longer than the baseline for the
-#    *same* field is evidence the delay command actually ran, without
-#    needing to see any output at all (useful when stdout isn't reflected).
-#
-# The marker is a fixed string (not {{TOKEN}}) because match.body_contains
-# is a literal, non-templated needle -- see ssti.yaml's "computed:49" for
-# the same convention.
-- id: cmdi-echo-semicolon
+#    computes and prints a value the RAW, unexecuted payload text does not
+#    itself contain. This is the same "reflection can't fake this" shape
+#    as ssti.yaml's "{{7*7}}" -> "computed:49": the pack sends the literal
+#    text "$((87340006+1))", and only a shell that actually evaluates
+#    arithmetic will ever produce the string "87340007" in the response.
+#    A prior version of this pack matched on the *payload's own literal
+#    text* being echoed back (e.g. payload "; echo MARKER #" matched via
+#    body_contains: "MARKER") -- that's indistinguishable from ordinary
+#    input reflection (the same thing xss.yaml's `reflected: true` packs
+#    detect) and fired on any endpoint that echoes user input at all,
+#    with or without a shell in the loop. Every value a match clause here
+#    looks for must be something only execution, not reflection, produces.
+# 2. Blind timing -- the same separators followed by a sleep. A response
+#    that took meaningfully longer than the baseline for the *same*
+#    field/separator is evidence the delay command actually ran, without
+#    needing to see any output at all (useful when stdout isn't
+#    reflected). This is a SINGLE-SAMPLE timing comparison with no
+#    retry/confirmation, so it's inherently noisier than the marker-echo
+#    checks (a slow endpoint, GC pause, or network hiccup can produce the
+#    same signal) -- severity is `medium`, not `high`, to reflect that,
+#    the same way xxe.yaml's OOB-only check is `medium` rather than
+#    `critical` because it too is unconfirmed by the tool itself. Sleep
+#    duration (4s) is kept well under the payload-tester's 8s per-request
+#    client timeout (see tester.py) so a real hit doesn't get lost to
+#    httpx.TimeoutException before the delay finishes.
+- id: cmdi-arith-semicolon
   finding_id: payload-command-injection
-  payload: "; echo shrdlr-cmdi-9f3a1c #"
+  payload: "; echo shrdlr-cmdi-$((87340006+1)) #"
   severity: high
-  description: Semicolon-chained command's output was echoed back in the response
+  description: >-
+    Semicolon-chained arithmetic expansion was evaluated (not just
+    reflected) in the response, evidence the field reaches an OS shell
   match:
     any:
-      - body_contains: "shrdlr-cmdi-9f3a1c"
+      - body_contains: "shrdlr-cmdi-87340007"
         new_only: true
-- id: cmdi-echo-pipe
+- id: cmdi-arith-pipe
   finding_id: payload-command-injection
-  payload: "| echo shrdlr-cmdi-9f3a1c"
+  payload: "| echo shrdlr-cmdi-$((87340006+1))"
   severity: high
-  description: Pipe-chained command's output was echoed back in the response
+  description: >-
+    Pipe-chained arithmetic expansion was evaluated (not just reflected)
+    in the response, evidence the field reaches an OS shell
   match:
     any:
-      - body_contains: "shrdlr-cmdi-9f3a1c"
+      - body_contains: "shrdlr-cmdi-87340007"
         new_only: true
-- id: cmdi-echo-and
+- id: cmdi-arith-and
   finding_id: payload-command-injection
-  payload: "&& echo shrdlr-cmdi-9f3a1c"
+  payload: "&& echo shrdlr-cmdi-$((87340006+1))"
   severity: high
-  description: "&&-chained command's output was echoed back in the response"
+  description: >-
+    "&&-chained arithmetic expansion was evaluated (not just reflected) in"
+    the response, evidence the field reaches an OS shell
   match:
     any:
-      - body_contains: "shrdlr-cmdi-9f3a1c"
+      - body_contains: "shrdlr-cmdi-87340007"
         new_only: true
-- id: cmdi-echo-backtick
+- id: cmdi-arith-backtick
   finding_id: payload-command-injection
-  payload: "`echo shrdlr-cmdi-9f3a1c`"
+  payload: "`echo shrdlr-cmdi-$((87340006+1))`"
   severity: high
-  description: Backtick command substitution's output was echoed back in the response
+  description: >-
+    Backtick-substituted arithmetic expansion was evaluated (not just
+    reflected) in the response, evidence the field reaches an OS shell
   match:
     any:
-      - body_contains: "shrdlr-cmdi-9f3a1c"
+      - body_contains: "shrdlr-cmdi-87340007"
         new_only: true
-- id: cmdi-echo-dollar-paren
+- id: cmdi-arith-dollar-paren
   finding_id: payload-command-injection
-  payload: "$(echo shrdlr-cmdi-9f3a1c)"
+  payload: "$(echo shrdlr-cmdi-$((87340006+1)))"
   severity: high
-  description: $()-command-substitution output was echoed back in the response
+  description: >-
+    $()-substituted arithmetic expansion was evaluated (not just
+    reflected) in the response, evidence the field reaches an OS shell
   match:
     any:
-      - body_contains: "shrdlr-cmdi-9f3a1c"
+      - body_contains: "shrdlr-cmdi-87340007"
+        new_only: true
+- id: cmdi-arith-windows
+  finding_id: payload-command-injection
+  payload: "& set /a 87340006+1 & echo shrdlr-cmdi-win-done"
+  severity: high
+  description: >-
+    Windows cmd.exe arithmetic (set /a) was evaluated (not just
+    reflected) in the response, evidence the field reaches a cmd.exe shell
+  match:
+    any:
+      # `set /a EXPR` prints the computed result to stdout by itself
+      # (documented cmd.exe behavior) with no prefix, unlike the Unix
+      # variants above where the marker text wraps the computed number --
+      # matching the bare digits is slightly weaker evidence, but an
+      # 8-digit sum is not the kind of string that appears on a page by
+      # coincidence.
+      - body_contains: "87340007"
         new_only: true
 - id: cmdi-time-based-semicolon
   finding_id: payload-command-injection-blind
-  payload: "; sleep 6 #"
-  severity: high
+  payload: "; sleep 4 #"
+  severity: medium
   description: >-
     Semicolon-chained sleep delayed the response by roughly the sleep
-    duration, evidence the field reaches an OS shell even with no output
-    reflected
+    duration -- a single-sample timing signal (no retry/confirmation),
+    consistent with but not proof of blind command injection
   match:
     any:
-      - time_delta_gte_ms: 5000
+      - time_delta_gte_ms: 3000
 - id: cmdi-time-based-pipe
   finding_id: payload-command-injection-blind
-  payload: "| sleep 6"
-  severity: high
-  description: Pipe-chained sleep delayed the response, evidence of blind command injection
+  payload: "| sleep 4"
+  severity: medium
+  description: >-
+    Pipe-chained sleep delayed the response -- a single-sample timing
+    signal, consistent with but not proof of blind command injection
   match:
     any:
-      - time_delta_gte_ms: 5000
+      - time_delta_gte_ms: 3000
 - id: cmdi-time-based-and
   finding_id: payload-command-injection-blind
-  payload: "&& sleep 6"
-  severity: high
-  description: "&&-chained sleep delayed the response, evidence of blind command injection"
+  payload: "&& sleep 4"
+  severity: medium
+  description: >-
+    "&&-chained sleep delayed the response -- a single-sample timing"
+    signal, consistent with but not proof of blind command injection
   match:
     any:
-      - time_delta_gte_ms: 5000
+      - time_delta_gte_ms: 3000
 - id: cmdi-time-based-backtick
   finding_id: payload-command-injection-blind
-  payload: "`sleep 6`"
-  severity: high
-  description: Backtick-substituted sleep delayed the response, evidence of blind command injection
+  payload: "`sleep 4`"
+  severity: medium
+  description: >-
+    Backtick-substituted sleep delayed the response -- a single-sample
+    timing signal, consistent with but not proof of blind command
+    injection
   match:
     any:
-      - time_delta_gte_ms: 5000
+      - time_delta_gte_ms: 3000
 - id: cmdi-time-based-windows
   finding_id: payload-command-injection-blind
-  payload: "& ping -n 7 127.0.0.1 & echo done"
-  severity: high
+  payload: "& ping -n 5 127.0.0.1 & echo done"
+  severity: medium
   description: >-
-    Windows ping-based delay chain delayed the response, evidence of blind
+    Windows ping-based delay chain delayed the response -- a
+    single-sample timing signal, consistent with but not proof of blind
     command injection on a cmd.exe-backed target
   match:
     any:
-      - time_delta_gte_ms: 5000
+      - time_delta_gte_ms: 3000

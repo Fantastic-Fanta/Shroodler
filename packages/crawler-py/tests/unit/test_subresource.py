@@ -81,19 +81,15 @@ def test_empty_body_returns_no_findings():
     assert extract_subresource_findings("", "https://app.example.org/") == []
 
 
-def test_crawl_omits_subresource_findings_by_default(fx):
+def test_crawl_includes_subresource_findings_by_default(fx):
+    # Always-on, unlike an opt-in flag: this is a real check, not a hidden
+    # one nobody would think to enable. shroodler-go doesn't implement it
+    # yet, so packages/parity-tests/run_parity.py excludes the
+    # "subresource" category from its Python/Go comparison instead of this
+    # check being gated behind a flag.
     fx.html(
         "/",
         '<html><head><script src="https://cdn.example.com/lib.js"></script></head></html>',
     )
     result = crawl_url(fx.origin + "/", depth=0)
-    assert "sri-missing" not in {f.id for f in result.findings}
-
-
-def test_crawl_includes_subresource_findings_when_enabled(fx):
-    fx.html(
-        "/",
-        '<html><head><script src="https://cdn.example.com/lib.js"></script></head></html>',
-    )
-    result = crawl_url(fx.origin + "/", depth=0, check_subresources=True)
     assert "sri-missing" in {f.id for f in result.findings}

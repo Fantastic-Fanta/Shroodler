@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from run_parity import compare, finding_set  # noqa: E402
+from run_parity import compare, finding_set
 
 
 def _doc(findings: list[dict]) -> dict:
@@ -31,4 +31,21 @@ def test_compare_flags_severity_regression_even_when_id_and_path_match():
 def test_compare_ok_when_id_path_and_severity_all_match():
     py_doc = _doc([{"id": "exposed-file", "url": "http://x/.git/HEAD", "severity": "high"}])
     go_doc = _doc([{"id": "exposed-file", "url": "http://x/.git/HEAD", "severity": "high"}])
+    assert compare(py_doc, go_doc) == []
+
+
+def test_python_only_category_excluded_from_comparison():
+    # sri-missing/mixed-content (category "subresource") run unconditionally
+    # in crawler-py but have no Go implementation yet -- a Python-only
+    # crawl must not be reported as a parity mismatch just because
+    # shroodler-go never emits this category at all.
+    doc = {
+        "id": "sri-missing",
+        "url": "http://x/",
+        "severity": "low",
+        "category": "subresource",
+    }
+    assert finding_set(_doc([doc])) == set()
+    py_doc = _doc([doc])
+    go_doc = _doc([])
     assert compare(py_doc, go_doc) == []

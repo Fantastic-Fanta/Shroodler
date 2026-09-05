@@ -7,30 +7,48 @@
 # CR/LF byte, percent-encoded by the HTTP client the way a real browser
 # would, exercises whether the target decodes and then unsafely reuses it.
 #
-# `crlf-header-redirect` targets fields that end up echoed into a
-# Location header (the same shape as the open-redirect checks): if the
-# decoded CRLF survives into the Location header unescaped, an attacker
-# could smuggle extra headers or split the response. Detected via the
-# existing redirected_to_contains matcher (already used by the
-# open-redirect pack) -- no new engine code needed. Modern HTTP stacks
-# (Werkzeug, Go net/http, etc.) reject control characters in headers
-# outright, so a miss here is the expected/safe result on most targets;
-# this exists for legacy/custom response-writing code paths that don't.
+# `crlf-header-injection` targets fields that end up echoed into a
+# response header (the same shape as the open-redirect checks' Location
+# field): if the decoded CRLF survives unescaped, an attacker could smuggle
+# an extra header or split the response. Detection uses header_contains,
+# which scans every response header VALUE for the marker -- not just
+# Location. A real split lands the marker wherever the client's own HTTP
+# parser decides the extra header begins (h11 treats a genuine CRLF as a
+# real header terminator, so a successful injection surfaces as an
+# actual extra header/cookie the client parses out, not as literal text
+# stuffed inside Location's own value); checking only
+# redirected_to_contains against Location, as an earlier version of this
+# pack did, would silently miss exactly the vulnerable case it was meant
+# to catch. Modern HTTP stacks (Werkzeug, Go net/http, etc.) reject
+# control characters in headers outright before this ever reaches the
+# wire, so a miss here is the expected/safe result on most targets; this
+# exists for legacy/custom response-writing code paths that don't.
 #
 # `crlf-reflected-raw` is a much weaker, body-reflection-only signal (like
 # sqli.yaml's status-change check): the decoded CRLF sequence came back
 # unescaped in the body itself, which doesn't prove header injection but
-# does show the input isn't being HTML/URL-encoded at all.
-- id: crlf-header-redirect
+# does show the input isn't being HTML/URL-encoded at all. A second entry
+# covers targets that strip \r but pass a bare \n through unfiltered.
+- id: crlf-header-injection-crlf
   finding_id: payload-crlf-header-injection
-  payload: "/shrdlr\r\nX-Shrdlr-Crlf: 1\r\nSet-Cookie: shrdlr_crlf=1"
+  payload: "/shrdlr\r\nX-Shrdlr-Crlf-Marker: shrdlr_crlf_9f2a1c"
   severity: high
   description: >-
-    Unescaped CRLF sequence survived into a Location header, evidence the
-    field could be used to inject/split HTTP response headers
+    Unescaped CRLF sequence caused an injected header to appear in the
+    response, evidence the field could be used to split HTTP responses
   match:
     any:
-      - redirected_to_contains: "shrdlr_crlf"
+      - header_contains: "shrdlr_crlf_9f2a1c"
+- id: crlf-header-injection-lf-only
+  finding_id: payload-crlf-header-injection
+  payload: "/shrdlr\nX-Shrdlr-Crlf-Marker: shrdlr_crlf_lf_7b3d"
+  severity: high
+  description: >-
+    A bare LF (no CR) alone caused an injected header to appear in the
+    response -- some frameworks filter \r but pass \n through unfiltered
+  match:
+    any:
+      - header_contains: "shrdlr_crlf_lf_7b3d"
 - id: crlf-reflected-raw
   finding_id: payload-crlf-reflected
   payload: "shrdlr-crlf-probe\r\nX-Shrdlr-Crlf-Test: 1"

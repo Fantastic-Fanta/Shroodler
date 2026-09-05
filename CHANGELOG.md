@@ -10,26 +10,34 @@ work that produced them rather than tags.
 - **New active-payload packs: OS command injection and CRLF/HTTP header
   injection.** Pure YAML additions (`packs/command-injection.yaml`,
   `packs/crlf-injection.yaml`) consumed by both engines' existing generic
-  pack loader/matcher, so no engine code changed and there's no parity
-  risk. Command injection has both a marker-echo variant (fast,
-  deterministic, exercised end-to-end against app5-injectable) and a
-  blind/timing variant across `;`/`|`/`&&`/backtick/`$()`/Windows-`ping`
-  separators using the pack engine's `time_delta_gte_ms` matcher, which
-  existed and was unit-tested but had no real pack using it until now.
-  CRLF adds a `redirected_to_contains`-based header-injection check (a
-  clean miss against any spec-compliant server that rejects control
-  characters in headers, which is the expected/safe result) plus a
-  weaker body-reflection-only signal.
-- **`--check-subresources` (Python-only, off by default): missing
-  Subresource Integrity and mixed content.** Flags cross-origin
-  `<script>`/`<link rel=stylesheet>` tags without an `integrity=`
-  attribute, and HTTPS pages loading `http://` subresources. Gated behind
-  an explicit flag rather than always-on (unlike the other passive
-  extractors in `crawler-py`) specifically because `shroodler-go` doesn't
-  implement it yet and `packages/parity-tests/run_parity.py` compares the
-  two engines' *default* crawl output -- an always-on Python-only check
-  would have silently broken that gate the next time a target happened to
-  have a qualifying tag.
+  pack loader/matcher. Command injection uses shell arithmetic markers
+  (`$((87340006+1))` -> `87340007`) so a match can only come from actual
+  execution, not from an endpoint that merely echoes its input back (an
+  earlier version of this pack matched on the payload's own literal text,
+  which is exactly what ordinary reflection also does -- fixed after
+  review, along with the app5-injectable test fixture that had
+  accidentally "proven" the broken version via reflection rather than
+  execution); a separate, lower-confidence blind/timing variant uses the
+  pack engine's `time_delta_gte_ms` matcher (`medium` severity, since a
+  single unconfirmed timing sample can false-positive on ordinary
+  network/GC jitter). CRLF adds a new shared match-clause type,
+  `header_contains` (ported to both the Python and Go payload engines,
+  with tests on both sides), which scans every response header's value
+  rather than only `Location` -- a real response-split lands the injected
+  text wherever the HTTP client's own parser splits it out (often an
+  extra header/cookie line), which `redirected_to_contains` alone cannot
+  see.
+- **Subresource Integrity and mixed-content checks, always on in
+  crawler-py.** Flags cross-origin `<script>`/`<link rel=stylesheet>`
+  tags without an `integrity=` attribute, and HTTPS pages loading
+  `http://` subresources. `shroodler-go` doesn't implement this yet, so
+  rather than hide it behind an opt-in flag nobody would think to enable
+  (the initial version of this change did exactly that, to protect
+  `packages/parity-tests/run_parity.py`'s Python/Go comparison), the
+  "subresource" finding category is instead excluded from that
+  comparison directly -- the check runs by default like every other
+  passive extractor, and the parity gate stays honest about which
+  category is Python-only instead of the feature being invisible.
 - **Reports now carry remediation guidance per finding**
   (`packages/report-generator/remediation.py`). HTML and Markdown output
   gets a one-line fix suggestion per finding id, with a category-level

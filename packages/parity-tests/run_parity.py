@@ -19,12 +19,25 @@ def path_set(doc: dict) -> set[str]:
     return {urlparse(p["url"]).path for p in doc.get("pages", [])}
 
 
+#: Categories known to be Python-only, checked on every crawl (unlike an
+#: opt-in flag, which would just never appear in this comparison). "subresource"
+#: (SRI/mixed-content) has no Go implementation yet -- excluded here rather
+#: than gated behind a flag so the check actually runs by default instead of
+#: being invisible to users who'd never think to enable it. If shroodler-go
+#: gains this check, remove it from here rather than leaving a stale exclusion.
+PYTHON_ONLY_CATEGORIES = {"subresource"}
+
+
 def finding_set(doc: dict) -> set[tuple[str, str, str]]:
     # Includes severity: an engine silently regressing a finding's severity
     # (e.g. a real vulnerability downgraded to "info") would previously pass
     # parity as long as the (id, path) pair still matched, since severity
     # was never compared.
-    return {(f["id"], urlparse(f["url"]).path, f["severity"]) for f in doc.get("findings", [])}
+    return {
+        (f["id"], urlparse(f["url"]).path, f["severity"])
+        for f in doc.get("findings", [])
+        if f.get("category") not in PYTHON_ONLY_CATEGORIES
+    }
 
 
 def run(bin_path: Path, target: str, dest: Path) -> dict:

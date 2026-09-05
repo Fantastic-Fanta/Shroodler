@@ -169,6 +169,18 @@ func TestNewClauseTypes(t *testing.T) {
 	if !clauseMatches(redirect, 200, "", "x", matchCtx{redirectedTo: "https://evil.test/x"}) {
 		t.Fatal("expected redirected_to_contains to match")
 	}
+
+	header := Clause{HeaderContains: "shrdlr_crlf_marker"}
+	headersWithMarker := http.Header{
+		"Location":            []string{"/shrdlr"},
+		"X-Shrdlr-Crlf-Extra": []string{"shrdlr_crlf_marker"},
+	}
+	if !clauseMatches(header, 302, "", "x", matchCtx{headers: headersWithMarker}) {
+		t.Fatal("expected header_contains to match a marker in a non-Location header")
+	}
+	if clauseMatches(header, 302, "", "x", matchCtx{headers: http.Header{"Location": []string{"/shrdlr"}}}) {
+		t.Fatal("header_contains should not match when the marker is absent from every header")
+	}
 }
 
 func TestRenderPayloadTokenAndMarker(t *testing.T) {

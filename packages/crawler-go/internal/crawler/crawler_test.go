@@ -1400,3 +1400,72 @@ func TestSitewideChallengeEscalation(t *testing.T) {
 		t.Fatalf("expected pages_challenged >= 3, got %#v", res.Stats)
 	}
 }
+
+func TestRecoveredChallengePageStillDiscoversLinks(t *testing.T) {
+	var rootHits int
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		rootHits++
+		if rootHits == 1 {
+			http.SetCookie(w, &http.Cookie{Name: "cf_clearance", Value: "abc"})
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Just a moment..."))
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<a href="/discovered-child">child</a>`))
+	})
+	mux.HandleFunc("/discovered-child", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("child page"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 2, IgnoreRobots: true, NoSitemap: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, p := range res.Pages {
+		if urls.PathOf(p.URL) == "/discovered-child" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected the recovered page's link to be discovered and crawled: %#v", res.Pages)
+	}
+}
+
+func TestCommonPathProbeReportsChallengeInsteadOfSilentlyDropping(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/.git/HEAD" {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			w.Write([]byte("Just a moment..."))
+			return
+		}
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Write([]byte("home"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 0, IgnoreRobots: true, NoSitemap: true, MaxPages: 500})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.Category == "waf-challenge" && strings.HasSuffix(f.URL, "/.git/HEAD") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected a waf-challenge finding for the common-path probe hit, not silent drop")
+	}
+}

@@ -217,7 +217,8 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
 		}
 		page, f, eps := pageFrom(res, rules, fetchForSourceMap)
-		if hasFindingCategory(f, "waf-challenge") && extractors.HasChallengeCookie(res.SetCookies) {
+		if hasFindingCategory(f, "waf-challenge") && extractors.HasChallengeCookie(res.SetCookies) &&
+			budgetHit(cfg, t0, len(pages)) == "" {
 			// The challenge response itself set a cookie the vendor's flow
 			// normally checks for on the next request (e.g. Cloudflare's
 			// cf_clearance) -- the client's cookie jar already has it, so
@@ -314,12 +315,16 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			continue
 		}
 		res := fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
-		if res.Status != 200 || isSoft404(baseline, res) {
-			continue
-		}
+		// Checked before the status-code gate below: a 403/503 challenge
+		// response would otherwise be silently treated as "not found" and
+		// never reported (weak/cookie signatures only fire on 403/503, so
+		// they'd never be reached past a status-based continue).
 		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status, res.SetCookies); challenge != nil {
 			challenge.URL = u
 			findings = append(findings, *challenge)
+			continue
+		}
+		if res.Status != 200 || isSoft404(baseline, res) {
 			continue
 		}
 		seen[key] = true
@@ -346,12 +351,12 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			continue
 		}
 		res := fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
-		if res.Status != 200 || isSoft404(baseline, res) {
-			continue
-		}
 		if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status, res.SetCookies); challenge != nil {
 			challenge.URL = u
 			findings = append(findings, *challenge)
+			continue
+		}
+		if res.Status != 200 || isSoft404(baseline, res) {
 			continue
 		}
 		seen[key] = true
@@ -509,7 +514,7 @@ func sitewideChallengeFinding(start string, pagesChallenged, totalPages int, hit
 	ev := fmt.Sprintf("%d/%d pages challenged", pagesChallenged, totalPages)
 	return &models.Finding{
 		ID:          "waf-challenge-sitewide",
-		Severity:    "high",
+		Severity:    "medium",
 		Category:    "waf-challenge",
 		URL:         start,
 		Description: desc,

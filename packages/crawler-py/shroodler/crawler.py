@@ -212,7 +212,7 @@ class Crawler:
             result = self._fetch_with_retries(url, t0)
             if result.status_code != 200 and is_probe_url(url):
                 continue
-            page, page_findings, page_eps = self._page_from_result(result)
+            page, page_findings, page_eps, result = self._page_from_result(result, t0)
             pages.append(page)
             findings.extend(page_findings)
             js_endpoints.extend(page_eps)
@@ -466,28 +466,35 @@ class Crawler:
         return last
 
     def _page_from_result(
-        self, result: FetchResult
-    ) -> tuple[Page, list[Finding], list[JsEndpoint]]:
+        self, result: FetchResult, t0: float | None = None
+    ) -> tuple[Page, list[Finding], list[JsEndpoint], FetchResult]:
         page, findings, endpoints = page_from_fetch(result)
         is_challenge = any(f.category == "waf-challenge" for f in findings)
-        if is_challenge and has_challenge_cookie(result.set_cookies):
+        if (
+            is_challenge
+            and has_challenge_cookie(result.set_cookies)
+            and (t0 is None or self._budget_hit(t0, 0) != "max-time")
+        ):
             # The challenge response itself set a cookie the vendor's flow
             # normally checks for on the next request (e.g. Cloudflare's
             # cf_clearance) -- the client's cookie jar already has it, so one
             # same-URL retry may already be enough to get past a *transient*
             # challenge. Still detection-only: this never solves anything,
             # it just avoids treating a one-off hiccup as a durable block.
+            # The recovered result is returned to the caller too, so every
+            # downstream decision (redirects, spec/link discovery) sees the
+            # real page instead of the stale challenge response.
             retry_result = self.fetcher.fetch(result.url)
             retry_page, retry_findings, retry_endpoints = page_from_fetch(retry_result)
             if not any(f.category == "waf-challenge" for f in retry_findings):
-                return retry_page, retry_findings, retry_endpoints
+                return retry_page, retry_findings, retry_endpoints, retry_result
         if not is_challenge and result.text and (
             "javascript" in _content_type(result.headers) or result.url.endswith(".js")
         ):
             map_eps, map_findings = self._from_source_map(result.url, result.text)
             endpoints = list(endpoints) + map_eps
             findings = list(findings) + map_findings
-        return page, findings, endpoints
+        return page, findings, endpoints, result
 
     def _from_source_map(self, js_url: str, js_text: str) -> tuple[list[JsEndpoint], list[Finding]]:
         spec = source_mapping_url(js_text)
@@ -603,7 +610,7 @@ def _sitewide_challenge_finding(
     vendor_text = ", ".join(vendors) if vendors else "a WAF/bot-mitigation vendor"
     return Finding(
         id="waf-challenge-sitewide",
-        severity="high",
+        severity="medium",
         category="waf-challenge",
         url=seed,
         description=(

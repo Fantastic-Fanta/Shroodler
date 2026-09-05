@@ -41,6 +41,7 @@ from shroodler.extractors.idor import probe_idor
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.links import extract_css_urls, extract_links
+from shroodler.extractors.oauth import check_oauth_authorize_url
 from shroodler.extractors.openapi import is_probe_url, probe_urls, urls_from_spec
 from shroodler.extractors.rate_limit import check_rate_limits
 from shroodler.extractors.secrets import scan_text
@@ -600,6 +601,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
     secret_findings = scan_text(result.text, result.url)
     jwt_findings = audit_jwts(result.text, result.url)
     markup_findings = extract_html_markup(result.text, result.url)
+    oauth_findings = check_oauth_authorize_url(result.url)
     subresource_findings = extract_subresource_findings(result.text, result.url)
     page = Page(
         url=result.url,
@@ -618,6 +620,7 @@ def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEn
         + secret_findings
         + jwt_findings
         + markup_findings
+        + oauth_findings
         + subresource_findings
         + ep_findings
     )

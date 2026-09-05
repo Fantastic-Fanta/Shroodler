@@ -623,6 +623,7 @@ func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchRe
 	sf := extractors.ScanSecrets(res.Body, res.URL, rules)
 	jf := extractors.AuditJWTsInText(res.Body, res.URL)
 	mf := extractors.ExtractHTMLMarkup(res.Body, res.URL, rules)
+	mf = append(mf, extractors.CheckOAuthAuthorizeURL(res.URL)...)
 	var eps []models.JSEndpoint
 	ctype := strings.ToLower(header(res.Headers, "content-type"))
 	isJS := strings.Contains(ctype, "javascript") || strings.HasSuffix(res.URL, ".js")

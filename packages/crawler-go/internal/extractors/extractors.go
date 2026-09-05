@@ -24,6 +24,11 @@ var (
 	pageQuery   = regexp.MustCompile(`(?i)(?:^|&)page=\d+`)
 	fetchStr    = regexp.MustCompile(`fetch\(\s*['"]([^'"]+)['"]`)
 	fetchTpl    = regexp.MustCompile("fetch\\(\\s*`([^`$]+)`")
+	xhrCall     = regexp.MustCompile(`(?:axios|request)\(\s*['"]([^'"]+)['"]`)
+	axiosMethod = regexp.MustCompile(`axios\.(?:get|post|put|patch|delete|head|options)\(\s*['"]([^'"]+)['"]`)
+	jqueryShort = regexp.MustCompile(`\$\.(?:get|post|getJSON)\(\s*['"]([^'"]+)['"]`)
+	jqueryAjax  = regexp.MustCompile(`(?s)\$\.ajax\(\s*\{[^}]*?url\s*:\s*['"]([^'"]+)['"]`)
+	xhrOpen     = regexp.MustCompile(`\.open\(\s*['"]\w+['"]\s*,\s*['"]([^'"]+)['"]`)
 	wsNewStr    = regexp.MustCompile(`new\s+WebSocket\(\s*['"]([^'"]+)['"]`)
 	wsNewTpl    = regexp.MustCompile("new\\s+WebSocket\\(\\s*`([^`$]+)`")
 	esNewStr    = regexp.MustCompile(`new\s+EventSource\(\s*['"]([^'"]+)['"]`)
@@ -594,7 +599,10 @@ func ExtractJSEndpoints(source, js string) []models.JSEndpoint {
 		seen[ep] = true
 		out = append(out, models.JSEndpoint{Source: source, Endpoint: ep})
 	}
-	for _, re := range []*regexp.Regexp{fetchStr, fetchTpl, wsNewStr, wsNewTpl, esNewStr, esNewTpl, wsLitStr, wsLitTpl} {
+	for _, re := range []*regexp.Regexp{
+		fetchStr, fetchTpl, xhrCall, axiosMethod, jqueryShort, jqueryAjax, xhrOpen,
+		wsNewStr, wsNewTpl, esNewStr, esNewTpl, wsLitStr, wsLitTpl,
+	} {
 		for _, m := range re.FindAllStringSubmatch(js, -1) {
 			add(m[1])
 		}

@@ -157,6 +157,28 @@ def test_single_redirect_and_chain(fx):
     assert {"/r1", "/r2", "/r3", "/r4", "/r5", "/r6"} <= _paths(chain)
 
 
+def test_long_redirect_chain_of_distinct_urls_is_truncated_with_finding(fx):
+    # Each hop lands on a brand-new URL (never revisited), so the `seen`
+    # set alone cannot stop this chain -- only real per-chain depth
+    # tracking can. Regression test for a bug where the old per-key
+    # redirect counter could never exceed 1 (each key is only ever
+    # processed once), making --max-redirects a no-op.
+    def redir(to: str):
+        return lambda _r: (302, {"Location": to}, b"")
+
+    n = 20
+    for i in range(n):
+        fx.route(f"/chain-{i}", redir(f"/chain-{i + 1}"))
+    fx.html(f"/chain-{n}", "end")
+
+    result = crawl_url(fx.origin + "/chain-0", depth=50, max_pages=100, max_redirects=10)
+    paths = _paths(result)
+    assert f"/chain-{n}" not in paths
+    assert len(paths) <= 12  # chain-0 fetched + up to max_redirects follow-ons
+    truncated = [f for f in result.findings if f.id == "redirect-chain-truncated"]
+    assert len(truncated) == 1
+
+
 def test_redirect_loop_stops(fx):
     fx.route("/loop-a", lambda _r: (302, {"Location": "/loop-b"}, b""))
     fx.route("/loop-b", lambda _r: (302, {"Location": "/loop-a"}, b""))

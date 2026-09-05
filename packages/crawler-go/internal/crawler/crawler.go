@@ -217,6 +217,13 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		}
 	}
 	family := map[string]int{}
+	// Tracks how many redirect hops it took to reach a given (not-yet-
+	// fetched) URL, keyed by its canonical key, so a long or endlessly
+	// bouncing redirect chain (each hop landing on a distinct URL, e.g. a
+	// token/nonce in the query string) gets truncated with a visible
+	// finding instead of silently eating page-budget slots one hop at a
+	// time until MaxPages/MaxTime happens to run out.
+	redirectChainDepth := map[string]int{}
 	var pages []models.Page
 	findings := append([]models.Finding{}, sessionFindings...)
 	var endpoints []models.JSEndpoint
@@ -291,7 +298,24 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 
 		if res.RedirectTo != "" {
 			loc := resolve(res.URL, res.RedirectTo)
-			if urls.SameOrigin(loc, start) && !seen[urls.CanonicalKey(loc)] {
+			depthSoFar := redirectChainDepth[key] + 1
+			if depthSoFar > cfg.MaxRedirects {
+				ev := "redirecting to " + loc
+				findings = append(findings, models.Finding{
+					ID:       "redirect-chain-truncated",
+					Severity: "info",
+					Category: "scan-note",
+					URL:      res.URL,
+					Description: fmt.Sprintf(
+						"Redirect chain exceeded %d hops and was not followed further -- "+
+							"content beyond this point was not crawled. This may be an "+
+							"infinite/looping redirect, or a chain longer than expected.",
+						cfg.MaxRedirects,
+					),
+					Evidence: &ev,
+				})
+			} else if urls.SameOrigin(loc, start) && !seen[urls.CanonicalKey(loc)] {
+				redirectChainDepth[urls.CanonicalKey(loc)] = depthSoFar
 				queue = append(queue, item{loc, it.depth})
 			}
 		}

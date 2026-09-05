@@ -19,8 +19,12 @@ def path_set(doc: dict) -> set[str]:
     return {urlparse(p["url"]).path for p in doc.get("pages", [])}
 
 
-def finding_set(doc: dict) -> set[tuple[str, str]]:
-    return {(f["id"], urlparse(f["url"]).path) for f in doc.get("findings", [])}
+def finding_set(doc: dict) -> set[tuple[str, str, str]]:
+    # Includes severity: an engine silently regressing a finding's severity
+    # (e.g. a real vulnerability downgraded to "info") would previously pass
+    # parity as long as the (id, path) pair still matched, since severity
+    # was never compared.
+    return {(f["id"], urlparse(f["url"]).path, f["severity"]) for f in doc.get("findings", [])}
 
 
 def run(bin_path: Path, target: str, dest: Path) -> dict:

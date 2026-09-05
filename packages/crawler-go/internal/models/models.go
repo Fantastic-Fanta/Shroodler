@@ -58,10 +58,11 @@ type JSEndpoint struct {
 }
 
 type CrawlStats struct {
-	PagesCrawled  int    `json:"pages_crawled"`
-	Requests      int    `json:"requests"`
-	ElapsedMs     int64  `json:"elapsed_ms"`
-	StoppedReason string `json:"stopped_reason"`
+	PagesCrawled    int    `json:"pages_crawled"`
+	PagesChallenged int    `json:"pages_challenged"`
+	Requests        int    `json:"requests"`
+	ElapsedMs       int64  `json:"elapsed_ms"`
+	StoppedReason   string `json:"stopped_reason"`
 }
 
 type CrawlResult struct {

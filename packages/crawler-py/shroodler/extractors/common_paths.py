@@ -154,6 +154,12 @@ def probe_soft_404_baseline(origin: str, fetcher: StaticFetcher) -> Soft404Basel
     )
 
 
+# Below this baseline body size, a fixed byte-count tolerance window would
+# cover a large fraction of the whole page, silently suppressing genuinely
+# different small pages -- require an exact hash match instead.
+_MIN_LENGTH_FOR_WINDOW = 200
+
+
 def _is_soft_404(baseline: Soft404Baseline | None, result: FetchResult) -> bool:
     if baseline is None or baseline.status_code != result.status_code:
         return False
@@ -163,9 +169,9 @@ def _is_soft_404(baseline: Soft404Baseline | None, result: FetchResult) -> bool:
     # Same status and near-identical length (templated page with a few
     # dynamic bytes, e.g. a timestamp or nonce) -- conservative window to
     # avoid merging genuinely different small pages.
-    if baseline.length > 0:
+    if baseline.length >= _MIN_LENGTH_FOR_WINDOW:
         delta = abs(len(body) - baseline.length)
-        if delta <= max(24, int(baseline.length * 0.02)):
+        if delta <= int(baseline.length * 0.02):
             return True
     return False
 
@@ -199,16 +205,21 @@ def _record_hit(
     )
 
 
+_UNSET = object()
+
+
 def probe_paths(
     origin: str,
     fetcher: StaticFetcher,
     already: set[str],
     remaining: int | None = None,
     deadline: float | None = None,
+    baseline: Soft404Baseline | None | object = _UNSET,
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []
-    baseline = probe_soft_404_baseline(origin, fetcher)
+    if baseline is _UNSET:
+        baseline = probe_soft_404_baseline(origin, fetcher)
     for path in load_paths():
         if remaining is not None and len(pages) >= remaining:
             break
@@ -244,10 +255,12 @@ def probe_mutations(
     discovered: list[str],
     remaining: int | None = None,
     deadline: float | None = None,
+    baseline: Soft404Baseline | None | object = _UNSET,
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []
-    baseline = probe_soft_404_baseline(origin, fetcher)
+    if baseline is _UNSET:
+        baseline = probe_soft_404_baseline(origin, fetcher)
     for path in mutation_paths(discovered):
         if remaining is not None and len(pages) >= remaining:
             break

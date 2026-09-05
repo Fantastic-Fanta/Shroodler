@@ -83,6 +83,7 @@ class JsEndpoint(BaseModel):
 
 class CrawlStats(BaseModel):
     pages_crawled: int = 0
+    pages_challenged: int = 0
     requests: int = 0
     elapsed_ms: int = 0
     stopped_reason: StoppedReason = "complete"

@@ -1,5 +1,7 @@
 <script>
   export let name = "";
+  let extraClass = "";
+  export { extraClass as class };
 
   const icons = {
     scan: `<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><line x1="12" y1="2" x2="12" y2="5"/>`,
@@ -22,10 +24,11 @@
     check: `<polyline points="4,12 9,17 20,6"/>`,
     "sort-asc": `<polyline points="6,14 12,8 18,14"/>`,
     chevron: `<polyline points="9,6 15,12 9,18"/>`,
+    logo: `<path d="M12 2.5 L19.5 5.5 V11.5 C19.5 16.5 16.3 20 12 21.5 C7.7 20 4.5 16.5 4.5 11.5 V5.5 Z"/><circle cx="10.5" cy="10.5" r="3"/><line x1="12.8" y1="12.8" x2="15" y2="15"/>`,
   };
 </script>
 
-<span class="icon" aria-hidden="true">
+<span class="icon {extraClass}" aria-hidden="true">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
     {@html icons[name] || ""}
   </svg>

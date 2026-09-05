@@ -46,6 +46,16 @@
   let showSuppressed = false;
   let filterSev = "all";
   let sortKey = "severity";
+  let sortDir = "asc";
+
+  function toggleSort(key) {
+    if (sortKey === key) {
+      sortDir = sortDir === "asc" ? "desc" : "asc";
+    } else {
+      sortKey = key;
+      sortDir = "asc";
+    }
+  }
   let history = [];
   let outputPath = "";
   let error = "";
@@ -60,6 +70,8 @@
   let bpMethod = "GET";
   let bpPattern = ".*";
   let bpStage = "request";
+  let activeBreakpoint = null;
+  let activeAutoResponderRules = null;
   let paused = [];
   let secretHits = [];
   let arYaml =
@@ -74,6 +86,31 @@
   let sessStatus = "all";
   let sessUrl = "";
   let curlCopied = false;
+  let exportMenuOpen = false;
+  let advancedOpen = false;
+
+  function focusOnMount(node) {
+    node.focus();
+  }
+
+  function activateOnKey(e, fn) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      fn();
+    }
+  }
+
+  function clickOutside(node, callback) {
+    const handler = (e) => {
+      if (!node.contains(e.target)) callback();
+    };
+    document.addEventListener("mousedown", handler, true);
+    return {
+      destroy() {
+        document.removeEventListener("mousedown", handler, true);
+      },
+    };
+  }
   let curlCopiedTimer;
 
   const views = [
@@ -88,10 +125,10 @@
     { value: "static", label: "static" },
     { value: "headless", label: "headless" },
   ];
-  const methodOpts = [
-    { value: "GET", label: "GET" },
-    { value: "POST", label: "POST" },
-  ];
+  const methodOpts = ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"].map((m) => ({
+    value: m,
+    label: m,
+  }));
   const stageOpts = [
     { value: "request", label: "request" },
     { value: "response", label: "response" },
@@ -111,8 +148,11 @@
       (f) => showSuppressed || !isSuppressed(f, suppressions),
     ),
     sortKey,
-    "asc",
+    sortDir,
   );
+  $: if (selected && !visible.includes(selected)) {
+    selected = null;
+  }
   $: siteMap = buildSiteMap(pages, findings, sessions);
   $: mapRows = siteMap.flatMap((h) =>
     flattenTree(h.tree).map((n) => ({ ...n, origin: h.origin })),
@@ -298,6 +338,18 @@
     ];
   }
 
+  function unsuppressSelected() {
+    if (!selected) return;
+    const path = (() => {
+      try {
+        return new URL(selected.url).pathname || "/";
+      } catch {
+        return selected.url || "*";
+      }
+    })();
+    suppressions = suppressions.filter((s) => !(s.id === selected.id && s.url === path));
+  }
+
   function pickNode(row) {
     selectedNode = row;
     if (row.findings?.length) {
@@ -353,14 +405,25 @@
   }
 
   function setBreakpoints() {
-    sendWs({
-      type: "set_breakpoints",
-      rules: [{ method: bpMethod, url_pattern: bpPattern, stage: bpStage }],
-    });
+    const rule = { method: bpMethod, url_pattern: bpPattern, stage: bpStage };
+    sendWs({ type: "set_breakpoints", rules: [rule] });
+    activeBreakpoint = rule;
+  }
+
+  function clearBreakpoints() {
+    sendWs({ type: "set_breakpoints", rules: [] });
+    activeBreakpoint = null;
   }
 
   function applyAutoResponder() {
-    sendWs({ type: "set_autoresponder_rules", rules: parseAutoResponderYaml(arYaml) });
+    const rules = parseAutoResponderYaml(arYaml);
+    sendWs({ type: "set_autoresponder_rules", rules });
+    activeAutoResponderRules = rules.length ? rules : null;
+  }
+
+  function clearAutoResponder() {
+    sendWs({ type: "set_autoresponder_rules", rules: [] });
+    activeAutoResponderRules = null;
   }
 
   function composeSend() {
@@ -500,10 +563,50 @@
 
 <div class="shell" class:has-banner={!!error}>
   <div class="titlebar">
-    <div class="wordmark">Shroodler</div>
+    <div class="wordmark"><Icon name="logo" /><span>Shroodler</span></div>
     <div class="title-meta">
       {#if scanning}<span class="live">Crawling</span>{/if}
       {#if proxyOn}<span class="live">Capturing</span>{/if}
+      {#if activeBreakpoint}
+        <button
+          type="button"
+          class="ca-chip"
+          on:click={() => {
+            view = "compose";
+            composePane = "breakpoints";
+          }}
+          title={`Breakpoint active: ${activeBreakpoint.method} ${activeBreakpoint.url_pattern} (${activeBreakpoint.stage})`}
+        >
+          <Icon name="shield-off" />
+          <span>Breakpoint active</span>
+        </button>
+      {/if}
+      {#if activeAutoResponderRules}
+        <button
+          type="button"
+          class="ca-chip"
+          on:click={() => {
+            view = "compose";
+            composePane = "autoresponder";
+          }}
+          title={`AutoResponder active: ${activeAutoResponderRules.length} rule(s) mocking matching requests`}
+        >
+          <Icon name="shield-off" />
+          <span>AutoResponder active</span>
+        </button>
+      {/if}
+      <button
+        type="button"
+        class="ca-chip"
+        class:on={caInstalled}
+        on:click={() => openCa(caInstalled ? "uninstall" : "install")}
+        title={caInstalled
+          ? "Shroodler root CA is trusted on this machine."
+          : "HTTPS interception is unavailable — the Shroodler root CA is not trusted on this machine."}
+      >
+        <Icon name={caInstalled ? "shield" : "shield-off"} />
+        <span>{caInstalled ? "CA trusted" : "CA untrusted"}</span>
+      </button>
     </div>
   </div>
 
@@ -518,23 +621,51 @@
         <button class="btn btn-primary" on:click={startScan}><Icon name="play" />Scan</button>
       {/if}
       <button class="btn btn-ghost" class:on={viaProxy} on:click={() => (viaProxy = !viaProxy)}><Icon name="plug" />Via proxy</button>
-      <button
-        class="btn btn-ghost"
-        class:on={useCookies}
-        disabled={!cookieHeader}
-        on:click={() => (useCookies = !useCookies)}>Cookies</button
-      >
-      <button
-        class="btn btn-ghost"
-        class:on={seedFromProxy}
-        disabled={!seedUrls.length}
-        on:click={() => (seedFromProxy = !seedFromProxy)}>Seeds</button
-      >
+      {#if cookieHeader}
+        <button class="btn btn-ghost" class:on={useCookies} on:click={() => (useCookies = !useCookies)}>Cookies</button>
+      {/if}
+      {#if seedUrls.length}
+        <button class="btn btn-ghost" class:on={seedFromProxy} on:click={() => (seedFromProxy = !seedFromProxy)}>Seeds</button>
+      {/if}
       <label class="btn file-btn"><Icon name="upload" />Load JSON<input type="file" accept=".json,.yaml,.yml,.shroodlerignore,application/json" on:change={loadFile} /></label>
       {#if view === "map" || view === "findings"}
-        <button class="btn" on:click={saveBaseline} disabled={!pages.length && !findings.length}><Icon name="download-cloud" />Baseline</button>
-        <button class="btn" on:click={exportSarif} disabled={!findings.length}><Icon name="download-cloud" />SARIF</button>
-        <button class="btn" on:click={exportJunit} disabled={!findings.length}><Icon name="download-cloud" />JUnit</button>
+        <div class="menu-wrap" use:clickOutside={() => (exportMenuOpen = false)}>
+          <button
+            class="btn"
+            disabled={!pages.length && !findings.length}
+            title={!pages.length && !findings.length ? "Run a scan or load a crawl document first" : ""}
+            on:click={() => (exportMenuOpen = !exportMenuOpen)}
+            ><Icon name="download-cloud" />Export<Icon name="chevron" class="caret" /></button
+          >
+          {#if exportMenuOpen}
+            <div class="menu">
+              <button
+                class="menu-item"
+                disabled={!pages.length && !findings.length}
+                on:click={() => {
+                  saveBaseline();
+                  exportMenuOpen = false;
+                }}>Baseline JSON</button
+              >
+              <button
+                class="menu-item"
+                disabled={!findings.length}
+                on:click={() => {
+                  exportSarif();
+                  exportMenuOpen = false;
+                }}>SARIF</button
+              >
+              <button
+                class="menu-item"
+                disabled={!findings.length}
+                on:click={() => {
+                  exportJunit();
+                  exportMenuOpen = false;
+                }}>JUnit XML</button
+              >
+            </div>
+          {/if}
+        </div>
       {/if}
     {:else if view === "diff"}
       <Select
@@ -554,14 +685,23 @@
         disabled={!history.length}
         options={histOpts}
       />
-      <button class="btn btn-primary" on:click={runDiff}>Compare</button>
+      <button
+        class="btn btn-primary"
+        on:click={runDiff}
+        disabled={!baseId || !compareId}
+        title={!baseId || !compareId ? "Pick a baseline and compare scan first" : ""}
+        >Compare</button
+      >
     {:else if view === "proxy"}
       <button class="btn btn-primary" on:click={connectProxy} disabled={proxyOn}
         ><Icon name="plug" />{proxyOn ? "Listening" : "Start proxy"}</button
       >
       <button class="btn" on:click={ingestCaptured} disabled={!sessions.length}><Icon name="upload" />Ingest findings</button>
-      <button class="btn" on:click={() => openCa("install")}><Icon name="shield" />Install CA</button>
-      <button class="btn" on:click={() => openCa("uninstall")}><Icon name="shield-off" />Uninstall CA</button>
+      {#if caInstalled}
+        <button class="btn" on:click={() => openCa("uninstall")}><Icon name="shield-off" />Uninstall CA</button>
+      {:else}
+        <button class="btn" on:click={() => openCa("install")}><Icon name="shield" />Install CA</button>
+      {/if}
       {#if paused.length}
         <span class="subcmd-label">{paused.length} paused</span>
       {/if}
@@ -573,19 +713,6 @@
   </div>
 
   {#if error}<div class="banner" role="alert">{error}</div>{/if}
-  {#if caInstalled}
-    <div class="ca-banner on" role="status">
-      <Icon name="shield" />
-      <span>Shroodler root CA is trusted on this machine.</span>
-      <button type="button" class="btn" on:click={() => openCa("uninstall")}>Uninstall</button>
-    </div>
-  {:else}
-    <div class="ca-banner off" role="status">
-      <Icon name="shield-off" />
-      <span>HTTPS interception is unavailable — the Shroodler root CA is not trusted on this machine.</span>
-      <button type="button" class="btn btn-primary" on:click={() => openCa("install")}>Install CA</button>
-    </div>
-  {/if}
 
   <div class="body">
     <nav class="nav-rail" role="tablist" aria-label="Views">
@@ -618,9 +745,13 @@
 
     <section class="work">
       {#if view === "scan"}
-        <div class="split">
-          <div class="grid-pane">
-            <div class="subcmd"><span class="subcmd-label">Crawl</span></div>
+        <div class="grid-pane">
+          <div class="subcmd">
+            <button type="button" class="btn-ghost" on:click={() => (advancedOpen = !advancedOpen)}
+              ><Icon name="chevron" class={advancedOpen ? "caret" : ""} />Advanced</button
+            >
+          </div>
+          {#if advancedOpen}
             <div class="auth-row">
               <label class="auth-field">
                 <span>Cookie jar</span>
@@ -641,49 +772,29 @@
                 />
               </label>
             </div>
-            <div class="scroll">
-              <table class="data">
-                <thead>
-                  <tr><th class="col-cat">Event</th><th>Detail</th></tr>
-                </thead>
-                <tbody>
-                  {#if scanning}
-                    <tr>
-                      <td>progress</td>
-                      <td class="mono clip">{progress.pages_crawled} · {progress.current_url || target}</td>
-                    </tr>
-                  {:else if findings.length}
-                    <tr>
-                      <td>complete</td>
-                      <td class="mono">{findings.length} findings — open Findings</td>
-                    </tr>
-                  {:else}
-                    <tr class="empty-row">
-                      <td colspan="2"><Icon name="scan" />Set a target in the bar and press Scan. Results open in Findings.</td>
-                    </tr>
-                  {/if}
-                </tbody>
-              </table>
-            </div>
-          </div>
-          <div class="inspect">
-            <div class="pane-h"><span>Log</span></div>
-            <pre class="payload">{scanning
-                ? `Crawling ${progress.pages_crawled}\n${progress.current_url || target}`
-                : outputPath
-                  ? outputPath
-                  : "Idle."}</pre>
-          </div>
+          {/if}
+          <div class="pane-h"><span>Log</span></div>
+          {#if scanning}
+            <pre class="payload">{`Crawling ${progress.pages_crawled}\n${progress.current_url || target}`}</pre>
+          {:else if findings.length}
+            <p class="payload">
+              {findings.length} findings — <button class="link-btn" on:click={() => (view = "findings")}>open Findings</button>
+            </p>
+          {:else if outputPath}
+            <pre class="payload">{outputPath}</pre>
+          {:else}
+            <pre class="payload">Set a target in the bar and press Scan. Results open in Findings.</pre>
+          {/if}
         </div>
       {:else if view === "map"}
         <div class="split">
           <div class="grid-pane">
             <div class="subcmd">
               <span class="subcmd-label">{pages.length} pages</span>
-              <span class="subcmd-label">{activeFindings.length} open</span>
+              <span class="subcmd-label">{activeFindings.length} open findings</span>
               {#if suppressions.length}<span class="subcmd-label">{suppressions.length} suppressed</span>{/if}
               <div class="cmd-gap"></div>
-              <button class="btn btn-ghost" on:click={saveIgnore} disabled={!suppressions.length}>.shroodlerignore</button>
+              <button class="btn btn-ghost" on:click={saveIgnore} disabled={!suppressions.length} title={!suppressions.length ? "No suppressions to export yet" : ""}>.shroodlerignore</button>
             </div>
             <div class="scroll">
               <table class="data map-table">
@@ -700,7 +811,10 @@
                     <tr
                       class:sel={selectedNode === row}
                       class:map-host={!row.segment}
+                      tabindex="0"
+                      role="button"
                       on:click={() => pickNode(row)}
+                      on:keydown={(e) => activateOnKey(e, () => pickNode(row))}
                     >
                       <td>{#if row.page?.status_code}<span class="pill {statusClass(row.page.status_code)}">{row.page.status_code}</span>{:else}<span class="mono">{row.segment ? "" : "·"}</span>{/if}</td>
                       <td class="mono clip map-path" style="--depth: {row.depth}" title="{row.origin}{row.path}">
@@ -746,7 +860,7 @@
                 </table>
               </div>
             {:else}
-              <p class="hint"><Icon name="map" />Select a path. Forms, params, and findings for that URL show here. Baseline / SARIF / JUnit export from the bar.</p>
+              <p class="hint"><Icon name="map" />Select a path.</p>
             {/if}
           </div>
         </div>
@@ -764,18 +878,22 @@
               <button class="btn btn-ghost" class:on={showSuppressed} on:click={() => (showSuppressed = !showSuppressed)}
                 >Suppressed</button
               >
-              <button class="btn btn-ghost" on:click={suppressSelected} disabled={!selected}>Ignore</button>
-              <button class="btn btn-ghost" on:click={saveIgnore} disabled={!suppressions.length}>.shroodlerignore</button>
+              {#if selected && isSuppressed(selected, suppressions)}
+                <button class="btn btn-ghost" on:click={unsuppressSelected}><Icon name="check" />Unsuppress</button>
+              {:else}
+                <button class="btn btn-ghost" on:click={suppressSelected} disabled={!selected} title={!selected ? "Select a finding first" : ""}>Suppress</button>
+              {/if}
+              <button class="btn btn-ghost" on:click={saveIgnore} disabled={!suppressions.length} title={!suppressions.length ? "No suppressions to export yet" : ""}>.shroodlerignore</button>
             </div>
             <div class="scroll">
               <table class="data">
                 <thead>
                   <tr>
-                    <th class="col-sev sortable" class:sorted={sortKey === "severity"} on:click={() => (sortKey = "severity")}
-                      ><span class="th-label">Sev{#if sortKey === "severity"}<Icon name="sort-asc" />{/if}</span></th
+                    <th class="col-sev sortable" class:sorted={sortKey === "severity"} on:click={() => toggleSort("severity")}
+                      ><span class="th-label">Sev{#if sortKey === "severity"}<Icon name="sort-asc" class={sortDir === "desc" ? "flip" : ""} />{/if}</span></th
                     >
-                    <th class="col-id sortable" class:sorted={sortKey === "id"} on:click={() => (sortKey = "id")}
-                      ><span class="th-label">Id{#if sortKey === "id"}<Icon name="sort-asc" />{/if}</span></th
+                    <th class="col-id sortable" class:sorted={sortKey === "id"} on:click={() => toggleSort("id")}
+                      ><span class="th-label">Id{#if sortKey === "id"}<Icon name="sort-asc" class={sortDir === "desc" ? "flip" : ""} />{/if}</span></th
                     >
                     <th class="col-cat">Category</th>
                     <th>Url</th>
@@ -786,9 +904,12 @@
                     <tr
                       class:sel={selected === f}
                       class:muted={!!isSuppressed(f, suppressions)}
+                      tabindex="0"
+                      role="button"
                       on:click={() => pickFinding(f)}
+                      on:keydown={(e) => activateOnKey(e, () => pickFinding(f))}
                     >
-                      <td class="sev sev-{f.severity}">{f.severity}</td>
+                      <td><span class="pill sev sev-{f.severity}">{f.severity}</span></td>
                       <td class="mono">{f.id}</td>
                       <td>{f.category}</td>
                       <td class="mono clip" title={f.url}>{f.url}</td>
@@ -816,8 +937,10 @@
                     <tr><th>Description</th><td>{selected.description}</td></tr>
                   </table>
                 </div>
+              {:else if selected.evidence}
+                <pre class="payload">{selected.evidence}</pre>
               {:else}
-                <pre class="payload">{selected.evidence || "No evidence."}</pre>
+                <p class="hint"><Icon name="findings" />No evidence.</p>
               {/if}
             {:else}
               <p class="hint"><Icon name="findings" />Select a finding.</p>
@@ -896,7 +1019,13 @@
                 </thead>
                 <tbody>
                   {#each visibleSessions as s}
-                    <tr class:sel={selectedSession === s} on:click={() => pickSession(s)}>
+                    <tr
+                      class:sel={selectedSession === s}
+                      tabindex="0"
+                      role="button"
+                      on:click={() => pickSession(s)}
+                      on:keydown={(e) => activateOnKey(e, () => pickSession(s))}
+                    >
                       <td class="mono">{sessions.length - sessions.indexOf(s)}</td>
                       <td class="mono">{s.request?.method || ""}</td>
                       <td>{#if s.response?.status_code}<span class="pill {statusClass(s.response.status_code)}">{s.response.status_code}</span>{:else}<span class="mono">—</span>{/if}</td>
@@ -934,7 +1063,12 @@
               {:else}
                 <div class="split-cols">
                   <div class="pane">
-                    <div class="pane-h"><span>Request</span></div>
+                    <div class="pane-h">
+                      <span>Request</span>
+                      <div class="pane-h-meta">
+                        {#if selectedSession.request?.method}<span class="pill">{selectedSession.request.method}</span>{/if}
+                      </div>
+                    </div>
                     <div class="scroll">
                       {#if sessionPane === "headers"}
                         <table class="kv">
@@ -950,7 +1084,15 @@
                     </div>
                   </div>
                   <div class="pane">
-                    <div class="pane-h"><span>Response</span></div>
+                    <div class="pane-h">
+                      <span>Response</span>
+                      <div class="pane-h-meta">
+                        {#if selectedSession.response?.status_code}
+                          <span class="pill {statusClass(selectedSession.response.status_code)}">{selectedSession.response.status_code}</span>
+                        {/if}
+                        {#if bodyOf(selectedSession.response)}<span class="pill">{bodyOf(selectedSession.response).length} B</span>{/if}
+                      </div>
+                    </div>
                     <div class="scroll">
                       {#if sessionPane === "headers"}
                         <table class="kv">
@@ -1001,6 +1143,13 @@
                 </div>
               </div>
             {:else if composePane === "breakpoints"}
+              {#if activeBreakpoint}
+                <div class="bp-banner">
+                  <Icon name="shield-off" />
+                  <span>Breakpoint active: {activeBreakpoint.method} {activeBreakpoint.url_pattern} ({activeBreakpoint.stage}) — matching traffic will pause.</span>
+                  <button class="btn" on:click={clearBreakpoints}>Clear</button>
+                </div>
+              {/if}
               <div class="form-grid">
                 <label for="bp-method">Method</label>
                 <Select
@@ -1021,7 +1170,7 @@
                   options={stageOpts}
                 />
                 <span></span>
-                <button class="btn" on:click={setBreakpoints}>Set breakpoint</button>
+                <button class="btn btn-primary" on:click={setBreakpoints}><Icon name="check" />Set breakpoint</button>
               </div>
               <div class="paused">
                 {#each paused as p}
@@ -1035,6 +1184,13 @@
                 {/each}
               </div>
             {:else}
+              {#if activeAutoResponderRules}
+                <div class="bp-banner">
+                  <Icon name="shield-off" />
+                  <span>AutoResponder active: {activeAutoResponderRules.length} rule{activeAutoResponderRules.length === 1 ? "" : "s"} mocking matching requests instead of hitting the real server.</span>
+                  <button class="btn" on:click={clearAutoResponder}>Clear</button>
+                </div>
+              {/if}
               <div class="pane-h"><span>AutoResponder rules (YAML)</span></div>
               <textarea class="field ar-editor" bind:value={arYaml}></textarea>
               <div class="subcmd">
@@ -1057,7 +1213,13 @@
                 </thead>
                 <tbody>
                   {#each sessions as s}
-                    <tr class:sel={selectedSession === s} on:click={() => pickSession(s)}>
+                    <tr
+                      class:sel={selectedSession === s}
+                      tabindex="0"
+                      role="button"
+                      on:click={() => pickSession(s)}
+                      on:keydown={(e) => activateOnKey(e, () => pickSession(s))}
+                    >
                       <td class="mono">{s.request?.method || ""}</td>
                       <td>{#if s.response?.status_code}<span class="pill {statusClass(s.response.status_code)}">{s.response.status_code}</span>{:else}<span class="mono">—</span>{/if}</td>
                       <td class="mono clip">{s.request?.url}</td>
@@ -1077,7 +1239,7 @@
   <footer class="status">
     <strong class:live-dot={scanning || proxyOn}>{statusLabel}</strong>
     <span><Icon name="findings" />{activeFindings.length} findings</span>
-    {#if suppressions.length}<span>{suppressions.length} ignored</span>{/if}
+    {#if suppressions.length}<span>{suppressions.length} suppressed</span>{/if}
     <span><Icon name="map" />{pages.length} pages</span>
     <span><Icon name="proxy" />{sessions.length} sessions</span>
     {#if cookieHeader}<span>cookies</span>{/if}
@@ -1088,7 +1250,15 @@
 </div>
 
 {#if caOpen}
-  <div class="modal-back">
+  <div
+    class="modal-back"
+    on:click={(e) => {
+      if (e.target === e.currentTarget) caOpen = false;
+    }}
+    on:keydown={(e) => {
+      if (e.key === "Escape") caOpen = false;
+    }}
+  >
     <div class="modal" role="dialog" aria-modal="true">
       <p>
         {caAction === "install"
@@ -1096,7 +1266,7 @@
           : "This removes the local Shroodler proxy CA files. Continue?"}
       </p>
       <div class="modal-actions">
-        <button class="btn" on:click={() => (caOpen = false)}>Cancel</button>
+        <button class="btn" use:focusOnMount on:click={() => (caOpen = false)}>Cancel</button>
         <button class="btn btn-primary" on:click={confirmCa}>Confirm</button>
       </div>
     </div>

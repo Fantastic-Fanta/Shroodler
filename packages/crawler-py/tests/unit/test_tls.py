@@ -18,6 +18,7 @@ def _make_cert(
     *,
     common_name: str = "localhost",
     san: list[str] | None = None,
+    ip_san: list[str] | None = None,
     not_valid_before: datetime.datetime | None = None,
     not_valid_after: datetime.datetime | None = None,
     self_signed: bool = True,
@@ -38,9 +39,14 @@ def _make_cert(
         .not_valid_before(not_valid_before)
         .not_valid_after(not_valid_after)
     )
-    if san:
+    san_entries: list = [x509.DNSName(n) for n in (san or [])]
+    if ip_san:
+        import ipaddress as _ipaddress
+
+        san_entries.extend(x509.IPAddress(_ipaddress.ip_address(ip)) for ip in ip_san)
+    if san_entries:
         builder = builder.add_extension(
-            x509.SubjectAlternativeName([x509.DNSName(n) for n in san]),
+            x509.SubjectAlternativeName(san_entries),
             critical=False,
         )
     cert = builder.sign(key, hashes.SHA256())
@@ -110,7 +116,7 @@ def tls_server():
 def test_expired_cert_is_flagged(tls_server):
     now = datetime.datetime.now(datetime.timezone.utc)
     server = tls_server(
-        san=["127.0.0.1"],
+        ip_san=["127.0.0.1"],
         not_valid_before=now - datetime.timedelta(days=400),
         not_valid_after=now - datetime.timedelta(days=1),
     )
@@ -125,7 +131,7 @@ def test_expired_cert_is_flagged(tls_server):
 def test_expiring_soon_cert_is_flagged(tls_server):
     now = datetime.datetime.now(datetime.timezone.utc)
     server = tls_server(
-        san=["127.0.0.1"],
+        ip_san=["127.0.0.1"],
         not_valid_after=now + datetime.timedelta(days=10),
     )
     findings = check_tls(f"https://127.0.0.1:{server.port}/")
@@ -135,7 +141,7 @@ def test_expiring_soon_cert_is_flagged(tls_server):
 
 
 def test_healthy_cert_is_not_flagged_for_expiry(tls_server):
-    server = tls_server(san=["127.0.0.1"])
+    server = tls_server(ip_san=["127.0.0.1"])
     findings = check_tls(f"https://127.0.0.1:{server.port}/")
     ids = {f.id for f in findings}
     assert "tls-cert-expired" not in ids
@@ -143,7 +149,7 @@ def test_healthy_cert_is_not_flagged_for_expiry(tls_server):
 
 
 def test_self_signed_cert_is_flagged(tls_server):
-    server = tls_server(san=["127.0.0.1"])
+    server = tls_server(ip_san=["127.0.0.1"])
     findings = check_tls(f"https://127.0.0.1:{server.port}/")
     ids = {f.id for f in findings}
     assert "tls-cert-self-signed" in ids
@@ -159,9 +165,36 @@ def test_hostname_mismatch_is_flagged(tls_server):
 
 
 def test_matching_san_is_not_flagged_as_mismatch(tls_server):
-    server = tls_server(san=["127.0.0.1", "example.com"])
+    server = tls_server(ip_san=["127.0.0.1"], san=["example.com"])
     findings = check_tls(f"https://127.0.0.1:{server.port}/")
     assert "tls-hostname-mismatch" not in {f.id for f in findings}
+
+
+def test_ip_literal_host_does_not_false_positive_on_dns_only_san(tls_server):
+    # Regression test: Shroodler's own default posture is scanning
+    # 127.0.0.1/localhost. A cert issued correctly for that IP carries it
+    # as an iPAddress SAN, not a dNSName -- matching only against
+    # get_values_for_type(x509.DNSName) would misreport every properly
+    # issued IP cert as a hostname mismatch, which would have made this
+    # check noisy-by-default against the tool's most common target shape.
+    server = tls_server(ip_san=["127.0.0.1"])
+    findings = check_tls(f"https://127.0.0.1:{server.port}/")
+    assert "tls-hostname-mismatch" not in {f.id for f in findings}
+
+
+def test_ip_literal_host_does_not_fall_back_to_dns_san_or_cn(tls_server):
+    # An IP-literal host must never match via wildcard/CN fallback logic
+    # meant for DNS names (RFC 6125 ss.1.7.2) -- a cert with a DNS SAN/CN
+    # that happens to equal the dotted-quad string is still a mismatch.
+    server = tls_server(common_name="127.0.0.1", san=["127.0.0.1"], ip_san=None)
+    findings = check_tls(f"https://127.0.0.1:{server.port}/")
+    assert "tls-hostname-mismatch" in {f.id for f in findings}
+
+
+def test_ip_literal_host_mismatch_against_different_ip_san(tls_server):
+    server = tls_server(ip_san=["10.0.0.5"])
+    findings = check_tls(f"https://127.0.0.1:{server.port}/")
+    assert "tls-hostname-mismatch" in {f.id for f in findings}
 
 
 def test_http_target_is_skipped_entirely(tls_server):
@@ -185,3 +218,9 @@ def test_hostname_matches_falls_back_to_common_name_when_no_san():
     _, cert = _make_cert(common_name="cn-only.example", san=None)
     assert hostname_matches("cn-only.example", cert)
     assert not hostname_matches("other.example", cert)
+
+
+def test_hostname_matches_ip_literal_against_ip_san_only():
+    _, cert = _make_cert(ip_san=["127.0.0.1"])
+    assert hostname_matches("127.0.0.1", cert)
+    assert not hostname_matches("10.0.0.5", cert)

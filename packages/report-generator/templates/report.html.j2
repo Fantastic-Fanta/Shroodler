@@ -24,7 +24,7 @@
   <h2>Summary (by finding)</h2>
   <table>
     <thead>
-      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th></tr>
+      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th><th>Remediation</th></tr>
     </thead>
     <tbody>
     {% for g in grouped %}
@@ -33,6 +33,7 @@
         <td><code>{{ g.id }}</code></td>
         <td>{{ g.count }}</td>
         <td>{{ g.description }}</td>
+        <td>{{ g.remediation }}</td>
       </tr>
     {% endfor %}
     </tbody>

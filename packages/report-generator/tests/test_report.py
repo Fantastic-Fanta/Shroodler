@@ -10,6 +10,7 @@ from xml.etree import ElementTree
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from remediation import remediation_for
 from reportgen import (
     format_evidence,
     render,
@@ -181,6 +182,28 @@ def test_markdown_grouped_by_severity():
     empty = render(EMPTY, "md")
     assert "No findings." in empty
     assert empty.encode("utf-8").decode("utf-8") == empty
+
+
+def test_known_finding_id_gets_specific_remediation():
+    assert "Secure" in remediation_for("insecure-cookie", "cookie")
+    assert remediation_for("insecure-cookie", "cookie") != remediation_for("cookie", "cookie")
+
+
+def test_unknown_id_falls_back_to_category_then_default():
+    assert "credential" in remediation_for("some-brand-new-secret-id", "secret").lower()
+    assert remediation_for("totally-unknown-id", "totally-unknown-category")
+
+
+def test_html_summary_includes_remediation_column():
+    html = render_html(ALL_SEV)
+    soup = BeautifulSoup(html, "lxml")
+    header_cells = [th.get_text() for th in soup.select("table")[0].select("thead th")]
+    assert "Remediation" in header_cells
+
+
+def test_markdown_includes_remediation_line():
+    md = render(ALL_SEV, "md")
+    assert "- Remediation:" in md
 
 
 def test_markdown_redacts_and_truncates_evidence():

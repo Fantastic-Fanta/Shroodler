@@ -1,0 +1,43 @@
+# CRLF / HTTP response-splitting payloads.
+#
+# Payloads carry a real \r\n (YAML double-quoted escapes), not the literal
+# text "%0d%0a" -- the tester sends field values through httpx's own
+# form/query encoder, so a literal "%0d%0a" string would just get its "%"
+# re-encoded and arrive server-side as harmless inert text. Only an actual
+# CR/LF byte, percent-encoded by the HTTP client the way a real browser
+# would, exercises whether the target decodes and then unsafely reuses it.
+#
+# `crlf-header-redirect` targets fields that end up echoed into a
+# Location header (the same shape as the open-redirect checks): if the
+# decoded CRLF survives into the Location header unescaped, an attacker
+# could smuggle extra headers or split the response. Detected via the
+# existing redirected_to_contains matcher (already used by the
+# open-redirect pack) -- no new engine code needed. Modern HTTP stacks
+# (Werkzeug, Go net/http, etc.) reject control characters in headers
+# outright, so a miss here is the expected/safe result on most targets;
+# this exists for legacy/custom response-writing code paths that don't.
+#
+# `crlf-reflected-raw` is a much weaker, body-reflection-only signal (like
+# sqli.yaml's status-change check): the decoded CRLF sequence came back
+# unescaped in the body itself, which doesn't prove header injection but
+# does show the input isn't being HTML/URL-encoded at all.
+- id: crlf-header-redirect
+  finding_id: payload-crlf-header-injection
+  payload: "/shrdlr\r\nX-Shrdlr-Crlf: 1\r\nSet-Cookie: shrdlr_crlf=1"
+  severity: high
+  description: >-
+    Unescaped CRLF sequence survived into a Location header, evidence the
+    field could be used to inject/split HTTP response headers
+  match:
+    any:
+      - redirected_to_contains: "shrdlr_crlf"
+- id: crlf-reflected-raw
+  finding_id: payload-crlf-reflected
+  payload: "shrdlr-crlf-probe\r\nX-Shrdlr-Crlf-Test: 1"
+  severity: low
+  description: >-
+    CRLF-encoded payload was reflected in the response body without
+    encoding -- weak signal, not proof of header injection by itself
+  match:
+    any:
+      - reflected: true

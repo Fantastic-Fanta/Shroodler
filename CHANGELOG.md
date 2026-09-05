@@ -7,6 +7,34 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **New active-payload packs: OS command injection and CRLF/HTTP header
+  injection.** Pure YAML additions (`packs/command-injection.yaml`,
+  `packs/crlf-injection.yaml`) consumed by both engines' existing generic
+  pack loader/matcher, so no engine code changed and there's no parity
+  risk. Command injection has both a marker-echo variant (fast,
+  deterministic, exercised end-to-end against app5-injectable) and a
+  blind/timing variant across `;`/`|`/`&&`/backtick/`$()`/Windows-`ping`
+  separators using the pack engine's `time_delta_gte_ms` matcher, which
+  existed and was unit-tested but had no real pack using it until now.
+  CRLF adds a `redirected_to_contains`-based header-injection check (a
+  clean miss against any spec-compliant server that rejects control
+  characters in headers, which is the expected/safe result) plus a
+  weaker body-reflection-only signal.
+- **`--check-subresources` (Python-only, off by default): missing
+  Subresource Integrity and mixed content.** Flags cross-origin
+  `<script>`/`<link rel=stylesheet>` tags without an `integrity=`
+  attribute, and HTTPS pages loading `http://` subresources. Gated behind
+  an explicit flag rather than always-on (unlike the other passive
+  extractors in `crawler-py`) specifically because `shroodler-go` doesn't
+  implement it yet and `packages/parity-tests/run_parity.py` compares the
+  two engines' *default* crawl output -- an always-on Python-only check
+  would have silently broken that gate the next time a target happened to
+  have a qualifying tag.
+- **Reports now carry remediation guidance per finding**
+  (`packages/report-generator/remediation.py`). HTML and Markdown output
+  gets a one-line fix suggestion per finding id, with a category-level
+  fallback so newly-added payload/secret pack ids aren't silently blank
+  until someone remembers to update the table.
 - **Redirect-chain truncation actually works now (Python + Go).** The
   per-URL redirect counter (`max_redirects`) was dead code in Python: a
   URL's canonical key is added to `seen` before it's ever fetched, so the

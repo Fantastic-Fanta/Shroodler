@@ -1,0 +1,108 @@
+# OS command injection payloads.
+#
+# Two independent detection strategies, mirroring the sqli.yaml pattern:
+#
+# 1. Marker echo -- a shell metacharacter chains a second command that
+#    prints a fixed, distinctive string. If that string comes back in the
+#    response body (and wasn't already there for the plain baseline value,
+#    new_only: true), the input reached a shell unescaped. One entry per
+#    common separator/shell so a scanner isn't blind to whichever style the
+#    target's shell/language happens to parse.
+# 2. Blind timing -- the same separators followed by a multi-second sleep.
+#    A response that took meaningfully longer than the baseline for the
+#    *same* field is evidence the delay command actually ran, without
+#    needing to see any output at all (useful when stdout isn't reflected).
+#
+# The marker is a fixed string (not {{TOKEN}}) because match.body_contains
+# is a literal, non-templated needle -- see ssti.yaml's "computed:49" for
+# the same convention.
+- id: cmdi-echo-semicolon
+  finding_id: payload-command-injection
+  payload: "; echo shrdlr-cmdi-9f3a1c #"
+  severity: high
+  description: Semicolon-chained command's output was echoed back in the response
+  match:
+    any:
+      - body_contains: "shrdlr-cmdi-9f3a1c"
+        new_only: true
+- id: cmdi-echo-pipe
+  finding_id: payload-command-injection
+  payload: "| echo shrdlr-cmdi-9f3a1c"
+  severity: high
+  description: Pipe-chained command's output was echoed back in the response
+  match:
+    any:
+      - body_contains: "shrdlr-cmdi-9f3a1c"
+        new_only: true
+- id: cmdi-echo-and
+  finding_id: payload-command-injection
+  payload: "&& echo shrdlr-cmdi-9f3a1c"
+  severity: high
+  description: "&&-chained command's output was echoed back in the response"
+  match:
+    any:
+      - body_contains: "shrdlr-cmdi-9f3a1c"
+        new_only: true
+- id: cmdi-echo-backtick
+  finding_id: payload-command-injection
+  payload: "`echo shrdlr-cmdi-9f3a1c`"
+  severity: high
+  description: Backtick command substitution's output was echoed back in the response
+  match:
+    any:
+      - body_contains: "shrdlr-cmdi-9f3a1c"
+        new_only: true
+- id: cmdi-echo-dollar-paren
+  finding_id: payload-command-injection
+  payload: "$(echo shrdlr-cmdi-9f3a1c)"
+  severity: high
+  description: $()-command-substitution output was echoed back in the response
+  match:
+    any:
+      - body_contains: "shrdlr-cmdi-9f3a1c"
+        new_only: true
+- id: cmdi-time-based-semicolon
+  finding_id: payload-command-injection-blind
+  payload: "; sleep 6 #"
+  severity: high
+  description: >-
+    Semicolon-chained sleep delayed the response by roughly the sleep
+    duration, evidence the field reaches an OS shell even with no output
+    reflected
+  match:
+    any:
+      - time_delta_gte_ms: 5000
+- id: cmdi-time-based-pipe
+  finding_id: payload-command-injection-blind
+  payload: "| sleep 6"
+  severity: high
+  description: Pipe-chained sleep delayed the response, evidence of blind command injection
+  match:
+    any:
+      - time_delta_gte_ms: 5000
+- id: cmdi-time-based-and
+  finding_id: payload-command-injection-blind
+  payload: "&& sleep 6"
+  severity: high
+  description: "&&-chained sleep delayed the response, evidence of blind command injection"
+  match:
+    any:
+      - time_delta_gte_ms: 5000
+- id: cmdi-time-based-backtick
+  finding_id: payload-command-injection-blind
+  payload: "`sleep 6`"
+  severity: high
+  description: Backtick-substituted sleep delayed the response, evidence of blind command injection
+  match:
+    any:
+      - time_delta_gte_ms: 5000
+- id: cmdi-time-based-windows
+  finding_id: payload-command-injection-blind
+  payload: "& ping -n 7 127.0.0.1 & echo done"
+  severity: high
+  description: >-
+    Windows ping-based delay chain delayed the response, evidence of blind
+    command injection on a cmd.exe-backed target
+  match:
+    any:
+      - time_delta_gte_ms: 5000

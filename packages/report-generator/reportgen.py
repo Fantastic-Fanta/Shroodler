@@ -8,6 +8,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from remediation import remediation_for
 
 SEVERITY_RANK = {
     "critical": 0,
@@ -47,6 +48,7 @@ def group_findings(findings: list[dict]) -> list[dict]:
                 "severity": f.get("severity", "info"),
                 "severity_rank": SEVERITY_RANK.get(f.get("severity", "info"), 9),
                 "description": f.get("description", ""),
+                "remediation": remediation_for(fid, f.get("category", "")),
                 "urls": [],
             }
             order.append(fid)
@@ -292,6 +294,7 @@ def render_markdown(doc: dict) -> str:
             ev = format_evidence(f.get("evidence"))
             if ev:
                 lines.append(f"- Evidence: `{ev}`")
+            lines.append(f"- Remediation: {remediation_for(fid, f.get('category', ''))}")
             lines.append("")
     return "\n".join(lines)
 

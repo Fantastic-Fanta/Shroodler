@@ -114,8 +114,52 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		}
 	}
 	applySeedCookies(jar, start, cfg.Cookies)
+	var sessionFindings []models.Finding
 	if cfg.LoginRecipe != nil {
-		runLogin(client, *cfg.LoginRecipe, start)
+		recipe := resolveRecipeURL(*cfg.LoginRecipe, start)
+		if mode == "headless" {
+			// Go's headless login still runs through this same httpx-style
+			// client (its cookies are then seeded into the headless fetcher
+			// below) -- that's an existing, unrelated difference from
+			// Python's headless mode (which logs in via the fetcher
+			// itself) and is out of scope here. What IS gated on mode,
+			// matching Python, is the fixation/logout-invalidation checks
+			// themselves: they only run in static mode.
+			runLogin(client, recipe, start)
+			sessionFindings = append(sessionFindings, models.Finding{
+				ID:       "session-checks-skipped-headless",
+				Severity: "info",
+				Category: "scan-note",
+				URL:      start,
+				Description: "Session-fixation and logout-invalidation checks were " +
+					"skipped: they only run in --mode static. A clean result here does " +
+					"not mean those checks passed -- they did not run.",
+			})
+		} else {
+			seedURL, seedErr := url.Parse(start)
+			if seedErr == nil {
+				_, _, _ = get(client, start) // warm a pre-auth session cookie, if any; error ignored
+			}
+			var preCookies map[string]string
+			if seedErr == nil {
+				preCookies = sessionCookiesFromJar(jar, seedURL)
+			}
+			runLogin(client, recipe, start)
+			if seedErr == nil {
+				postCookies := sessionCookiesFromJar(jar, seedURL)
+				sessionFindings = append(sessionFindings, checkSessionFixation(preCookies, postCookies, start)...)
+				if recipe.LogoutURL != "" && len(postCookies) > 0 {
+					protectedURL := recipe.ProtectedURL
+					if protectedURL == "" {
+						protectedURL = start
+					}
+					staleHeader := cookieHeaderFromMap(postCookies)
+					sessionFindings = append(sessionFindings, checkLogoutInvalidation(
+						recipe.LogoutURL, recipe.LogoutMethod, protectedURL, staleHeader, 8*time.Second,
+					)...)
+				}
+			}
+		}
 	}
 
 	fetchPage := func(u string) fetchResult {
@@ -178,7 +222,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	}
 	family := map[string]int{}
 	var pages []models.Page
-	var findings []models.Finding
+	findings := append([]models.Finding{}, sessionFindings...)
 	var endpoints []models.JSEndpoint
 	var corsCandidates []string
 	rules := extractors.LoadSecretRules()

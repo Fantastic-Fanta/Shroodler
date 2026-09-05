@@ -1469,3 +1469,187 @@ func TestCommonPathProbeReportsChallengeInsteadOfSilentlyDropping(t *testing.T) 
 		t.Fatal("expected a waf-challenge finding for the common-path probe hit, not silent drop")
 	}
 }
+
+func loginHandler(w http.ResponseWriter, r *http.Request, setCookie string) {
+	if r.Method == http.MethodGet {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte(`<form method="POST" action="/login"><input name="user"></form>`))
+		return
+	}
+	if setCookie != "" {
+		w.Header().Set("Set-Cookie", setCookie)
+	}
+	w.Header().Set("Location", "/")
+	w.WriteHeader(http.StatusFound)
+}
+
+func TestFlagsSessionFixationWhenCookieUnchangedByLogin(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !strings.Contains(r.Header.Get("Cookie"), "sessionid=") {
+			w.Header().Set("Set-Cookie", "sessionid=fixed-value-123; Path=/")
+		}
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		// Vulnerable: login succeeds but does NOT rotate the session cookie.
+		loginHandler(w, r, "")
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20,
+		LoginRecipe: &crawler.LoginRecipe{URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFindingID(res.Findings, "session-fixation") {
+		t.Fatalf("expected session-fixation, got %#v", res.Findings)
+	}
+}
+
+func TestNoSessionFixationWhenLoginRotatesCookie(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !strings.Contains(r.Header.Get("Cookie"), "sessionid=") {
+			w.Header().Set("Set-Cookie", "sessionid=pre-auth-value; Path=/")
+		}
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginHandler(w, r, "sessionid=post-auth-rotated; Path=/")
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20,
+		LoginRecipe: &crawler.LoginRecipe{URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasFindingID(res.Findings, "session-fixation") {
+		t.Fatalf("did not expect session-fixation, got %#v", res.Findings)
+	}
+}
+
+func TestFlagsLogoutNotInvalidatingSession(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !strings.Contains(r.Header.Get("Cookie"), "sessionid=") {
+			w.Header().Set("Set-Cookie", "sessionid=pre-auth; Path=/")
+		}
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginHandler(w, r, "sessionid=post-auth; Path=/")
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("/account", func(w http.ResponseWriter, r *http.Request) {
+		// Logout "succeeds" but the app never actually revokes the session server-side.
+		w.Write([]byte("<p>still logged in</p>"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20,
+		LoginRecipe: &crawler.LoginRecipe{
+			URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"},
+			LogoutURL: srv.URL + "/logout", ProtectedURL: srv.URL + "/account",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFindingID(res.Findings, "logout-session-not-invalidated") {
+		t.Fatalf("expected logout-session-not-invalidated, got %#v", res.Findings)
+	}
+}
+
+func TestNoLogoutFindingWhenSessionActuallyInvalidated(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		if !strings.Contains(r.Header.Get("Cookie"), "sessionid=") {
+			w.Header().Set("Set-Cookie", "sessionid=pre-auth; Path=/")
+		}
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginHandler(w, r, "sessionid=post-auth; Path=/")
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	mux.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+	mux.HandleFunc("/account", func(w http.ResponseWriter, r *http.Request) {
+		// Properly invalidated: the stale session now gets rejected.
+		w.WriteHeader(http.StatusForbidden)
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20,
+		LoginRecipe: &crawler.LoginRecipe{
+			URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"},
+			LogoutURL: srv.URL + "/logout", ProtectedURL: srv.URL + "/account",
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hasFindingID(res.Findings, "logout-session-not-invalidated") {
+		t.Fatalf("did not expect logout-session-not-invalidated, got %#v", res.Findings)
+	}
+}
+
+func TestSessionChecksSkippedWithNoticeInHeadlessMode(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write([]byte(`<a href="/secret">s</a>`))
+	})
+	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
+		loginHandler(w, r, "sessionid=post-auth; Path=/")
+	})
+	mux.HandleFunc("/secret", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("<p>secret</p>"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{
+		Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20, Mode: "headless",
+		LoginRecipe: &crawler.LoginRecipe{URL: srv.URL + "/login", Fields: map[string]string{"user": "ok"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !hasFindingID(res.Findings, "session-checks-skipped-headless") {
+		t.Fatalf("expected session-checks-skipped-headless, got %#v", res.Findings)
+	}
+	if hasFindingID(res.Findings, "session-fixation") {
+		t.Fatalf("did not expect session-fixation in headless mode, got %#v", res.Findings)
+	}
+	for _, f := range res.Findings {
+		if f.ID == "session-checks-skipped-headless" && f.Category != "scan-note" {
+			t.Fatalf("expected scan-note category, got %#v", f)
+		}
+	}
+}

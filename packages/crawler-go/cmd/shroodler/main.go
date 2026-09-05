@@ -93,6 +93,8 @@ func run(args []string) int {
 		return cmdBaseline(args[1:])
 	case "ingest-sessions":
 		return cmdIngest(args[1:])
+	case "authz-diff":
+		return cmdAuthzDiff(args[1:])
 	case "proxy":
 		return cmdProxy(args[1:])
 	case "version", "-V", "--version":
@@ -111,6 +113,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "Shroodler Go CLI — crawl, report, diff, payload-test, or drive the proxy.")
 	fmt.Fprintln(os.Stderr, "shroodler crawl <url> [--mode static|headless] [--depth N] [--max-pages N] [--max-time SECONDS] [--output out.json] [--ignore-robots] [--no-sitemap] [--allow-external] [--check-rate-limit] [--header 'Name: value'] [--user-agent STRING] [--cookie n=v] [--cookie-jar FILE] [--storage-state FILE] [--login-recipe FILE] [--proxy URL] [--seed URL] [--seed-from FILE] [--cookies-from FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler ingest-sessions <sessions.jsonl> [--target url] [--output out.json] [--allow-external]")
+	fmt.Fprintln(os.Stderr, "shroodler authz-diff <higher_crawl.json> [--cookie n=v] [--header 'Name: value'] [--no-anon-check] [--allow-external] [--output out.json]")
 	fmt.Fprintln(os.Stderr, "shroodler report <findings.json> [--format html|csv|json|sarif|junit|md] [--output out] [--suppressions FILE]")
 	fmt.Fprintln(os.Stderr, "shroodler diff <findings.json> <expected_findings.json> [--pages-only] [--gate] [--suppressions FILE] [--format text|junit|sarif]")
 	fmt.Fprintln(os.Stderr, "shroodler baseline <findings.json> [--output expected_findings.json] [--name NAME] [--suppressions FILE]")
@@ -341,6 +344,69 @@ func cmdIngest(args []string) int {
 		_ = os.WriteFile(outPath, append(b, '\n'), 0o644)
 	} else {
 		fmt.Println(string(b))
+	}
+	return 0
+}
+
+func cmdAuthzDiff(args []string) int {
+	if len(args) < 1 {
+		usage()
+		return 2
+	}
+	higherPath := args[0]
+	var cookiePairs []string
+	var headerLines []string
+	noAnonCheck := false
+	allowExternal := false
+	var outPath string
+	for i := 1; i < len(args); i++ {
+		switch args[i] {
+		case "--cookie":
+			i++
+			cookiePairs = append(cookiePairs, args[i])
+		case "--header":
+			i++
+			headerLines = append(headerLines, args[i])
+		case "--no-anon-check":
+			noAnonCheck = true
+		case "--allow-external":
+			allowExternal = true
+		case "--output", "-o":
+			i++
+			outPath = args[i]
+		}
+	}
+	b, err := os.ReadFile(higherPath)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	var higherDoc models.CrawlResult
+	if err := json.Unmarshal(b, &higherDoc); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	var cookieParts []string
+	for _, raw := range cookiePairs {
+		if c, ok := crawler.ParseCookiePair(raw); ok {
+			cookieParts = append(cookieParts, c.Name+"="+c.Value)
+		}
+	}
+	res, err := crawler.RunAuthzDiff(&higherDoc, crawler.AuthzDiffOptions{
+		CookieHeader:  strings.Join(cookieParts, "; "),
+		ExtraHeaders:  crawler.ParseHeaders(headerLines),
+		NoAnonCheck:   noAnonCheck,
+		AllowExternal: allowExternal,
+	})
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		return 1
+	}
+	outBytes, _ := json.MarshalIndent(res, "", "  ")
+	if outPath != "" {
+		_ = os.WriteFile(outPath, append(outBytes, '\n'), 0o644)
+	} else {
+		fmt.Println(string(outBytes))
 	}
 	return 0
 }

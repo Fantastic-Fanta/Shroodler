@@ -7,6 +7,17 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Go parity: `authz-diff`, session-fixation, logout-invalidation.** These
+  were Python-only since 0.2.0. `shroodler-go` now has a full `authz-diff`
+  subcommand (same flags/output shape as Python: `--cookie`, `--header`,
+  `--no-anon-check`, `--allow-external`, `--output`), and `--login-recipe`
+  crawls in `--mode static` now run the same session-fixation and
+  logout-invalidation checks Python has -- a `LoginRecipe`'s `logout_url`/
+  `protected_url` fields are honored, and `--mode headless` emits the same
+  `session-checks-skipped-headless` scan-note Python does rather than
+  silently skipping. Ported edge-case-for-edge-case against the existing
+  Python test suite, including the previously-fixed "ordinary redirect
+  isn't a denial" behavior in `authz-diff`'s anonymous-control check.
 - **Challenge-cookie signature tier + single-retry recovery** (Python + Go):
   known challenge-issuance cookies (`cf_clearance`, `__cf_bm`, `incap_ses_*`,
   `ak_bmsc`, `_abck`, DataDome, etc.) are now a detection signal too (gated

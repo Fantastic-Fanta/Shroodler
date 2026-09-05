@@ -1,6 +1,11 @@
 package extractors
 
-import "testing"
+import (
+	"strings"
+	"testing"
+
+	"github.com/shroodler/crawler-go/internal/models"
+)
 
 func TestIsAuthorizationRequest(t *testing.T) {
 	if !IsAuthorizationRequest("https://idp.example/authorize?response_type=code&client_id=abc&state=xyz") {
@@ -27,12 +32,55 @@ func TestCheckOAuthAuthorizeURLMissingState(t *testing.T) {
 	}
 }
 
+func TestCheckOAuthAuthorizeURLMissingStateWithPKCEIsDowngraded(t *testing.T) {
+	// code_challenge (PKCE) mitigates most of the CSRF risk state
+	// normally addresses -- must not be scored the same as no CSRF
+	// protection at all.
+	findings := CheckOAuthAuthorizeURL(
+		"https://idp.example/authorize?response_type=code&client_id=abc" +
+			"&code_challenge=abc123&code_challenge_method=S256",
+	)
+	var hit *models.Finding
+	for i := range findings {
+		if findings[i].ID == "oauth-missing-state" {
+			hit = &findings[i]
+		}
+	}
+	if hit == nil {
+		t.Fatal("expected oauth-missing-state to still fire")
+	}
+	if hit.Severity != "low" {
+		t.Fatalf("expected low severity with PKCE present, got %s", hit.Severity)
+	}
+	if !strings.Contains(strings.ToLower(hit.Description), "pkce") {
+		t.Fatalf("expected description to mention PKCE, got %q", hit.Description)
+	}
+}
+
 func TestCheckOAuthAuthorizeURLWithState(t *testing.T) {
 	findings := CheckOAuthAuthorizeURL("https://idp.example/authorize?response_type=code&client_id=abc&state=xyz123")
 	for _, f := range findings {
 		if f.ID == "oauth-missing-state" {
 			t.Fatal("state is present and non-empty, must not fire oauth-missing-state")
 		}
+	}
+}
+
+func TestCheckOAuthAuthorizeURLRepeatedStateWithBlankFirstValue(t *testing.T) {
+	// Regression test for a real Python/Go parity gap caught in review:
+	// Go's net/url.Values.Get returns the FIRST value in a repeated
+	// param's list ("" here), which Python's parse_qs used to silently
+	// drop instead of keeping -- both engines must agree the first
+	// occurrence decides, blank or not.
+	findings := CheckOAuthAuthorizeURL("https://idp.example/authorize?response_type=code&client_id=abc&state=&state=real")
+	found := false
+	for _, f := range findings {
+		if f.ID == "oauth-missing-state" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected oauth-missing-state when the first state occurrence is blank")
 	}
 }
 

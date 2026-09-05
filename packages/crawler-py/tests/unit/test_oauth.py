@@ -26,6 +26,33 @@ def test_missing_state_is_flagged():
     assert hit.category == "auth"
 
 
+def test_missing_state_with_pkce_is_downgraded_to_low():
+    # code_challenge (PKCE) mitigates most of the CSRF risk state
+    # normally addresses -- must not be scored the same as no CSRF
+    # protection at all.
+    findings = check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc"
+        "&code_challenge=abc123&code_challenge_method=S256"
+    )
+    hit = next(f for f in findings if f.id == "oauth-missing-state")
+    assert hit.severity == "low"
+    assert "pkce" in hit.description.lower()
+
+
+def test_repeated_state_with_blank_first_value_is_flagged():
+    # Regression test for a real Python/Go parity gap caught in review:
+    # Python's parse_qs defaults to dropping a blank occurrence of a
+    # repeated param entirely (?state=&state=real used to become just
+    # {"state": ["real"]}, hiding the blank first value), while Go's
+    # net/url.Values.Get returns the first value in the raw list ("").
+    # Both engines must now agree: the FIRST occurrence decides, blank or
+    # not, so this fires oauth-missing-state in both.
+    findings = check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc&state=&state=real"
+    )
+    assert "oauth-missing-state" in _ids(findings)
+
+
 def test_empty_state_is_flagged():
     findings = check_oauth_authorize_url(
         "https://idp.example/authorize?response_type=code&client_id=abc&state="

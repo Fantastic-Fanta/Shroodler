@@ -17,7 +17,7 @@ func IsAuthorizationRequest(rawURL string) bool {
 		return false
 	}
 	q := u.Query()
-	return q.Get("response_type") != "" && q.Has("client_id")
+	return q.Get("response_type") != "" && q.Get("client_id") != ""
 }
 
 func oauthFinding(id, severity, pageURL, description, evidence string) models.Finding {
@@ -38,22 +38,33 @@ func CheckOAuthAuthorizeURL(pageURL string) []models.Finding {
 		return nil
 	}
 	q := u.Query()
-	if q.Get("response_type") == "" || !q.Has("client_id") {
+	if q.Get("response_type") == "" || q.Get("client_id") == "" {
 		return nil
 	}
 	var findings []models.Finding
 
 	state := q.Get("state")
 	if strings.TrimSpace(state) == "" {
-		findings = append(findings, oauthFinding(
-			"oauth-missing-state",
-			"medium",
-			pageURL,
-			"OAuth/OIDC authorization request has no state parameter, which is what "+
-				"normally protects the redirect callback against CSRF (an attacker tricking "+
-				"a victim into completing the attacker's own OAuth flow)",
-			pageURL,
-		))
+		hasPKCE := q.Get("code_challenge") != ""
+		severity := "medium"
+		description := "OAuth/OIDC authorization request has no state parameter and no PKCE " +
+			"(code_challenge), which is what normally protects the redirect callback against " +
+			"CSRF (an attacker tricking a victim into completing the attacker's own OAuth flow)"
+		if hasPKCE {
+			// PKCE binds the authorization code to the client that
+			// started the flow and is widely considered adequate CSRF
+			// mitigation on its own in modern implementations, so this
+			// is downgraded (not dropped -- state alongside PKCE is
+			// still recommended defense-in-depth per the OAuth Security
+			// BCP) rather than treated as the same risk as no CSRF
+			// protection at all.
+			severity = "low"
+			description = "OAuth/OIDC authorization request has no state parameter, though " +
+				"code_challenge (PKCE) is present -- PKCE mitigates most of the CSRF risk " +
+				"state normally addresses, but state alongside it is still recommended " +
+				"defense-in-depth"
+		}
+		findings = append(findings, oauthFinding("oauth-missing-state", severity, pageURL, description, pageURL))
 	}
 
 	if q.Get("response_type") == "token" {

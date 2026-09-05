@@ -230,13 +230,17 @@ def probe_paths(
         if key in already:
             continue
         result: FetchResult = fetcher.fetch(url)
-        if result.status_code != 200 or _is_soft_404(baseline, result):
-            continue
+        # Checked before the status-code gate below: a 403/503 challenge
+        # response would otherwise be silently treated as "not found" and
+        # never reported at all (weak/cookie signatures only fire on
+        # 403/503, so they'd never be reached past a status-based continue).
         challenge = detect_challenge(
             result.headers, result.text, result.status_code, result.set_cookies
         )
         if challenge:
             findings.append(challenge.model_copy(update={"url": url}))
+            continue
+        if result.status_code != 200 or _is_soft_404(baseline, result):
             continue
         _record_hit(
             url,
@@ -273,13 +277,13 @@ def probe_mutations(
         if key in already:
             continue
         result: FetchResult = fetcher.fetch(url)
-        if result.status_code != 200 or _is_soft_404(baseline, result):
-            continue
         challenge = detect_challenge(
             result.headers, result.text, result.status_code, result.set_cookies
         )
         if challenge:
             findings.append(challenge.model_copy(update={"url": url}))
+            continue
+        if result.status_code != 200 or _is_soft_404(baseline, result):
             continue
         _record_hit(
             url,

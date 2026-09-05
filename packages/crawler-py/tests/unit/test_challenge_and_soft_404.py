@@ -134,6 +134,39 @@ def test_challenge_stays_reported_when_retry_also_fails(fx):
     assert any(f.category == "waf-challenge" for f in result.findings)
 
 
+def test_recovered_challenge_page_still_discovers_links(fx):
+    hits = {"n": 0}
+
+    def handler(_incoming):
+        hits["n"] += 1
+        if hits["n"] == 1:
+            return (
+                503,
+                {"Content-Type": "text/html", "Set-Cookie": "cf_clearance=abc; Path=/"},
+                b"Just a moment...",
+            )
+        return (200, {"Content-Type": "text/html"}, b'<a href="/discovered-child">child</a>')
+
+    fx.on("GET", "/", handler)
+    fx.html("/discovered-child", "child page")
+
+    result = crawl_url(fx.origin + "/", depth=2)
+    urls = {p.url for p in result.pages}
+    assert fx.origin + "/discovered-child" in urls
+
+
+def test_common_path_probe_reports_challenge_instead_of_silently_dropping(fx):
+    fx.html("/", "home")
+    fx.html("/.git/HEAD", "Just a moment...", status=503)
+
+    result = crawl_url(fx.origin + "/", depth=0)
+    challenge_urls = {f.url for f in result.findings if f.category == "waf-challenge"}
+    assert fx.origin + "/.git/HEAD" in challenge_urls
+    # And it must not also show up as a false exposed-file hit.
+    exposed = {f.evidence for f in result.findings if f.id == "exposed-file"}
+    assert "/.git/HEAD" not in exposed
+
+
 def test_sitewide_challenge_escalation(fx):
     fx.html("/", '<a href="/a">a</a><a href="/b">b</a><a href="/c">c</a>')
     for path in ("/a", "/b", "/c"):

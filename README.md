@@ -82,7 +82,12 @@ packages/crawler-go/shroodler-go ingest-sessions /tmp/sess.jsonl --target http:/
 packages/crawler-go/shroodler-go crawl http://127.0.0.1:8081 --cookies-from /tmp/sess.jsonl --seed-from /tmp/sess.jsonl
 
 # Optional: put shroodler, shroodler-go, shroodler-proxy on PATH
-make install-cli   # symlinks into ~/.local/bin
+make install-cli   # symlinks into ~/.local/bin; also prints completion/man-page paths
+
+# Optional: shell completion and man page (also shown by `make install-cli`)
+source packages/cli/completions/shroodler.bash   # bash
+# zsh: add packages/cli/completions to your $fpath, then `autoload -Uz compinit && compinit`
+man packages/cli/man/shroodler.1
 
 # Desktop (Tauri)
 cd packages/desktop-app && npm install && npm run tauri dev

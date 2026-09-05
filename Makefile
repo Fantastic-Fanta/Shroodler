@@ -28,6 +28,8 @@ install-cli: cli
 	ln -sf "$(ROOT)packages/crawler-go/shroodler-go" "$(HOME)/.local/bin/shroodler-go"
 	ln -sf "$(ROOT)packages/proxy-go/shroodler-proxy" "$(HOME)/.local/bin/shroodler-proxy"
 	@echo "Symlinked into $(HOME)/.local/bin — add that directory to PATH if needed"
+	@echo "Shell completion: source $(ROOT)packages/cli/completions/shroodler.bash (bash) or add $(ROOT)packages/cli/completions to your zsh \$$fpath (zsh)"
+	@echo "Man page: man $(ROOT)packages/cli/man/shroodler.1"
 
 lint: bootstrap
 	$(VENV)/bin/ruff check packages/crawler-py/shroodler packages/crawler-py/tests packages/cli

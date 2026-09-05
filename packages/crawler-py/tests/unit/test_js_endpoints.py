@@ -20,6 +20,35 @@ def test_fetch_string_literal():
     assert findings[0].id == "js-endpoint"
 
 
+def test_axios_method_calls():
+    js = (
+        'axios.get("/api/users");'
+        'axios.post("/api/users", data);'
+        'axios.delete("/api/users/1");'
+    )
+    eps, _ = extract_js_endpoints("/app.js", js)
+    endpoints = {e.endpoint for e in eps}
+    assert {"/api/users", "/api/users/1"} <= endpoints
+
+
+def test_jquery_shorthand_and_ajax_object():
+    js = (
+        '$.get("/api/list", cb);'
+        '$.post("/api/save", data);'
+        '$.ajax({url: "/api/config", method: "GET"});'
+    )
+    eps, _ = extract_js_endpoints("/app.js", js)
+    endpoints = {e.endpoint for e in eps}
+    assert {"/api/list", "/api/save", "/api/config"} <= endpoints
+
+
+def test_xhr_open_call():
+    js = 'var x = new XMLHttpRequest(); x.open("GET", "/api/legacy");'
+    eps, _ = extract_js_endpoints("/app.js", js)
+    endpoints = {e.endpoint for e in eps}
+    assert "/api/legacy" in endpoints
+
+
 def test_template_literal_best_effort():
     eps, _ = extract_js_endpoints("/static/app.js", "fetch(`/api/session`)")
     assert eps[0].endpoint == "/api/session"

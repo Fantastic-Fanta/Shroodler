@@ -2,6 +2,7 @@ package crawler_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -64,6 +65,56 @@ func TestRedirectLoopStops(t *testing.T) {
 	}
 	if len(res.Pages) > 6 {
 		t.Fatalf("loop not bounded: %d", len(res.Pages))
+	}
+}
+
+func TestLongRedirectChainOfDistinctURLsIsTruncatedWithFinding(t *testing.T) {
+	// Each hop lands on a brand-new URL (never revisited), so the `seen`
+	// set alone cannot stop this chain -- only real per-chain depth
+	// tracking can. Before this fix, Go had zero redirect-chain
+	// protection at all beyond `seen` + the page/time budget.
+	const n = 20
+	mux := http.NewServeMux()
+	for i := 0; i < n; i++ {
+		i := i
+		mux.HandleFunc(fmt.Sprintf("/chain-%d", i), func(w http.ResponseWriter, r *http.Request) {
+			// A bare redirect (Location header, no body) -- net/http's
+			// http.Redirect() helper writes a small HTML body containing
+			// an <a href> to the target, which would let the crawler's
+			// ordinary link extractor discover the next hop directly and
+			// defeat this test's whole point (most real-world redirects
+			// carry no body anyway).
+			w.Header().Set("Location", fmt.Sprintf("/chain-%d", i+1))
+			w.WriteHeader(http.StatusFound)
+		})
+	}
+	mux.HandleFunc(fmt.Sprintf("/chain-%d", n), func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("end"))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/chain-0", crawler.Config{
+		Depth: 50, IgnoreRobots: true, NoSitemap: true, MaxPages: 100, MaxRedirects: 10,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, p := range res.Pages {
+		if urls.PathOf(p.URL) == fmt.Sprintf("/chain-%d", n) {
+			t.Fatalf("chain should have been truncated before reaching the end: %#v", res.Pages)
+		}
+	}
+	if len(res.Pages) > 12 {
+		t.Fatalf("chain not bounded by MaxRedirects: %d pages", len(res.Pages))
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.ID == "redirect-chain-truncated" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected a redirect-chain-truncated finding")
 	}
 }
 

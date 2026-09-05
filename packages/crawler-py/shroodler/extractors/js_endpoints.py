@@ -8,6 +8,19 @@ from shroodler.urls import canonical_key, normalize_url, same_origin
 _FETCH_STR = re.compile(r"""fetch\(\s*['"]([^'"]+)['"]""")
 _FETCH_TPL = re.compile(r"fetch\(\s*`([^`$]+)`")
 _XHR = re.compile(r"""(?:axios|request)\(\s*['"]([^'"]+)['"]""")
+# axios.get(...)/post(...)/etc -- real SPAs overwhelmingly call axios this
+# way rather than the bare axios(...) form _XHR already covers.
+_AXIOS_METHOD = re.compile(
+    r"""axios\.(?:get|post|put|patch|delete|head|options)\(\s*['"]([^'"]+)['"]"""
+)
+# jQuery's $.get/$.post/$.getJSON take the URL as a plain string first arg;
+# $.ajax takes an options object, so it's matched separately below.
+_JQUERY_SHORTHAND = re.compile(r"""\$\.(?:get|post|getJSON)\(\s*['"]([^'"]+)['"]""")
+_JQUERY_AJAX_OBJ = re.compile(
+    r"""\$\.ajax\(\s*\{[^}]*?url\s*:\s*['"]([^'"]+)['"]""", re.S
+)
+# Raw XMLHttpRequest: xhr.open("GET", "/api/x")
+_XHR_OPEN = re.compile(r"""\.open\(\s*['"]\w+['"]\s*,\s*['"]([^'"]+)['"]""")
 _WS_NEW_STR = re.compile(r"""new\s+WebSocket\(\s*['"]([^'"]+)['"]""")
 _WS_NEW_TPL = re.compile(r"new\s+WebSocket\(\s*`([^`$]+)`")
 _ES_NEW_STR = re.compile(r"""new\s+EventSource\(\s*['"]([^'"]+)['"]""")
@@ -19,6 +32,10 @@ _PATTERNS = (
     _FETCH_STR,
     _FETCH_TPL,
     _XHR,
+    _AXIOS_METHOD,
+    _JQUERY_SHORTHAND,
+    _JQUERY_AJAX_OBJ,
+    _XHR_OPEN,
     _WS_NEW_STR,
     _WS_NEW_TPL,
     _ES_NEW_STR,

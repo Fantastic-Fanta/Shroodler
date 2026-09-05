@@ -183,7 +183,13 @@ class Crawler:
         js_endpoints: list = []
         cors_candidates: list[str] = []
         family_counts: dict[str, int] = defaultdict(int)
-        redirect_hits: dict[str, int] = defaultdict(int)
+        # Tracks how many redirect hops it took to reach a given (not-yet-
+        # fetched) URL, keyed by its canonical key, so a long or endlessly
+        # bouncing redirect chain (each hop landing on a distinct URL, e.g.
+        # a token/nonce in the query string) gets truncated with a visible
+        # finding instead of silently eating page-budget slots one hop at a
+        # time until --max-pages/--max-time happens to run out.
+        redirect_chain_depth: dict[str, int] = {}
 
         while queue:
             hit = self._budget_hit(t0, len(pages))
@@ -227,10 +233,27 @@ class Crawler:
 
             if result.redirect_to:
                 loc = urljoin(result.url, result.redirect_to)
-                redirect_hits[key] += 1
-                if redirect_hits[key] <= self.max_redirects:
+                depth_so_far = redirect_chain_depth.get(key, 0) + 1
+                if depth_so_far > self.max_redirects:
+                    findings.append(
+                        Finding(
+                            id="redirect-chain-truncated",
+                            severity="info",
+                            category="scan-note",
+                            url=result.url,
+                            description=(
+                                f"Redirect chain exceeded {self.max_redirects} hops and was "
+                                "not followed further -- content beyond this point was not "
+                                "crawled. This may be an infinite/looping redirect, or a "
+                                "chain longer than expected."
+                            ),
+                            evidence=f"redirecting to {loc}",
+                        )
+                    )
+                else:
                     loc_key = canonical_key(loc)
                     if loc_key not in seen and same_origin(loc, origin_url):
+                        redirect_chain_depth[loc_key] = depth_so_far
                         queue.append((loc, depth))
 
             if result.status_code == 200:

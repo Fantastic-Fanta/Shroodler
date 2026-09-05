@@ -232,6 +232,44 @@ func TestCSPHeaderFindings(t *testing.T) {
 	}
 }
 
+func TestExtractJSAxiosMethodCalls(t *testing.T) {
+	js := `axios.get("/api/users"); axios.post("/api/users", data); axios.delete("/api/users/1");`
+	eps := ExtractJSEndpoints("/app.js", js)
+	got := map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	if !got["/api/users"] || !got["/api/users/1"] {
+		t.Fatalf("axios method calls %#v", eps)
+	}
+}
+
+func TestExtractJSJQueryShorthandAndAjaxObject(t *testing.T) {
+	js := `$.get("/api/list", cb); $.post("/api/save", data); $.ajax({url: "/api/config", method: "GET"});`
+	eps := ExtractJSEndpoints("/app.js", js)
+	got := map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	for _, want := range []string{"/api/list", "/api/save", "/api/config"} {
+		if !got[want] {
+			t.Fatalf("missing %q in %#v", want, eps)
+		}
+	}
+}
+
+func TestExtractJSXHROpenCall(t *testing.T) {
+	js := `var x = new XMLHttpRequest(); x.open("GET", "/api/legacy");`
+	eps := ExtractJSEndpoints("/app.js", js)
+	got := map[string]bool{}
+	for _, e := range eps {
+		got[e.Endpoint] = true
+	}
+	if !got["/api/legacy"] {
+		t.Fatalf("xhr open %#v", eps)
+	}
+}
+
 func TestExtractJSWebSocketSSE(t *testing.T) {
 	eps := ExtractJSEndpoints("/rt.js", `new WebSocket("/ws/live"); new EventSource("/sse/events");`)
 	got := map[string]bool{}

@@ -7,6 +7,33 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Redirect-chain truncation actually works now (Python + Go).** The
+  per-URL redirect counter (`max_redirects`) was dead code in Python: a
+  URL's canonical key is added to `seen` before it's ever fetched, so the
+  queue can only process each key once, meaning the counter could never
+  exceed 1 regardless of `max_redirects` -- only the global `seen` set
+  (catching an exact A->B->A loop) plus the outer page/time budget
+  (eventually running out) ever actually stopped a chain, silently
+  eating page-budget slots one hop at a time with no visibility. Go had
+  no protection at all beyond `seen`+budget. Both engines now track
+  chain depth forward across distinct canonical keys and emit a
+  `redirect-chain-truncated` scan-note finding when a chain exceeds
+  `--max-redirects` hops, so a report reader can tell "this site's
+  redirect design ate N budget slots" from a real content gap.
+- **`js-endpoint` extraction covers more real-world API-client call
+  shapes** (Python + Go): `axios.get/post/put/patch/delete/head/options(...)`
+  (previously only the bare `axios(...)` form matched, but real SPAs
+  overwhelmingly call axios per-method), jQuery's `$.get/$.post/$.getJSON`
+  and `$.ajax({url: ...})`, and raw `XMLHttpRequest`'s `.open(method, url)`.
+  Go was also missing the pre-existing `axios(...)`/`request(...)` pattern
+  entirely -- a real, previously-unnoticed parity gap, now fixed in the
+  same change.
+- **`parity-tests` now compares finding severity, not just id+path.** A
+  regression that flipped a finding's severity between the two engines
+  (e.g. a real vulnerability silently downgraded to `info`) would
+  previously report "parity ok" as long as the (id, path) pair still
+  matched -- this is wired live into CI via `make verify`, so it was an
+  active, not theoretical, gap.
 - **`payload` now fuzzes GET endpoints with no `<form>` using `Page.params`.**
   Both crawlers have populated `Page.params` (query-parameter names) for
   every page for a while -- via OpenAPI/GraphQL discovery and plain

@@ -50,7 +50,45 @@ def test_severity_disagreement_is_flagged():
     }
     merged = merge_engine_results(py_doc, go_doc)
     disagreement = merged["findings"][0]["severity_disagreement"]
-    assert disagreement == {"python": "high", "go": "medium"}
+    assert disagreement == {"python": ["high"], "go": ["medium"]}
+
+
+def test_same_engine_duplicate_severities_are_not_reported_as_cross_engine_disagreement():
+    # Two Set-Cookie headers on one page can both trip insecure-cookie
+    # with different severities under ONE engine -- this must never be
+    # mislabeled as "the Go engine disagrees" when Go found nothing.
+    py_doc = {
+        "target": "http://x",
+        "pages": [],
+        "findings": [
+            _finding("insecure-cookie", "http://x/a", severity="high"),
+            _finding("insecure-cookie", "http://x/a", severity="medium"),
+        ],
+    }
+    go_doc = {"target": "http://x", "pages": [], "findings": []}
+    merged = merge_engine_results(py_doc, go_doc)
+    assert len(merged["findings"]) == 1
+    assert merged["findings"][0]["engines"] == ["python"]
+    assert "severity_disagreement" not in merged["findings"][0]
+
+
+def test_real_cross_engine_disagreement_with_same_engine_duplicates_present():
+    py_doc = {
+        "target": "http://x",
+        "pages": [],
+        "findings": [
+            _finding("insecure-cookie", "http://x/a", severity="high"),
+            _finding("insecure-cookie", "http://x/a", severity="medium"),
+        ],
+    }
+    go_doc = {
+        "target": "http://x",
+        "pages": [],
+        "findings": [_finding("insecure-cookie", "http://x/a", severity="low")],
+    }
+    merged = merge_engine_results(py_doc, go_doc)
+    disagreement = merged["findings"][0]["severity_disagreement"]
+    assert disagreement == {"python": ["high", "medium"], "go": ["low"]}
 
 
 def test_query_string_distinguishes_findings():

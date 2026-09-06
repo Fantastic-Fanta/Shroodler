@@ -463,15 +463,31 @@ def cmd_suppress_expiring(args: argparse.Namespace) -> int:
 
 def cmd_sla_apply(args: argparse.Namespace) -> int:
     from shroodler.history import default_history_dir
-    from shroodler.sla import apply_sla, load_ownership_rules
+    from shroodler.sla import apply_sla, load_ownership_rules, wildcard_rules
 
     doc = load_json(args.scan_json)
     history_dir_arg = getattr(args, "history_dir", None)
     history_dir = Path(history_dir_arg) if history_dir_arg else default_history_dir()
     owners = load_ownership_rules(getattr(args, "owners", None))
+    for rule in wildcard_rules(owners):
+        print(
+            f"warning: ownership rule id={rule['id']!r} url={rule['url']!r} "
+            f"matches everything it applies to -- every matching finding will be "
+            f"attributed to owner={rule['owner']!r}",
+            file=sys.stderr,
+        )
     result = apply_sla(doc, history_dir=history_dir, owners=owners)
     text = json.dumps(result, indent=2) + "\n"
     _write(text, args.output)
+    if result["findings"] and not result["findings"][0].get("history_available", True):
+        print(
+            f"warning: no recorded scan history found for target "
+            f"{doc.get('target', '')!r} in {history_dir} -- first_seen/age_days/"
+            "sla_breached could NOT be evaluated for any finding (not the same as "
+            "a clean result). Run `shroodler history record` after a scan to "
+            "start tracking.",
+            file=sys.stderr,
+        )
     breached = [f for f in result["findings"] if f.get("sla_breached")]
     if getattr(args, "gate", False) and breached:
         for f in breached:

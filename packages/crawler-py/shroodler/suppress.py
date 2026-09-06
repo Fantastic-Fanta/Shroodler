@@ -125,6 +125,15 @@ def expiring_within(rules: list[dict], days: int, today: date | None = None) -> 
     return out
 
 
+def _md_code_escape(value: str) -> str:
+    """Make an arbitrary string safe to place inside a single backtick
+    code span: strip characters that could close the span early or
+    inject Markdown/line structure into a PR body a CI job posts
+    unattended (backticks, newlines/carriage-returns, and pipes, which
+    could otherwise break out into surrounding table/list structure)."""
+    return str(value).replace("`", "'").replace("\n", " ").replace("\r", " ").replace("|", "/")
+
+
 def render_expiring_pr_body(rules: list[dict], days: int) -> str:
     """Markdown body a scheduled CI job can hand straight to `gh pr create
     --body` (or equivalent) to open a PR nudging someone to
@@ -132,6 +141,11 @@ def render_expiring_pr_body(rules: list[dict], days: int) -> str:
     this module only generates the content; actually opening the PR
     (running `gh`, pushing a branch) is CI's job, not this library's, so
     it stays free of any network/credential concerns.
+
+    Suppression files are normally PR-reviewed, so a hostile id/url/
+    owner/reason getting in here at all is unlikely -- fields are still
+    escaped before being placed in Markdown/code spans as defense in
+    depth, since this text is posted into a PR body unattended.
     """
     if not rules:
         return f"No suppression rules expire within the next {days} day(s)."
@@ -142,9 +156,13 @@ def render_expiring_pr_body(rules: list[dict], days: int) -> str:
         "",
     ]
     for rule in rules:
+        rid = _md_code_escape(rule["id"])
+        url = _md_code_escape(rule["url"])
+        expires = _md_code_escape(rule["expires"])
+        owner = _md_code_escape(rule["owner"]) or "(unset)"
+        reason = _md_code_escape(rule["reason"]) or "(none)"
         lines.append(
-            f"- `id={rule['id']}` `url={rule['url']}` expires **{rule['expires']}** "
-            f"(owner: {rule['owner'] or '(unset)'}; reason: {rule['reason'] or '(none)'})"
+            f"- `id={rid}` `url={url}` expires **{expires}** (owner: {owner}; reason: {reason})"
         )
     return "\n".join(lines) + "\n"
 

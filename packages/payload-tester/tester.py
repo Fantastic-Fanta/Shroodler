@@ -167,20 +167,51 @@ def _clause_kinds(pack: dict) -> set[str]:
     return {k for c in clauses if isinstance(c, dict) for k in c}
 
 
-def infer_confidence(pack: dict) -> str:
-    """Static, per-pack confidence classification, used when a pack
-    doesn't set its own `confidence:` key. Timing-based signals are
-    inherently the noisiest kind this tool produces (a single-sample
-    comparison against baseline, no retry) so they're "probable" even
-    when the pack's own severity is high; plain reflection alone (the
-    raw payload text echoed back, with no exec/computation confirming
-    it actually ran) is a real observation but not proof of
-    exploitability, so it's "heuristic"; anything else here required a
-    marker the target had to compute/execute or an unambiguous
-    error-signature match, so it's "confirmed".
+def _matched_clause_kinds(pack: dict, **ctx) -> set[str]:
+    """Which clause(s) actually matched THIS response, not the pack's
+    static clause inventory. A pack combining a strong marker clause and
+    a weak `reflected: true` fallback in one `any:` block must not be
+    classified by "the pack contains a reflected clause" when the run
+    that matched did so via the strong clause -- see `_confidence_for`.
+    For an `all:` pack every listed clause had to match, so this is the
+    union of every clause's kind either way.
     """
+    match = pack.get("match") or {}
+    clauses = match.get("all") or match.get("any") or []
+    kinds: set[str] = set()
+    for c in clauses:
+        if isinstance(c, dict) and _clause_matches(c, **ctx):
+            kinds |= set(c)
+    return kinds
+
+
+def _confidence_for(pack: dict, matched_kinds: set[str]) -> str:
+    """Confidence classification driven by which clause(s) actually fired
+    on this response (`matched_kinds`), not merely which clause *types*
+    the pack happens to contain -- so a pack that combines a strong
+    marker/error-signature clause with a weaker `reflected: true`
+    fallback in the same `any:` block is graded by whichever of them
+    actually matched, never downgraded just because a weaker clause is
+    also present in the pack. An explicit per-pack `confidence:` key
+    always wins over this inference.
+    """
+    if pack.get("confidence"):
+        return str(pack["confidence"])
     if pack.get("blind"):
         return "probable"
+    # Anything beyond "reflected"/"time_delta_gte_ms" required the target
+    # to compute/execute something or produced an unambiguous
+    # error-signature -- confirmed, even if a weaker clause also fired.
+    strong = matched_kinds - {"reflected", "time_delta_gte_ms"}
+    if strong:
+        return "confirmed"
+    if "time_delta_gte_ms" in matched_kinds:
+        return "probable"
+    if matched_kinds:
+        return "heuristic"
+    # No context available (e.g. a caller classifying a pack in the
+    # abstract, without a matched response) -- fall back to the pack's
+    # static clause inventory.
     kinds = _clause_kinds(pack)
     if "time_delta_gte_ms" in kinds:
         return "probable"
@@ -189,7 +220,19 @@ def infer_confidence(pack: dict) -> str:
     return "confirmed"
 
 
-def _finding(pack: dict, action: str, payload: str) -> dict:
+def infer_confidence(pack: dict) -> str:
+    """Static, per-pack confidence classification with no match context
+    available -- used by callers that only have the pack definition
+    (e.g. documentation/listing tools). Prefer `_confidence_for` with
+    `matched_kinds` from an actual response wherever one exists.
+    """
+    return _confidence_for(pack, matched_kinds=set())
+
+
+_CONFIDENCE_RANK = {"confirmed": 0, "probable": 1, "heuristic": 2}
+
+
+def _finding(pack: dict, action: str, payload: str, confidence: str) -> dict:
     ev = payload if len(payload) <= 80 else payload[:80]
     return {
         "id": pack_finding_id(pack),
@@ -198,7 +241,7 @@ def _finding(pack: dict, action: str, payload: str) -> dict:
         "url": action,
         "description": pack.get("description", pack_finding_id(pack)),
         "evidence": ev,
-        "confidence": pack.get("confidence") or infer_confidence(pack),
+        "confidence": confidence,
     }
 
 
@@ -325,7 +368,7 @@ def run(
                 # payload that matched -- a smaller repro is less noise to
                 # paste into a bug report, without needing an actual
                 # binary search over each pack's own variants.
-                best_by_id: dict[str, tuple[str, dict]] = {}
+                best_by_id: dict[str, tuple[str, dict, int, str]] = {}
                 for pack in loaded:
                     if not request_allowed():
                         break
@@ -364,8 +407,7 @@ def run(
                             continue
                     elapsed_ms = resp.elapsed.total_seconds() * 1000
                     redirected_to = resp.headers.get("location", "")
-                    if not pack_matches(
-                        pack,
+                    match_ctx = dict(
                         status=resp.status_code,
                         body=resp.text,
                         payload=payload,
@@ -376,19 +418,29 @@ def run(
                         baseline_elapsed_ms=baseline_elapsed_ms,
                         marker_host=marker_host,
                         response_headers=resp.headers,
-                    ):
+                    )
+                    if not pack_matches(pack, **match_ctx):
                         continue
                     fid = pack_finding_id(pack)
+                    confidence = _confidence_for(pack, _matched_clause_kinds(pack, **match_ctx))
+                    rank = _CONFIDENCE_RANK.get(confidence, 99)
                     existing = best_by_id.get(fid)
-                    if existing is None or len(payload) < len(existing[0]):
-                        best_by_id[fid] = (payload, pack)
+                    # Prefer the strongest-confidence match first; only use
+                    # payload length to break ties within the same
+                    # confidence tier -- a shorter-but-weaker match (e.g. a
+                    # bare reflection) must never displace a longer payload
+                    # that triggered an unambiguous marker/error signature,
+                    # or "minimal repro" would quietly downgrade the
+                    # evidence a human actually wants to see.
+                    if existing is None or (rank, len(payload)) < (existing[2], len(existing[0])):
+                        best_by_id[fid] = (payload, pack, rank, confidence)
 
-                for fid, (payload, pack) in best_by_id.items():
+                for fid, (payload, pack, _rank, confidence) in best_by_id.items():
                     key = (fid, action)
                     if key in seen:
                         continue
                     seen.add(key)
-                    finding = _finding(pack, action, payload)
+                    finding = _finding(pack, action, payload, confidence)
                     finding["minimal_repro"] = True
                     findings.append(finding)
     finally:

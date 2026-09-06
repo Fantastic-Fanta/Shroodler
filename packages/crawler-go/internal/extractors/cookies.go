@@ -183,6 +183,51 @@ func ExtractCookies(headers []string, pageURL string) ([]models.Cookie, []models
 			}
 			pathNorm = &n
 		}
+		// __Secure-/__Host- are contracts a browser enforces at parse
+		// time, not hardening advice: a Set-Cookie whose name carries
+		// the prefix but doesn't meet the prefix's requirements is
+		// REJECTED outright (RFC 6265bis s4.1.3) -- the app thinks it
+		// set a cookie and it silently never existed. Deterministic
+		// from the header alone, independent of whether this looks
+		// like a "session" cookie, and distinct from
+		// cookie-missing-*-prefix below (a suggestion to adopt a
+		// prefix that isn't there yet).
+		if strings.HasPrefix(c.Name, "__Secure-") && !c.Secure {
+			findings = append(findings, cookieFinding(
+				"cookie-secure-prefix-violation", "medium", pageURL, c.Name,
+				"Cookie "+c.Name+" uses the __Secure- prefix but is missing the Secure "+
+					"flag -- browsers reject this Set-Cookie entirely, so the application "+
+					"likely thinks it set a cookie that was never actually stored",
+			))
+		}
+		if strings.HasPrefix(c.Name, "__Host-") {
+			var violations []string
+			if !c.Secure {
+				violations = append(violations, "is missing Secure")
+			}
+			if p.domain != nil && strings.TrimSpace(*p.domain) != "" {
+				violations = append(violations, "has Domain="+strings.TrimSpace(*p.domain))
+			}
+			// The __Host- prefix requires an EXPLICIT Path=/ attribute
+			// (RFC 6265bis), so an omitted Path (pathNorm == nil) is
+			// itself a violation, not just Path != "/".
+			if pathNorm == nil || *pathNorm != "/" {
+				pv := "(none)"
+				if pathNorm != nil {
+					pv = *pathNorm
+				}
+				violations = append(violations, "has Path="+pv+" (must be /)")
+			}
+			if len(violations) > 0 {
+				findings = append(findings, cookieFinding(
+					"cookie-host-prefix-violation", "medium", pageURL, c.Name,
+					"Cookie "+c.Name+" uses the __Host- prefix but "+strings.Join(violations, " and ")+
+						" -- browsers reject this Set-Cookie entirely, so the application "+
+						"likely thinks it set a cookie that was never actually stored",
+				))
+			}
+		}
+
 		session := IsSessionCookie(c.Name)
 		if session && pathNorm != nil && *pathNorm == "/" {
 			findings = append(findings, cookieFinding("cookie-path-broad", "info", pageURL, c.Name, "Session cookie "+c.Name+" is scoped to Path=/"))

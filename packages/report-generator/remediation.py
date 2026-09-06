@@ -14,6 +14,8 @@ _BY_ID: dict[str, str] = {
     "cookie-not-httponly": "Set HttpOnly on this cookie so client-side JS (and XSS) cannot read it.",
     "cookie-samesite-none-without-secure": "SameSite=None cookies must also carry Secure; add it or use SameSite=Lax/Strict.",
     "cookie-domain-broad": "Scope the cookie's Domain to the exact host that needs it instead of a parent domain.",
+    "cookie-secure-prefix-violation": "Add the Secure flag (required by the __Secure- prefix) or drop the prefix -- as-is, browsers silently reject this Set-Cookie entirely.",
+    "cookie-host-prefix-violation": "Fix the flagged attribute(s) to meet the __Host- prefix's requirements (Secure, no Domain, Path=/) or drop the prefix -- as-is, browsers silently reject this Set-Cookie entirely.",
     "cookie-path-broad": "Scope session cookies to the narrowest Path that still works, not '/'.",
     "missing-csp": "Add a Content-Security-Policy header restricting script/style/object sources.",
     "weak-csp": "Tighten the CSP: drop 'unsafe-inline'/'unsafe-eval' and wildcard sources in favor of nonces/hashes.",

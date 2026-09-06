@@ -121,3 +121,75 @@ func TestCookieSameSiteNoneWithoutSecure(t *testing.T) {
 		t.Fatal("expected cookie-samesite-none-without-secure")
 	}
 }
+
+func TestCookieSecurePrefixViolation(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Secure-id=abc; Path=/"},
+		"https://app.example.com/",
+	)
+	if !ids["cookie-secure-prefix-violation"] {
+		t.Fatal("expected cookie-secure-prefix-violation when __Secure- cookie lacks Secure")
+	}
+}
+
+func TestCookieSecurePrefixWithSecureIsClean(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Secure-id=abc; Path=/; Secure"},
+		"https://app.example.com/",
+	)
+	if ids["cookie-secure-prefix-violation"] {
+		t.Fatal("__Secure- cookie with Secure must not violate")
+	}
+}
+
+func TestCookieHostPrefixViolationMissingSecure(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Host-id=abc; Path=/"},
+		"https://app.example.com/",
+	)
+	if !ids["cookie-host-prefix-violation"] {
+		t.Fatal("expected cookie-host-prefix-violation when __Host- cookie lacks Secure")
+	}
+}
+
+func TestCookieHostPrefixViolationHasDomain(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Host-id=abc; Path=/; Secure; Domain=example.com"},
+		"https://app.example.com/",
+	)
+	if !ids["cookie-host-prefix-violation"] {
+		t.Fatal("expected cookie-host-prefix-violation when __Host- cookie has Domain")
+	}
+}
+
+func TestCookieHostPrefixViolationWrongPath(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Host-id=abc; Path=/account; Secure"},
+		"https://app.example.com/account",
+	)
+	if !ids["cookie-host-prefix-violation"] {
+		t.Fatal("expected cookie-host-prefix-violation when __Host- cookie's Path isn't /")
+	}
+}
+
+func TestCookieHostPrefixViolationMissingPath(t *testing.T) {
+	// __Host- requires an EXPLICIT Path=/ -- omitting Path entirely is
+	// itself a violation, not a safe default.
+	ids := findingIDs(
+		[]string{"__Host-id=abc; Secure"},
+		"https://app.example.com/",
+	)
+	if !ids["cookie-host-prefix-violation"] {
+		t.Fatal("expected cookie-host-prefix-violation when __Host- cookie omits Path")
+	}
+}
+
+func TestCookieHostPrefixCompliantIsClean(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Host-id=abc; Path=/; Secure"},
+		"https://app.example.com/",
+	)
+	if ids["cookie-host-prefix-violation"] {
+		t.Fatal("compliant __Host- cookie must not violate")
+	}
+}

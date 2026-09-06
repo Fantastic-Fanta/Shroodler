@@ -30,12 +30,43 @@ def _key(finding: dict) -> tuple[str, str, str]:
     return (finding.get("id", ""), path_of(url), urlparse(url).query)
 
 
+class EngineOrderError(ValueError):
+    """Raised when a crawl document's self-reported `crawler.name`
+    contradicts the positional slot it was passed in -- both engines
+    always stamp this (`shroodler-py`/`shroodler-go`; see
+    shroodler/crawler.py and crawler-go/internal/crawler/crawler.go), so
+    a caller running `shroodler compare-engines go.json py.json` in the
+    wrong order gets a loud error instead of every finding's `engines`
+    tag and the only_python/only_go counters being silently swapped --
+    nothing else in either document's shape reveals which engine
+    produced it."""
+
+
+def _check_engine_order(py_doc: dict, go_doc: dict) -> None:
+    py_name = str((py_doc.get("crawler") or {}).get("name", "")).lower()
+    go_name = str((go_doc.get("crawler") or {}).get("name", "")).lower()
+    if py_name and "go" in py_name and "py" not in py_name:
+        raise EngineOrderError(
+            f"first argument's crawler.name={py_name!r} looks like the Go engine's "
+            "output -- pass the Python engine's crawl JSON first, Go's second"
+        )
+    if go_name and "py" in go_name and "go" not in go_name:
+        raise EngineOrderError(
+            f"second argument's crawler.name={go_name!r} looks like the Python engine's "
+            "output -- pass the Python engine's crawl JSON first, Go's second"
+        )
+
+
 def merge_engine_results(py_doc: dict, go_doc: dict) -> dict:
     """Merge two crawl documents' findings into one list, annotated with
     which engine(s) reproduced each (id, path, query). Pages/target/etc.
     are taken from whichever document is non-empty, preferring the
     Python doc's metadata (arbitrary but stable) when both have pages.
+
+    Raises EngineOrderError if either document's own crawler.name
+    contradicts its positional slot.
     """
+    _check_engine_order(py_doc, go_doc)
     by_key: dict[tuple[str, str, str], dict] = {}
     # Severities actually observed FROM EACH ENGINE for a key, kept
     # separately rather than compared against "whatever's in the merged

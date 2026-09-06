@@ -144,8 +144,13 @@ def render_expiring_pr_body(rules: list[dict], days: int) -> str:
 
     Suppression files are normally PR-reviewed, so a hostile id/url/
     owner/reason getting in here at all is unlikely -- fields are still
-    escaped before being placed in Markdown/code spans as defense in
-    depth, since this text is posted into a PR body unattended.
+    escaped and placed inside Markdown code spans as defense in depth,
+    since this text is posted into a PR body unattended. ALL FOUR
+    interpolated fields (id, url, owner, reason) are wrapped in code
+    spans, not just id/url -- code spans suppress link/emphasis/etc.
+    Markdown parsing entirely, which plain-prose interpolation (the
+    earlier, incomplete version of this fix) would not have caught for
+    a `reason` like "legit [click here](http://evil.example/)".
     """
     if not rules:
         return f"No suppression rules expire within the next {days} day(s)."
@@ -162,7 +167,8 @@ def render_expiring_pr_body(rules: list[dict], days: int) -> str:
         owner = _md_code_escape(rule["owner"]) or "(unset)"
         reason = _md_code_escape(rule["reason"]) or "(none)"
         lines.append(
-            f"- `id={rid}` `url={url}` expires **{expires}** (owner: {owner}; reason: {reason})"
+            f"- `id={rid}` `url={url}` expires **{expires}** "
+            f"(owner: `{owner}`; reason: `{reason}`)"
         )
     return "\n".join(lines) + "\n"
 

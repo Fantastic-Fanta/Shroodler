@@ -171,3 +171,17 @@ def test_render_expiring_pr_body_escapes_markdown_control_chars():
     assert len(lines) == 2
     assert "a`evil" not in body
     assert "line1 line2" in body
+
+
+def test_render_expiring_pr_body_reason_cannot_inject_a_markdown_link():
+    # round-2 fix: owner/reason are placed in prose, not just id/url --
+    # a hostile reason must not render as a live Markdown link in a PR
+    # body a CI job posts unattended.
+    rules = parse_suppressions(
+        '[{"id": "a", "url": "/x", "expires": "2020-01-10", "owner": "team", '
+        '"reason": "legit [click here](http://evil.example/)"}]'
+    )
+    body = render_expiring_pr_body(rules, 14)
+    # The reason text is wrapped in its own code span, so the markdown
+    # link syntax renders as literal text, not a clickable link.
+    assert "reason: `legit [click here](http://evil.example/)`" in body

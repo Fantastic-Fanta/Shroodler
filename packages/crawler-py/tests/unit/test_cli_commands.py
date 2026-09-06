@@ -134,6 +134,39 @@ def test_cmd_diff_ok_and_fail(tmp_path):
     assert cmd_diff(ns) == 1
 
 
+def test_cmd_diff_warns_on_expired_suppression(tmp_path, capsys):
+    actual = tmp_path / "a.json"
+    expected = tmp_path / "e.json"
+    suppressions = tmp_path / "ignore.json"
+    actual.write_text(
+        '{"pages":[{"url":"http://127.0.0.1/"}],'
+        '"findings":[{"id":"missing-csp","url":"http://127.0.0.1/","severity":"medium"}]}',
+        encoding="utf-8",
+    )
+    expected.write_text(
+        '{"expected_pages":["/"],"expected_findings":[],"expected_not_found":[]}',
+        encoding="utf-8",
+    )
+    suppressions.write_text(
+        '[{"id": "missing-csp", "url": "*", "expires": "2020-01-01"}]', encoding="utf-8"
+    )
+    ns = argparse.Namespace(
+        findings=str(actual),
+        expected=str(expected),
+        pages_only=False,
+        suppressions=str(suppressions),
+        gate=True,
+    )
+    result = cmd_diff(ns)
+    err = capsys.readouterr().err
+    assert "suppression expired" in err
+    assert "missing-csp" in err
+    # And the underlying finding is genuinely no longer suppressed --
+    # this is a warning, not a silent no-op.
+    assert "new finding missing-csp" in err
+    assert result == 1
+
+
 def test_cmd_report_html_and_json(tmp_path, capsys):
     docp = tmp_path / "d.json"
     docp.write_text('{"target":"http://127.0.0.1/","findings":[]}', encoding="utf-8")

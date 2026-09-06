@@ -7,6 +7,20 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Suppression rules can now carry an `expires` date**
+  (`packages/crawler-py/shroodler/suppress.py`). A rule with
+  `"expires": "YYYY-MM-DD"` stops suppressing once that date has
+  passed -- `diff` (in any mode, including `--gate`) prints a warning
+  naming the expired rule rather than silently continuing to suppress
+  forever, or the finding it hides silently going unsuppressed with no
+  visible signal either way. A rule with no `expires` field behaves
+  exactly as before (never expires) -- fully backward compatible with
+  every existing `.shroodlerignore`. An unparseable `expires` value
+  fails safe (treated as already-expired, surfaced as a warning) rather
+  than silently suppressing forever because a date was typo'd. Rules
+  also gained an optional `owner` field, carried through for humans/
+  tooling. Pure post-processing over already-produced JSON, so this
+  never touches `crawl` and has no Python/Go parity surface.
 - **Fixes from a pentester review of the cookie-prefix-violation checks
   and the trend severity gate -- the headless false positive was
   disqualifying on its own.**

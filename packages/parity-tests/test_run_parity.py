@@ -14,7 +14,23 @@ def _doc(findings: list[dict]) -> dict:
 
 def test_finding_set_includes_severity():
     doc = _doc([{"id": "missing-csp", "url": "http://x/", "severity": "medium"}])
-    assert finding_set(doc) == {("missing-csp", "/", "medium")}
+    assert finding_set(doc) == {("missing-csp", "/", "", "medium")}
+
+
+def test_finding_set_includes_query_string():
+    # A purely query-string-driven check (e.g. the OAuth checks) has its
+    # entire signal in the query -- two findings differing only by query
+    # must not collapse to the same key.
+    doc = _doc(
+        [
+            {"id": "oauth-missing-state", "url": "http://x/authorize?a=1", "severity": "medium"},
+            {"id": "oauth-missing-state", "url": "http://x/authorize?a=2", "severity": "medium"},
+        ]
+    )
+    assert finding_set(doc) == {
+        ("oauth-missing-state", "/authorize", "a=1", "medium"),
+        ("oauth-missing-state", "/authorize", "a=2", "medium"),
+    }
 
 
 def test_compare_flags_severity_regression_even_when_id_and_path_match():

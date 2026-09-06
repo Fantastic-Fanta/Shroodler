@@ -353,6 +353,16 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			}
 		}
 		for _, link := range links {
+			// Checked here, BEFORE the same-origin filter below drops it
+			// -- an authorization request overwhelmingly points at a
+			// third-party IdP, which is off-origin and therefore never
+			// fetched. Since this check is purely passive (URL
+			// inspection only), restricting it to fetched pages would
+			// examine zero real authorization requests on most real
+			// engagements against a relying party. Duplicate off-origin
+			// links across multiple pages collapse via dedupeF below
+			// (keyed on id+url).
+			findings = append(findings, extractors.CheckOAuthAuthorizeURL(link)...)
 			if !urls.SameOrigin(link, start) || seen[urls.CanonicalKey(link)] {
 				continue
 			}

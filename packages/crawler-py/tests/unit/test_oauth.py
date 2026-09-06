@@ -116,7 +116,7 @@ def test_implicit_flow_is_flagged():
     )
     assert "oauth-implicit-flow" in _ids(findings)
     hit = next(f for f in findings if f.id == "oauth-implicit-flow")
-    assert hit.severity == "low"
+    assert hit.severity == "medium"
 
 
 def test_code_flow_does_not_trigger_implicit_finding():
@@ -139,3 +139,76 @@ def test_crawl_flags_oauth_authorize_link(fx):
     result = crawl_url(fx.origin + "/", depth=1)
     ids = {f.id for f in result.findings}
     assert "oauth-missing-state" in ids
+
+
+def test_crawl_flags_off_origin_authorize_link_never_fetched(fx):
+    # Regression test for a real coverage gap caught in review: the
+    # overwhelming majority of real relying parties link to a
+    # THIRD-PARTY IdP (accounts.google.com, an Okta/Auth0 tenant, ...),
+    # which the crawler's same-origin policy never follows or fetches.
+    # Since this check is purely passive (URL inspection only, no
+    # request), it must still fire on off-origin authorize links
+    # discovered on a page, not just links the crawler happened to fetch.
+    fx.html(
+        "/",
+        '<html><body><a href="https://idp.example.invalid/authorize'
+        '?response_type=code&client_id=abc">login</a></body></html>',
+    )
+    result = crawl_url(fx.origin + "/", depth=1)
+    ids = {f.id for f in result.findings}
+    assert "oauth-missing-state" in ids
+    # And that off-origin URL was never queued/fetched as a page.
+    assert not any(p.url.startswith("https://idp.example.invalid") for p in result.pages)
+
+
+def test_malformed_query_is_not_assessed():
+    # Regression test for a real Python/Go parity gap caught in review:
+    # Go's net/url.Values (via url.ParseQuery) silently drops a pair
+    # whose value contains a bare ";" or an invalid %-escape, discarding
+    # the parse error -- while Python's parse_qs is lenient and keeps the
+    # raw text. That made Go treat state as *absent* on "state=a;b" (a
+    # false oauth-missing-state on a URL that DOES carry a state value)
+    # while Python correctly saw "a;b". Rather than one engine's leniency
+    # trying to match the other's, both now refuse to assess a query
+    # with either red flag at all -- verified byte-identical against Go
+    # over an adversarial corpus during review.
+    assert not is_authorization_request(
+        "https://idp.example/authorize?response_type=code&client_id=abc&state=a;b"
+    )
+    assert check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc&state=a;b"
+    ) == []
+    assert check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc&state=%zz"
+    ) == []
+    assert check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc&state=%"
+    ) == []
+
+
+def test_jar_and_par_requests_are_not_flagged_missing_state():
+    # RFC 9101 (JAR) / RFC 9126 (PAR): response_type+client_id stay in
+    # the query for OAuth2 compatibility even when the real parameters
+    # (state included) are inside a signed request object or held
+    # server-side -- state genuinely can't be assessed passively, and
+    # this is a MORE secure deployment shape, not a less secure one.
+    assert check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc"
+        "&request=eyJhbGciOiJSUzI1NiJ9.payload.sig"
+    ) == []
+    assert check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc"
+        "&request_uri=urn:ietf:params:oauth:request_uri:abc"
+    ) == []
+
+
+def test_whitespace_only_code_challenge_is_not_treated_as_pkce():
+    # code_challenge must be trimmed the same way state is -- a
+    # whitespace-only value is not a real PKCE challenge and must not
+    # earn the severity downgrade.
+    findings = check_oauth_authorize_url(
+        "https://idp.example/authorize?response_type=code&client_id=abc"
+        "&state=%20&code_challenge=%20&code_challenge_method=S256"
+    )
+    hit = next(f for f in findings if f.id == "oauth-missing-state")
+    assert hit.severity == "medium"

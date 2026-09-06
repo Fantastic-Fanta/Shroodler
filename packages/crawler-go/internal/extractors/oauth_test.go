@@ -135,6 +135,65 @@ func TestCheckOAuthAuthorizeURLWithState(t *testing.T) {
 	}
 }
 
+func TestMalformedQueryIsNotAssessed(t *testing.T) {
+	// Regression test for a real Python/Go parity gap caught in review:
+	// url.Query() (via url.ParseQuery) silently drops a pair whose value
+	// contains a bare ";" or an invalid %-escape, discarding the parse
+	// error -- while Python's parse_qs is lenient and keeps the raw
+	// text. That made this engine treat state as *absent* on "state=a;b"
+	// (a false oauth-missing-state on a URL that DOES carry a state
+	// value). Both engines now refuse to assess a query with either red
+	// flag at all -- verified byte-identical against Python over an
+	// adversarial corpus during review.
+	if IsAuthorizationRequest("https://idp.example/authorize?response_type=code&client_id=abc&state=a;b") {
+		t.Fatal("a query containing a bare ';' must not be assessed at all")
+	}
+	for _, u := range []string{
+		"https://idp.example/authorize?response_type=code&client_id=abc&state=a;b",
+		"https://idp.example/authorize?response_type=code&client_id=abc&state=%zz",
+		"https://idp.example/authorize?response_type=code&client_id=abc&state=%",
+	} {
+		if got := CheckOAuthAuthorizeURL(u); len(got) != 0 {
+			t.Fatalf("expected no findings for malformed query %q, got %v", u, got)
+		}
+	}
+}
+
+func TestJARAndPARRequestsAreNotFlaggedMissingState(t *testing.T) {
+	// RFC 9101 (JAR) / RFC 9126 (PAR): response_type+client_id stay in
+	// the query for OAuth2 compatibility even when the real parameters
+	// (state included) are inside a signed request object or held
+	// server-side -- state genuinely can't be assessed passively, and
+	// this is a MORE secure deployment shape, not a less secure one.
+	for _, u := range []string{
+		"https://idp.example/authorize?response_type=code&client_id=abc&request=eyJhbGciOiJSUzI1NiJ9.payload.sig",
+		"https://idp.example/authorize?response_type=code&client_id=abc&request_uri=urn:ietf:params:oauth:request_uri:abc",
+	} {
+		if got := CheckOAuthAuthorizeURL(u); len(got) != 0 {
+			t.Fatalf("expected no findings for JAR/PAR request %q, got %v", u, got)
+		}
+	}
+}
+
+func TestWhitespaceOnlyCodeChallengeIsNotTreatedAsPKCE(t *testing.T) {
+	findings := CheckOAuthAuthorizeURL(
+		"https://idp.example/authorize?response_type=code&client_id=abc" +
+			"&state=%20&code_challenge=%20&code_challenge_method=S256",
+	)
+	var hit *models.Finding
+	for i := range findings {
+		if findings[i].ID == "oauth-missing-state" {
+			hit = &findings[i]
+		}
+	}
+	if hit == nil {
+		t.Fatal("expected oauth-missing-state to fire")
+	}
+	if hit.Severity != "medium" {
+		t.Fatalf("expected medium severity for whitespace-only code_challenge, got %s", hit.Severity)
+	}
+}
+
 func TestCheckOAuthAuthorizeURLRepeatedStateWithBlankFirstValue(t *testing.T) {
 	// Regression test for a real Python/Go parity gap caught in review:
 	// Go's net/url.Values.Get returns the FIRST value in a repeated
@@ -172,8 +231,8 @@ func TestCheckOAuthAuthorizeURLImplicitFlow(t *testing.T) {
 	for _, f := range findings {
 		if f.ID == "oauth-implicit-flow" {
 			found = true
-			if f.Severity != "low" {
-				t.Fatalf("expected low severity, got %s", f.Severity)
+			if f.Severity != "medium" {
+				t.Fatalf("expected medium severity, got %s", f.Severity)
 			}
 		}
 	}

@@ -27,7 +27,38 @@ def _finding(fid: str, severity: str, url: str, description: str, evidence: str)
     )
 
 
-def _parse_qs(url: str) -> dict[str, list[str]]:
+def _raw_query_is_well_formed(query: str) -> bool:
+    """Reject a query string neither engine's stdlib parser can be
+    trusted to agree on, rather than silently reasoning from a
+    partially-parsed result.
+
+    Verified in review: Go's net/url.Values (backed by url.ParseQuery)
+    silently DROPS a pair whose value contains a bare ";" (rejected as an
+    ambiguous separator since Go 1.17) or an invalid %-escape, discarding
+    the error -- while Python's parse_qs is lenient and keeps the raw
+    text unchanged. For "state=a;b" that made Go treat state as *absent*
+    (a false oauth-missing-state on a URL that does carry a state value)
+    while Python correctly saw "a;b". Rather than trying to make one
+    stdlib parser's leniency match the other's exactly, both engines
+    refuse to assess a query with either red flag at all.
+    """
+    if ";" in query:
+        return False
+    i = 0
+    while True:
+        i = query.find("%", i)
+        if i == -1:
+            return True
+        hex_part = query[i + 1 : i + 3]
+        if len(hex_part) != 2 or not all(c in "0123456789abcdefABCDEF" for c in hex_part):
+            return False
+        i += 3
+
+
+def _parse_qs(url: str) -> dict[str, list[str]] | None:
+    query = urlparse(url).query
+    if not _raw_query_is_well_formed(query):
+        return None
     # keep_blank_values=True + an explicit non-empty check below, rather
     # than relying on "key in qs" with the default keep_blank_values=False:
     # the default silently DROPS a blank occurrence of a repeated param
@@ -36,7 +67,7 @@ def _parse_qs(url: str) -> dict[str, list[str]]:
     # one like Go's net/url.Values.Get does -- a real Python/Go parity
     # divergence caught in review, since the two engines would then
     # disagree on whether oauth-missing-state fires for that URL.
-    return parse_qs(urlparse(url).query, keep_blank_values=True)
+    return parse_qs(query, keep_blank_values=True)
 
 
 def _first(qs: dict[str, list[str]], key: str) -> str:
@@ -46,14 +77,28 @@ def _first(qs: dict[str, list[str]], key: str) -> str:
 
 def is_authorization_request(url: str) -> bool:
     qs = _parse_qs(url)
+    if qs is None:
+        return False
     return _first(qs, "response_type") != "" and _first(qs, "client_id") != ""
 
 
 def check_oauth_authorize_url(url: str) -> list[Finding]:
-    if not is_authorization_request(url):
-        return []
     qs = _parse_qs(url)
+    if qs is None:
+        return []
+    if _first(qs, "response_type") == "" or _first(qs, "client_id") == "":
+        return []
     findings: list[Finding] = []
+
+    # RFC 9101 (JAR) / RFC 9126 (PAR): response_type+client_id stay in
+    # the query for OAuth2 compatibility even when the actual parameters
+    # (including state) are carried inside a signed request object or
+    # left server-side, referenced only by request/request_uri -- state
+    # genuinely cannot be assessed passively here, and this is a MORE
+    # secure deployment shape, not a less secure one. Reporting
+    # oauth-missing-state against it would be a real overclaim.
+    if _first(qs, "request") != "" or _first(qs, "request_uri") != "":
+        return findings
 
     state = _first(qs, "state")
     if not state.strip():
@@ -64,7 +109,7 @@ def check_oauth_authorize_url(url: str) -> list[Finding]:
         # "plain" (or a present-but-unhashed challenge) is real PKCE
         # syntactically but weak enough that this stays at medium rather
         # than being treated as equivalent to a proper S256 challenge.
-        code_challenge = _first(qs, "code_challenge")
+        code_challenge = _first(qs, "code_challenge").strip()
         has_strong_pkce = code_challenge != "" and _first(qs, "code_challenge_method") == "S256"
         findings.append(
             _finding(
@@ -111,13 +156,18 @@ def check_oauth_authorize_url(url: str) -> list[Finding]:
         findings.append(
             _finding(
                 "oauth-implicit-flow",
-                "low",
+                # medium, not low: a token exposed in the URL fragment is
+                # exploitable via history/referrer/redirector-log leakage
+                # and turns any open redirect on the relying party into a
+                # token-theft primitive; OAuth 2.1 removes this flow
+                # outright rather than merely discouraging it.
+                "medium",
                 url,
-                "OAuth response_type includes \"token\" (implicit or hybrid flow), which "
-                "returns an access token directly in the redirect URI fragment, exposed to "
-                "browser history/referrer leakage/redirector logs; OAuth 2.1 and current best "
-                "practice deprecate this in favor of the authorization code flow (+ PKCE)",
-                response_type,
+                f"OAuth response_type={response_type!r} includes \"token\" (implicit or hybrid "
+                "flow), which returns an access token directly in the redirect URI fragment, "
+                "exposed to browser history/referrer leakage/redirector logs; OAuth 2.1 removes "
+                "this flow in favor of the authorization code flow (+ PKCE)",
+                url,
             )
         )
 

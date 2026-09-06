@@ -46,6 +46,18 @@ def test_unparseable_expires_fails_safe_to_already_expired():
     assert is_expired(rules[0], today=datetime.date(2026, 1, 1))
 
 
+def test_non_string_expires_fails_safe_instead_of_crashing():
+    from shroodler.suppress import expires_malformed
+
+    # A hand-built rule dict (bypassing parse_suppressions' str()
+    # coercion) with a non-string expires (e.g. unquoted YAML int) must
+    # fail safe like any other malformed value, not raise AttributeError
+    # from calling .strip() on an int.
+    rule = {"id": "a", "url": "*", "owner": "", "expires": 20250101}
+    assert is_expired(rule, today=datetime.date(2020, 1, 1))
+    assert expires_malformed(rule)
+
+
 def test_expired_suppression_no_longer_suppresses_the_finding():
     rules = parse_suppressions('[{"id": "missing-csp", "url": "*", "expires": "2020-01-01"}]')
     finding = _finding("missing-csp", "http://x/")

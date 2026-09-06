@@ -42,18 +42,35 @@ class EngineOrderError(ValueError):
     produced it."""
 
 
+# The exact, canonical names each engine stamps into crawler.name. Checked
+# by EXACT equality against the *other* slot's canonical name, not a
+# substring test -- an earlier version used `"go" in name`/`"py" in name`,
+# which both false-negatived (a name like "shroodler-go-copy" contains
+# "py" via "co-py" and slipped past undetected) and would have
+# false-positived on a hypothetical future name merely containing one of
+# these letter pairs. Exact-name comparison has neither failure mode; the
+# tradeoff is it can only catch a swap against a name it recognizes as
+# literally the OTHER known engine, not against every conceivable typo.
+_PY_ENGINE_NAME = "shroodler-py"
+_GO_ENGINE_NAME = "shroodler-go"
+
+
+def _engine_name(doc: dict) -> str:
+    return str((doc.get("crawler") or {}).get("name", "")).strip().lower()
+
+
 def _check_engine_order(py_doc: dict, go_doc: dict) -> None:
-    py_name = str((py_doc.get("crawler") or {}).get("name", "")).lower()
-    go_name = str((go_doc.get("crawler") or {}).get("name", "")).lower()
-    if py_name and "go" in py_name and "py" not in py_name:
+    py_name = _engine_name(py_doc)
+    go_name = _engine_name(go_doc)
+    if py_name == _GO_ENGINE_NAME:
         raise EngineOrderError(
-            f"first argument's crawler.name={py_name!r} looks like the Go engine's "
-            "output -- pass the Python engine's crawl JSON first, Go's second"
+            f"first argument's crawler.name={py_name!r} is the Go engine's own name -- "
+            "pass the Python engine's crawl JSON first, Go's second"
         )
-    if go_name and "py" in go_name and "go" not in go_name:
+    if go_name == _PY_ENGINE_NAME:
         raise EngineOrderError(
-            f"second argument's crawler.name={go_name!r} looks like the Python engine's "
-            "output -- pass the Python engine's crawl JSON first, Go's second"
+            f"second argument's crawler.name={go_name!r} is the Python engine's own name -- "
+            "pass the Python engine's crawl JSON first, Go's second"
         )
 
 
@@ -63,10 +80,21 @@ def merge_engine_results(py_doc: dict, go_doc: dict) -> dict:
     are taken from whichever document is non-empty, preferring the
     Python doc's metadata (arbitrary but stable) when both have pages.
 
-    Raises EngineOrderError if either document's own crawler.name
-    contradicts its positional slot.
+    Raises EngineOrderError if either document's own crawler.name is
+    literally the OTHER engine's canonical name. When crawler.name is
+    missing/unrecognized on either side, the merge still proceeds
+    (permissive, since not every synthetic/third-party crawl doc will
+    carry it) -- but the result's `engine_agreement.engine_verification`
+    is set to "unverified" rather than silently claiming the same
+    confidence as a document pair that was actually checked, so a
+    consumer can tell "we confirmed the order" from "we couldn't check".
     """
     _check_engine_order(py_doc, go_doc)
+    engine_verification = (
+        "verified"
+        if _engine_name(py_doc) == _PY_ENGINE_NAME and _engine_name(go_doc) == _GO_ENGINE_NAME
+        else "unverified"
+    )
     by_key: dict[tuple[str, str, str], dict] = {}
     # Severities actually observed FROM EACH ENGINE for a key, kept
     # separately rather than compared against "whatever's in the merged
@@ -117,5 +145,6 @@ def merge_engine_results(py_doc: dict, go_doc: dict) -> dict:
             "only_python": only_python,
             "only_go": only_go,
             "total_distinct": len(merged_findings),
+            "engine_verification": engine_verification,
         },
     }

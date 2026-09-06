@@ -76,6 +76,12 @@ def parse_suppressions(raw: str) -> list[dict]:
 def _parse_expires(value: str | None) -> date | None:
     if value is None:
         return None
+    if not isinstance(value, str):
+        # A hand-edited YAML file can produce a non-string here (e.g.
+        # `expires: 20250101` without quotes parses as an int) --
+        # .strip() on that would raise AttributeError instead of failing
+        # safe like every other malformed-value case below.
+        return date.min
     try:
         return datetime.strptime(value.strip(), "%Y-%m-%d").date()
     except ValueError:
@@ -102,6 +108,8 @@ def expires_malformed(rule: dict) -> bool:
     raw = rule.get("expires")
     if raw is None:
         return False
+    if not isinstance(raw, str):
+        return True
     return _parse_expires(raw) == date.min and raw.strip() != date.min.isoformat()
 
 

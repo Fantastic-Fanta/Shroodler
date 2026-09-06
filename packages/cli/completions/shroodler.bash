@@ -43,7 +43,7 @@ _shroodler_flags_for() {
             echo "--target --format --history-dir"
             ;;
         trend)
-            echo "--format --output --history-dir"
+            echo "--format --output --history-dir --gate-on-severity-increase"
             ;;
         *)
             echo ""

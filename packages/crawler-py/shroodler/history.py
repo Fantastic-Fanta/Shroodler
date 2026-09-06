@@ -92,11 +92,40 @@ def _finding_keys(doc: dict) -> set[tuple[str, str]]:
     return {(f.get("id", ""), f.get("url", "")) for f in doc.get("findings", [])}
 
 
+# Lower rank = more severe. Local to this module rather than importing
+# report-generator's SEVERITY_RANK: that package is reached via a
+# sys.path insert elsewhere in this codebase (see report.py), and a
+# 5-entry constant isn't worth adding that indirection to a module that
+# otherwise has zero report-generator dependency.
+_SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+
+def _severity_by_key(doc: dict) -> dict[tuple[str, str], str]:
+    # Last write wins on a duplicate key within one doc (e.g. the same
+    # id+url crawled twice some other way) -- irrelevant in practice
+    # since crawl output doesn't duplicate keys, but keeps this a total
+    # function with no surprise KeyError either way.
+    return {
+        (f.get("id", ""), f.get("url", "")): f.get("severity", "info")
+        for f in doc.get("findings", [])
+    }
+
+
 def trend_diff(older: dict, newer: dict) -> dict:
     old_keys = _finding_keys(older)
     new_keys = _finding_keys(newer)
     introduced = sorted(new_keys - old_keys)
     resolved = sorted(old_keys - new_keys)
+
+    old_severity = _severity_by_key(older)
+    new_severity = _severity_by_key(newer)
+    severity_increased = []
+    for key in sorted(old_keys & new_keys):
+        old_sev = old_severity.get(key, "info")
+        new_sev = new_severity.get(key, "info")
+        if _SEVERITY_RANK.get(new_sev, 4) < _SEVERITY_RANK.get(old_sev, 4):
+            severity_increased.append({"id": key[0], "url": key[1], "from": old_sev, "to": new_sev})
+
     return {
         "older": {
             "target": older.get("target", ""),
@@ -110,6 +139,16 @@ def trend_diff(older: dict, newer: dict) -> dict:
         },
         "introduced": [{"id": i, "url": u} for i, u in introduced],
         "resolved": [{"id": i, "url": u} for i, u in resolved],
+        # A finding present in BOTH scans (same id+url, so not "introduced")
+        # whose severity got worse -- e.g. a header check that used to be
+        # "low" now co-occurs with something that bumps it to "medium".
+        # diff --gate alone can't see this: it only compares
+        # (id, path) presence against a static baseline, which has no
+        # severity in it at all, so a same-key severity regression is
+        # invisible there. This compares two full scan docs instead
+        # (both carry severity already), so no baseline schema change
+        # was needed.
+        "severity_increased": severity_increased,
         "unchanged_count": len(old_keys & new_keys),
     }
 
@@ -135,6 +174,13 @@ def render_trend_text(trend: dict) -> str:
             lines.append(f"  - {f['id']} @ {f['url']}")
     else:
         lines.append("resolved: none")
+    lines.append("")
+    if trend["severity_increased"]:
+        lines.append(f"severity increased ({len(trend['severity_increased'])}):")
+        for f in trend["severity_increased"]:
+            lines.append(f"  ! {f['id']} @ {f['url']}: {f['from']} -> {f['to']}")
+    else:
+        lines.append("severity increased: none")
     lines.append("")
     lines.append(f"unchanged: {trend['unchanged_count']}")
     return "\n".join(lines) + "\n"

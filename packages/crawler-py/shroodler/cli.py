@@ -279,6 +279,11 @@ def cmd_trend(args: argparse.Namespace) -> int:
     else:
         text = render_trend_text(trend)
     _write(text, args.output)
+    if bool(getattr(args, "gate_on_severity_increase", False)) and trend["severity_increased"]:
+        for f in trend["severity_increased"]:
+            msg = f"severity increased: {f['id']} @ {f['url']}: {f['from']} -> {f['to']}"
+            print(msg, file=sys.stderr)
+        return 1
     return 0
 
 
@@ -707,6 +712,14 @@ def build_parser() -> argparse.ArgumentParser:
     trend.add_argument("--format", choices=["text", "json"], default="text")
     trend.add_argument("--output", "-o")
     trend.add_argument("--history-dir")
+    trend.add_argument(
+        "--gate-on-severity-increase",
+        action="store_true",
+        help="Exit 1 if any finding present in both scans (same id+url, so not "
+        "'introduced') has a worse severity in the newer scan than the older one -- "
+        "catches a same-key regression that `diff --gate` can't see, since its "
+        "static baseline never recorded a severity to compare against.",
+    )
     trend.set_defaults(func=cmd_trend)
 
     version = sub.add_parser("version", help="Print version")

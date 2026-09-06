@@ -124,9 +124,26 @@ def cmd_crawl(args: argparse.Namespace) -> int:
 
 
 def cmd_diff(args: argparse.Namespace) -> int:
+    from shroodler.suppress import expired_suppressions
+
     actual = load_json(args.findings)
     expected = load_json(args.expected)
     rules = load_suppressions(getattr(args, "suppressions", None))
+    expired = expired_suppressions(rules)
+    if expired:
+        # A warning, not a gate failure: an expired suppression means
+        # the finding it used to hide is now enforced again (visible
+        # below as whatever diff_outcome reports for it), which is the
+        # whole point -- but silently going back to enforcing with no
+        # visible signal that a suppression aged out would be easy to
+        # miss, especially for one whose finding happens to still not
+        # reproduce.
+        for rule in expired:
+            print(
+                f"suppression expired {rule['expires']!r} for id={rule['id']!r} "
+                f"url={rule['url']!r}: no longer suppressing",
+                file=sys.stderr,
+            )
     outcome = diff_outcome(
         actual,
         expected,
@@ -522,7 +539,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="CI mode: fail on findings not in the baseline; resolved findings do not fail",
     )
-    diff.add_argument("--suppressions", default=None)
+    diff.add_argument(
+        "--suppressions",
+        default=None,
+        help="Suppression rules JSON/YAML (default: .shroodlerignore if present). Each rule "
+        "is {id, url} (glob-matched, '*' for either); optional 'expires' (YYYY-MM-DD) makes "
+        "a rule stop suppressing once passed -- diff warns (not fails) when a rule has "
+        "expired, since the finding it hid is now enforced again. Optional 'owner' is "
+        "carried through for humans/tooling; this command doesn't use it.",
+    )
     diff.add_argument("--format", choices=["text", "junit", "sarif"], default="text")
     diff.add_argument("--output", "-o")
     diff.set_defaults(func=cmd_diff)

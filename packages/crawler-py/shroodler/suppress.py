@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date, datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -48,21 +49,58 @@ def parse_suppressions(raw: str) -> list[dict]:
     for row in rows:
         if not isinstance(row, dict):
             continue
+        expires_raw = row.get("expires")
         out.append(
             {
                 "id": str(row.get("id") or "*"),
                 "url": str(row.get("url") or "*"),
                 "reason": str(row.get("reason") or ""),
+                "owner": str(row.get("owner") or ""),
+                # None means "never expires" -- the pre-existing,
+                # unchanged behavior for a rule that doesn't set this
+                # field at all.
+                "expires": str(expires_raw) if expires_raw else None,
             }
         )
     return out
 
 
-def finding_suppressed(finding: dict, rules: list[dict]) -> dict | None:
+def _parse_expires(value: str | None) -> date | None:
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        # An unparseable expires value fails safe: treat the rule as
+        # already-expired (stop suppressing) rather than silently
+        # suppressing forever because a date was typo'd, and surface it
+        # via expired_suppressions() the same way a real expiry would be.
+        return date.min
+
+
+def is_expired(rule: dict, today: date | None = None) -> bool:
+    expires = _parse_expires(rule.get("expires"))
+    if expires is None:
+        return False
+    return (today or datetime.now(timezone.utc).date()) > expires
+
+
+def expired_suppressions(rules: list[dict], today: date | None = None) -> list[dict]:
+    """Rules with a real `expires` date that has passed -- surfaced so
+    `diff --gate` can warn about them instead of a suppression silently
+    aging out of relevance (or, per is_expired's fail-safe, silently
+    stopping enforcement of a suppression on a typo'd date) with no one
+    noticing either way."""
+    return [r for r in rules if is_expired(r, today)]
+
+
+def finding_suppressed(finding: dict, rules: list[dict], today: date | None = None) -> dict | None:
     fid = finding.get("id", "")
     url = finding.get("url", "")
     path = path_of(url)
     for rule in rules:
+        if is_expired(rule, today):
+            continue
         if rule["id"] not in ("*", fid):
             continue
         if glob_match(rule["url"], path) or glob_match(rule["url"], url):
@@ -70,7 +108,9 @@ def finding_suppressed(finding: dict, rules: list[dict]) -> dict | None:
     return None
 
 
-def filter_findings(findings: list[dict], rules: list[dict]) -> list[dict]:
+def filter_findings(
+    findings: list[dict], rules: list[dict], today: date | None = None
+) -> list[dict]:
     if not rules:
         return list(findings)
-    return [f for f in findings if finding_suppressed(f, rules) is None]
+    return [f for f in findings if finding_suppressed(f, rules, today) is None]

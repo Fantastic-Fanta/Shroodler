@@ -7,6 +7,27 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **New `shroodler tokens` command: password-reset/verification-token
+  predictability analysis** (`packages/crawler-py/shroodler/
+  token_entropy.py`). Operates on a recorded proxy session (the same
+  JSONL `--cookies-from`/`--seed-from`/`ingest-sessions` already
+  consume), not a live crawl -- a reset token is normally delivered
+  out-of-band (email/SMS), so the only way to observe one is a tester's
+  browser, routed through the recording proxy, actually visiting the
+  reset/verification link. With 2+ captured samples of the same
+  parameter, tests whether the values are small/clustered integers
+  (`reset-token-sequential`, critical) or measures real Shannon entropy
+  across the sample set (`reset-token-low-entropy`, medium); with only
+  one sample, makes a single conservative length-based estimate
+  (`reset-token-short`, low) and says explicitly that it couldn't check
+  for a sequential/low-entropy pattern with just one data point, rather
+  than implying the same confidence as the multi-sample checks. A
+  curated parameter-name list (token, reset_token, otp, ...) keeps this
+  from firing on unrelated opaque query values (session IDs, CSRF
+  tokens, API keys) that have entirely different generation/rotation
+  properties than a one-shot emailed token. Python-only: this is a
+  standalone command that never touches `crawl`, so there's no parity
+  surface to port to Go at all.
 - **Fixes from a second, deeper pentester review of the OAuth checks --
   four real issues, one of them a coverage gap serious enough to
   matter on almost every real engagement.**

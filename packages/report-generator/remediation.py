@@ -61,6 +61,9 @@ _BY_ID: dict[str, str] = {
     "authz-diff": "This URL returned success for a lower-privileged session that replayed a higher-privileged crawl; enforce authorization checks server-side per-object, not just per-route.",
     "idor-adjacent-id-accessible": "First confirm the adjacent ID actually belongs to a different account (not just another of your own records); if so, enforce an object-level authorization check on this endpoint instead of trusting that any valid session may access any ID.",
     "oauth-missing-state": "Add a random, unguessable state parameter to the authorization request and verify it matches on the callback, to prevent CSRF against the OAuth flow.",
+    "reset-token-sequential": "Generate reset/verification tokens with a CSPRNG (e.g. 32+ random bytes), never a sequential or incrementing value.",
+    "reset-token-low-entropy": "Generate reset/verification tokens with a CSPRNG over the full token length; the sampled values show far less variation than random.",
+    "reset-token-short": "Lengthen the reset/verification token (aim for 128+ bits of real entropy) and confirm it's generated with a CSPRNG.",
     "oauth-implicit-flow": "Migrate off the implicit flow (response_type=token) to the authorization code flow with PKCE; the implicit flow exposes the access token in the URL fragment.",
 }
 

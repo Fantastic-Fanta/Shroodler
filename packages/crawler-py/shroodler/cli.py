@@ -189,6 +189,18 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_tokens(args: argparse.Namespace) -> int:
+    from shroodler.sessions import load_sessions
+    from shroodler.token_entropy import analyze_tokens
+
+    sessions = load_sessions(args.sessions)
+    findings = analyze_tokens(sessions)
+    doc = {"target": args.sessions, "findings": [f.model_dump() for f in findings]}
+    text = json.dumps(doc, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
 def cmd_authz_diff(args: argparse.Namespace) -> int:
     from shroodler.auth import parse_cookie_pairs, parse_header_lines
     from shroodler.authz_diff import run as authz_diff_run
@@ -548,6 +560,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow ingesting sessions captured against a non-local target; off by default",
     )
     ingest.set_defaults(func=cmd_ingest)
+
+    tokens = sub.add_parser(
+        "tokens",
+        help="Analyze reset/verification token predictability from captured proxy JSONL",
+    )
+    tokens.add_argument(
+        "sessions",
+        help="Recorded proxy session JSONL (the same format --cookies-from/"
+        "--seed-from/ingest-sessions consume). A token is normally delivered "
+        "out-of-band (email/SMS); this only sees one if a tester's browser, "
+        "routed through the recording proxy, actually visited the reset/"
+        "verification link -- capture the same flow multiple times (e.g. "
+        "request several password resets) to get more than one sample, "
+        "since only 2+ samples let this test for a sequential/low-entropy "
+        "generation pattern rather than a weaker length-only estimate.",
+    )
+    tokens.add_argument("--output", "-o")
+    tokens.set_defaults(func=cmd_tokens)
 
     payload = sub.add_parser(
         "payload",

@@ -63,6 +63,15 @@ negatives are left empty for you to add by hand.
 Turn a captured proxy session (JSON Lines) into a findings document, as if
 it had been crawled directly.
 .TP
+.B tokens \fISESSIONS.JSONL\fR
+Analyze password-reset/verification-token predictability from a captured
+proxy session. A token is normally delivered out-of-band (email/SMS), so
+this only sees one if a tester's browser, routed through the recording
+proxy, actually visited the reset/verification link -- capture the same
+flow multiple times (e.g. request several password resets) to get more
+than one sample, since only 2+ samples let this test for a sequential or
+low-entropy generation pattern rather than a weaker length-only estimate.
+.TP
 .B payload \fICRAWL.JSON\fR
 Run the bundled YAML payload packs (SQLi, XSS, SSTI, path-traversal, SSRF,
 open-redirect, XXE) against every form in a crawl's output.

@@ -97,3 +97,101 @@ def test_render_trend_text_mentions_introduced_and_resolved():
     assert "+ b @ http://x/" in text
     assert "resolved (1)" in text
     assert "- a @ http://x/" in text
+
+
+def test_trend_diff_detects_severity_increase_on_same_key():
+    older = _doc(
+        "http://x/",
+        [{"id": "missing-hsts", "url": "http://x/", "severity": "low"}],
+        finished_at="2026-01-01T00:00:00Z",
+    )
+    newer = _doc(
+        "http://x/",
+        [{"id": "missing-hsts", "url": "http://x/", "severity": "medium"}],
+        finished_at="2026-02-01T00:00:00Z",
+    )
+    trend = trend_diff(older, newer)
+    assert trend["severity_increased"] == [
+        {"id": "missing-hsts", "url": "http://x/", "from": "low", "to": "medium"}
+    ]
+    # Same (id, url) key both before and after -- must not also be
+    # reported as introduced/resolved.
+    assert trend["introduced"] == []
+    assert trend["resolved"] == []
+
+
+def test_trend_diff_does_not_flag_unchanged_or_decreased_severity():
+    same = trend_diff(
+        _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "medium"}]),
+        _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "medium"}]),
+    )
+    assert same["severity_increased"] == []
+
+    decreased = trend_diff(
+        _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "high"}]),
+        _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "low"}]),
+    )
+    assert decreased["severity_increased"] == []
+
+
+def test_render_trend_text_mentions_severity_increase():
+    older = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "low"}])
+    newer = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "critical"}])
+    text = render_trend_text(trend_diff(older, newer))
+    assert "severity increased (1)" in text
+    assert "! a @ http://x/: low -> critical" in text
+
+
+def test_cli_trend_gate_on_severity_increase(tmp_path):
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    older = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "low"}])
+    newer = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "critical"}])
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--gate-on-severity-increase",
+            ]
+        )
+    assert ex.value.code == 1
+
+
+def test_cli_trend_gate_on_severity_increase_clean_exits_zero(tmp_path):
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    doc = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "low"}])
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(doc), encoding="utf-8")
+    newer_path.write_text(json.dumps(doc), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--gate-on-severity-increase",
+            ]
+        )
+    assert ex.value.code == 0

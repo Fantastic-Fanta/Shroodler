@@ -123,6 +123,13 @@ Unlike
 .BR diff ,
 this compares two arbitrary scans rather than gating against a static
 baseline.
+.B \-\-gate\-on\-severity\-increase
+exits 1 if a finding present in both scans (same id+url, so not
+"introduced") has a worse severity in the newer scan -- a same-key
+regression
+.B diff \-\-gate
+can't see, since its baseline never records a severity to compare
+against.
 .TP
 .B version
 Print the version and exit.

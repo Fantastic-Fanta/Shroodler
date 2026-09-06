@@ -7,6 +7,19 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler trend --gate-on-severity-increase`** (Python-only;
+  `shroodler-go` has no `trend` command at all yet, so this doesn't
+  introduce a new gap). Catches a same-key finding (same id+url, so not
+  "introduced") whose severity got worse between two scans -- something
+  `diff --gate` structurally cannot see, since its static baseline
+  (`expected_findings.json`) never records a severity to compare
+  against, only presence. Rather than changing that on-disk baseline
+  schema (which would have broken every existing committed baseline
+  fixture and several exact-equality tests), this compares two full
+  scan documents instead -- both already carry severity per finding, so
+  no schema change was needed anywhere. Exits 1 when set and any
+  same-key severity regression is found; `trend`'s JSON/text output
+  also gained a `severity_increased` list either way.
 - **New `__Secure-`/`__Host-` cookie-prefix violation checks, in both
   engines** (`packages/crawler-py/shroodler/extractors/cookies.py`,
   `packages/crawler-go/internal/extractors/cookies.go`). Distinct from

@@ -123,6 +123,7 @@ _shroodler() {
             '--format[Output format]:(text json)' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--history-dir[Override history directory]:dir:_files -/' \
+            '--gate-on-severity-increase[Exit 1 if a same-key finding got a worse severity]' \
             '1:older scan id or file' \
             '2:newer scan id or file'
           ;;

@@ -123,7 +123,19 @@ def trend_diff(older: dict, newer: dict) -> dict:
     for key in sorted(old_keys & new_keys):
         old_sev = old_severity.get(key, "info")
         new_sev = new_severity.get(key, "info")
-        if _SEVERITY_RANK.get(new_sev, 4) < _SEVERITY_RANK.get(old_sev, 4):
+        # Skip the comparison entirely if either severity string isn't
+        # one of the 5 known values, rather than defaulting it to rank 4
+        # (least severe): a corrupted/hand-edited history file or a
+        # future new severity level this table doesn't know about yet
+        # would otherwise make the OLDER severity default to "as if
+        # info", so ANY real severity in the newer scan -- even "low",
+        # the least severe real value -- would numerically look like an
+        # increase. Silently skipping an unrecognized pair is the
+        # conservative choice: it can only under-report, never fabricate
+        # a regression from bad data.
+        if old_sev not in _SEVERITY_RANK or new_sev not in _SEVERITY_RANK:
+            continue
+        if _SEVERITY_RANK[new_sev] < _SEVERITY_RANK[old_sev]:
             severity_increased.append({"id": key[0], "url": key[1], "from": old_sev, "to": new_sev})
 
     return {

@@ -195,3 +195,18 @@ def test_cli_trend_gate_on_severity_increase_clean_exits_zero(tmp_path):
             ]
         )
     assert ex.value.code == 0
+
+
+def test_trend_diff_unrecognized_severity_does_not_fabricate_an_increase():
+    # Regression test: an unrecognized severity string in the OLDER scan
+    # (a corrupted/hand-edited history file, or a future severity level
+    # this table doesn't know yet) must not default to "as if info" and
+    # make every real severity in the newer scan look like an increase.
+    older = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "Weird"}])
+    newer = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "low"}])
+    assert trend_diff(older, newer)["severity_increased"] == []
+
+    # Same check the other direction (unrecognized in the newer scan).
+    older2 = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "critical"}])
+    newer2 = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "Weird"}])
+    assert trend_diff(older2, newer2)["severity_increased"] == []

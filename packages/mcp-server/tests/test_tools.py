@@ -145,6 +145,47 @@ def test_check_idor_allow_without_policy_reaches_authz_diff(monkeypatch):
     assert called["enforcer"] is not None
 
 
+def test_scan_route_headless_refuses_without_policy_by_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+
+    def fail_if_called(*_a, **_k):
+        raise AssertionError("crawl_url should not run before the guardrail check")
+
+    monkeypatch.setattr("shroodler.crawler.crawl_url", fail_if_called)
+
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        scan_route({"url": "http://127.0.0.1:1/", "mode": "headless"})
+
+
+def test_scan_route_headless_allow_without_policy_proceeds(monkeypatch):
+    class FakeResult:
+        def to_dict(self):
+            return {"target": "http://127.0.0.1:1", "pages": [], "findings": [], "js_endpoints": []}
+
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *_a, **_k: FakeResult())
+    monkeypatch.setattr("shroodler.validate.validate_crawl", lambda *_a, **_k: None)
+
+    doc = scan_route({"url": "http://127.0.0.1:1/", "mode": "headless", "allow_without_policy": True})
+    assert doc["target"] == "http://127.0.0.1:1"
+
+
+def test_scan_route_static_mode_does_not_require_policy(monkeypatch):
+    class FakeResult:
+        def to_dict(self):
+            return {"target": "http://127.0.0.1:1", "pages": [], "findings": [], "js_endpoints": []}
+
+    def fail_if_called(*_a, **_k):
+        raise AssertionError("static mode should not need a policy fetch at all")
+
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", fail_if_called)
+    monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *_a, **_k: FakeResult())
+    monkeypatch.setattr("shroodler.validate.validate_crawl", lambda *_a, **_k: None)
+
+    doc = scan_route({"url": "http://127.0.0.1:1/"})
+    assert doc["target"] == "http://127.0.0.1:1"
+
+
 def test_project_root_uses_env_override(tmp_path, monkeypatch):
     monkeypatch.setenv("SHROODLER_MCP_ROOT", str(tmp_path))
     assert _project_root() == tmp_path.resolve()

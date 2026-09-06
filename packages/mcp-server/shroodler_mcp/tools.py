@@ -116,14 +116,21 @@ def scan_route(args: dict) -> dict:
     scan is fast enough to run inline before a commit rather than waiting
     for a full site crawl.
 
-    When `run_payloads` is set, active requests are gated by
-    `shroodler_guardrails.policy.PolicyEnforcer` the same way `shroodler
-    payload --require-policy` is: by default a target must publish a
-    `.well-known/scan-policy.json` consent manifest before this tool will
-    fire live payloads at it, since this is the one code path an agent can
-    trigger autonomously without a human typing a CLI flag. Pass
-    `allow_without_policy: true` to explicitly opt out for a target that
-    hasn't deployed a manifest yet (e.g. local dev).
+    When `run_payloads` is set, OR `mode` is "headless", a scan-policy
+    consent manifest is required by default (`allow_without_policy: true`
+    to opt out), the same way `shroodler payload --require-policy` works.
+    "static" mode is a passive GET -- but headless mode drives real
+    Chromium and clicks into buttons/links to enumerate SPA routes (see
+    `shroodler/modes/headless.py`'s `_enumerate_routes`), which can fire
+    real state-changing requests (a "confirm purchase" button, a logout,
+    an admin action) with no payload ever sent. Treating headless mode as
+    "just a passive crawl" would let an agent cause real side effects on
+    an unconsented target through this tool with default arguments, so it
+    gets the same manifest requirement as active payload sends. Note this
+    gates the manifest CHECK at the route level (refuses to even start a
+    headless crawl of an unconsented target), not each individual click
+    headless mode makes internally -- per-click scope enforcement inside
+    the Playwright click loop is a known follow-up, not yet implemented.
     """
     from shroodler.crawler import crawl_url
     from shroodler.validate import validate_crawl
@@ -133,10 +140,15 @@ def scan_route(args: dict) -> dict:
         raise ValueError("scan_route requires 'url'")
     allow_external = bool(args.get("allow_external", False))
     run_payloads = bool(args.get("run_payloads", False))
+    mode = args.get("mode", "static")
+
+    enforcer = None
+    if run_payloads or mode == "headless":
+        enforcer = _build_enforcer(args, url)
 
     result = crawl_url(
         url,
-        mode=args.get("mode", "static"),
+        mode=mode,
         depth=0,
         max_pages=1,
         allow_external=allow_external,
@@ -150,7 +162,6 @@ def scan_route(args: dict) -> dict:
         ensure_on_path(payload_tester_dir())
         import tester
 
-        enforcer = _build_enforcer(args, doc.get("target", ""))
         payload_out = tester.run(doc, allow_external=allow_external, enforcer=enforcer)
         doc["findings"] = list(doc.get("findings", [])) + payload_out["findings"]
         doc["oob_probes"] = payload_out.get("oob_probes", [])
@@ -230,8 +241,9 @@ TOOLS: dict[str, dict[str, Any]] = {
     "scan_route": {
         "description": "Crawl a single route/URL (no link-following) for passive findings, "
         "optionally running active payload packs against it. Use before committing a "
-        "change to a specific route. Active payloads are refused unless the target "
-        "publishes a scan-policy consent manifest, or allow_without_policy is set.",
+        "change to a specific route. Active payloads (run_payloads) AND headless mode "
+        "(which clicks buttons/links, not just a passive GET) are refused unless the "
+        "target publishes a scan-policy consent manifest, or allow_without_policy is set.",
         "input_schema": {
             "type": "object",
             "additionalProperties": False,

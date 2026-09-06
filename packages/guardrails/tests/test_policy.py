@@ -105,12 +105,13 @@ def test_fetch_policy_success():
     assert policy.contact == "sec@example.test"
 
 
-def test_fetch_policy_missing_returns_none():
+def test_fetch_policy_missing_returns_none_and_does_not_warn(recwarn):
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(404)
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
     assert fetch_policy("https://example.test", client=client) is None
+    assert len(recwarn) == 0, "a plain 404 (no manifest published) should not warn"
 
 
 def test_fetch_policy_refuses_plain_http_for_non_local_target():
@@ -130,14 +131,60 @@ def test_fetch_policy_allows_plain_http_for_localhost():
     assert policy is not None
 
 
-def test_fetch_policy_rejects_oversized_manifest():
+def test_fetch_policy_rejects_oversized_manifest_and_warns():
     huge = {"allow": ["/x"], "contact": "a" * 200_000}
 
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=huge)
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    assert fetch_policy("https://example.test", client=client) is None
+    with pytest.warns(UserWarning, match="bytes"):
+        assert fetch_policy("https://example.test", client=client) is None
+
+
+def test_fetch_policy_malformed_json_body_warns_and_returns_none():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"not json{{{")
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    with pytest.warns(UserWarning, match="not valid JSON"):
+        result = fetch_policy("https://example.test", client=client)
+    assert result is None
+
+
+def test_fetch_policy_non_dict_body_warns_and_returns_none():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=["not", "an", "object"])
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    with pytest.warns(UserWarning, match="not a JSON object"):
+        result = fetch_policy("https://example.test", client=client)
+    assert result is None
+
+
+def test_fetch_policy_server_error_warns_and_returns_none():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(500)
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    with pytest.warns(UserWarning, match="HTTP 500"):
+        assert fetch_policy("https://example.test", client=client) is None
+
+
+def test_require_policy_fails_closed_when_manifest_present_but_malformed():
+    # The end-to-end case round 3 flagged as untested: a manifest that
+    # EXISTS but is broken must still refuse to proceed under
+    # require_policy=True, exactly like a genuinely absent one -- it must
+    # never silently fall back to "no policy enforced".
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"{not valid json")
+
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    with pytest.warns(UserWarning):
+        policy = fetch_policy("https://example.test", client=client)
+    assert policy is None
+    with pytest.raises(PolicyViolation):
+        PolicyEnforcer(policy=policy, require_policy=True)
 
 
 def test_origin_of():

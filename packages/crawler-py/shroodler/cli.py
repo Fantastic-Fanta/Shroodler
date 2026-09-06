@@ -771,7 +771,8 @@ def build_parser() -> argparse.ArgumentParser:
         "--audit-log",
         metavar="PATH",
         help="Append a JSONL audit trail of every active request the guardrail "
-        "allowed or blocked (implied by --require-policy/--policy-file).",
+        "allowed or blocked. Not implied by --require-policy/--policy-file alone -- "
+        "pass this explicitly to get a durable record on disk.",
     )
     payload.set_defaults(func=cmd_payload)
 

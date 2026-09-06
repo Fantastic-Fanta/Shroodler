@@ -247,12 +247,37 @@ def cmd_authz_diff(args: argparse.Namespace) -> int:
     cookie_pairs = parse_cookie_pairs(list(getattr(args, "cookie", None) or []))
     cookie_header = "; ".join(f"{c.name}={c.value}" for c in cookie_pairs)
     extra_headers = parse_header_lines(list(getattr(args, "header", None) or []))
+
+    enforcer = None
+    require_policy = getattr(args, "require_policy", False)
+    policy_file = getattr(args, "policy_file", None)
+    audit_log = getattr(args, "audit_log", None)
+    if require_policy or policy_file or audit_log:
+        from shroodler_guardrails.policy import (
+            PolicyEnforcer,
+            fetch_policy,
+            origin_of,
+            parse_policy,
+        )
+
+        if policy_file:
+            manifest = json.loads(Path(policy_file).read_text(encoding="utf-8"))
+            policy = parse_policy(manifest, origin=origin_of(higher_doc.get("target", "")))
+        else:
+            policy = fetch_policy(higher_doc.get("target", ""))
+        enforcer = PolicyEnforcer(
+            policy=policy,
+            require_policy=require_policy,
+            audit_path=Path(audit_log) if audit_log else None,
+        )
+
     out = authz_diff_run(
         higher_doc,
         cookie_header=cookie_header,
         extra_headers=extra_headers,
         check_anonymous=not bool(getattr(args, "no_anon_check", False)),
         allow_external=bool(getattr(args, "allow_external", False)),
+        enforcer=enforcer,
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -411,6 +436,19 @@ def find_proxy_bin() -> Path | None:
         if cand.is_file():
             return cand
     return None
+
+
+def cmd_audit_verify(args: argparse.Namespace) -> int:
+    from shroodler_guardrails.policy import verify_audit_log
+
+    problems = verify_audit_log(Path(args.audit_log))
+    if problems:
+        for p in problems:
+            print(p, file=sys.stderr)
+        print(f"{len(problems)} problem(s) found in {args.audit_log}", file=sys.stderr)
+        return 1
+    print(f"audit log intact: {args.audit_log}")
+    return 0
 
 
 def cmd_proxy(args: argparse.Namespace) -> int:
@@ -777,6 +815,23 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Allow replaying against a non-local target; off by default",
     )
+    authz.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run unless the target publishes a "
+        ".well-known/scan-policy.json consent manifest.",
+    )
+    authz.add_argument(
+        "--policy-file",
+        metavar="PATH",
+        help="Use a local scan-policy.json instead of fetching one from the target.",
+    )
+    authz.add_argument(
+        "--audit-log",
+        metavar="PATH",
+        help="Append a JSONL audit trail of every active request the guardrail "
+        "allowed or blocked.",
+    )
     authz.set_defaults(func=cmd_authz_diff)
 
     proxy = sub.add_parser(
@@ -867,6 +922,13 @@ def build_parser() -> argparse.ArgumentParser:
         "explain_finding as agent tools over stdio",
     )
     mcp_server.set_defaults(func=cmd_mcp_server)
+
+    audit_verify = sub.add_parser(
+        "audit-verify",
+        help="Replay a guardrail --audit-log and confirm its hash chain is intact",
+    )
+    audit_verify.add_argument("audit_log")
+    audit_verify.set_defaults(func=cmd_audit_verify)
 
     return p
 

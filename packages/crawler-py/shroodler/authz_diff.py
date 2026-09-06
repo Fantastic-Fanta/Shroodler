@@ -52,7 +52,14 @@ def run(
     check_anonymous: bool = True,
     allow_external: bool = False,
     client: httpx.Client | None = None,
+    enforcer=None,
 ) -> dict:
+    """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
+    consulted before every live request this replay makes (both the
+    lower-privilege and the anonymous control request) -- authz-diff fires
+    real requests against a real target just like the payload tester does,
+    so it is gated by the same scope/rate/blast-radius guardrail.
+    """
     target = higher_doc.get("target", "")
     if not allow_external and not is_loopback_or_local(target):
         raise ValueError(
@@ -76,6 +83,11 @@ def run(
                 continue
             seen.add(url)
 
+            if enforcer is not None:
+                ok, _reason = enforcer.check(url)
+                if not ok:
+                    continue
+
             try:
                 lower_resp = http.get(url, headers=lower_headers)
             except httpx.HTTPError:
@@ -83,7 +95,7 @@ def run(
             if not _is_success(lower_resp.status_code):
                 continue
 
-            if check_anonymous:
+            if check_anonymous and (enforcer is None or enforcer.check(url)[0]):
                 try:
                     anon_headers = {k: v for k, v in lower_headers.items() if k != "Cookie"}
                     anon_resp = http.get(url, headers=anon_headers)

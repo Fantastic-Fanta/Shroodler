@@ -6,6 +6,7 @@ import json
 import pytest
 
 from shroodler.cli import (
+    cmd_audit_verify,
     cmd_baseline,
     cmd_crawl,
     cmd_diff,
@@ -387,3 +388,30 @@ def test_cmd_report_sarif_and_markdown(tmp_path):
     assert "`missing-csp`" in md
     ns = argparse.Namespace(findings=str(docp), format="markdown", output=str(tmp_path / "r2.md"))
     assert cmd_report(ns) == 0
+
+
+def test_cmd_audit_verify_intact(tmp_path):
+    from shroodler_guardrails.policy import PolicyEnforcer
+
+    audit = tmp_path / "audit.jsonl"
+    enforcer = PolicyEnforcer(policy=None, audit_path=audit)
+    enforcer.check("https://x.test/a")
+    ns = argparse.Namespace(audit_log=str(audit))
+    assert cmd_audit_verify(ns) == 0
+
+
+def test_cmd_audit_verify_detects_tampering(tmp_path, capsys):
+    from shroodler_guardrails.policy import PolicyEnforcer
+
+    audit = tmp_path / "audit.jsonl"
+    enforcer = PolicyEnforcer(policy=None, audit_path=audit)
+    enforcer.check("https://x.test/a")
+    enforcer.check("https://x.test/b")
+    lines = audit.read_text().splitlines()
+    tampered = json.loads(lines[0])
+    tampered["allowed"] = not tampered["allowed"]
+    lines[0] = json.dumps(tampered)
+    audit.write_text("\n".join(lines) + "\n")
+    ns = argparse.Namespace(audit_log=str(audit))
+    assert cmd_audit_verify(ns) == 1
+    assert "problem" in capsys.readouterr().err

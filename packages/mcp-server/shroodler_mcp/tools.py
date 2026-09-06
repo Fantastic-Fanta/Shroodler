@@ -21,26 +21,80 @@ from shroodler_mcp.paths import ensure_on_path, payload_tester_dir, report_gener
 # An MCP client -- or a coding agent whose context was poisoned by
 # adversarial content it read elsewhere in the same session -- can supply
 # any string for a "path to a file on disk" argument. Restricting reads to
-# beneath the process's working directory (normally the project root the
-# agent is already operating in) bounds that to "files this project could
-# plausibly want the tool to read" instead of "any file this OS user can
-# read", without breaking the common case of pointing at a scan/baseline
-# file that lives in the repo. Set SHROODLER_MCP_ALLOW_ANY_PATH=1 to opt
-# out for an operator-controlled, trusted setup that needs paths outside
-# the project root.
+# a project root bounds that to "files this project could plausibly want
+# the tool to read" instead of "any file this OS user can read".
+#
+# The process's bare working directory is NOT used as that root: many MCP
+# hosts launch a stdio server with an unspecified or ambient cwd (e.g. the
+# user's home directory), and anchoring there would happily permit
+# reading ~/.ssh/id_rsa or ~/.aws/credentials -- narrower than "any file"
+# but still far more than intended. Instead: an explicit
+# SHROODLER_MCP_ROOT wins if set; otherwise walk up from cwd looking for
+# a `.git` directory (the same "find the project root" heuristic as
+# everything else in this repo) and use that; only if neither exists does
+# this fall back to bare cwd, which is then just as good/bad as the
+# process's launch directory -- operators who care should set
+# SHROODLER_MCP_ROOT. Set SHROODLER_MCP_ALLOW_ANY_PATH=1 to disable
+# sandboxing entirely for a trusted, operator-controlled setup.
+def _project_root() -> Path:
+    env = os.environ.get("SHROODLER_MCP_ROOT")
+    if env:
+        return Path(env).expanduser().resolve()
+    cwd = Path.cwd().resolve()
+    for candidate in (cwd, *cwd.parents):
+        if (candidate / ".git").exists():
+            return candidate
+    return cwd
+
+
 def _resolve_safe_path(raw: str) -> Path:
     resolved = Path(raw).expanduser().resolve()
     if os.environ.get("SHROODLER_MCP_ALLOW_ANY_PATH") == "1":
         return resolved
-    root = Path.cwd().resolve()
+    root = _project_root()
     try:
         resolved.relative_to(root)
     except ValueError as exc:
         raise ValueError(
-            f"refusing to read {raw!r}: outside the working directory {root} "
-            "(set SHROODLER_MCP_ALLOW_ANY_PATH=1 to allow arbitrary paths)"
+            f"refusing to read {raw!r}: outside the project root {root} "
+            "(set SHROODLER_MCP_ROOT to change it, or SHROODLER_MCP_ALLOW_ANY_PATH=1 "
+            "to allow arbitrary paths)"
         ) from exc
     return resolved
+
+
+def _build_enforcer(args: dict, target: str):
+    """Shared by every tool that fires live requests at a target
+    (scan_route's payload run, check_idor's replay): refuse to proceed
+    unless the target publishes a scan-policy consent manifest, unless
+    the caller explicitly opts out via `allow_without_policy`. This is
+    the one guardrail an MCP client/agent can't skip by just not passing
+    a CLI flag the way a human running `shroodler payload` without
+    `--require-policy` implicitly can.
+    """
+    from shroodler_guardrails.policy import (
+        PolicyEnforcer,
+        PolicyViolation,
+        fetch_policy,
+        origin_of,
+        parse_policy,
+    )
+
+    policy_file = args.get("policy_file")
+    require_policy = not bool(args.get("allow_without_policy", False))
+    if policy_file:
+        manifest = json.loads(_resolve_safe_path(policy_file).read_text(encoding="utf-8"))
+        policy = parse_policy(manifest, origin=origin_of(target))
+    else:
+        policy = fetch_policy(target)
+    try:
+        return PolicyEnforcer(
+            policy=policy,
+            require_policy=require_policy,
+            audit_path=_resolve_safe_path(args["audit_log"]) if args.get("audit_log") else None,
+        )
+    except PolicyViolation as exc:
+        raise ValueError(str(exc)) from exc
 
 
 def _load_doc(value: Any) -> dict:
@@ -95,30 +149,8 @@ def scan_route(args: dict) -> dict:
     if run_payloads:
         ensure_on_path(payload_tester_dir())
         import tester
-        from shroodler_guardrails.policy import (
-            PolicyEnforcer,
-            PolicyViolation,
-            fetch_policy,
-            origin_of,
-            parse_policy,
-        )
 
-        policy_file = args.get("policy_file")
-        require_policy = not bool(args.get("allow_without_policy", False))
-        if policy_file:
-            manifest = json.loads(_resolve_safe_path(policy_file).read_text(encoding="utf-8"))
-            policy = parse_policy(manifest, origin=origin_of(doc.get("target", "")))
-        else:
-            policy = fetch_policy(doc.get("target", ""))
-        try:
-            enforcer = PolicyEnforcer(
-                policy=policy,
-                require_policy=require_policy,
-                audit_path=_resolve_safe_path(args["audit_log"]) if args.get("audit_log") else None,
-            )
-        except PolicyViolation as exc:
-            raise ValueError(str(exc)) from exc
-
+        enforcer = _build_enforcer(args, doc.get("target", ""))
         payload_out = tester.run(doc, allow_external=allow_external, enforcer=enforcer)
         doc["findings"] = list(doc.get("findings", [])) + payload_out["findings"]
         doc["oob_probes"] = payload_out.get("oob_probes", [])
@@ -133,17 +165,26 @@ def check_idor(args: dict) -> dict:
     the mechanism the roadmap's "agent-driven lead confirmation" idea
     reuses: a documented single-session limitation becomes something an
     agent can resolve by spinning up a second session and calling this.
+
+    Like `scan_route`'s payload run, this fires real requests at the
+    target and is gated by the same scan-policy consent manifest by
+    default (`allow_without_policy: true` to opt out) -- this is the
+    other autonomously-triggerable active-testing tool on this surface,
+    and it doesn't get a free pass just because its requests are GETs
+    rather than payload sends.
     """
     from shroodler.authz_diff import run as authz_diff_run
 
     higher_doc = _load_doc(args.get("higher_priv_crawl"))
     if not higher_doc:
         raise ValueError("check_idor requires 'higher_priv_crawl' (doc or path)")
+    enforcer = _build_enforcer(args, higher_doc.get("target", ""))
     return authz_diff_run(
         higher_doc,
         cookie_header=args.get("lower_priv_cookie", ""),
         check_anonymous=bool(args.get("check_anonymous", True)),
         allow_external=bool(args.get("allow_external", False)),
+        enforcer=enforcer,
     )
 
 
@@ -193,6 +234,7 @@ TOOLS: dict[str, dict[str, Any]] = {
         "publishes a scan-policy consent manifest, or allow_without_policy is set.",
         "input_schema": {
             "type": "object",
+            "additionalProperties": False,
             "properties": {
                 "url": {"type": "string", "description": "The route/URL to scan"},
                 "mode": {"type": "string", "enum": ["static", "headless"], "default": "static"},
@@ -222,9 +264,12 @@ TOOLS: dict[str, dict[str, Any]] = {
     },
     "check_idor": {
         "description": "Replay a privileged crawl's URLs under a second, lower-privileged "
-        "session's cookie to confirm or drop a suspected IDOR/broken-access-control lead.",
+        "session's cookie to confirm or drop a suspected IDOR/broken-access-control lead. "
+        "Requires the target to publish a scan-policy consent manifest unless "
+        "allow_without_policy is set.",
         "input_schema": {
             "type": "object",
+            "additionalProperties": False,
             "properties": {
                 "higher_priv_crawl": {
                     "description": "Crawl-document object, or a path to one on disk, "
@@ -236,6 +281,9 @@ TOOLS: dict[str, dict[str, Any]] = {
                 },
                 "check_anonymous": {"type": "boolean", "default": True},
                 "allow_external": {"type": "boolean", "default": False},
+                "allow_without_policy": {"type": "boolean", "default": False},
+                "policy_file": {"type": "string"},
+                "audit_log": {"type": "string"},
             },
             "required": ["higher_priv_crawl"],
         },
@@ -246,6 +294,7 @@ TOOLS: dict[str, dict[str, Any]] = {
         "and report what's new, resolved, or unexpectedly missing.",
         "input_schema": {
             "type": "object",
+            "additionalProperties": False,
             "properties": {
                 "crawl": {"description": "Crawl-document object, or a path to one on disk"},
                 "baseline": {"description": "Baseline object, or a path to one on disk"},
@@ -260,6 +309,7 @@ TOOLS: dict[str, dict[str, Any]] = {
         "description": "Get static remediation guidance for a finding id or category.",
         "input_schema": {
             "type": "object",
+            "additionalProperties": False,
             "properties": {
                 "finding_id": {"type": "string"},
                 "category": {"type": "string"},

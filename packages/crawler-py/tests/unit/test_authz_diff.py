@@ -19,6 +19,37 @@ def test_allow_external_bypasses_guard():
     assert out == {"target": "https://example.com/", "findings": []}
 
 
+def test_enforcer_blocks_before_any_request(fx):
+    from shroodler_guardrails.policy import PolicyEnforcer, origin_of, parse_policy
+
+    calls = []
+    fx.on("GET", "/admin/report/1", lambda inc: calls.append(1) or (200, {}, b"secret"))
+    policy = parse_policy({"allow": ["/nope/*"]}, origin=origin_of(fx.origin))
+    enforcer = PolicyEnforcer(policy=policy)
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(doc, cookie_header="session=x", enforcer=enforcer)
+    assert out["findings"] == []
+    assert not calls, "enforcer should block the request before it's ever sent"
+    assert enforcer.summary()["requests_blocked"] >= 1
+
+
+def test_enforcer_allows_and_counts_both_lower_and_anon_requests(fx):
+    from shroodler_guardrails.policy import PolicyEnforcer, origin_of, parse_policy
+
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b"secret") if "session=x" in inc.cookies else (403, {}, b"no"),
+    )
+    policy = parse_policy({"allow": ["*"]}, origin=origin_of(fx.origin))
+    enforcer = PolicyEnforcer(policy=policy)
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(doc, cookie_header="session=x", enforcer=enforcer)
+    assert {f["id"] for f in out["findings"]} == {"authz-broken-access-control"}
+    # One lower-priv request + one anonymous control request == 2 checks.
+    assert enforcer.summary()["requests_attempted"] == 2
+
+
 def test_flags_broken_access_control_when_anon_denied(fx):
     fx.on(
         "GET",

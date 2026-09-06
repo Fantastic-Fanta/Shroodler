@@ -4,6 +4,7 @@ import json
 
 import pytest
 from shroodler_mcp.tools import (
+    _project_root,
     _resolve_safe_path,
     check_idor,
     diff_since_baseline,
@@ -83,7 +84,7 @@ def test_resolve_safe_path_refuses_traversal_outside_cwd(tmp_path, monkeypatch):
     outside = tmp_path / "secret.json"
     outside.write_text("{}")
     monkeypatch.chdir(workdir)
-    with pytest.raises(ValueError, match="outside the working directory"):
+    with pytest.raises(ValueError, match="outside the project root"):
         _resolve_safe_path(str(outside))
     with pytest.raises(ValueError):
         _resolve_safe_path("../secret.json")
@@ -120,3 +121,40 @@ def test_scan_route_run_payloads_refuses_without_policy_by_default(monkeypatch):
 
     with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
         scan_route({"url": "http://127.0.0.1:1/", "run_payloads": True})
+
+
+def test_check_idor_refuses_without_policy_by_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    higher_doc = {"target": "http://127.0.0.1:1", "pages": []}
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        check_idor({"higher_priv_crawl": higher_doc})
+
+
+def test_check_idor_allow_without_policy_reaches_authz_diff(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    called = {}
+
+    def fake_authz_diff_run(doc, **kwargs):
+        called["enforcer"] = kwargs.get("enforcer")
+        return {"target": doc.get("target", ""), "findings": []}
+
+    monkeypatch.setattr("shroodler.authz_diff.run", fake_authz_diff_run)
+    higher_doc = {"target": "http://127.0.0.1:1", "pages": []}
+    result = check_idor({"higher_priv_crawl": higher_doc, "allow_without_policy": True})
+    assert result["findings"] == []
+    assert called["enforcer"] is not None
+
+
+def test_project_root_uses_env_override(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHROODLER_MCP_ROOT", str(tmp_path))
+    assert _project_root() == tmp_path.resolve()
+
+
+def test_project_root_finds_git_ancestor(tmp_path, monkeypatch):
+    monkeypatch.delenv("SHROODLER_MCP_ROOT", raising=False)
+    repo = tmp_path / "repo"
+    (repo / ".git").mkdir(parents=True)
+    nested = repo / "a" / "b"
+    nested.mkdir(parents=True)
+    monkeypatch.chdir(nested)
+    assert _project_root() == repo.resolve()

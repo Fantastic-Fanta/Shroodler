@@ -368,10 +368,16 @@ def cmd_payload(args: argparse.Namespace) -> int:
     policy_file = getattr(args, "policy_file", None)
     audit_log = getattr(args, "audit_log", None)
     if require_policy or policy_file or audit_log:
-        from shroodler_guardrails.policy import PolicyEnforcer, fetch_policy, parse_policy
+        from shroodler_guardrails.policy import (
+            PolicyEnforcer,
+            fetch_policy,
+            origin_of,
+            parse_policy,
+        )
 
         if policy_file:
-            policy = parse_policy(json.loads(Path(policy_file).read_text(encoding="utf-8")))
+            manifest = json.loads(Path(policy_file).read_text(encoding="utf-8"))
+            policy = parse_policy(manifest, origin=origin_of(doc.get("target", "")))
         else:
             policy = fetch_policy(doc.get("target", ""))
         enforcer = PolicyEnforcer(

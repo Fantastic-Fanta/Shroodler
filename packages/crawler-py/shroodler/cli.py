@@ -438,6 +438,64 @@ def find_proxy_bin() -> Path | None:
     return None
 
 
+def cmd_suppress_expiring(args: argparse.Namespace) -> int:
+    from shroodler.suppress import expiring_within, render_expiring_pr_body
+
+    rules = load_suppressions(args.suppressions)
+    expiring = expiring_within(rules, args.days)
+    if args.format == "json":
+        text = json.dumps(expiring, indent=2) + "\n"
+    elif args.format == "github-pr-body":
+        text = render_expiring_pr_body(expiring, args.days)
+    else:
+        if not expiring:
+            text = f"No suppression rules expire within the next {args.days} day(s).\n"
+        else:
+            lines = [
+                f"id={r['id']!r} url={r['url']!r} expires={r['expires']} "
+                f"owner={r['owner'] or '(unset)'!r} reason={r['reason'] or '(none)'!r}"
+                for r in expiring
+            ]
+            text = "\n".join(lines) + "\n"
+    _write(text, args.output)
+    return 1 if (args.gate and expiring) else 0
+
+
+def cmd_sla_apply(args: argparse.Namespace) -> int:
+    from shroodler.history import default_history_dir
+    from shroodler.sla import apply_sla, load_ownership_rules
+
+    doc = load_json(args.scan_json)
+    history_dir_arg = getattr(args, "history_dir", None)
+    history_dir = Path(history_dir_arg) if history_dir_arg else default_history_dir()
+    owners = load_ownership_rules(getattr(args, "owners", None))
+    result = apply_sla(doc, history_dir=history_dir, owners=owners)
+    text = json.dumps(result, indent=2) + "\n"
+    _write(text, args.output)
+    breached = [f for f in result["findings"] if f.get("sla_breached")]
+    if getattr(args, "gate", False) and breached:
+        for f in breached:
+            print(
+                f"SLA breached: {f['id']} @ {f['url']} "
+                f"(age={f['age_days']}d, {f['severity']} -> {f['sla_severity']}, "
+                f"owner={f['owner'] or '(unset)'})",
+                file=sys.stderr,
+            )
+        return 1
+    return 0
+
+
+def cmd_compare_engines(args: argparse.Namespace) -> int:
+    from shroodler.compare_engines import merge_engine_results
+
+    py_doc = load_json(args.python_crawl_json)
+    go_doc = load_json(args.go_crawl_json)
+    merged = merge_engine_results(py_doc, go_doc)
+    text = json.dumps(merged, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
 def cmd_audit_verify(args: argparse.Namespace) -> int:
     from shroodler_guardrails.policy import verify_audit_log
 
@@ -930,6 +988,82 @@ def build_parser() -> argparse.ArgumentParser:
     )
     audit_verify.add_argument("audit_log")
     audit_verify.set_defaults(func=cmd_audit_verify)
+
+    compare_engines = sub.add_parser(
+        "compare-engines",
+        help="Merge Python and Go crawl JSON, tagging each finding with which "
+        "engine(s) reproduced it -- agreement as a confidence signal",
+    )
+    compare_engines.add_argument("python_crawl_json")
+    compare_engines.add_argument("go_crawl_json")
+    compare_engines.add_argument("--output", "-o")
+    compare_engines.set_defaults(func=cmd_compare_engines)
+
+    sla = sub.add_parser(
+        "sla",
+        help="Attach ownership + SLA-escalated severity to findings, using recorded history",
+    )
+    sla_sub = sla.add_subparsers(dest="sla_command", required=True)
+    sla_apply = sla_sub.add_parser(
+        "apply",
+        help="Resolve owner + first-seen age + SLA-escalated severity per finding",
+        description=(
+            "Looks up each finding's earliest appearance in recorded scan "
+            "history (see `history record`) and, once its age exceeds the "
+            "SLA budget for its severity (critical=2d, high=7d, medium=30d, "
+            "low=90d, info=180d by default), escalates it one severity level "
+            "in a new `sla_severity` field. Also resolves `owner` from an "
+            "ownership-rules file (same id/url glob format as "
+            ".shroodlerignore)."
+        ),
+    )
+    sla_apply.add_argument("scan_json")
+    sla_apply.add_argument("--output", "-o")
+    sla_apply.add_argument(
+        "--history-dir",
+        help="Override the history directory (default ~/.shroodler/history "
+        "or $SHROODLER_HISTORY_DIR)",
+    )
+    sla_apply.add_argument(
+        "--owners",
+        help="Ownership-rules file (id/url glob rows, each with an 'owner' field)",
+    )
+    sla_apply.add_argument(
+        "--gate",
+        action="store_true",
+        help="Exit 1 and list every SLA-breached finding on stderr",
+    )
+    sla_apply.set_defaults(func=cmd_sla_apply)
+
+    suppress = sub.add_parser(
+        "suppress",
+        help="Work with suppression rules (.shroodlerignore) beyond diff/report/baseline",
+    )
+    suppress_sub = suppress.add_subparsers(dest="suppress_command", required=True)
+    suppress_expiring = suppress_sub.add_parser(
+        "expiring",
+        help="List suppression rules expiring soon, or render a PR body for a scheduled job",
+        description=(
+            "A suppression rule aging past its `expires` date only ever "
+            "warns once it's already expired (see the warning `diff` and "
+            "other commands print). This looks the other direction: rules "
+            "expiring within --days, so a scheduled CI job can open a PR "
+            "nudging someone to extend-with-justification or remove one "
+            "before it lapses, rather than someone noticing after the fact."
+        ),
+    )
+    suppress_expiring.add_argument(
+        "--days", type=int, default=14, help="Expiry horizon in days (default 14)"
+    )
+    suppress_expiring.add_argument("--suppressions", default=None)
+    suppress_expiring.add_argument(
+        "--format", choices=["text", "json", "github-pr-body"], default="text"
+    )
+    suppress_expiring.add_argument("--output", "-o")
+    suppress_expiring.add_argument(
+        "--gate", action="store_true", help="Exit 1 if any rule is expiring within --days"
+    )
+    suppress_expiring.set_defaults(func=cmd_suppress_expiring)
 
     return p
 

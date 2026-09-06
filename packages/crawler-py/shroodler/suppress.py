@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -103,6 +103,50 @@ def expires_malformed(rule: dict) -> bool:
     if raw is None:
         return False
     return _parse_expires(raw) == date.min and raw.strip() != date.min.isoformat()
+
+
+def expiring_within(rules: list[dict], days: int, today: date | None = None) -> list[dict]:
+    """Rules with a real, non-expired `expires` date that falls within the
+    next `days` days -- the "scheduled suppression-expiry PR" mechanism:
+    a warning in CI logs (see expired_suppressions) is easy to scroll
+    past, but a rule that's ABOUT to expire, listed here, is exactly the
+    input a scheduled job needs to open a PR nudging someone to either
+    extend-with-justification or remove it, before it silently starts
+    failing `diff --gate` with no notice."""
+    now = today or datetime.now(timezone.utc).date()
+    horizon = now + timedelta(days=days)
+    out = []
+    for rule in rules:
+        expires = _parse_expires(rule.get("expires"))
+        if expires is None or expires == date.min:
+            continue  # never expires, or malformed (already surfaced elsewhere)
+        if now <= expires <= horizon:
+            out.append(rule)
+    return out
+
+
+def render_expiring_pr_body(rules: list[dict], days: int) -> str:
+    """Markdown body a scheduled CI job can hand straight to `gh pr create
+    --body` (or equivalent) to open a PR nudging someone to
+    extend-with-justification or remove each rule before it expires --
+    this module only generates the content; actually opening the PR
+    (running `gh`, pushing a branch) is CI's job, not this library's, so
+    it stays free of any network/credential concerns.
+    """
+    if not rules:
+        return f"No suppression rules expire within the next {days} day(s)."
+    lines = [
+        f"The following suppression rule(s) expire within {days} day(s). "
+        "Extend with a justification, or remove them and let the finding "
+        "reappear in `diff --gate`.",
+        "",
+    ]
+    for rule in rules:
+        lines.append(
+            f"- `id={rule['id']}` `url={rule['url']}` expires **{rule['expires']}** "
+            f"(owner: {rule['owner'] or '(unset)'}; reason: {rule['reason'] or '(none)'})"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def expired_suppressions(rules: list[dict], today: date | None = None) -> list[dict]:

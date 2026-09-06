@@ -23,6 +23,7 @@ _shroodler_commands=(
   'trend:Diff findings between two recorded scans'
   'ask:Ask a question over a scan/report'
   'mcp-server:Run the MCP server exposing Shroodler as agent tools'
+  'audit-verify:Verify a guardrail audit-log hash chain is intact'
   'version:Print version'
 )
 
@@ -118,6 +119,9 @@ _shroodler() {
             '*--header[Lower-priv session extra header]:header' \
             '--no-anon-check[Skip the anonymous control request]' \
             '--allow-external[Allow replaying against a non-local target]' \
+            '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
+            '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
+            '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
             '1:higher-priv crawl json:_files'
           ;;
         history)
@@ -143,6 +147,9 @@ _shroodler() {
           ;;
         mcp-server)
           _message 'no arguments (speaks JSON-RPC over stdio)'
+          ;;
+        audit-verify)
+          _arguments '1:audit log jsonl:_files'
           ;;
       esac
       ;;

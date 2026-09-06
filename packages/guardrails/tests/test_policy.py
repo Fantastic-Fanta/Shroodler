@@ -141,19 +141,19 @@ def test_fetch_policy_rejects_oversized_manifest():
 
 
 def test_origin_of():
-    assert origin_of("https://x.test/a") == "https://x.test:"
+    assert origin_of("https://x.test/a") == "https://x.test:443"
     assert origin_of("https://x.test:8443/a") == "https://x.test:8443"
 
 
 def test_covers_rejects_mismatched_origin():
-    p = parse_policy({"allow": ["*"]}, origin="https://x.test:")
+    p = parse_policy({"allow": ["*"]}, origin="https://x.test:443")
     assert p.covers("https://x.test/anything")
     assert not p.covers("https://evil.test/anything")
     assert not p.covers("http://x.test/anything")  # scheme differs too
 
 
 def test_covers_normalizes_percent_encoding_against_deny():
-    p = parse_policy({"allow": ["*"], "deny": ["/admin/*"]}, origin="https://x.test:")
+    p = parse_policy({"allow": ["*"], "deny": ["/admin/*"]}, origin="https://x.test:443")
     assert not p.covers("https://x.test/admin/delete")
     assert not p.covers("https://x.test/admin%2Fdelete")
     assert not p.covers("https://x.test/ADMIN".lower() + "/delete")
@@ -163,21 +163,38 @@ def test_covers_normalizes_dot_segments_against_allow_escape():
     # A request that *looks* like it targets an allowed prefix but really
     # resolves (after ../ collapsing) into a denied one must not sneak
     # through as "allowed".
-    p = parse_policy({"allow": ["/public/*"], "deny": ["/admin/*"]}, origin="https://x.test:")
+    p = parse_policy({"allow": ["/public/*"], "deny": ["/admin/*"]}, origin="https://x.test:443")
     assert not p.covers("https://x.test/public/../admin/delete")
+
+
+def test_deny_pattern_itself_is_normalized():
+    # A deny rule authored with a percent-escape or dot-segment (e.g.
+    # copy-pasted from an access log) must still match a normalized
+    # incoming URL -- otherwise the pattern silently matches nothing,
+    # since normalized paths never contain a literal "%2F".
+    p = parse_policy({"allow": ["*"], "deny": ["/admin%2Fsecret"]}, origin="https://x.test:443")
+    assert not p.covers("https://x.test/admin/secret")
+
+    p2 = parse_policy({"allow": ["*"], "deny": ["/a/../admin/*"]}, origin="https://x.test:443")
+    assert not p2.covers("https://x.test/admin/delete")
+
+
+def test_wildcard_survives_pattern_normalization():
+    p = parse_policy({"allow": ["/api/%2A"]}, origin="https://x.test:443")
+    assert p.covers("https://x.test/api/anything")
 
 
 def test_manifest_cannot_raise_limits_past_hard_ceiling():
     p = parse_policy(
         {"max_requests_per_minute": 10**9, "max_total_requests": 10**9},
-        origin="https://x.test:",
+        origin="https://x.test:443",
     )
     assert p.max_requests_per_minute == HARD_MAX_REQUESTS_PER_MINUTE
     assert p.max_total_requests == HARD_MAX_TOTAL_REQUESTS
 
 
 def test_enforcer_caller_ceiling_wins_over_manifest():
-    p = parse_policy({"max_requests_per_minute": 1000}, origin="https://x.test:")
+    p = parse_policy({"max_requests_per_minute": 1000}, origin="https://x.test:443")
     enforcer = PolicyEnforcer(policy=p, rpm_ceiling=1)
     ok1, _ = enforcer.check("https://x.test/a")
     ok2, reason2 = enforcer.check("https://x.test/b")
@@ -188,7 +205,7 @@ def test_enforcer_caller_ceiling_wins_over_manifest():
 
 def test_audit_log_hash_chain_detects_tampering(tmp_path):
     audit = tmp_path / "audit.jsonl"
-    p = parse_policy({"allow": ["/ok/*"]}, origin="https://x.test:")
+    p = parse_policy({"allow": ["/ok/*"]}, origin="https://x.test:443")
     enforcer = PolicyEnforcer(policy=p, audit_path=audit)
     enforcer.check("https://x.test/ok/a")
     enforcer.check("https://x.test/ok/b")

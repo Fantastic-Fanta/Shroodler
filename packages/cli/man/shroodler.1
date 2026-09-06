@@ -113,7 +113,11 @@ account) using a second, lower-privileged session's
 .B \-\-cookie
 /\fB\-\-header\fR. Flags a URL as broken access control if the lower-priv
 session can still reach it while an anonymous request to the same URL was
-denied.
+denied. Accepts the same
+.BR \-\-require\-policy / \-\-policy\-file / \-\-audit\-log
+guardrail flags as
+.B payload
+(this replays real requests too).
 .TP
 .B proxy \fIARGS...\fR
 Forward arguments to the
@@ -162,6 +166,13 @@ Run an MCP (Model Context Protocol) server on stdio exposing
 .B explain_finding
 as tools an MCP-speaking coding agent can call directly, instead of
 shelling out to this CLI and parsing text output.
+.TP
+.B audit\-verify \fIAUDIT_LOG.JSONL\fR
+Replay a guardrail
+.B \-\-audit\-log
+and confirm its hash chain is intact (each entry chains to the previous
+one's hash); reports which line, if any, was deleted, reordered, or
+edited after the fact.
 .TP
 .B version
 Print the version and exit.

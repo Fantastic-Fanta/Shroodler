@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -34,7 +34,7 @@ _shroodler_flags_for() {
             echo "--output --pack --allow-external --oob-host --require-policy --policy-file --audit-log"
             ;;
         authz-diff)
-            echo "--output --cookie --header --no-anon-check --allow-external"
+            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log"
             ;;
         history-record)
             echo "--label --history-dir"
@@ -49,6 +49,9 @@ _shroodler_flags_for() {
             echo "--since"
             ;;
         mcp-server)
+            echo ""
+            ;;
+        audit-verify)
             echo ""
             ;;
         *)

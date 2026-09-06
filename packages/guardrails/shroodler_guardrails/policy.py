@@ -97,9 +97,22 @@ def _path_of(url: str) -> str:
     return _normalize_path(urlparse(url).path or "/")
 
 
+_DEFAULT_PORTS = {"http": 80, "https": 443}
+
+
 def origin_of(url: str) -> str:
+    """RFC 6454-ish origin string: scheme://host:port, with the scheme's
+    default port normalized in (so `https://x.test/a` and
+    `https://x.test:443/a` compare equal, matching how browsers/servers
+    treat them as the same origin) and IPv6 hosts re-bracketed (urlparse's
+    `.hostname` strips the brackets `.netloc` would otherwise carry)."""
     p = urlparse(url)
-    return f"{p.scheme.lower()}://{p.hostname.lower() if p.hostname else ''}:{p.port or ''}"
+    scheme = p.scheme.lower()
+    hostname = p.hostname.lower() if p.hostname else ""
+    if ":" in hostname:  # IPv6 literal
+        hostname = f"[{hostname}]"
+    port = p.port if p.port is not None else _DEFAULT_PORTS.get(scheme)
+    return f"{scheme}://{hostname}:{port if port is not None else ''}"
 
 
 # Internal alias kept for readability at call sites within this module.
@@ -154,9 +167,27 @@ class PolicyViolation(RuntimeError):
     into hard-fail-on-block semantics."""
 
 
+def _normalize_pattern(pattern: str) -> str:
+    """Normalize a manifest-authored allow/deny pattern the same way an
+    incoming URL's path is normalized before matching. Without this, a
+    pattern containing a percent-escape or dot-segment (e.g. copy-pasted
+    from an access log as `deny: ["/admin%2Fsecret"]`) would silently
+    never match anything, because normalized incoming paths never contain
+    a literal `%2F` -- they always arrive already decoded. A literal `*`/
+    `?` glob wildcard is untouched by `_normalize_path` (it only acts on
+    `/`, `.`, `..`, and percent-escapes), so no separate protection is
+    needed -- a `%2A` in a pattern decodes to a literal `*`, which then
+    behaves as an (intentional) wildcard, matching what percent-decoding
+    it would mean anywhere else in this function.
+    """
+    if pattern in ("", "*"):
+        return pattern
+    return _normalize_path(pattern)
+
+
 def parse_policy(data: dict, *, origin: str = "") -> ScanPolicy:
-    allow = tuple(str(p) for p in (data.get("allow") or ["*"]))
-    deny = tuple(str(p) for p in (data.get("deny") or []))
+    allow = tuple(_normalize_pattern(str(p)) for p in (data.get("allow") or ["*"]))
+    deny = tuple(_normalize_pattern(str(p)) for p in (data.get("deny") or []))
     max_rpm = int(data.get("max_requests_per_minute", DEFAULT_MAX_REQUESTS_PER_MINUTE))
     max_total = int(data.get("max_total_requests", DEFAULT_MAX_TOTAL_REQUESTS))
     return ScanPolicy(

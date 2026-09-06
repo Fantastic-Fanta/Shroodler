@@ -123,7 +123,9 @@ def test_html_executive_summary_scores_by_distinct_finding_not_raw_instances():
     soup = BeautifulSoup(html, "lxml")
     grade = soup.select_one(".risk-grade")
     assert grade is not None
-    assert grade.get_text().strip() == "B"  # score 4 (one medium, weight 4)
+    # Score alone (4) would band as B, but any medium present is floored
+    # to at least C -- see risk_score.py's severity-floor rationale.
+    assert grade.get_text().strip() == "C"
     assert "1 medium" in soup.select_one(".risk-counts").get_text()
 
 
@@ -141,7 +143,9 @@ def test_html_executive_summary_grade_f_for_multiple_criticals():
     html = render_html(doc)
     soup = BeautifulSoup(html, "lxml")
     grade_text = soup.select_one(".risk-grade").get_text().strip()
-    assert grade_text in {"C", "D", "F"}  # 2 critical (40) alone clears B
+    # Any critical present floors the grade to F outright, regardless of
+    # the numeric score -- pinned exactly, not a membership check.
+    assert grade_text == "F"
 
 
 def test_empty_scan_gets_grade_a_executive_summary():
@@ -236,9 +240,24 @@ def test_markdown_grouped_by_severity():
 
 def test_markdown_includes_risk_score():
     md = render(ALL_SEV, "md")
-    assert "Risk score:" in md
+    assert "**Grade:" in md
     empty_md = render(EMPTY, "md")
-    assert "Risk score: 0/100 (A)" in empty_md
+    assert "**Grade: A** (0 risk points)" in empty_md
+
+
+def test_markdown_partial_coverage_caveat():
+    doc = dict(EMPTY, findings=[
+        {
+            "id": "waf-challenge-sitewide",
+            "severity": "info",
+            "category": "waf-challenge",
+            "url": "http://127.0.0.1:8081/",
+            "description": "most of the scan was challenged",
+            "evidence": None,
+        }
+    ])
+    md = render(doc, "md")
+    assert "could not fully test the target" in md
 
 
 def test_known_finding_id_gets_specific_remediation():

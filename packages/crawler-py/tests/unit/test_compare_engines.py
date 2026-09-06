@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from shroodler.compare_engines import merge_engine_results
+import pytest
+
+from shroodler.compare_engines import EngineOrderError, merge_engine_results
 
 
 def _finding(id_, url, severity="medium"):
@@ -105,3 +107,23 @@ def test_query_string_distinguishes_findings():
     merged = merge_engine_results(py_doc, go_doc)
     assert len(merged["findings"]) == 2
     assert merged["engine_agreement"]["agreed"] == 0
+
+
+def test_swapped_argument_order_is_rejected():
+    py_doc = {"target": "http://x", "crawler": {"name": "shroodler-py"}, "findings": []}
+    go_doc = {"target": "http://x", "crawler": {"name": "shroodler-go"}, "findings": []}
+    # Called in the wrong order: go_doc first, py_doc second.
+    with pytest.raises(EngineOrderError):
+        merge_engine_results(go_doc, py_doc)
+
+
+def test_correct_argument_order_is_accepted():
+    py_doc = {"target": "http://x", "crawler": {"name": "shroodler-py"}, "findings": []}
+    go_doc = {"target": "http://x", "crawler": {"name": "shroodler-go"}, "findings": []}
+    merge_engine_results(py_doc, go_doc)  # no raise
+
+
+def test_missing_crawler_metadata_does_not_block_merge():
+    py_doc = {"target": "http://x", "findings": []}
+    go_doc = {"target": "http://x", "findings": []}
+    merge_engine_results(py_doc, go_doc)  # no raise -- unknown engine name isn't an error

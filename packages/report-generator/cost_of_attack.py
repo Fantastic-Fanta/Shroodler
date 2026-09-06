@@ -35,7 +35,6 @@ _BY_ID: dict[str, str] = {
     "reset-token-small-keyspace": "low",
     "reset-token-short": "low",
     "reset-token-in-url": "low",
-    "oauth-missing-state": "low",
     # Forging a token with a known-weak/absent signature needs no prior
     # session -- once the weakness is known, any anonymous attacker can
     # mint a token.
@@ -48,10 +47,12 @@ _BY_ID: dict[str, str] = {
     "authz-broken-access-control": "medium",
     "idor-adjacent-id-accessible": "medium",
     "oauth-implicit-flow": "medium",
-    # Session fixation is exploited by an anonymous attacker planting a
-    # session identifier before the victim logs in -- the attacker needs
-    # no account of their own.
+    # Session fixation and a missing OAuth "state" parameter are both
+    # anonymous, CSRF-style attacks: the attacker crafts a request/link
+    # of their own and lures the victim into completing it, needing
+    # neither an account nor a guessed secret/token.
     "session-fixation": "none",
+    "oauth-missing-state": "none",
     # Replaying a session that should have died on logout requires having
     # captured a valid token first (e.g. via prior XSS/theft), not an
     # account of the attacker's own -- closer to "needs a token" than

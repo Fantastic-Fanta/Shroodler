@@ -270,6 +270,18 @@ def test_unknown_id_falls_back_to_category_then_default():
     assert remediation_for("totally-unknown-id", "totally-unknown-category")
 
 
+def test_missing_rate_limit_id_matches_real_finding_id():
+    # Was previously keyed as the non-existent "rate-limit-missing",
+    # silently falling back to the generic auth-category text.
+    assert "rate limiting" in remediation_for("missing-rate-limit", "auth").lower()
+
+
+def test_authz_finding_ids_have_specific_remediation():
+    assert "authz-still-accessible" not in remediation_for("authz-still-accessible", "auth")
+    assert remediation_for("authz-still-accessible", "auth") != remediation_for("x", "auth")
+    assert remediation_for("authz-broken-access-control", "auth") != remediation_for("x", "auth")
+
+
 def test_html_summary_includes_remediation_column():
     html = render_html(ALL_SEV)
     soup = BeautifulSoup(html, "lxml")

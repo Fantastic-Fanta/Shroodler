@@ -15,6 +15,16 @@ stdin and the raw question as argv[1], and must print its answer to
 stdout. This keeps the tool honest about which mode answered a given
 question (`answered_by` in the result) rather than pretending the
 heuristic backend understands free-form English.
+
+Security note for SHROODLER_ASK_LLM_CMD: the scan context piped to that
+program's stdin is built from data the scanned TARGET produced --
+crawled URLs, header values, HTML comments, secrets findings -- none of
+it is trusted input. If the external command is itself an LLM wrapper,
+a hostile page can attempt prompt injection through that content the
+same way it could through any other tool that feeds live web content to
+a model. This module only guarantees the subprocess call itself is safe
+(argv-list invocation, no shell); it makes no claim about what the
+external program does with the content it's handed.
 """
 
 from __future__ import annotations

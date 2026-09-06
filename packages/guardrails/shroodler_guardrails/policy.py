@@ -216,15 +216,31 @@ def policy_hash(policy: ScanPolicy | dict) -> str:
 def fetch_policy(target: str, *, client=None, timeout: float = 5.0) -> ScanPolicy | None:
     """Fetch and parse the target's scan-policy manifest, if any.
 
-    Returns None (not an error) when the target has no manifest -- most
-    targets won't have one yet, and that absence is a legitimate, common
-    state that callers decide how to treat (see PolicyEnforcer's
-    `require_policy`). Also returns None for a manifest fetched over
-    plain HTTP against a non-local target: an unauthenticated document is
-    only meaningful as consent if it can't be trivially forged by
-    whoever happens to be on-path, so a public target's manifest must be
-    served over HTTPS to be honored.
+    Returns None (not an error) when the target simply has no manifest --
+    a 404 is by far the most common response, since most targets don't
+    have one yet, and that absence is a legitimate, common state that
+    callers decide how to treat (see PolicyEnforcer's `require_policy`).
+    Also returns None, silently, for a manifest that would be fetched
+    over plain HTTP against a non-local target: an unauthenticated
+    document is only meaningful as consent if it can't be trivially
+    forged by whoever happens to be on-path, so a public target's
+    manifest must be served over HTTPS to be honored, and that's treated
+    the same as "no manifest" rather than an error.
+
+    Every OTHER failure mode -- a non-404 error status, a response body
+    that's too large, isn't valid JSON, or isn't a JSON object, or the
+    request timing out/erroring at the transport level -- also returns
+    None (so a caller not using `require_policy` degrades the same way),
+    but additionally emits a `UserWarning`. Without this, a target that
+    genuinely publishes a narrow-scope manifest but is having a bad
+    moment (a transient 500, a slow TLS handshake) would silently look
+    identical to a target that never opted into scoping at all, and an
+    operator with `require_policy=False` would have no way to tell "this
+    target opted out" from "we just failed to fetch its consent grant"
+    when reviewing what ran.
     """
+    import warnings
+
     import httpx
 
     base = target if target.endswith("/") else target + "/"
@@ -233,22 +249,40 @@ def fetch_policy(target: str, *, client=None, timeout: float = 5.0) -> ScanPolic
     if parsed.scheme != "https" and not _is_local_host(parsed.hostname):
         return None
 
+    def _warn(reason: str) -> None:
+        warnings.warn(
+            f"scan-policy manifest fetch from {url} failed ({reason}); proceeding as "
+            "if no manifest were published. If this target normally has one, its scope "
+            "was NOT enforced for this run.",
+            stacklevel=2,
+        )
+
     own_client = client is None
     http = client or httpx.Client(timeout=timeout)
     try:
         with http.stream("GET", url) as resp:
+            if resp.status_code == 404:
+                return None
             if resp.status_code != 200:
+                _warn(f"HTTP {resp.status_code}")
                 return None
             body = b""
             for chunk in resp.iter_bytes():
                 body += chunk
                 if len(body) > MAX_MANIFEST_BYTES:
+                    _warn(f"response exceeded {MAX_MANIFEST_BYTES} bytes")
                     return None
-        data = json.loads(body)
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            _warn("response body was not valid JSON")
+            return None
         if not isinstance(data, dict):
+            _warn("response body was not a JSON object")
             return None
         return parse_policy(data, origin=_origin_of(url))
-    except (httpx.HTTPError, json.JSONDecodeError, ValueError):
+    except httpx.HTTPError as exc:
+        _warn(f"{type(exc).__name__}: {exc}")
         return None
     finally:
         if own_client:

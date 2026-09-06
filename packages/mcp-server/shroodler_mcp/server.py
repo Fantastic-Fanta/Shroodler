@@ -14,6 +14,15 @@ over newline-delimited stdio messages: `initialize`, `tools/list`,
 rather than depending on an MCP SDK, so this has zero new runtime
 dependencies. The message shapes match the public MCP spec, so any
 MCP-speaking client can drive it.
+
+Known limitation: `serve()`'s loop is synchronous and single-threaded --
+one request is fully handled (including any live HTTP calls a tool
+makes, e.g. a crawl or a scan-policy fetch) before the next line of
+stdin is even read. A slow target makes a single `scan_route`/
+`check_idor` call block every other request, including `tools/list` and
+`ping`, for that call's duration. Each such call is still bounded by the
+underlying HTTP client's own timeouts, so nothing hangs forever, but
+there is currently no concurrency or cancellation.
 """
 
 from __future__ import annotations

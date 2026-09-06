@@ -7,6 +7,15 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixed a self-caught false-positive source in
+  `trend --gate-on-severity-increase`** ahead of review: an
+  unrecognized severity string in the OLDER scan (a corrupted/hand-
+  edited history file, or a future severity level the rank table
+  doesn't know yet) defaulted to rank 4 ("as if info"), which meant ANY
+  real severity in the newer scan -- even "low", the least severe real
+  value -- would numerically look like an increase. The comparison now
+  skips a key entirely when either side's severity string isn't one of
+  the 5 known values, rather than guessing.
 - **`shroodler trend --gate-on-severity-increase`** (Python-only;
   `shroodler-go` has no `trend` command at all yet, so this doesn't
   introduce a new gap). Catches a same-key finding (same id+url, so not

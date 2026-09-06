@@ -7,6 +7,70 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler tokens` substantially reworked after a deeper pentester
+  review found the entropy check false-positived on almost every
+  correctly-implemented numeric OTP system, among other issues.**
+  - **Per-string Shannon entropy replaced with a pooled length x
+    observed-alphabet keyspace estimate.** A short string's entropy is
+    bounded above by log2(its own length), so a 6-char token's ceiling
+    (~2.6 bits/char) sat barely above the old 2.5 bits/char threshold --
+    measured at ~98-99.7% false-positive rate against genuinely random
+    6-digit OTPs across 20k trials. The new estimate (`min(len) *
+    log2(|alphabet actually observed|)`, flagged below 64 bits as
+    `reset-token-small-keyspace`, not `-low-entropy`) correctly reports
+    a small OTP keyspace as a rate-limiting concern rather than
+    misdiagnosing the RNG.
+  - **Sequential detection switched from an absolute to a relative span**
+    (`(max-min)/mean`), and now requires 3+ distinct values. The old
+    absolute window (`span <= max(N*1000, 1000)`) missed a shared/
+    tenant-wide auto-increment counter that jumps by hundreds of
+    thousands between resets, and missed a millisecond-epoch token
+    entirely -- both have a relative span many orders of magnitude
+    below a random sample's regardless of absolute magnitude, so the
+    relative check catches both while still correctly rejecting random
+    OTPs. Values are validated with a strict `^[0-9]+$` check before
+    being treated as integers (the bare `int()` call previously accepted
+    PEP-515 underscores, leading `+`, and Unicode digit code points as
+    "clean sequential integers").
+  - **A structured/prefixed token (`"reset-" + timestamp`) no longer
+    defeats both checks at once.** High per-string entropy from the
+    varying digits previously hid a trivially-predictable timestamp
+    behind a constant textual prefix. Non-digit characters are now
+    stripped from each value before the sequential check runs (a
+    per-value strip, not a cross-sample common-affix strip -- close-in-
+    time epoch timestamps share several of their own leading digits too,
+    and an early attempt at cross-sample stripping ate into that shared
+    digit run and left too little behind to analyze).
+  - **The id-shaped path-segment regex no longer merges unrelated
+    endpoints.** It previously matched any 8+-char alphanumeric segment,
+    including plain path words like "passwordreset"/"verifyemail" --
+    merging two different flows with different generators into one
+    (falsely) sequential-looking group, with the finding's evidence and
+    URL attributed to the wrong endpoint. It now requires actual id
+    shape (UUID, hex, all-digit, or a genuine digit+letter mix) and
+    never matches pure-alphabetic text.
+  - **Coverage widened**: the curated param list now includes Devise's
+    `reset_password_token`, WordPress's `key`, and the near-universal
+    `code`/`t`, among others; path-segment tokens (Django's
+    `/reset/<uidb64>/<token>/`, Laravel's `/password/reset/{token}`) are
+    now also detected on paths whose wording suggests a reset/
+    verification flow.
+  - **A new always-fired, always-true finding, `reset-token-in-url`**
+    (medium): the token sitting in a URL leaks via Referer headers,
+    proxy/CDN/server logs, and browser history regardless of how
+    predictable it is -- the one thing this tool can state with full
+    confidence from a single sample, which the original version never
+    actually said.
+  - **`reset-token-sequential` demoted from `critical` to `high`**,
+    consistent with how every other single-session/small-sample signal
+    in this codebase is scored (see `idor-adjacent-id-accessible`) --
+    it's a strong statistical lead from a handful of samples, not a
+    proven finding.
+  - **Evidence no longer includes raw live token values.** Sample values
+    in a finding's evidence are now redacted (first/last 2 characters
+    only) before being written into a report -- the original version put
+    up to 10 real, possibly still-valid tokens straight into the
+    deliverable.
 - **Three self-caught fixes to `shroodler tokens` ahead of review.**
   (1) Identical values observed more than once (a proxy recording
   naturally captures retries/redirect chains, or a tester revisiting the

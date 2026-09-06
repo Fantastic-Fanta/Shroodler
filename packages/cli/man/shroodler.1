@@ -273,7 +273,13 @@ only when it confirms the finding is fixed does it write a pytest module
 .B \-\-output
 or stdout) that re-checks the same (finding_id, url) pair via
 `shroodler.reverify.reverify()` on every future test run. Refuses (exit
-1, no file written) if the finding is still present.
+1, no file written) if the finding is still present, or if reverify's
+result came with a warning (e.g.
+.I URL
+has no query string, so a GET-parameter finding may not have actually
+been re-tested) --
+.B \-\-force
+generates the test anyway.
 .TP
 .B version
 Print the version and exit.

@@ -159,7 +159,12 @@ def mutate_payload(payload: str, *, context: dict) -> str | None:
     if not cmd:
         return _default_mutate(payload)
     try:
-        argv = shlex.split(cmd)
+        # shlex's POSIX mode (the default) treats "\" as an escape
+        # character, which mangles an unquoted Windows path like
+        # "C:\Program Files\mutate.exe" -- non-POSIX mode leaves
+        # backslashes alone, matching how Windows command lines are
+        # actually written.
+        argv = shlex.split(cmd, posix=(os.name != "nt"))
     except ValueError:
         return None
     if not argv:

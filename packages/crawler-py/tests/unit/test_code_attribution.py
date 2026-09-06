@@ -116,3 +116,19 @@ def test_oversized_file_is_skipped(tmp_path):
     big = tmp_path / "big.py"
     big.write_text("@app.route('/export')\n" + ("x" * (_MAX_FILE_BYTES + 1)), encoding="utf-8")
     assert find_route_source(tmp_path, "/export") is None
+
+
+def test_aggregate_byte_budget_stops_indexing_further_files(tmp_path, monkeypatch):
+    import shroodler.code_attribution as mod
+
+    # Shrink the aggregate budget so two modest files already exceed it,
+    # without needing to actually write hundreds of MB to disk.
+    monkeypatch.setattr(mod, "_MAX_TOTAL_INDEX_BYTES", 10)
+    (tmp_path / "a.py").write_text("@app.route('/first')\n" * 5, encoding="utf-8")
+    (tmp_path / "b.py").write_text("@app.route('/second')\n" * 5, encoding="utf-8")
+
+    index = mod.SourceIndex(tmp_path)
+    loaded = index._load()
+    # At least the first file made it in; the aggregate cap must have
+    # stopped the walk before both were indexed.
+    assert 0 < len(loaded) < 2

@@ -67,7 +67,7 @@ _shroodler_flags_for() {
             echo "--mode --allow-external --no-payloads --output --require-policy --policy-file --audit-log"
             ;;
         gen-regression-test)
-            echo "--mode --allow-external --no-payloads --output"
+            echo "--mode --allow-external --no-payloads --output --force"
             ;;
         *)
             echo ""

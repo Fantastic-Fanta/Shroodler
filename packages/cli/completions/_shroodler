@@ -191,6 +191,7 @@ _shroodler() {
             '--allow-external[Allow a non-local target]' \
             '--no-payloads[Skip active payload packs]' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--force[Generate even if reverify returned a warning]' \
             '1:url' \
             '2:finding id'
           ;;

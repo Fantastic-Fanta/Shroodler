@@ -103,6 +103,30 @@ def test_short_degenerate_marker_is_ignored(fx):
     assert "confidence" not in out["findings"][0]
 
 
+def test_marker_present_in_anonymous_response_is_not_confirmation(fx):
+    # A long-enough marker that's also visible to an anonymous visitor
+    # (page boilerplate: a footer, a repeated nav fragment) can't be
+    # evidence of a specific account's private data, regardless of its
+    # length -- must not upgrade to confidence=confirmed.
+    def handler(inc):
+        if "session=x" in inc.cookies:
+            return (200, {}, b"boilerplate-footer-text and some secret data")
+        # Neither denied (401/403) nor success -- falls through to the
+        # authz-still-accessible path, where anon_resp is still fetched.
+        return (500, {}, b"boilerplate-footer-text on the error page too")
+
+    fx.on("GET", "/report/1", handler)
+    doc = _doc(fx.origin, [fx.origin + "/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        higher_priv_identity_markers=["boilerplate-footer-text"],
+    )
+    finding = out["findings"][0]
+    assert finding["id"] == "authz-still-accessible"
+    assert "confidence" not in finding
+
+
 def test_no_marker_match_leaves_confidence_unset(fx):
     fx.on(
         "GET",

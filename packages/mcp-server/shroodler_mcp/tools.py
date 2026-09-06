@@ -1,18 +1,46 @@
 """Tool implementations exposed over MCP.
 
-Each function takes a plain dict of arguments (already validated against
-that tool's JSON schema by the caller) and returns a plain, JSON-serializable
-dict. Kept free of any protocol/transport concerns so they're independently
-unit-testable and reusable from a plain Python REPL, not just an agent.
+Each function takes a plain dict of arguments and returns a plain,
+JSON-serializable dict. Kept free of any protocol/transport concerns so
+they're independently unit-testable and reusable from a plain Python
+REPL, not just an agent. `server.py` validates `arguments` against each
+tool's `input_schema` before calling the handler; handlers still validate
+domain-level requirements (e.g. "one of A or B must be set") themselves.
 """
 
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 from typing import Any
 
 from shroodler_mcp.paths import ensure_on_path, payload_tester_dir, report_generator_dir
+
+
+# An MCP client -- or a coding agent whose context was poisoned by
+# adversarial content it read elsewhere in the same session -- can supply
+# any string for a "path to a file on disk" argument. Restricting reads to
+# beneath the process's working directory (normally the project root the
+# agent is already operating in) bounds that to "files this project could
+# plausibly want the tool to read" instead of "any file this OS user can
+# read", without breaking the common case of pointing at a scan/baseline
+# file that lives in the repo. Set SHROODLER_MCP_ALLOW_ANY_PATH=1 to opt
+# out for an operator-controlled, trusted setup that needs paths outside
+# the project root.
+def _resolve_safe_path(raw: str) -> Path:
+    resolved = Path(raw).expanduser().resolve()
+    if os.environ.get("SHROODLER_MCP_ALLOW_ANY_PATH") == "1":
+        return resolved
+    root = Path.cwd().resolve()
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(
+            f"refusing to read {raw!r}: outside the working directory {root} "
+            "(set SHROODLER_MCP_ALLOW_ANY_PATH=1 to allow arbitrary paths)"
+        ) from exc
+    return resolved
 
 
 def _load_doc(value: Any) -> dict:
@@ -23,7 +51,7 @@ def _load_doc(value: Any) -> dict:
     if isinstance(value, dict):
         return value
     if isinstance(value, str):
-        return json.loads(Path(value).read_text(encoding="utf-8"))
+        return json.loads(_resolve_safe_path(value).read_text(encoding="utf-8"))
     raise ValueError("expected a crawl-document object or a path to one")
 
 
@@ -33,6 +61,15 @@ def scan_route(args: dict) -> dict:
     the route it's about to commit, mid-session" tool -- a single-page
     scan is fast enough to run inline before a commit rather than waiting
     for a full site crawl.
+
+    When `run_payloads` is set, active requests are gated by
+    `shroodler_guardrails.policy.PolicyEnforcer` the same way `shroodler
+    payload --require-policy` is: by default a target must publish a
+    `.well-known/scan-policy.json` consent manifest before this tool will
+    fire live payloads at it, since this is the one code path an agent can
+    trigger autonomously without a human typing a CLI flag. Pass
+    `allow_without_policy: true` to explicitly opt out for a target that
+    hasn't deployed a manifest yet (e.g. local dev).
     """
     from shroodler.crawler import crawl_url
     from shroodler.validate import validate_crawl
@@ -58,10 +95,34 @@ def scan_route(args: dict) -> dict:
     if run_payloads:
         ensure_on_path(payload_tester_dir())
         import tester
+        from shroodler_guardrails.policy import (
+            PolicyEnforcer,
+            PolicyViolation,
+            fetch_policy,
+            origin_of,
+            parse_policy,
+        )
 
-        payload_out = tester.run(doc, allow_external=allow_external)
+        policy_file = args.get("policy_file")
+        require_policy = not bool(args.get("allow_without_policy", False))
+        if policy_file:
+            manifest = json.loads(_resolve_safe_path(policy_file).read_text(encoding="utf-8"))
+            policy = parse_policy(manifest, origin=origin_of(doc.get("target", "")))
+        else:
+            policy = fetch_policy(doc.get("target", ""))
+        try:
+            enforcer = PolicyEnforcer(
+                policy=policy,
+                require_policy=require_policy,
+                audit_path=_resolve_safe_path(args["audit_log"]) if args.get("audit_log") else None,
+            )
+        except PolicyViolation as exc:
+            raise ValueError(str(exc)) from exc
+
+        payload_out = tester.run(doc, allow_external=allow_external, enforcer=enforcer)
         doc["findings"] = list(doc.get("findings", [])) + payload_out["findings"]
         doc["oob_probes"] = payload_out.get("oob_probes", [])
+        doc["guardrail"] = payload_out.get("guardrail")
 
     return doc
 
@@ -97,7 +158,7 @@ def diff_since_baseline(args: dict) -> dict:
     expected = _load_doc(args.get("baseline"))
     suppressions = []
     if args.get("suppressions_file"):
-        suppressions = load_suppressions(args["suppressions_file"])
+        suppressions = load_suppressions(_resolve_safe_path(args["suppressions_file"]))
     outcome = diff_outcome(
         actual,
         expected,
@@ -128,7 +189,8 @@ TOOLS: dict[str, dict[str, Any]] = {
     "scan_route": {
         "description": "Crawl a single route/URL (no link-following) for passive findings, "
         "optionally running active payload packs against it. Use before committing a "
-        "change to a specific route.",
+        "change to a specific route. Active payloads are refused unless the target "
+        "publishes a scan-policy consent manifest, or allow_without_policy is set.",
         "input_schema": {
             "type": "object",
             "properties": {
@@ -139,6 +201,17 @@ TOOLS: dict[str, dict[str, Any]] = {
                     "default": False,
                     "description": "Also run active payload packs (SQLi/XSS/SSTI/etc.) against this route",
                 },
+                "allow_without_policy": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Allow active payloads even without a scan-policy manifest "
+                    "(only for targets you already know you're authorized to test)",
+                },
+                "policy_file": {
+                    "type": "string",
+                    "description": "Local scan-policy.json path instead of fetching one from the target",
+                },
+                "audit_log": {"type": "string", "description": "Path to append a JSONL audit trail to"},
                 "allow_external": {"type": "boolean", "default": False},
                 "cookies": {"type": "array", "items": {"type": "string"}},
                 "headers": {"type": "array", "items": {"type": "string"}},

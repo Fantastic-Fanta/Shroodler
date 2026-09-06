@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 from shroodler_mcp.tools import (
+    _resolve_safe_path,
     check_idor,
     diff_since_baseline,
     explain_finding,
@@ -65,3 +68,55 @@ def test_diff_since_baseline_flags_new_finding():
     result = diff_since_baseline({"crawl": crawl, "baseline": baseline, "gate": True})
     assert result["clean"] is False
     assert any("missing-hsts" in e for e in result["errors"])
+
+
+def test_resolve_safe_path_allows_file_under_cwd(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    f = tmp_path / "scan.json"
+    f.write_text("{}")
+    assert _resolve_safe_path("scan.json") == f.resolve()
+
+
+def test_resolve_safe_path_refuses_traversal_outside_cwd(tmp_path, monkeypatch):
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    outside = tmp_path / "secret.json"
+    outside.write_text("{}")
+    monkeypatch.chdir(workdir)
+    with pytest.raises(ValueError, match="outside the working directory"):
+        _resolve_safe_path(str(outside))
+    with pytest.raises(ValueError):
+        _resolve_safe_path("../secret.json")
+
+
+def test_resolve_safe_path_escape_hatch(tmp_path, monkeypatch):
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    outside = tmp_path / "secret.json"
+    outside.write_text("{}")
+    monkeypatch.chdir(workdir)
+    monkeypatch.setenv("SHROODLER_MCP_ALLOW_ANY_PATH", "1")
+    assert _resolve_safe_path(str(outside)) == outside.resolve()
+
+
+def test_load_doc_via_path_is_sandboxed(tmp_path, monkeypatch):
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    outside = tmp_path / "secret.json"
+    outside.write_text(json.dumps({"findings": []}))
+    monkeypatch.chdir(workdir)
+    with pytest.raises(ValueError):
+        diff_since_baseline({"crawl": str(outside), "baseline": {"expected_findings": []}})
+
+
+def test_scan_route_run_payloads_refuses_without_policy_by_default(monkeypatch):
+    class FakeResult:
+        def to_dict(self):
+            return {"target": "http://127.0.0.1:1", "pages": [], "findings": [], "js_endpoints": []}
+
+    monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *_a, **_k: FakeResult())
+    monkeypatch.setattr("shroodler.validate.validate_crawl", lambda *_a, **_k: None)
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        scan_route({"url": "http://127.0.0.1:1/", "run_payloads": True})

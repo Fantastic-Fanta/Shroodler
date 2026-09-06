@@ -5,8 +5,10 @@ from shroodler_guardrails.policy import (
     PolicyViolation,
     ScanPolicy,
     fetch_policy,
+    origin_of,
     parse_policy,
     policy_hash,
+    verify_audit_log,
 )
 
 __all__ = [
@@ -14,6 +16,8 @@ __all__ = [
     "PolicyViolation",
     "ScanPolicy",
     "fetch_policy",
+    "origin_of",
     "parse_policy",
     "policy_hash",
+    "verify_audit_log",
 ]

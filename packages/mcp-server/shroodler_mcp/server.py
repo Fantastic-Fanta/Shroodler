@@ -22,6 +22,8 @@ import json
 import sys
 from typing import Any, TextIO
 
+import jsonschema
+
 from shroodler_mcp.tools import TOOLS
 
 PROTOCOL_VERSION = "2024-11-05"
@@ -60,6 +62,13 @@ def handle_request(method: str, params: dict[str, Any]) -> Any:
         if name not in TOOLS:
             raise RpcError(-32602, f"unknown tool: {name!r}")
         arguments = params.get("arguments") or {}
+        try:
+            jsonschema.validate(arguments, TOOLS[name]["input_schema"])
+        except jsonschema.ValidationError as exc:
+            return {
+                "content": [{"type": "text", "text": f"error: invalid arguments: {exc.message}"}],
+                "isError": True,
+            }
         try:
             result = TOOLS[name]["handler"](arguments)
         except (ValueError, FileNotFoundError, TypeError) as exc:

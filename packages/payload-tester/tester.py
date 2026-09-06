@@ -255,10 +255,21 @@ def run(
                     action = f"{p.scheme}://{p.netloc}{action}"
                 if not allowed(action):
                     continue
-                if enforcer is not None:
-                    ok, _reason = enforcer.check(action)
-                    if not ok:
-                        continue
+
+                def request_allowed(target_url: str = action) -> bool:
+                    # Checked once per actual outbound HTTP request (baseline
+                    # probe AND every payload send below), not once per form
+                    # -- a form fuzzed with N packs makes N+1 live requests,
+                    # and a rate/blast-radius budget that only counted the
+                    # first of those would let real traffic run at up to
+                    # len(packs)x the configured limit.
+                    if enforcer is None:
+                        return True
+                    ok, _reason = enforcer.check(target_url)
+                    return ok
+
+                if not request_allowed():
+                    continue
                 method = (form.get("method") or "GET").upper()
                 fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
                 if not fields:
@@ -279,6 +290,8 @@ def run(
                     baseline_status, baseline_body, baseline_elapsed_ms = None, "", None
 
                 for pack in loaded:
+                    if not request_allowed():
+                        break
                     payload = render_payload(
                         str(pack["payload"]), token=token, marker_host=marker_host
                     )
@@ -400,11 +413,13 @@ def main(argv: list[str] | None = None) -> int:
         from shroodler_guardrails.policy import (
             PolicyEnforcer,
             fetch_policy,
+            origin_of,
             parse_policy,
         )
 
         if args.policy_file:
-            policy = parse_policy(json.loads(Path(args.policy_file).read_text(encoding="utf-8")))
+            manifest = json.loads(Path(args.policy_file).read_text(encoding="utf-8"))
+            policy = parse_policy(manifest, origin=origin_of(doc.get("target", "")))
         else:
             policy = fetch_policy(doc.get("target", ""))
         enforcer = PolicyEnforcer(

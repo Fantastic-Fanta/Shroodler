@@ -3,7 +3,11 @@ package extractors
 import "testing"
 
 func findingIDs(headers []string, pageURL string) map[string]bool {
-	_, findings := ExtractCookies(headers, pageURL)
+	return findingIDsReliable(headers, pageURL, true)
+}
+
+func findingIDsReliable(headers []string, pageURL string, attrsReliable bool) map[string]bool {
+	_, findings := ExtractCookies(headers, pageURL, attrsReliable)
 	out := map[string]bool{}
 	for _, f := range findings {
 		out[f.ID] = true
@@ -181,6 +185,88 @@ func TestCookieHostPrefixViolationMissingPath(t *testing.T) {
 	)
 	if !ids["cookie-host-prefix-violation"] {
 		t.Fatal("expected cookie-host-prefix-violation when __Host- cookie omits Path")
+	}
+}
+
+func TestCookieHostPrefixHeadlessSynthesizedHeaderIsNotFlagged(t *testing.T) {
+	// Regression test for a real false positive caught in review:
+	// headless mode synthesizes Set-Cookie strings from the browser's
+	// cookie jar API, which never exposes Path/Domain -- treating that
+	// absence as violation evidence flagged EVERY __Host- cookie in a
+	// headless crawl, including ones a real browser accepted and stored.
+	// With attrsReliable=false, only the (reliable) Secure flag is still
+	// checked.
+	ids := findingIDsReliable(
+		[]string{"__Host-id=abc; Secure; HttpOnly"}, // no Path/Domain, as headless synthesizes
+		"https://app.example.com/",
+		false,
+	)
+	if ids["cookie-host-prefix-violation"] {
+		t.Fatal("a headless-synthesized __Host- cookie with Secure must not violate on absent Path/Domain")
+	}
+}
+
+func TestCookieHostPrefixHeadlessStillCatchesMissingSecure(t *testing.T) {
+	ids := findingIDsReliable(
+		[]string{"__Host-id=abc"},
+		"https://app.example.com/",
+		false,
+	)
+	if !ids["cookie-host-prefix-violation"] {
+		t.Fatal("missing Secure must still be caught even when attrsReliable=false")
+	}
+}
+
+func TestCookieSecurePrefixRequiresSecureOrigin(t *testing.T) {
+	ids := findingIDs(
+		[]string{"__Secure-id=abc; Path=/; Secure"},
+		"http://app.example.com/",
+	)
+	if !ids["cookie-secure-prefix-violation"] {
+		t.Fatal("expected cookie-secure-prefix-violation when set from a non-secure origin")
+	}
+}
+
+func TestCookieSecurePrefixLoopbackHTTPIsExempt(t *testing.T) {
+	// Real browsers treat loopback/localhost as a secure context even
+	// over plain HTTP.
+	ids := findingIDs(
+		[]string{"__Secure-id=abc; Path=/; Secure"},
+		"http://127.0.0.1/",
+	)
+	if ids["cookie-secure-prefix-violation"] {
+		t.Fatal("loopback over HTTP must be treated as a secure origin")
+	}
+}
+
+func TestCookiePrefixViolationSuppressesOtherFindingsForSameCookie(t *testing.T) {
+	// A cookie the browser rejects outright must not also get findings
+	// describing attributes of a cookie that, per the violation, never
+	// actually existed.
+	ids := findingIDs(
+		[]string{"__Host-sid=abc; Path=/"}, // missing Secure -> violation
+		"https://app.example.com/",
+	)
+	if !ids["cookie-host-prefix-violation"] {
+		t.Fatal("expected cookie-host-prefix-violation")
+	}
+	for _, other := range []string{"insecure-cookie", "cookie-not-httponly", "cookie-path-broad"} {
+		if ids[other] {
+			t.Fatalf("did not expect %s alongside cookie-host-prefix-violation", other)
+		}
+	}
+}
+
+func TestCookieHostPrefixCompliantDoesNotGetPathBroadSuggestion(t *testing.T) {
+	// A compliant __Host- cookie's Path=/ is mandatory, not a
+	// broad-scope hardening problem -- must not ALSO suggest narrowing
+	// it away from Path=/.
+	ids := findingIDs(
+		[]string{"__Host-sid=abc; Path=/; Secure"},
+		"https://app.example.com/",
+	)
+	if ids["cookie-path-broad"] {
+		t.Fatal("a compliant __Host- cookie must not get cookie-path-broad")
 	}
 }
 

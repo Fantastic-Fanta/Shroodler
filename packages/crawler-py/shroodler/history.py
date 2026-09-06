@@ -100,15 +100,33 @@ def _finding_keys(doc: dict) -> set[tuple[str, str]]:
 _SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 
 
-def _severity_by_key(doc: dict) -> dict[tuple[str, str], str]:
-    # Last write wins on a duplicate key within one doc (e.g. the same
-    # id+url crawled twice some other way) -- irrelevant in practice
-    # since crawl output doesn't duplicate keys, but keeps this a total
-    # function with no surprise KeyError either way.
-    return {
-        (f.get("id", ""), f.get("url", "")): f.get("severity", "info")
-        for f in doc.get("findings", [])
-    }
+def _severity_by_key(doc: dict) -> dict[tuple[str, str], str | None]:
+    # A duplicate (id, url) key within one doc is real, not a
+    # theoretical edge case: extract_cookies() (and other extractors)
+    # emit one finding per cookie/header/etc. on a page, all sharing
+    # that page's url, so two different Set-Cookie headers on one page
+    # that both trip e.g. insecure-cookie produce two findings with an
+    # IDENTICAL (id, url) key. A last-write-wins reduction would make
+    # the result depend on the findings list's ORDER within the JSON
+    # file -- collapsing by the WORST (most severe) severity instead
+    # makes this deterministic regardless of order, and is also the
+    # conservative choice for a regression check (report the worst
+    # thing that key represents, not whichever happened to be seen
+    # last).
+    result: dict[tuple[str, str], str | None] = {}
+    for f in doc.get("findings", []):
+        key = (f.get("id", ""), f.get("url", ""))
+        # None (missing key) is deliberately NOT defaulted to "info"
+        # here: a history file whose findings simply lack a severity
+        # field (written by some past version of this tool) must be
+        # treated the same as an unrecognized severity string by the
+        # comparison in trend_diff, not silently coerced into the
+        # least-severe real value.
+        sev = f.get("severity")
+        existing = result.get(key)
+        if existing is None or _SEVERITY_RANK.get(sev, 99) < _SEVERITY_RANK.get(existing, 99):
+            result[key] = sev
+    return result
 
 
 def trend_diff(older: dict, newer: dict) -> dict:
@@ -121,8 +139,15 @@ def trend_diff(older: dict, newer: dict) -> dict:
     new_severity = _severity_by_key(newer)
     severity_increased = []
     for key in sorted(old_keys & new_keys):
-        old_sev = old_severity.get(key, "info")
-        new_sev = new_severity.get(key, "info")
+        # _severity_by_key() guarantees an entry for every key present in
+        # the doc's own findings (which is exactly old_keys/new_keys'
+        # source), so these .get() defaults are just defensive -- None
+        # here feeds the same "unrecognized/missing -> skip" guard below
+        # as an actually-missing severity would, rather than "info"
+        # silently reintroducing the fabricated-increase bug through a
+        # different fallback path.
+        old_sev = old_severity.get(key)
+        new_sev = new_severity.get(key)
         # Skip the comparison entirely if either severity string isn't
         # one of the 5 known values, rather than defaulting it to rank 4
         # (least severe): a corrupted/hand-edited history file or a

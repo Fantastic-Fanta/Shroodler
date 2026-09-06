@@ -263,7 +263,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		fetchForSourceMap := func(u string) fetchResult {
 			return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
 		}
-		page, f, eps := pageFrom(res, rules, fetchForSourceMap)
+		page, f, eps := pageFrom(res, rules, fetchForSourceMap, mode != "headless")
 		if hasFindingCategory(f, "waf-challenge") && extractors.HasChallengeCookie(res.SetCookies) &&
 			budgetHit(cfg, t0, len(pages)) == "" {
 			// The challenge response itself set a cookie the vendor's flow
@@ -274,7 +274,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			// anything, it just avoids treating a one-off hiccup as a
 			// durable block.
 			retryRes := fetchPage(it.u)
-			retryPage, retryF, retryEps := pageFrom(retryRes, rules, fetchForSourceMap)
+			retryPage, retryF, retryEps := pageFrom(retryRes, rules, fetchForSourceMap, mode != "headless")
 			if !hasFindingCategory(retryF, "waf-challenge") {
 				page, f, eps = retryPage, retryF, retryEps
 				res = retryRes
@@ -605,8 +605,8 @@ func hasFindingCategory(findings []models.Finding, category string) bool {
 	return false
 }
 
-func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchResult) (models.Page, []models.Finding, []models.JSEndpoint) {
-	cookies, cf := extractors.ExtractCookies(res.SetCookies, res.URL)
+func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchResult, cookiesAttrsReliable bool) (models.Page, []models.Finding, []models.JSEndpoint) {
+	cookies, cf := extractors.ExtractCookies(res.SetCookies, res.URL, cookiesAttrsReliable)
 	headers, hf := extractors.ExtractHeaders(res.Headers, res.URL)
 	if challenge := extractors.DetectChallenge(res.Headers, res.Body, res.Status, res.SetCookies); challenge != nil {
 		challenge.URL = res.URL

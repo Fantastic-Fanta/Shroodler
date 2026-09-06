@@ -220,3 +220,83 @@ def test_cookie_prefix_violation_applies_regardless_of_session_name_heuristic():
     # heuristic happens to recognize.
     ids = _ids(["__Host-not_a_session_name=abc; Path=/account; Secure"], "https://app.example.com/account")
     assert "cookie-host-prefix-violation" in ids
+
+
+def test_cookie_host_prefix_headless_synthesized_header_is_not_flagged():
+    # Regression test for a real false positive caught in review:
+    # headless mode synthesizes Set-Cookie strings from the browser's
+    # cookie jar API, which never exposes Path/Domain -- treating that
+    # absence as violation evidence flagged EVERY __Host- cookie in a
+    # headless crawl, including ones a real browser accepted and stored.
+    # With attrs_reliable=False, only the (reliable) Secure flag is
+    # still checked.
+    _, findings = extract_cookies(
+        ["__Host-id=abc; Secure; HttpOnly"],  # no Path/Domain, as headless synthesizes
+        "https://app.example.com/",
+        attrs_reliable=False,
+    )
+    ids = {f.id for f in findings}
+    assert "cookie-host-prefix-violation" not in ids
+
+
+def test_cookie_host_prefix_headless_still_catches_missing_secure():
+    _, findings = extract_cookies(
+        ["__Host-id=abc"],
+        "https://app.example.com/",
+        attrs_reliable=False,
+    )
+    ids = {f.id for f in findings}
+    assert "cookie-host-prefix-violation" in ids
+
+
+def test_cookie_secure_prefix_requires_secure_origin():
+    ids = _ids(["__Secure-id=abc; Path=/; Secure"], "http://app.example.com/")
+    assert "cookie-secure-prefix-violation" in ids
+
+
+def test_cookie_secure_prefix_loopback_http_is_exempt():
+    # Real browsers treat loopback/localhost as a secure context even
+    # over plain HTTP.
+    ids = _ids(["__Secure-id=abc; Path=/; Secure"], "http://127.0.0.1/")
+    assert "cookie-secure-prefix-violation" not in ids
+
+
+def test_cookie_prefix_violation_suppresses_other_findings_for_same_cookie():
+    # A cookie the browser rejects outright must not also get findings
+    # describing attributes of a cookie that, per the violation, never
+    # actually existed.
+    ids = _ids(["__Host-sid=abc; Path=/"], "https://app.example.com/")  # missing Secure
+    assert "cookie-host-prefix-violation" in ids
+    assert "insecure-cookie" not in ids
+    assert "cookie-not-httponly" not in ids
+    assert "cookie-path-broad" not in ids
+
+
+def test_cookie_host_prefix_compliant_does_not_get_path_broad_suggestion():
+    # A compliant __Host- cookie's Path=/ is mandatory, not a
+    # broad-scope hardening problem -- must not ALSO suggest narrowing
+    # it away from Path=/.
+    ids = _ids(["__Host-sid=abc; Path=/; Secure"], "https://app.example.com/")
+    assert "cookie-path-broad" not in ids
+
+
+def test_page_from_fetch_passes_cookies_attrs_reliable_false_in_headless_mode():
+    from shroodler.crawler import page_from_fetch
+    from shroodler.modes.static import FetchResult
+
+    result = FetchResult(
+        url="https://app.example.com/",
+        status_code=200,
+        headers={"Content-Type": "text/html"},
+        body=b"<html></html>",
+        text="<html></html>",
+        redirect_to=None,
+        set_cookies=["__Host-id=abc; Secure"],
+    )
+    _, findings, _ = page_from_fetch(result, cookies_attrs_reliable=False)
+    ids = {f.id for f in findings}
+    assert "cookie-host-prefix-violation" not in ids
+
+    _, findings_static, _ = page_from_fetch(result, cookies_attrs_reliable=True)
+    ids_static = {f.id for f in findings_static}
+    assert "cookie-host-prefix-violation" in ids_static

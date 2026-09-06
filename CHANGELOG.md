@@ -7,6 +7,56 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixes from a pentester review of the cookie-prefix-violation checks
+  and the trend severity gate -- the headless false positive was
+  disqualifying on its own.**
+  - **Every `__Host-` cookie in a headless crawl false-positived, in
+    both engines, 100% of the time, once per page.** Headless mode
+    doesn't read raw Set-Cookie headers -- it synthesizes header-shaped
+    strings from the browser's cookie jar API, which never exposes
+    Path/Domain. Treating an absent Path/Domain as violation evidence
+    under those conditions flagged every `__Host-` cookie, including
+    ones a real browser demonstrably accepted and stored, with wording
+    that asserted the opposite of what actually happened
+    ("browsers reject this Set-Cookie entirely"). `extract_cookies()`/
+    `ExtractCookies()` now take an `attrs_reliable`/`attrsReliable` flag
+    (false in headless mode, threaded through `page_from_fetch`/
+    `pageFrom`): the Secure-flag check (which the jar API *does* report
+    reliably) still runs, but the Domain-presence and Path-exactness
+    checks are skipped when the "header" isn't a real one.
+  - **The secure-origin half of both prefix contracts was
+    unimplemented** -- browsers also require `__Secure-`/`__Host-` to be
+    *set from* a secure origin, not just carry the `Secure` attribute
+    (Chrome's `IsCookiePrefixValid` checks `SchemeIsCryptographic`), so
+    e.g. `__Secure-sid` set over plain HTTP with `Secure` present was
+    silently missed -- exactly the defect class this feature exists to
+    catch. Both engines now also check this (loopback/localhost exempt,
+    matching real browser behavior for local development).
+  - **A prefix-violated cookie no longer also gets per-attribute
+    findings** (`insecure-cookie`, `cookie-not-httponly`, `cookie-path-
+    broad`, ...) describing a cookie that, per the violation finding
+    itself, the browser never actually stored -- self-contradictory in
+    a report, and inflated the executive risk score with 3-4x the real
+    number of distinct issues for one root cause.
+  - **A compliant `__Host-` cookie no longer also gets the pre-existing
+    `cookie-path-broad` suggestion** -- `Path=/` is mandatory for
+    `__Host-`, not a broad-scope hardening problem, so the two findings
+    were telling the client to both set and narrow away from `Path=/`
+    on the same cookie.
+  - **`history.py`'s duplicate-(id,url)-key handling was
+    order-dependent and its justifying comment was false** -- cookie
+    findings (among others) routinely share a page's URL across
+    multiple Set-Cookie headers, so a last-write-wins reduction made
+    `--gate-on-severity-increase`'s verdict depend on list order within
+    a JSON file. Duplicates now collapse by worst (most severe)
+    severity, which is both deterministic and the conservative choice.
+    A finding missing a `severity` key entirely is now also treated as
+    unrecognized (previously defaulted to "info", which could still
+    fabricate an increase).
+  - **`trend` now takes `--suppressions`**, filtering both scans before
+    diffing -- every other gate-capable command already honored
+    suppressions; a formally-accepted finding could still fail
+    `--gate-on-severity-increase` before this.
 - **Fixed a self-caught false-positive source in
   `trend --gate-on-severity-increase`** ahead of review: an
   unrecognized severity string in the OLDER scan (a corrupted/hand-

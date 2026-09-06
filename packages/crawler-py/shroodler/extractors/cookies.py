@@ -128,19 +128,107 @@ def _finding(
 
 
 def extract_cookies(
-    set_cookie_headers: list[str], page_url: str
+    set_cookie_headers: list[str], page_url: str, *, attrs_reliable: bool = True
 ) -> tuple[list[Cookie], list[Finding]]:
+    """`attrs_reliable=False` is for headless mode, where the Set-Cookie
+    "header" strings are actually SYNTHESIZED from the browser's cookie
+    jar API (see modes/headless.py), which does not expose Path/Domain
+    the way a real Set-Cookie header does -- Path/Domain are always
+    absent in that reconstruction, regardless of what the real header
+    said. Review caught that treating an absent Path/Domain as violation
+    evidence under those conditions made EVERY __Host- cookie in a
+    headless crawl false-positive (100% of the time, once per page),
+    including ones a real browser demonstrably accepted and stored.
+    With attrs_reliable=False, the Domain-presence and Path-exactness
+    violation arms are skipped -- only the Secure flag (which the jar API
+    *does* report reliably) is still checked.
+    """
     cookies: list[Cookie] = []
     findings: list[Finding] = []
     parsed_url = urlparse(page_url)
     host = parsed_url.hostname or ""
     https = parsed_url.scheme.lower() == "https"
+    # Browsers (Chrome's IsCookiePrefixValid, Firefox) also require
+    # __Secure-/__Host- to be SET FROM a secure origin, not just carry
+    # the Secure attribute -- treating loopback/localhost as trustworthy
+    # even over plain HTTP, matching how real browsers special-case it
+    # for local development.
+    secure_origin = https or _is_loopback_or_local(host)
     for raw in set_cookie_headers:
         parsed = _parse_set_cookie(raw)
         if not parsed:
             continue
         cookie, path, domain = parsed
         cookies.append(cookie)
+        path_norm = path.strip() if path is not None else None
+        if path_norm == "":
+            path_norm = "/"
+
+        # __Secure-/__Host- are contracts a browser enforces at parse
+        # time, not hardening advice: a Set-Cookie whose name carries
+        # the prefix but doesn't meet the prefix's requirements is
+        # REJECTED outright (RFC 6265bis s4.1.3) -- the app thinks it
+        # set a cookie and it silently never existed. Deterministic
+        # from the header alone (when attrs_reliable), independent of
+        # whether this looks like a "session" cookie, and distinct from
+        # cookie-missing-*-prefix below (a suggestion to adopt a prefix
+        # that isn't there yet). Checked FIRST and, if violated, this is
+        # the ONLY finding emitted for the cookie: every other
+        # attribute-level check below (missing Secure/HttpOnly, broad
+        # Path/Domain, ...) would otherwise describe a cookie that, per
+        # this very finding, the browser never actually stored --
+        # reporting both was reviewed as self-contradictory.
+        prefix_violated = False
+        if cookie.name.startswith("__Secure-") and (not cookie.secure or not secure_origin):
+            reasons = []
+            if not cookie.secure:
+                reasons.append("is missing Secure")
+            if not secure_origin:
+                reasons.append("was set from a non-secure origin")
+            findings.append(
+                _finding(
+                    "cookie-secure-prefix-violation",
+                    "medium",
+                    page_url,
+                    cookie.name,
+                    f"Cookie {cookie.name} uses the __Secure- prefix but "
+                    f"{' and '.join(reasons)} -- browsers reject this Set-Cookie entirely, "
+                    "so the application likely thinks it set a cookie that was never "
+                    "actually stored",
+                )
+            )
+            prefix_violated = True
+        if cookie.name.startswith("__Host-"):
+            violations = []
+            if not cookie.secure:
+                violations.append("is missing Secure")
+            if not secure_origin:
+                violations.append("was set from a non-secure origin")
+            if attrs_reliable and domain:
+                violations.append(f"has Domain={domain}")
+            if attrs_reliable and path_norm != "/":
+                # The __Host- prefix requires an EXPLICIT Path=/
+                # attribute (RFC 6265bis), so an omitted Path
+                # (path_norm is None) is itself a violation, not just
+                # Path != "/".
+                violations.append(f"has Path={path_norm or '(none)'} (must be /)")
+            if violations:
+                findings.append(
+                    _finding(
+                        "cookie-host-prefix-violation",
+                        "medium",
+                        page_url,
+                        cookie.name,
+                        f"Cookie {cookie.name} uses the __Host- prefix but "
+                        f"{' and '.join(violations)} -- browsers reject this Set-Cookie "
+                        "entirely, so the application likely thinks it set a cookie that "
+                        "was never actually stored",
+                    )
+                )
+                prefix_violated = True
+        if prefix_violated:
+            continue
+
         if not cookie.secure:
             findings.append(
                 _finding(
@@ -171,58 +259,13 @@ def extract_cookies(
                     f"Cookie {cookie.name} uses SameSite=None without Secure",
                 )
             )
-        path_norm = path.strip() if path is not None else None
-        if path_norm == "":
-            path_norm = "/"
-
-        # __Secure-/__Host- are contracts a browser enforces at parse
-        # time, not hardening advice: a Set-Cookie whose name carries
-        # the prefix but doesn't meet the prefix's requirements is
-        # REJECTED outright (RFC 6265bis s4.1.3) -- the app thinks it
-        # set a cookie and it silently never existed. Deterministic
-        # from the header alone, independent of whether this looks like
-        # a "session" cookie, and distinct from cookie-missing-*-prefix
-        # below (a suggestion to adopt a prefix that isn't there yet).
-        if cookie.name.startswith("__Secure-") and not cookie.secure:
-            findings.append(
-                _finding(
-                    "cookie-secure-prefix-violation",
-                    "medium",
-                    page_url,
-                    cookie.name,
-                    f"Cookie {cookie.name} uses the __Secure- prefix but is missing the "
-                    "Secure flag -- browsers reject this Set-Cookie entirely, so the "
-                    "application likely thinks it set a cookie that was never actually stored",
-                )
-            )
-        if cookie.name.startswith("__Host-"):
-            violations = []
-            if not cookie.secure:
-                violations.append("is missing Secure")
-            if domain:
-                violations.append(f"has Domain={domain}")
-            if path_norm != "/":
-                # The __Host- prefix requires an EXPLICIT Path=/
-                # attribute (RFC 6265bis), so an omitted Path
-                # (path_norm is None) is itself a violation, not just
-                # Path != "/".
-                violations.append(f"has Path={path_norm or '(none)'} (must be /)")
-            if violations:
-                findings.append(
-                    _finding(
-                        "cookie-host-prefix-violation",
-                        "medium",
-                        page_url,
-                        cookie.name,
-                        f"Cookie {cookie.name} uses the __Host- prefix but "
-                        f"{' and '.join(violations)} -- browsers reject this Set-Cookie "
-                        "entirely, so the application likely thinks it set a cookie that "
-                        "was never actually stored",
-                    )
-                )
-
         session = is_session_cookie(cookie.name)
-        if session and path_norm == "/":
+        # A __Host- cookie's Path=/ is mandatory (checked/enforced
+        # above), not a broad-scope hardening problem -- flagging it
+        # here too would tell the client to both set Path=/ (the prefix
+        # requirement) and narrow it away from Path=/ (this suggestion)
+        # for the same cookie.
+        if session and path_norm == "/" and not cookie.name.startswith("__Host-"):
             findings.append(
                 _finding(
                     "cookie-path-broad",

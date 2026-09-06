@@ -90,6 +90,45 @@ def test_auth_category_finding_not_flagged_when_different_subsystem():
     assert node["relevant_token_context"] is False
 
 
+def test_generic_top_segment_requires_second_segment_to_match():
+    # /api/v1/reset-password and /api/v1/account/settings share top-level
+    # segment "api" -- too generic to mean anything on a typical REST
+    # API/SPA backend, where nearly everything lives under one "api"
+    # prefix. Matching top-segment alone would reintroduce the exact
+    # scan-wide noise problem the subsystem scoping fixed.
+    doc = {
+        "target": "http://x",
+        "findings": [
+            _finding("reset-token-short", "http://x/api/v1/reset-password", category="auth"),
+            _finding(
+                "authz-still-accessible",
+                "http://x/api/v1/account/settings",
+                category="auth",
+            ),
+        ],
+    }
+    report = build_attack_path(doc)
+    node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
+    assert node["relevant_token_context"] is False
+
+
+def test_generic_top_segment_matches_when_second_segment_agrees():
+    doc = {
+        "target": "http://x",
+        "findings": [
+            _finding("reset-token-short", "http://x/api/account/reset", category="auth"),
+            _finding(
+                "authz-still-accessible",
+                "http://x/api/account/settings",
+                category="auth",
+            ),
+        ],
+    }
+    report = build_attack_path(doc)
+    node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
+    assert node["relevant_token_context"] is True
+
+
 def test_non_auth_finding_not_flagged_even_with_weak_token_present():
     doc = {
         "target": "http://x",
@@ -121,3 +160,21 @@ def test_render_markdown_mentions_heuristic_disclaimer_and_findings():
     md = render_attack_path_markdown(report)
     assert "heuristic" in md.lower()
     assert "missing-hsts" in md
+
+
+def test_cmd_attack_path_cli_writes_json(tmp_path):
+    import argparse
+    import json
+
+    from shroodler.cli import cmd_attack_path
+
+    findings_path = tmp_path / "f.json"
+    findings_path.write_text(
+        json.dumps({"target": "http://x", "findings": [_finding("missing-hsts", "http://x/a")]}),
+        encoding="utf-8",
+    )
+    out = tmp_path / "out.json"
+    ns = argparse.Namespace(findings=str(findings_path), format="json", output=str(out))
+    assert cmd_attack_path(ns) == 0
+    result = json.loads(out.read_text(encoding="utf-8"))
+    assert result["nodes"][0]["id"] == "missing-hsts"

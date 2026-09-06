@@ -453,8 +453,19 @@ def cmd_trend(args: argparse.Namespace) -> int:
             print(msg, file=sys.stderr)
         failing = True
     if bool(getattr(args, "gate_on_waf_coverage_drop", False)) and waf_finding:
-        print(f"waf coverage regression: {waf_finding['description']}", file=sys.stderr)
-        failing = True
+        if waf_finding["page_count_mismatch"] and not getattr(
+            args, "gate_even_if_page_count_mismatch", False
+        ):
+            print(
+                "waf coverage regression NOT gated: the two scans crawled very "
+                "different numbers of pages, so this comparison may not be "
+                "meaningful -- pass --gate-even-if-page-count-mismatch to gate on it "
+                f"anyway. {waf_finding['description']}",
+                file=sys.stderr,
+            )
+        else:
+            print(f"waf coverage regression: {waf_finding['description']}", file=sys.stderr)
+            failing = True
     return 1 if failing else 0
 
 
@@ -1242,7 +1253,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Exit 1 if the fraction of crawled pages showing a WAF/bot-mitigation "
         "challenge dropped by more than --waf-drop-threshold between the two scans "
         "-- 'my own protection silently got weaker' as a tracked regression, not "
-        "just a quieter scan.",
+        "just a quieter scan. Does NOT fail the build when the two scans crawled "
+        "very different numbers of pages (see --gate-even-if-page-count-mismatch); "
+        "the regression is still reported, just not gated on.",
     )
     trend.add_argument(
         "--waf-drop-threshold",
@@ -1251,6 +1264,13 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="FRACTION",
         help="Minimum absolute coverage drop (0.0-1.0, default 0.2 = 20 percentage "
         "points) to count as a regression.",
+    )
+    trend.add_argument(
+        "--gate-even-if-page-count-mismatch",
+        action="store_true",
+        help="With --gate-on-waf-coverage-drop, fail the build even when the two "
+        "scans' page counts differ by more than 2x (a low-confidence comparison by "
+        "default).",
     )
     trend.set_defaults(func=cmd_trend)
 

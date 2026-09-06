@@ -308,9 +308,14 @@ def render_markdown(doc: dict) -> str:
     crawler = doc.get("crawler") or {}
     target = _md_inline_code_safe(doc.get("target") or "")
     pages = doc.get("pages") or []
-    name = crawler.get("name") or ""
-    version = crawler.get("version") or ""
-    mode = crawler.get("mode") or ""
+    # crawler.name/version/mode come from the crawl doc like every other
+    # field checked here -- not target-reflected in the crawlers this
+    # codebase ships today, but this function has no way to enforce
+    # that, and the whole point of the self-scan work this escaping
+    # belongs to is not leaving that kind of assumption unenforced.
+    name = html.escape(crawler.get("name") or "")
+    version = html.escape(crawler.get("version") or "")
+    mode = html.escape(crawler.get("mode") or "")
     risk = compute_risk_score(group_findings(findings))
     counts = risk["severity_counts"]
     risk_line = (

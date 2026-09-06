@@ -198,27 +198,40 @@
           "items": { "type": "string", "enum": ["python", "go"] },
           "description": "Optional. Which crawler engine(s) independently reproduced this exact finding (same id+url) when a scan's results were merged via `shroodler compare-engines`. Two engines agreeing is a confidence signal; a single engine is not itself evidence of a false positive."
         },
+        "severity_disagreement": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "python": { "type": "array", "items": { "type": "string" } },
+            "go": { "type": "array", "items": { "type": "string" } }
+          },
+          "description": "Optional. Set by `shroodler compare-engines` only when BOTH engines independently reproduced this (id, path, query) AND reported different severities -- lists the distinct severities each engine actually observed. Never set from one engine emitting the same key twice with different severities on its own."
+        },
         "owner": {
           "type": "string",
           "description": "Optional. Team/individual responsible for remediating this finding, resolved from an ownership-rules file by `shroodler sla apply` (same id/url glob matching as .shroodlerignore)."
         },
         "first_seen": {
-          "type": "string",
-          "description": "Optional. Date (YYYY-MM-DD) this finding (by id+url) first appeared in recorded scan history, set by `shroodler sla apply`."
+          "type": ["string", "null"],
+          "description": "Optional. Date (YYYY-MM-DD) this finding (by id+url) first appeared in recorded scan history, set by `shroodler sla apply`. Null when history_available is false (not enough recorded history to determine this, NOT the same as 'first seen today')."
         },
         "age_days": {
-          "type": "integer",
+          "type": ["integer", "null"],
           "minimum": 0,
-          "description": "Optional. Days since first_seen, set by `shroodler sla apply`."
+          "description": "Optional. Days since first_seen, set by `shroodler sla apply`. Null when first_seen is null."
         },
         "sla_severity": {
           "type": "string",
           "enum": ["info", "low", "medium", "high", "critical"],
-          "description": "Optional. Severity after SLA escalation (bumped up one level once age_days exceeds the SLA budget for the original severity, capped at critical). Equal to \"severity\" until the SLA burns down."
+          "description": "Optional. Severity after SLA escalation (bumped up one level once age_days exceeds the SLA budget for the original severity, capped at critical). Equal to \"severity\" until the SLA burns down, and always equal to \"severity\" when history_available is false."
         },
         "sla_breached": {
           "type": "boolean",
-          "description": "Optional. True once age_days has exceeded the SLA budget for this finding's original severity, set by `shroodler sla apply`."
+          "description": "Optional. True once age_days has exceeded the SLA budget for this finding's original severity, set by `shroodler sla apply`. Always false when history_available is false -- absence of history is not evidence of a clean SLA."
+        },
+        "history_available": {
+          "type": "boolean",
+          "description": "Optional. False when `shroodler sla apply` found zero recorded scans for this target in history (missing/empty history dir, or wrong target) -- age_days/sla_breached could not be meaningfully evaluated, as opposed to being evaluated and clean."
         }
       }
     },

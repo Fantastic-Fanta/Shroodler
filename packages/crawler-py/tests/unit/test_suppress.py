@@ -157,3 +157,17 @@ def test_render_expiring_pr_body_lists_rules():
     assert "team-x" in body
     assert "known issue" in body
     assert "2020-01-10" in body
+
+
+def test_render_expiring_pr_body_escapes_markdown_control_chars():
+    rules = parse_suppressions(
+        '[{"id": "a`evil", "url": "/x", "expires": "2020-01-10", '
+        '"owner": "team", "reason": "line1\\nline2 | pipe ` backtick"}]'
+    )
+    body = render_expiring_pr_body(rules, 14)
+    lines = [ln for ln in body.split("\n") if ln.strip()]
+    # One rule -> exactly one intro line plus one rule line; an
+    # unescaped embedded newline in `reason` would have produced more.
+    assert len(lines) == 2
+    assert "a`evil" not in body
+    assert "line1 line2" in body

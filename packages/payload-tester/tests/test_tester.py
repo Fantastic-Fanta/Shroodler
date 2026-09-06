@@ -810,3 +810,104 @@ def test_minimal_repro_picks_shortest_matching_payload(tmp_path):
     finding = out["findings"][0]
     assert finding["evidence"] == "MARK"
     assert finding["minimal_repro"] is True
+
+
+def test_confidence_is_based_on_which_clause_actually_matched_not_pack_shape(tmp_path):
+    # A pack combining a strong marker clause with a weak `reflected: true`
+    # fallback in the same `any:` block must be graded "confirmed" when the
+    # response was matched via the strong clause, never downgraded to
+    # "heuristic" just because a weaker clause type is also present in the
+    # pack's static definition.
+    extra = tmp_path / "mixed.yaml"
+    extra.write_text(
+        "- id: mixed-probe\n"
+        "  finding_id: payload-mixed-probe\n"
+        "  payload: 'computed:49'\n"
+        "  severity: high\n"
+        "  match:\n"
+        "    any:\n"
+        "      - body_contains: 'computed:49'\n"
+        "      - reflected: true\n",
+        encoding="utf-8",
+    )
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        # Body contains the strong marker but NOT the raw payload text, so
+        # only the body_contains clause can have fired, not `reflected`.
+        return [f"result: {q}".encode()] if "computed" not in q else [b"result: computed:49"]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        origin_url = f"http://127.0.0.1:{port}"
+        doc = {
+            "target": origin_url + "/",
+            "pages": [{"url": origin_url + "/search", "params": ["q"], "forms": []}],
+        }
+        packs = [p for p in load_packs(extra=[extra]) if p["finding_id"] == "payload-mixed-probe"]
+        out = run(doc, packs=packs)
+    finally:
+        httpd.shutdown()
+
+    assert len(out["findings"]) == 1
+    assert out["findings"][0]["confidence"] == "confirmed"
+
+
+def test_minimal_repro_prefers_higher_confidence_over_shorter_payload(tmp_path):
+    # A shorter but weaker (reflected-only) match must not displace a
+    # longer payload that triggered a strong, unambiguous marker clause.
+    extra = tmp_path / "packs.yaml"
+    extra.write_text(
+        "- id: weak-short\n"
+        "  finding_id: payload-priority-probe\n"
+        "  payload: 'W'\n"
+        "  severity: medium\n"
+        "  match:\n"
+        "    any:\n"
+        "      - reflected: true\n"
+        "- id: strong-long\n"
+        "  finding_id: payload-priority-probe\n"
+        "  payload: 'STRONGMARKERVALUE'\n"
+        "  severity: medium\n"
+        "  match:\n"
+        "    any:\n"
+        "      - body_contains: 'confirmed-marker'\n",
+        encoding="utf-8",
+    )
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        if q == "STRONGMARKERVALUE":
+            return [b"confirmed-marker"]
+        return [f"echo: {q}".encode()]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        origin_url = f"http://127.0.0.1:{port}"
+        doc = {
+            "target": origin_url + "/",
+            "pages": [{"url": origin_url + "/search", "params": ["q"], "forms": []}],
+        }
+        packs = [p for p in load_packs(extra=[extra]) if p["finding_id"] == "payload-priority-probe"]
+        out = run(doc, packs=packs)
+    finally:
+        httpd.shutdown()
+
+    assert len(out["findings"]) == 1
+    finding = out["findings"][0]
+    assert finding["confidence"] == "confirmed"
+    assert finding["evidence"] == "STRONGMARKERVALUE"

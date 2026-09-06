@@ -41,19 +41,33 @@ _BY_ID: dict[str, str] = {
     # mint a token.
     "jwt-alg-none": "none",
     "jwt-weak-secret": "none",
-    # Broken access control / IDOR / session-hygiene findings all
-    # presuppose the attacker already holds *some* authenticated session
-    # (that's exactly what authz-diff's two-session replay requires) --
-    # a real, if low-privileged, account, not just a guessed token.
+    # Broken access control / IDOR presuppose the attacker already holds
+    # *some* authenticated session (that's exactly what authz-diff's
+    # two-session replay requires) -- a real, if low-privileged, account.
     "authz-still-accessible": "medium",
     "authz-broken-access-control": "medium",
     "idor-adjacent-id-accessible": "medium",
-    "session-fixation": "medium",
-    "logout-not-invalidated": "medium",
     "oauth-implicit-flow": "medium",
+    # Session fixation is exploited by an anonymous attacker planting a
+    # session identifier before the victim logs in -- the attacker needs
+    # no account of their own.
+    "session-fixation": "none",
+    # Replaying a session that should have died on logout requires having
+    # captured a valid token first (e.g. via prior XSS/theft), not an
+    # account of the attacker's own -- closer to "needs a token" than
+    # "needs a session".
+    "logout-session-not-invalidated": "low",
+    # Missing rate limiting on an auth endpoint is exploited by a fully
+    # anonymous attacker (credential stuffing) BEFORE any account exists.
+    "missing-rate-limit": "none",
 }
 
-# Category fallback for ids not listed above.
+# Category fallback for ids not listed above. "auth" defaults to "none"
+# rather than "medium": most of this category's unenumerated ids (rate
+# limiting, pre-auth OAuth checks) are exploited by an anonymous
+# attacker, and understating cost as "none" when it should be "medium"
+# is a far safer failure mode for a triager than the reverse -- the
+# latter reads as "you need an account" for something anyone can hit.
 _BY_CATEGORY: dict[str, str] = {
     "header": "none",
     "cookie": "none",
@@ -63,7 +77,7 @@ _BY_CATEGORY: dict[str, str] = {
     "verbose-error": "none",
     "autocomplete": "none",
     "payload": "none",
-    "auth": "medium",
+    "auth": "none",
 }
 
 _DEFAULT = "none"

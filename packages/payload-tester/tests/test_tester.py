@@ -21,6 +21,7 @@ from tester import (
     _local,
     build_marker_host,
     gen_token,
+    infer_confidence,
     load_packs,
     main,
     pack_finding_id,
@@ -720,3 +721,92 @@ def test_cli_oob_host_flag(tmp_path):
     assert main([str(crawl), "--oob-host", "collab.example.com", "-o", str(outp)]) == 0
     body = json.loads(outp.read_text(encoding="utf-8"))
     assert body["oob_probes"] == []
+
+
+def test_infer_confidence_blind_is_probable():
+    assert infer_confidence({"blind": True, "match": {"any": [{"body_contains": "x"}]}}) == "probable"
+
+
+def test_infer_confidence_timing_clause_is_probable():
+    pack = {"match": {"any": [{"time_delta_gte_ms": 4000}]}}
+    assert infer_confidence(pack) == "probable"
+
+
+def test_infer_confidence_bare_reflection_is_heuristic():
+    pack = {"match": {"any": [{"reflected": True}]}}
+    assert infer_confidence(pack) == "heuristic"
+
+
+def test_infer_confidence_marker_echo_is_confirmed():
+    pack = {"match": {"any": [{"body_contains": "computed:49"}]}}
+    assert infer_confidence(pack) == "confirmed"
+
+
+def test_infer_confidence_explicit_override_wins(query_reflect_origin, tmp_path):
+    extra = tmp_path / "override.yaml"
+    extra.write_text(
+        "- id: override-probe\n"
+        "  finding_id: payload-override-probe\n"
+        "  payload: 'OVR'\n"
+        "  confidence: confirmed\n"
+        "  match:\n"
+        "    any:\n"
+        "      - reflected: true\n",
+        encoding="utf-8",
+    )
+    doc = {
+        "target": query_reflect_origin + "/",
+        "pages": [{"url": query_reflect_origin + "/search", "params": ["q"], "forms": []}],
+    }
+    packs = [p for p in load_packs(extra=[extra]) if p["id"] == "override-probe"]
+    out = run(doc, packs=packs)
+    assert out["findings"][0]["confidence"] == "confirmed"
+
+
+def test_minimal_repro_picks_shortest_matching_payload(tmp_path):
+    extra = tmp_path / "packs.yaml"
+    extra.write_text(
+        "- id: long-probe\n"
+        "  finding_id: payload-repro-probe\n"
+        "  payload: 'AAAAAAAAAA-MARK'\n"
+        "  severity: medium\n"
+        "  match:\n"
+        "    any:\n"
+        "      - body_contains: 'MARK'\n"
+        "- id: short-probe\n"
+        "  finding_id: payload-repro-probe\n"
+        "  payload: 'MARK'\n"
+        "  severity: medium\n"
+        "  match:\n"
+        "    any:\n"
+        "      - body_contains: 'MARK'\n",
+        encoding="utf-8",
+    )
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [f"echo: {q}".encode()]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        origin_url = f"http://127.0.0.1:{port}"
+        doc = {
+            "target": origin_url + "/",
+            "pages": [{"url": origin_url + "/search", "params": ["q"], "forms": []}],
+        }
+        packs = [p for p in load_packs(extra=[extra]) if p["finding_id"] == "payload-repro-probe"]
+        out = run(doc, packs=packs)
+    finally:
+        httpd.shutdown()
+
+    assert len(out["findings"]) == 1
+    finding = out["findings"][0]
+    assert finding["evidence"] == "MARK"
+    assert finding["minimal_repro"] is True

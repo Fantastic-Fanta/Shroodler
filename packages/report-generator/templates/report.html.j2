@@ -60,7 +60,7 @@
   <h2>Summary (by finding)</h2>
   <table>
     <thead>
-      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th><th>Remediation</th></tr>
+      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th><th>Cost of attack</th><th>Remediation</th></tr>
     </thead>
     <tbody>
     {% for g in grouped %}
@@ -69,6 +69,7 @@
         <td><code>{{ g.id }}</code></td>
         <td>{{ g.count }}</td>
         <td>{{ g.description }}</td>
+        <td>{{ g.cost_of_attack }}</td>
         <td>{{ g.remediation }}</td>
       </tr>
     {% endfor %}
@@ -78,7 +79,7 @@
   <h2>Findings (detail)</h2>
   <table id="detail-findings">
     <thead>
-      <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th></tr>
+      <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th><th>Confidence</th><th>Cost of attack</th></tr>
     </thead>
     <tbody>
     {% for f in findings|sort(attribute='severity_rank') %}
@@ -88,9 +89,11 @@
         <td>{{ f.category }}</td>
         <td><code>{{ f.url }}</code></td>
         <td>{{ f.description }}</td>
+        <td>{{ f.confidence or "" }}</td>
+        <td>{{ f.cost_of_attack }}</td>
       </tr>
     {% else %}
-      <tr><td colspan="5">No findings.</td></tr>
+      <tr><td colspan="7">No findings.</td></tr>
     {% endfor %}
     </tbody>
   </table>

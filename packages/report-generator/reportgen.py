@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlparse
 
+from cost_of_attack import cost_of_attack_for
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from remediation import remediation_for
 from risk_score import compute_risk_score
@@ -50,6 +51,9 @@ def group_findings(findings: list[dict]) -> list[dict]:
                 "severity_rank": SEVERITY_RANK.get(f.get("severity", "info"), 9),
                 "description": f.get("description", ""),
                 "remediation": remediation_for(fid, f.get("category", "")),
+                "confidence": f.get("confidence"),
+                "cost_of_attack": f.get("cost_of_attack")
+                or cost_of_attack_for(fid, f.get("category", "")),
                 "urls": [],
             }
             order.append(fid)
@@ -64,6 +68,9 @@ def render_html(doc: dict) -> str:
     for f in doc.get("findings", []):
         item = dict(f)
         item["severity_rank"] = SEVERITY_RANK.get(f.get("severity", "info"), 9)
+        item["cost_of_attack"] = f.get("cost_of_attack") or cost_of_attack_for(
+            f.get("id", ""), f.get("category", "")
+        )
         findings.append(item)
     grouped = group_findings(findings)
     tmpl = _env().get_template("report.html.j2")
@@ -81,7 +88,16 @@ def render_csv(doc: dict) -> str:
     buf = io.StringIO()
     writer = csv.DictWriter(
         buf,
-        fieldnames=["severity", "id", "category", "url", "description", "evidence"],
+        fieldnames=[
+            "severity",
+            "id",
+            "category",
+            "url",
+            "description",
+            "evidence",
+            "confidence",
+            "cost_of_attack",
+        ],
     )
     writer.writeheader()
     ordered = sorted(
@@ -97,6 +113,9 @@ def render_csv(doc: dict) -> str:
                 "url": f.get("url", ""),
                 "description": f.get("description", ""),
                 "evidence": f.get("evidence") or "",
+                "confidence": f.get("confidence") or "",
+                "cost_of_attack": f.get("cost_of_attack")
+                or cost_of_attack_for(f.get("id", ""), f.get("category", "")),
             }
         )
     return buf.getvalue()
@@ -314,6 +333,11 @@ def render_markdown(doc: dict) -> str:
             ev = format_evidence(f.get("evidence"))
             if ev:
                 lines.append(f"- Evidence: `{ev}`")
+            confidence = f.get("confidence")
+            if confidence:
+                lines.append(f"- Confidence: {confidence}")
+            cost = f.get("cost_of_attack") or cost_of_attack_for(fid, f.get("category", ""))
+            lines.append(f"- Cost of attack: {cost}")
             lines.append(f"- Remediation: {remediation_for(fid, f.get('category', ''))}")
             lines.append("")
     return "\n".join(lines)

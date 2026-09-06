@@ -55,7 +55,7 @@
   <h2>Summary (by finding)</h2>
   <table>
     <thead>
-      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th><th>Remediation</th></tr>
+      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th><th>Cost of attack</th><th>Remediation</th></tr>
     </thead>
     <tbody>
     
@@ -64,6 +64,7 @@
         <td><code>b</code></td>
         <td>1</td>
         <td>crit finding</td>
+        <td>none</td>
         <td>Rotate the exposed credential immediately and remove it from the response/source.</td>
       </tr>
     
@@ -72,6 +73,7 @@
         <td><code>d</code></td>
         <td>1</td>
         <td>high finding</td>
+        <td>none</td>
         <td>Remove or restrict access to this file; it should not be reachable by unauthenticated requests.</td>
       </tr>
     
@@ -80,6 +82,7 @@
         <td><code>e</code></td>
         <td>1</td>
         <td>med finding</td>
+        <td>none</td>
         <td>Review the response header for a safer, more restrictive value.</td>
       </tr>
     
@@ -88,6 +91,7 @@
         <td><code>c</code></td>
         <td>1</td>
         <td>low finding</td>
+        <td>none</td>
         <td>Review the cookie&#39;s Secure/HttpOnly/SameSite/Domain/Path attributes.</td>
       </tr>
     
@@ -96,6 +100,7 @@
         <td><code>a</code></td>
         <td>1</td>
         <td>info finding</td>
+        <td>none</td>
         <td>Review the response header for a safer, more restrictive value.</td>
       </tr>
     
@@ -105,7 +110,7 @@
   <h2>Findings (detail)</h2>
   <table id="detail-findings">
     <thead>
-      <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th></tr>
+      <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th><th>Confidence</th><th>Cost of attack</th></tr>
     </thead>
     <tbody>
     
@@ -115,6 +120,8 @@
         <td>secret</td>
         <td><code>http://127.0.0.1:8081/</code></td>
         <td>crit finding</td>
+        <td></td>
+        <td>none</td>
       </tr>
     
       <tr>
@@ -123,6 +130,8 @@
         <td>exposed-file</td>
         <td><code>http://127.0.0.1:8081/</code></td>
         <td>high finding</td>
+        <td></td>
+        <td>none</td>
       </tr>
     
       <tr>
@@ -131,6 +140,8 @@
         <td>header</td>
         <td><code>http://127.0.0.1:8081/</code></td>
         <td>med finding</td>
+        <td></td>
+        <td>none</td>
       </tr>
     
       <tr>
@@ -139,6 +150,8 @@
         <td>cookie</td>
         <td><code>http://127.0.0.1:8081/</code></td>
         <td>low finding</td>
+        <td></td>
+        <td>none</td>
       </tr>
     
       <tr>
@@ -147,6 +160,8 @@
         <td>header</td>
         <td><code>http://127.0.0.1:8081/</code></td>
         <td>info finding</td>
+        <td></td>
+        <td>none</td>
       </tr>
     
     </tbody>

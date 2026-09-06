@@ -174,6 +174,42 @@ and confirm its hash chain is intact (each entry chains to the previous
 one's hash); reports which line, if any, was deleted, reordered, or
 edited after the fact.
 .TP
+.B compare\-engines \fIPYTHON_CRAWL.JSON\fR \fIGO_CRAWL.JSON\fR
+Merge two crawl JSON documents (nominally the same target, one from each
+engine) into one findings list, tagging each with which engine(s)
+independently reproduced it. Agreement between two independent
+implementations is a confidence signal; disagreement isn't itself proof
+of a false positive (one engine may simply lack a check the other has).
+.TP
+\fBsla apply\fR \fISCAN.JSON\fR
+Resolves each finding's owner (from an
+.B \-\-owners
+ownership-rules file, same id/url glob format as
+.IR .shroodlerignore )
+and looks up its earliest appearance in recorded scan history (see
+.BR "history record" ),
+escalating its severity by one level in a new
+.B sla_severity
+field once its age exceeds the SLA budget for its original severity
+(critical=2d, high=7d, medium=30d, low=90d, info=180d by default).
+.B \-\-gate
+exits 1 and lists every SLA-breached finding on stderr.
+.TP
+\fBsuppress expiring\fR
+Lists suppression rules whose
+.B expires
+date falls within
+.B \-\-days
+(default 14) -- the input a scheduled job needs to open a PR nudging
+someone to extend-with-justification or remove a rule before it lapses,
+rather than only finding out after
+.B diff
+starts failing.
+.B \-\-format github\-pr\-body
+renders a ready-to-use Markdown PR body;
+.B \-\-gate
+exits 1 if any rule is expiring.
+.TP
 .B version
 Print the version and exit.
 .SH CRAWL OPTIONS

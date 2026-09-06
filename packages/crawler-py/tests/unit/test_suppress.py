@@ -4,10 +4,12 @@ import datetime
 
 from shroodler.suppress import (
     expired_suppressions,
+    expiring_within,
     filter_findings,
     finding_suppressed,
     is_expired,
     parse_suppressions,
+    render_expiring_pr_body,
 )
 
 
@@ -112,3 +114,46 @@ def test_expires_malformed_true_for_bad_string_false_for_real_dates():
     assert expires_malformed(bad)
     assert not expires_malformed(good_past)
     assert not expires_malformed(good_future)
+
+
+def test_expiring_within_includes_rule_inside_horizon():
+    today = datetime.date(2020, 1, 1)
+    rules = parse_suppressions('[{"id": "a", "url": "*", "expires": "2020-01-10"}]')
+    assert expiring_within(rules, 14, today=today) == rules
+
+
+def test_expiring_within_excludes_rule_beyond_horizon():
+    today = datetime.date(2020, 1, 1)
+    rules = parse_suppressions('[{"id": "a", "url": "*", "expires": "2020-02-01"}]')
+    assert expiring_within(rules, 14, today=today) == []
+
+
+def test_expiring_within_excludes_already_expired_rule():
+    today = datetime.date(2020, 1, 10)
+    rules = parse_suppressions('[{"id": "a", "url": "*", "expires": "2020-01-01"}]')
+    assert expiring_within(rules, 14, today=today) == []
+
+
+def test_expiring_within_excludes_never_expiring_and_malformed():
+    today = datetime.date(2020, 1, 1)
+    rules = parse_suppressions(
+        '[{"id": "a", "url": "*"}, {"id": "b", "url": "*", "expires": "not-a-date"}]'
+    )
+    assert expiring_within(rules, 14, today=today) == []
+
+
+def test_render_expiring_pr_body_empty():
+    body = render_expiring_pr_body([], 14)
+    assert "No suppression rules expire" in body
+
+
+def test_render_expiring_pr_body_lists_rules():
+    rules = parse_suppressions(
+        '[{"id": "missing-hsts", "url": "/a", "expires": "2020-01-10", '
+        '"owner": "team-x", "reason": "known issue"}]'
+    )
+    body = render_expiring_pr_body(rules, 14)
+    assert "missing-hsts" in body
+    assert "team-x" in body
+    assert "known issue" in body
+    assert "2020-01-10" in body

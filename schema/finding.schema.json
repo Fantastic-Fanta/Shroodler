@@ -178,7 +178,48 @@
         },
         "url": { "type": "string", "minLength": 1 },
         "description": { "type": "string" },
-        "evidence": { "type": ["string", "null"] }
+        "evidence": { "type": ["string", "null"] },
+        "confidence": {
+          "type": "string",
+          "enum": ["confirmed", "probable", "heuristic"],
+          "description": "Optional. How this finding was established: \"confirmed\" for an exact/unambiguous signal (an echoed marker string matched verbatim, a secret pattern matched literally), \"probable\" for a strong-but-inferential signal (blind/timing-based payload confirmation), \"heuristic\" for a passive check that flags a likely-but-unverified condition (a missing header, a suspicious comment). Absent on findings produced before this field existed or by checks that don't yet classify themselves."
+        },
+        "cost_of_attack": {
+          "type": "string",
+          "enum": ["none", "low", "medium", "high"],
+          "description": "Optional. How much an attacker needs beyond network access to exploit this: \"none\" (unauthenticated), \"low\" (a low-entropy/guessable token or a throwaway account), \"medium\" (a valid authenticated session), \"high\" (privileged/admin access or a high-entropy secret). A cross-cutting axis alongside severity, not a replacement for it."
+        },
+        "minimal_repro": {
+          "type": "boolean",
+          "description": "Optional. True when \"evidence\" holds the smallest payload variant found to still trigger this finding (binary-searched down from the full pack), rather than whichever payload happened to match first."
+        },
+        "engines": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["python", "go"] },
+          "description": "Optional. Which crawler engine(s) independently reproduced this exact finding (same id+url) when a scan's results were merged via `shroodler compare-engines`. Two engines agreeing is a confidence signal; a single engine is not itself evidence of a false positive."
+        },
+        "owner": {
+          "type": "string",
+          "description": "Optional. Team/individual responsible for remediating this finding, resolved from an ownership-rules file by `shroodler sla apply` (same id/url glob matching as .shroodlerignore)."
+        },
+        "first_seen": {
+          "type": "string",
+          "description": "Optional. Date (YYYY-MM-DD) this finding (by id+url) first appeared in recorded scan history, set by `shroodler sla apply`."
+        },
+        "age_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Optional. Days since first_seen, set by `shroodler sla apply`."
+        },
+        "sla_severity": {
+          "type": "string",
+          "enum": ["info", "low", "medium", "high", "critical"],
+          "description": "Optional. Severity after SLA escalation (bumped up one level once age_days exceeds the SLA budget for the original severity, capped at critical). Equal to \"severity\" until the SLA burns down."
+        },
+        "sla_breached": {
+          "type": "boolean",
+          "description": "Optional. True once age_days has exceeded the SLA budget for this finding's original severity, set by `shroodler sla apply`."
+        }
       }
     },
     "js_endpoint": {

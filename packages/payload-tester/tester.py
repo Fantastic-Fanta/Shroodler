@@ -161,6 +161,34 @@ def pack_matches(pack: dict, *, status: int, body: str, payload: str, **ctx) -> 
     return any(_clause_matches(c, status=status, body=body, payload=payload, **ctx) for c in clauses)
 
 
+def _clause_kinds(pack: dict) -> set[str]:
+    match = pack.get("match") or {}
+    clauses = match.get("all") or match.get("any") or []
+    return {k for c in clauses if isinstance(c, dict) for k in c}
+
+
+def infer_confidence(pack: dict) -> str:
+    """Static, per-pack confidence classification, used when a pack
+    doesn't set its own `confidence:` key. Timing-based signals are
+    inherently the noisiest kind this tool produces (a single-sample
+    comparison against baseline, no retry) so they're "probable" even
+    when the pack's own severity is high; plain reflection alone (the
+    raw payload text echoed back, with no exec/computation confirming
+    it actually ran) is a real observation but not proof of
+    exploitability, so it's "heuristic"; anything else here required a
+    marker the target had to compute/execute or an unambiguous
+    error-signature match, so it's "confirmed".
+    """
+    if pack.get("blind"):
+        return "probable"
+    kinds = _clause_kinds(pack)
+    if "time_delta_gte_ms" in kinds:
+        return "probable"
+    if kinds and kinds <= {"reflected"}:
+        return "heuristic"
+    return "confirmed"
+
+
 def _finding(pack: dict, action: str, payload: str) -> dict:
     ev = payload if len(payload) <= 80 else payload[:80]
     return {
@@ -170,6 +198,7 @@ def _finding(pack: dict, action: str, payload: str) -> dict:
         "url": action,
         "description": pack.get("description", pack_finding_id(pack)),
         "evidence": ev,
+        "confidence": pack.get("confidence") or infer_confidence(pack),
     }
 
 
@@ -289,6 +318,14 @@ def run(
                 except httpx.HTTPError:
                     baseline_status, baseline_body, baseline_elapsed_ms = None, "", None
 
+                # Multiple packs can fire the same finding id against this
+                # action (several SQLi payloads all trip the same
+                # "payload-sql-error" id, say); rather than reporting
+                # whichever happened to run first, keep the shortest
+                # payload that matched -- a smaller repro is less noise to
+                # paste into a bug report, without needing an actual
+                # binary search over each pack's own variants.
+                best_by_id: dict[str, tuple[str, dict]] = {}
                 for pack in loaded:
                     if not request_allowed():
                         break
@@ -341,11 +378,19 @@ def run(
                         response_headers=resp.headers,
                     ):
                         continue
-                    key = (pack_finding_id(pack), action)
+                    fid = pack_finding_id(pack)
+                    existing = best_by_id.get(fid)
+                    if existing is None or len(payload) < len(existing[0]):
+                        best_by_id[fid] = (payload, pack)
+
+                for fid, (payload, pack) in best_by_id.items():
+                    key = (fid, action)
                     if key in seen:
                         continue
                     seen.add(key)
-                    findings.append(_finding(pack, action, payload))
+                    finding = _finding(pack, action, payload)
+                    finding["minimal_repro"] = True
+                    findings.append(finding)
     finally:
         if own:
             http.close()

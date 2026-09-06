@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -54,6 +54,15 @@ _shroodler_flags_for() {
         audit-verify)
             echo ""
             ;;
+        compare-engines)
+            echo "--output"
+            ;;
+        sla-apply)
+            echo "--output --history-dir --owners --gate"
+            ;;
+        suppress-expiring)
+            echo "--days --suppressions --format --output --gate"
+            ;;
         *)
             echo ""
             ;;
@@ -95,6 +104,36 @@ _shroodler_complete() {
         subcmd="history-$hsub"
     fi
 
+    # `sla` has its own nested subcommand (apply) before any flags.
+    if [[ "$subcmd" == "sla" ]]; then
+        local ssub=""
+        for ((i = 1; i < COMP_CWORD; i++)); do
+            case "${COMP_WORDS[i]}" in
+                apply) ssub="${COMP_WORDS[i]}"; break ;;
+            esac
+        done
+        if [[ -z "$ssub" ]]; then
+            COMPREPLY=($(compgen -W "apply" -- "$cur"))
+            return
+        fi
+        subcmd="sla-$ssub"
+    fi
+
+    # `suppress` has its own nested subcommand (expiring) before any flags.
+    if [[ "$subcmd" == "suppress" ]]; then
+        local xsub=""
+        for ((i = 1; i < COMP_CWORD; i++)); do
+            case "${COMP_WORDS[i]}" in
+                expiring) xsub="${COMP_WORDS[i]}"; break ;;
+            esac
+        done
+        if [[ -z "$xsub" ]]; then
+            COMPREPLY=($(compgen -W "expiring" -- "$cur"))
+            return
+        fi
+        subcmd="suppress-$xsub"
+    fi
+
     case "$prev" in
         --format)
             case "$subcmd" in
@@ -102,6 +141,7 @@ _shroodler_complete() {
                 diff) COMPREPLY=($(compgen -W "text junit sarif" -- "$cur")) ;;
                 report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown" -- "$cur")) ;;
                 history-list|trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
+                suppress-expiring) COMPREPLY=($(compgen -W "text json github-pr-body" -- "$cur")) ;;
             esac
             return
             ;;
@@ -113,7 +153,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

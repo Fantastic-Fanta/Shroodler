@@ -220,6 +220,16 @@ def reverify_fix(args: dict) -> dict:
     to skip) are gated by the same scan-policy consent requirement as
     scan_route, for the same reason: this is a live-request-issuing
     tool an agent can trigger autonomously.
+
+    IMPORTANT: the result also carries a `warnings` list (e.g. "url has
+    no query string" when the URL you passed can't let the active
+    re-run rediscover a GET parameter the original finding depended on)
+    -- check it before treating `verified_fixed: true` as fully trusted;
+    a non-empty list means this specific check may not have actually
+    re-tested what the original finding was about. Also note: this tool
+    only checks and reports; it does not generate a regression test file
+    (that's a separate, CLI-only step -- `shroodler gen-regression-test`
+    -- not currently exposed over MCP).
     """
     from shroodler.reverify import reverify
 
@@ -363,7 +373,8 @@ TOOLS: dict[str, dict[str, Any]] = {
         "description": "Re-scan one URL and report whether a specific finding_id is now "
         "gone -- closed-loop remediate-and-reverify. Call after patching source in "
         "response to a finding, before opening/merging a PR. Active payload re-runs "
-        "require a scan-policy consent manifest by default, like scan_route.",
+        "require a scan-policy consent manifest by default, like scan_route. Check "
+        "the result's 'warnings' list before trusting verified_fixed=true.",
         "input_schema": {
             "type": "object",
             "additionalProperties": False,

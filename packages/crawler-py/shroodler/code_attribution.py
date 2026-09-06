@@ -102,12 +102,23 @@ class SourceIndex:
     def __init__(self, source_root: Path) -> None:
         self.source_root = source_root
         self._files: list[tuple[Path, list[str]]] | None = None
+        # True once either the aggregate byte budget or the file-count
+        # cap cut the walk short -- a finding that comes back
+        # unattributed after that is indistinguishable, on its own, from
+        # "genuinely has no route source in this codebase" unless a
+        # caller checks this. Path.rglob's order isn't guaranteed
+        # stable across filesystems/OSes either, so which files made it
+        # in before a cap tripped (and therefore which findings can
+        # still be attributed) can differ run to run for the same repo.
+        self.exhausted = False
 
     def _load(self) -> list[tuple[Path, list[str]]]:
         if self._files is None:
             loaded = []
             total_bytes = 0
+            scanned_files = 0
             for path in _iter_source_files(self.source_root):
+                scanned_files += 1
                 if total_bytes >= _MAX_TOTAL_INDEX_BYTES:
                     # The per-file (_MAX_FILE_BYTES) and file-count
                     # (_MAX_FILES_SCANNED) caps don't bound the AGGREGATE
@@ -117,6 +128,7 @@ class SourceIndex:
                     # a cheap best-effort heuristic. Stop reading further
                     # files once the aggregate budget is spent; whatever
                     # was already indexed is still searched.
+                    self.exhausted = True
                     break
                 try:
                     text = path.read_text(encoding="utf-8", errors="ignore")
@@ -124,6 +136,8 @@ class SourceIndex:
                     continue
                 total_bytes += len(text.encode("utf-8", errors="ignore"))
                 loaded.append((path, text.splitlines()))
+            if scanned_files >= _MAX_FILES_SCANNED:
+                self.exhausted = True
             self._files = loaded
         return self._files
 
@@ -241,13 +255,22 @@ def attribute_finding(source_root: Path, url: str) -> dict | None:
     return _attribute_from_location(source_root, location)
 
 
-def attribute_findings(source_root: Path, urls: list[str]) -> dict[str, dict]:
+@dataclass(frozen=True)
+class AttributionBatch:
+    by_url: dict[str, dict]
+    exhausted: bool
+
+
+def attribute_findings(source_root: Path, urls: list[str]) -> AttributionBatch:
     """Batch form of `attribute_finding`: builds one `SourceIndex` and
     reuses it for every URL, instead of re-walking (and re-reading every
-    file in) `source_root` once per URL. Returns a dict keyed by the
-    URLs that were successfully attributed; a URL with no plausible
-    route source is simply absent from the result, same convention as
-    `attribute_finding` returning None.
+    file in) `source_root` once per URL. `by_url` is keyed by the URLs
+    that were successfully attributed; a URL with no plausible route
+    source is simply absent from it, same convention as
+    `attribute_finding` returning None. `exhausted` is True when the
+    index's file-count or aggregate-byte budget cut the walk short --
+    callers should treat any unattributed URL in that case as "couldn't
+    be checked", not "confirmed absent from this codebase".
     """
     index = SourceIndex(source_root)
     out: dict[str, dict] = {}
@@ -256,4 +279,4 @@ def attribute_findings(source_root: Path, urls: list[str]) -> dict[str, dict]:
         attribution = _attribute_from_location(source_root, index.find(url_path))
         if attribution is not None:
             out[url] = attribution
-    return out
+    return AttributionBatch(by_url=out, exhausted=index.exhausted)

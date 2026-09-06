@@ -41,7 +41,7 @@ def _confirm_ownership(
     *,
     higher_markers: list[str] | None,
     lower_markers: list[str] | None,
-    anon_body: str | None = None,
+    anon_body: str | None,
 ) -> str | None:
     """Returns the specific higher-priv marker found in `body`, or None.
     A marker that ALSO appears in the lower-priv account's own identity
@@ -51,15 +51,24 @@ def _confirm_ownership(
     match by coincidence). A length floor alone is a weak proxy for
     "uniquely identifies an account" though -- plenty of 8+ character
     strings are page boilerplate (a footer's copyright line, a repeated
-    CSS class, a nav-link URL fragment common to every page). When an
-    anonymous control response is available (`anon_body`), a marker
-    found THERE too is rejected outright: boilerplate visible to a
-    logged-out visitor can never be evidence of a specific account's
-    private data, regardless of its length. This is a much stronger
-    signal than length and is nearly free since the anonymous response
-    is already fetched by the caller for the denial check.
+    CSS class, a nav-link URL fragment common to every page), so a
+    marker is only ever treated as confirmation when the anonymous
+    control response was actually captured (`anon_body is not None`)
+    AND the marker is NOT also visible in it.
+
+    `anon_body is None` (rather than falling back to a length-only
+    check) covers every case where the anon probe didn't actually run or
+    didn't come back: `check_anonymous=False`, the anon request raising
+    a transport error, or the guardrail's enforcer denying that specific
+    request. This matters for reproducibility: the same marker on the
+    same target must not flip between "confirmed" and "not confirmed"
+    across two runs purely because the anonymous request happened to
+    succeed on one and time out on the other -- that would make the
+    "confirmed" tier untrustworthy exactly where it needs to be trusted
+    most. No anon body means no confirmation, full stop, not a silent
+    downgrade to a weaker check.
     """
-    if not higher_markers:
+    if not higher_markers or anon_body is None:
         return None
     lower_set = set(lower_markers or [])
     for marker in higher_markers:
@@ -67,7 +76,7 @@ def _confirm_ownership(
             continue
         if marker not in body or marker in lower_set:
             continue
-        if anon_body is not None and marker in anon_body:
+        if marker in anon_body:
             continue
         return marker
     return None

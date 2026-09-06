@@ -9,7 +9,7 @@ DOCKER := $(shell test -e /Applications/Docker.app/Contents/Resources/bin/docker
 bootstrap:
 	@git submodule update --init --recursive
 	@test -x "$(PY)" || python3 -m venv "$(VENV)"
-	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]" -e "$(ROOT)packages/cli"
+	@$(PIP) install -q -e "$(ROOT)packages/crawler-py[dev]" -e "$(ROOT)packages/cli" -e "$(ROOT)packages/guardrails" -e "$(ROOT)packages/mcp-server"
 	@$(VENV)/bin/playwright install chromium
 
 bins:
@@ -44,6 +44,8 @@ test-unit: bootstrap bins
 	cd packages/proxy-go && go test ./...
 	cd packages/payload-tester && PYTHONPATH="$(ROOT)packages/payload-tester" "$(ROOT).venv/bin/pytest" tests -q
 	cd packages/cli && "$(ROOT).venv/bin/pytest" tests -q
+	cd packages/guardrails && "$(ROOT).venv/bin/pytest" tests -q
+	cd packages/mcp-server && "$(ROOT).venv/bin/pytest" tests -q
 
 cover: bootstrap
 	cd packages/crawler-py && "$(ROOT).venv/bin/pytest" tests/unit --cov=shroodler --cov-fail-under=90 -q --cov-report=term

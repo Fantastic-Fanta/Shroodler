@@ -1,0 +1,27 @@
+[project]
+name = "shroodler-mcp"
+version = "0.1.0"
+description = "MCP server exposing Shroodler (scan_route, check_idor, diff_since_baseline, explain_finding) as agent tools over stdio JSON-RPC"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [{ name = "The Shroodler Authors" }]
+dependencies = ["shroodler"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+shroodler-mcp = "shroodler_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["shroodler_mcp*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "--import-mode=importlib"

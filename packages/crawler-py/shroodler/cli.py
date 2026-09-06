@@ -362,11 +362,30 @@ def cmd_payload(args: argparse.Namespace) -> int:
     extra = [Path(x) for x in (getattr(args, "pack", None) or [])]
     doc = load_json(args.crawl_json)
     packs = tester.load_packs(extra=extra) if extra else tester.load_packs()
+
+    enforcer = None
+    require_policy = getattr(args, "require_policy", False)
+    policy_file = getattr(args, "policy_file", None)
+    audit_log = getattr(args, "audit_log", None)
+    if require_policy or policy_file or audit_log:
+        from shroodler_guardrails.policy import PolicyEnforcer, fetch_policy, parse_policy
+
+        if policy_file:
+            policy = parse_policy(json.loads(Path(policy_file).read_text(encoding="utf-8")))
+        else:
+            policy = fetch_policy(doc.get("target", ""))
+        enforcer = PolicyEnforcer(
+            policy=policy,
+            require_policy=require_policy,
+            audit_path=Path(audit_log) if audit_log else None,
+        )
+
     out = tester.run(
         doc,
         packs=packs,
         allow_external=getattr(args, "allow_external", False),
         oob_host=getattr(args, "oob_host", None),
+        enforcer=enforcer,
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -404,6 +423,22 @@ def cmd_proxy(args: argparse.Namespace) -> int:
 def cmd_version(_args: argparse.Namespace | None = None) -> int:
     print(f"shroodler {__version__}")
     return 0
+
+
+def cmd_ask(args: argparse.Namespace) -> int:
+    from shroodler.ask import answer
+
+    scan = load_json(args.scan_json)
+    older = load_json(args.since) if getattr(args, "since", None) else None
+    result = answer(args.question, scan, older_scan=older)
+    print(result.text)
+    return 0
+
+
+def cmd_mcp_server(_args: argparse.Namespace) -> int:
+    from shroodler_mcp.server import main as mcp_main
+
+    return mcp_main()
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -677,6 +712,23 @@ def build_parser() -> argparse.ArgumentParser:
         "server for you -- for 'blind' packs, check its logs afterward for "
         "the token printed in the output's oob_probes list.",
     )
+    payload.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run unless the target publishes a "
+        ".well-known/scan-policy.json consent manifest.",
+    )
+    payload.add_argument(
+        "--policy-file",
+        metavar="PATH",
+        help="Use a local scan-policy.json instead of fetching one from the target.",
+    )
+    payload.add_argument(
+        "--audit-log",
+        metavar="PATH",
+        help="Append a JSONL audit trail of every active request the guardrail "
+        "allowed or blocked (implied by --require-policy/--policy-file).",
+    )
     payload.set_defaults(func=cmd_payload)
 
     authz = sub.add_parser(
@@ -788,6 +840,27 @@ def build_parser() -> argparse.ArgumentParser:
 
     version = sub.add_parser("version", help="Print version")
     version.set_defaults(func=cmd_version)
+
+    ask = sub.add_parser(
+        "ask",
+        help="Ask a question over a scan/report ('show critical findings', "
+        "'what's new since', 'reachable without auth')",
+    )
+    ask.add_argument("question")
+    ask.add_argument("scan_json")
+    ask.add_argument(
+        "--since",
+        metavar="OLDER_SCAN_JSON",
+        help="An older scan to compare against for 'new since'/'resolved' questions",
+    )
+    ask.set_defaults(func=cmd_ask)
+
+    mcp_server = sub.add_parser(
+        "mcp-server",
+        help="Run the MCP server exposing scan_route/check_idor/diff_since_baseline/"
+        "explain_finding as agent tools over stdio",
+    )
+    mcp_server.set_defaults(func=cmd_mcp_server)
 
     return p
 

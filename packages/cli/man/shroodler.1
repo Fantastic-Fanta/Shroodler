@@ -92,6 +92,19 @@ packs (currently the parameter-entity XXE and OOB SSRF payloads), check
 its logs afterward for the token recorded in the output's
 .B oob_probes
 list.
+.TP
+.B \-\-require\-policy
+Refuse to run unless the target publishes a
+.I .well\-known/scan\-policy.json
+consent manifest declaring allow/deny scope and rate limits.
+.TP
+.BI \-\-policy\-file " PATH"
+Use a local scan-policy.json instead of fetching one from the target.
+.TP
+.BI \-\-audit\-log " PATH"
+Append a JSONL audit trail of every active request the guardrail allowed
+or blocked (scope/rate-limit decisions), each entry stamped with the
+manifest's hash as proof of which consent grant governed it.
 .RE
 .TP
 .B authz\-diff \fIHIGHER_CRAWL.JSON\fR
@@ -130,6 +143,25 @@ regression
 .B diff \-\-gate
 can't see, since its baseline never records a severity to compare
 against.
+.TP
+.B ask \fIQUESTION\fR \fISCAN.JSON\fR
+Ask a question over a scan/report ("show critical findings", "any secret
+issues", "reachable without auth"). A small built-in keyword matcher
+answers severity/category filters and summaries offline; add
+.B \-\-since \fIOLDER_SCAN.JSON\fR
+for "what's new"/"what got resolved" questions. Set
+.B $SHROODLER_ASK_LLM_CMD
+to an external program's path to delegate free-form questions to it
+instead.
+.TP
+.B mcp\-server
+Run an MCP (Model Context Protocol) server on stdio exposing
+.BR scan_route ,
+.BR check_idor ,
+.BR diff_since_baseline ", and"
+.B explain_finding
+as tools an MCP-speaking coding agent can call directly, instead of
+shelling out to this CLI and parsing text output.
 .TP
 .B version
 Print the version and exit.

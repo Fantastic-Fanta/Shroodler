@@ -324,6 +324,39 @@ def test_cli_trend_gate_even_if_page_count_mismatch_overrides(tmp_path):
     assert ex.value.code == 1
 
 
+def test_cli_trend_gate_even_if_page_count_mismatch_alone_has_no_effect(tmp_path):
+    # Passing --gate-even-if-page-count-mismatch WITHOUT --gate-on-waf-
+    # coverage-drop must not gate on anything by itself -- it only
+    # modifies the other flag's behavior.
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    older_pages = [f"http://x/{i}" for i in range(5)]
+    newer_pages = [f"http://x/{i}" for i in range(50)]
+    older = _doc_with_pages("http://x/", older_pages, older_pages)
+    newer = _doc_with_pages("http://x/", newer_pages, newer_pages[:25])
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--gate-even-if-page-count-mismatch",
+            ]
+        )
+    assert ex.value.code == 0
+
+
 def test_cli_trend_json_includes_waf_coverage_regression_key(tmp_path, capsys):
     import json
 

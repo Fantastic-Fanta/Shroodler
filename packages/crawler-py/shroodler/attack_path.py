@@ -30,6 +30,7 @@ choice below:
 
 from __future__ import annotations
 
+import re
 from urllib.parse import unquote, urlparse
 
 _TOKEN_WEAKNESS_IDS = {
@@ -48,9 +49,30 @@ _SESSION_RELEVANT_CATEGORIES = {"auth"}
 # these (/api/v1/reset-password and /api/v1/account/settings share top-
 # level segment "api"), so matching on it alone reintroduces "any weak
 # token anywhere correlates with any auth finding anywhere" on any site
-# organized this way. A generic top segment requires agreement on the
-# SECOND segment too before two findings are considered related.
-_GENERIC_TOP_SEGMENTS = {"api", "app", "rest", "service", "services", "v1", "v2", "v3"}
+# organized this way. A literal denylist can't enumerate every naming
+# scheme -- that's an accepted limitation of a best-effort heuristic,
+# and a missed correlation here is a much cheaper failure than the
+# scan-wide-noise flood this list exists to prevent -- but a VERSION
+# segment specifically is common and pattern-matchable ("v4", "v12",
+# or a bare numeral like a Twitter-style "/2/tweets"), so that case is
+# covered by pattern instead of needing every version number enumerated.
+_GENERIC_TOP_SEGMENTS = {
+    "api",
+    "app",
+    "rest",
+    "service",
+    "services",
+    "graphql",
+    "internal",
+    "gateway",
+    "backend",
+    "platform",
+}
+_VERSION_SEGMENT_RE = re.compile(r"^v?\d+(\.\d+)*$", re.IGNORECASE)
+
+
+def _is_generic_segment(segment: str) -> bool:
+    return segment.lower() in _GENERIC_TOP_SEGMENTS or bool(_VERSION_SEGMENT_RE.match(segment))
 
 
 def _path_depth(url: str) -> int:
@@ -77,7 +99,7 @@ def _strip_generic_prefix(segments: tuple[str, ...]) -> tuple[str, ...]:
     (/api/v1/reset-password has two), so this strips ALL of them, not
     just the first."""
     i = 0
-    while i < len(segments) and segments[i].lower() in _GENERIC_TOP_SEGMENTS:
+    while i < len(segments) and _is_generic_segment(segments[i]):
         i += 1
     return segments[i:]
 

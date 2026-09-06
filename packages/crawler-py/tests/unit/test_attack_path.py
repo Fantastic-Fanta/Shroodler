@@ -112,6 +112,50 @@ def test_generic_top_segment_requires_second_segment_to_match():
     assert node["relevant_token_context"] is False
 
 
+def test_version_segment_beyond_the_literal_denylist_is_still_stripped():
+    # v4 (and any vN) isn't in the literal generic-segment set -- must be
+    # caught by the version-number PATTERN instead, or this reintroduces
+    # the exact scan-wide-noise bug for any API versioned past v3.
+    doc = {
+        "target": "http://x",
+        "findings": [
+            _finding("reset-token-short", "http://x/v4/reset-password", category="auth"),
+            _finding("authz-still-accessible", "http://x/v4/account/settings", category="auth"),
+        ],
+    }
+    report = build_attack_path(doc)
+    node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
+    assert node["relevant_token_context"] is False
+
+
+def test_bare_numeral_version_segment_is_stripped():
+    doc = {
+        "target": "http://x",
+        "findings": [
+            _finding("reset-token-short", "http://x/2/reset-password", category="auth"),
+            _finding("authz-still-accessible", "http://x/2/account/settings", category="auth"),
+        ],
+    }
+    report = build_attack_path(doc)
+    node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
+    assert node["relevant_token_context"] is False
+
+
+def test_graphql_and_internal_segments_are_stripped():
+    doc = {
+        "target": "http://x",
+        "findings": [
+            _finding("reset-token-short", "http://x/graphql/reset-password", category="auth"),
+            _finding(
+                "authz-still-accessible", "http://x/internal/account/settings", category="auth"
+            ),
+        ],
+    }
+    report = build_attack_path(doc)
+    node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
+    assert node["relevant_token_context"] is False
+
+
 def test_generic_top_segment_matches_when_second_segment_agrees():
     doc = {
         "target": "http://x",

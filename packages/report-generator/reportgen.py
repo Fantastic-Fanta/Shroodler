@@ -394,11 +394,16 @@ def render_markdown(doc: dict) -> str:
             ev = format_evidence(f.get("evidence"))
             if ev:
                 lines.append(f"- Evidence: `{_md_inline_code_safe(ev)}`")
+            # confidence/cost_of_attack are drawn from fixed enums today
+            # (never target-reflected), but escaped anyway for the same
+            # reason id is: consistent with this function's own stated
+            # position that a renderer's escaping shouldn't silently
+            # depend on current data provenance staying true forever.
             confidence = f.get("confidence")
             if confidence:
-                lines.append(f"- Confidence: {confidence}")
+                lines.append(f"- Confidence: {html.escape(str(confidence))}")
             cost = f.get("cost_of_attack") or cost_of_attack_for(fid, f.get("category", ""))
-            lines.append(f"- Cost of attack: {cost}")
+            lines.append(f"- Cost of attack: {html.escape(str(cost))}")
             lines.append(f"- Remediation: {remediation_for(fid, f.get('category', ''))}")
             lines.append("")
     return "\n".join(lines)

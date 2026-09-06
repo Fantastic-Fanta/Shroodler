@@ -180,7 +180,15 @@ def run(
     packs: list[dict] | None = None,
     allow_external: bool = False,
     oob_host: str | None = None,
+    enforcer=None,
 ) -> dict:
+    """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
+    consulted before every live request (baseline probe and each payload
+    send): scope, rate-limit, and blast-radius decisions all flow through
+    it, and every attempt -- allowed or blocked -- lands in its audit log.
+    A blocked URL is skipped for the rest of this run (all of its packs),
+    not just the one send that tripped the limit.
+    """
     target = crawl_doc.get("target", "")
 
     def allowed(url: str) -> bool:
@@ -247,6 +255,10 @@ def run(
                     action = f"{p.scheme}://{p.netloc}{action}"
                 if not allowed(action):
                     continue
+                if enforcer is not None:
+                    ok, _reason = enforcer.check(action)
+                    if not ok:
+                        continue
                 method = (form.get("method") or "GET").upper()
                 fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
                 if not fields:
@@ -324,7 +336,10 @@ def run(
     finally:
         if own:
             http.close()
-    return {"target": target, "findings": findings, "oob_probes": oob_probes}
+    out = {"target": target, "findings": findings, "oob_probes": oob_probes}
+    if enforcer is not None:
+        out["guardrail"] = enforcer.summary()
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -358,14 +373,52 @@ def main(argv: list[str] | None = None) -> int:
         "server for you -- for 'blind' packs, check its logs afterward for "
         "the token printed in --output's oob_probes list.",
     )
+    p.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run unless the target publishes a "
+        ".well-known/scan-policy.json consent manifest (see shroodler_guardrails).",
+    )
+    p.add_argument(
+        "--policy-file",
+        metavar="PATH",
+        help="Use a local scan-policy.json instead of fetching one from the target "
+        "(e.g. for a target that hasn't deployed its manifest yet).",
+    )
+    p.add_argument(
+        "--audit-log",
+        metavar="PATH",
+        help="Append a JSONL audit trail of every active request the guardrail "
+        "allowed or blocked.",
+    )
     args = p.parse_args(argv)
     doc = json.loads(Path(args.crawl_json).read_text(encoding="utf-8"))
     extra = [Path(x) for x in args.pack]
+
+    enforcer = None
+    if args.require_policy or args.policy_file or args.audit_log:
+        from shroodler_guardrails.policy import (
+            PolicyEnforcer,
+            fetch_policy,
+            parse_policy,
+        )
+
+        if args.policy_file:
+            policy = parse_policy(json.loads(Path(args.policy_file).read_text(encoding="utf-8")))
+        else:
+            policy = fetch_policy(doc.get("target", ""))
+        enforcer = PolicyEnforcer(
+            policy=policy,
+            require_policy=args.require_policy,
+            audit_path=Path(args.audit_log) if args.audit_log else None,
+        )
+
     out = run(
         doc,
         packs=load_packs(extra=extra) if extra else None,
         allow_external=args.allow_external,
         oob_host=args.oob_host,
+        enforcer=enforcer,
     )
     text = json.dumps(out, indent=2) + "\n"
     if args.output:

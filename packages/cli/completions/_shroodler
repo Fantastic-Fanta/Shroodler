@@ -21,6 +21,8 @@ _shroodler_commands=(
   'proxy:Forward to shroodler-proxy'
   'history:Record and list local scan history'
   'trend:Diff findings between two recorded scans'
+  'ask:Ask a question over a scan/report'
+  'mcp-server:Run the MCP server exposing Shroodler as agent tools'
   'version:Print version'
 )
 
@@ -104,6 +106,9 @@ _shroodler() {
             '*--pack[Extra YAML pack file or directory]:file:_files' \
             '--allow-external[Allow sending payloads to a non-local target]' \
             '--oob-host[Your own collaborator-style server for blind SSRF/XXE checks]:host' \
+            '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
+            '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
+            '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
             '1:crawl json:_files'
           ;;
         authz-diff)
@@ -129,6 +134,15 @@ _shroodler() {
           ;;
         proxy)
           _message 'arguments forwarded to shroodler-proxy'
+          ;;
+        ask)
+          _arguments \
+            '--since[Older scan to compare against for new/resolved questions]:file:_files' \
+            '1:question' \
+            '2:scan json:_files'
+          ;;
+        mcp-server)
+          _message 'no arguments (speaks JSON-RPC over stdio)'
           ;;
       esac
       ;;

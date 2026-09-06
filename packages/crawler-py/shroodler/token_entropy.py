@@ -21,6 +21,7 @@ sample.
 from __future__ import annotations
 
 import math
+import re
 from collections import Counter, defaultdict
 from typing import Any
 from urllib.parse import parse_qsl, urlparse
@@ -36,28 +37,51 @@ def _request_url(sess: dict[str, Any]) -> str:
 # value": widening this to arbitrary opaque query params would start
 # flagging session IDs, CSRF tokens, and API keys that have entirely
 # different generation/rotation properties than a one-shot,
-# email-delivered reset token.
+# email-delivered reset token. Matched against the param name with
+# underscores/hyphens both normalized to "_" (see _normalize_param_name),
+# so "reset-token" and "reset_token" are treated as the same name --
+# real APIs use both conventions and a hyphenated name silently missing
+# entirely would be a real, easy-to-hit coverage gap.
 TOKEN_PARAM_NAMES = frozenset(
     {
         "token",
         "reset_token",
-        "resettoken",
         "reset_code",
-        "resetcode",
         "otp",
         "verification_code",
-        "verificationcode",
         "verify_token",
-        "verifytoken",
         "confirm_token",
-        "confirmtoken",
         "confirmation_code",
-        "confirmationcode",
         "activation_code",
-        "activationcode",
         "magic_link_token",
     }
 )
+
+_UUID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$", re.IGNORECASE
+)
+_LONG_ID_RE = re.compile(r"^[0-9a-zA-Z]{8,}$")
+
+
+def _normalize_param_name(name: str) -> str:
+    return name.lower().replace("-", "_")
+
+
+def _template_path(path: str) -> str:
+    """Collapse a per-request-varying path segment (a UUID, or any long
+    alphanumeric id) to a placeholder, so e.g. /reset/<uuid>/confirm and
+    /reset/<other-uuid>/confirm group together as the same endpoint
+    template instead of each observation landing in its own singleton
+    group -- a real, common API shape (a request-id or resource-id
+    segment alongside a token query param) that would otherwise silently
+    keep this tool in single-sample mode forever for that endpoint,
+    never running the sequential/entropy checks even with many samples.
+    """
+    segments = path.split("/")
+    templated = [
+        "{id}" if _UUID_RE.match(seg) or _LONG_ID_RE.match(seg) else seg for seg in segments
+    ]
+    return "/".join(templated)
 
 _MIN_TOKEN_LEN = 6
 # A real random token's per-character Shannon entropy is close to
@@ -108,11 +132,12 @@ def _extract_token_observations(
             continue
         parsed = urlparse(url)
         for key, value in parse_qsl(parsed.query, keep_blank_values=True):
-            if key.lower() not in TOKEN_PARAM_NAMES:
+            name = _normalize_param_name(key)
+            if name not in TOKEN_PARAM_NAMES:
                 continue
             if len(value) < _MIN_TOKEN_LEN:
                 continue
-            groups[(parsed.hostname or "", parsed.path, key.lower())].append((value, url))
+            groups[(parsed.hostname or "", _template_path(parsed.path), name)].append((value, url))
     return groups
 
 
@@ -137,49 +162,63 @@ def _is_sequential(values: list[str]) -> bool:
 def analyze_tokens(sessions: list[dict[str, Any]]) -> list[Finding]:
     findings: list[Finding] = []
     for (host, path, param), observations in _extract_token_observations(sessions).items():
-        values = [v for v, _ in observations]
         sample_url = observations[-1][1]
         endpoint = f"{host}{path}?{param}=..."
 
-        if len(values) >= 2:
-            unique_values = sorted(set(values))
-            if _is_sequential(values):
+        # Dedupe identical values BEFORE deciding this has "2+ samples":
+        # a proxy recording naturally captures retries/redirect chains/a
+        # tester revisiting the same emailed link twice, and the same
+        # literal value observed N times is one real data point, not N.
+        # Treating it as N would have been actively wrong for the
+        # sequential check in particular -- an identical value repeated
+        # has span 0, which would otherwise trip _is_sequential's
+        # threshold trivially despite revealing nothing about whether
+        # the generator is sequential at all.
+        unique_values = sorted(set(v for v, _ in observations))
+
+        if len(unique_values) >= 2:
+            if _is_sequential(unique_values):
                 findings.append(
                     _finding(
                         "reset-token-sequential",
                         "critical",
                         sample_url,
-                        f"{len(values)} observed values of `{param}` at {endpoint} are small, "
-                        "closely-clustered integers -- consistent with a sequential/incrementing "
-                        "generator rather than a random token, letting an attacker guess a valid "
-                        "reset/verification token by iterating nearby values",
+                        f"{len(unique_values)} distinct observed values of `{param}` at "
+                        f"{endpoint} are small, closely-clustered integers -- consistent with a "
+                        "sequential/incrementing generator rather than a random token, letting "
+                        "an attacker guess a valid reset/verification token by iterating nearby "
+                        "values. Treat as a strong lead to manually confirm (request two resets "
+                        "back-to-back and compare), not a proven finding from this sample alone",
                         ", ".join(unique_values[:10]),
                     )
                 )
                 continue
-            avg_bits = sum(shannon_entropy_bits_per_char(v) for v in values) / len(values)
+            avg_bits = sum(shannon_entropy_bits_per_char(v) for v in unique_values) / len(
+                unique_values
+            )
             if avg_bits < _LOW_ENTROPY_BITS_PER_CHAR:
                 findings.append(
                     _finding(
                         "reset-token-low-entropy",
                         "medium",
                         sample_url,
-                        f"{len(values)} observed values of `{param}` at {endpoint} average "
-                        f"{avg_bits:.1f} bits of Shannon entropy per character (a random token "
-                        "typically shows several bits/char over its own alphabet), suggesting a "
-                        "weak or narrow-alphabet generator",
+                        f"{len(unique_values)} distinct observed values of `{param}` at "
+                        f"{endpoint} average {avg_bits:.1f} bits of Shannon entropy per character "
+                        "(a random token typically shows several bits/char over its own "
+                        "alphabet), suggesting a weak or narrow-alphabet generator",
                         ", ".join(unique_values[:10]),
                     )
                 )
             continue
 
-        # Exactly one sample: no sequential/entropy comparison is
-        # possible, so this only ever makes the single, explicitly
-        # conservative claim that the value is short enough that even a
-        # generous alphabet assumption can't reach a reasonable security
-        # margin -- and says so, rather than implying the same confidence
-        # as the multi-sample checks above.
-        value = values[0]
+        # Exactly one DISTINCT sample (possibly observed multiple times):
+        # no sequential/entropy comparison is possible, so this only
+        # ever makes the single, explicitly conservative claim that the
+        # value is short enough that even a generous alphabet assumption
+        # can't reach a reasonable security margin -- and says so, rather
+        # than implying the same confidence as the multi-sample checks
+        # above.
+        value = unique_values[0]
         if len(value) < _SHORT_TOKEN_MIN_LEN:
             bits = _worst_case_bits(value)
             findings.append(

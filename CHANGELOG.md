@@ -7,6 +7,25 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Three self-caught fixes to `shroodler tokens` ahead of review.**
+  (1) Identical values observed more than once (a proxy recording
+  naturally captures retries/redirect chains, or a tester revisiting the
+  same emailed link) were counted as separate "samples" -- 3 identical
+  observations of one real token would trivially satisfy the "2+
+  samples" threshold and, worse, always look "sequential" (an identical
+  value repeated has span 0). Values are now deduplicated before any
+  multi-sample check runs, falling back to the single-sample estimate
+  when only one distinct value remains. (2) The curated param-name list
+  only matched underscore-style names (`reset_token`); a hyphenated
+  `reset-token` (equally common in real APIs) silently fell outside it
+  entirely. Param names are now normalized (hyphens to underscores)
+  before matching. (3) Grouping was keyed on the literal path, so a
+  common real API shape -- a per-request id segment alongside the token
+  query param, e.g. `/reset/<uuid>/confirm?token=...` -- put every
+  observation in its own singleton group, permanently preventing the
+  multi-sample checks from ever running for that endpoint no matter how
+  many samples were captured. A UUID/long-id path segment is now
+  templated to a placeholder before grouping.
 - **New `shroodler tokens` command: password-reset/verification-token
   predictability analysis** (`packages/crawler-py/shroodler/
   token_entropy.py`). Operates on a recorded proxy session (the same

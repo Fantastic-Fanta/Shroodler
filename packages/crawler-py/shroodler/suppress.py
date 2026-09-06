@@ -49,6 +49,17 @@ def parse_suppressions(raw: str) -> list[dict]:
     for row in rows:
         if not isinstance(row, dict):
             continue
+        # Distinguish the KEY being absent (never expires -- the
+        # pre-existing behavior for every rule written before this
+        # feature existed) from the key being PRESENT but empty/falsy
+        # ("expires": "", null, false, 0), which is a malformed value,
+        # not an absent one -- review caught that treating both as "never
+        # expires" via a truthiness check silently disabled the whole
+        # feature for a rule whose expires field got cleared out or
+        # misconfigured, which is exactly backwards for a mechanism whose
+        # point is to force re-review rather than silently accept risk
+        # forever.
+        has_expires_key = "expires" in row
         expires_raw = row.get("expires")
         out.append(
             {
@@ -56,25 +67,23 @@ def parse_suppressions(raw: str) -> list[dict]:
                 "url": str(row.get("url") or "*"),
                 "reason": str(row.get("reason") or ""),
                 "owner": str(row.get("owner") or ""),
-                # None means "never expires" -- the pre-existing,
-                # unchanged behavior for a rule that doesn't set this
-                # field at all.
-                "expires": str(expires_raw) if expires_raw else None,
+                "expires": (str(expires_raw) if has_expires_key else None),
             }
         )
     return out
 
 
 def _parse_expires(value: str | None) -> date | None:
-    if not value:
+    if value is None:
         return None
     try:
-        return datetime.strptime(value, "%Y-%m-%d").date()
+        return datetime.strptime(value.strip(), "%Y-%m-%d").date()
     except ValueError:
-        # An unparseable expires value fails safe: treat the rule as
-        # already-expired (stop suppressing) rather than silently
-        # suppressing forever because a date was typo'd, and surface it
-        # via expired_suppressions() the same way a real expiry would be.
+        # An unparseable (or empty/present-but-invalid) expires value
+        # fails safe: treat the rule as already-expired (stop
+        # suppressing) rather than silently suppressing forever because
+        # a date was typo'd or cleared out, and surface it via
+        # expired_suppressions() the same way a real expiry would be.
         return date.min
 
 
@@ -85,12 +94,24 @@ def is_expired(rule: dict, today: date | None = None) -> bool:
     return (today or datetime.now(timezone.utc).date()) > expires
 
 
+def expires_malformed(rule: dict) -> bool:
+    """True when `expires` is present but isn't a valid YYYY-MM-DD date
+    (including present-but-empty) -- distinguished from a rule that
+    genuinely aged out, so a warning can tell a human "you typo'd this"
+    apart from "this expired on schedule"."""
+    raw = rule.get("expires")
+    if raw is None:
+        return False
+    return _parse_expires(raw) == date.min and raw.strip() != date.min.isoformat()
+
+
 def expired_suppressions(rules: list[dict], today: date | None = None) -> list[dict]:
-    """Rules with a real `expires` date that has passed -- surfaced so
-    `diff --gate` can warn about them instead of a suppression silently
-    aging out of relevance (or, per is_expired's fail-safe, silently
-    stopping enforcement of a suppression on a typo'd date) with no one
-    noticing either way."""
+    """Rules with a real `expires` date that has passed (or an
+    unparseable one, which fails safe to "expired") -- surfaced so
+    `diff --gate` (and every other command that loads suppressions) can
+    warn about them instead of a suppression silently aging out of
+    relevance, or silently stopping enforcement on a typo'd date, with no
+    one noticing either way."""
     return [r for r in rules if is_expired(r, today)]
 
 

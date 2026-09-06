@@ -7,6 +7,33 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixes from a pentester/CI-reviewer pass on the suppression-expiry
+  feature.** The core mechanism (expiry reaching the real `diff --gate`
+  enforcement path, boundary date handling, `date.min` fail-safe) held
+  up under review, but the edges around it didn't:
+  - **`shroodler baseline` regenerated over an expired suppression with
+    no warning**, silently baking the now-unsuppressed finding in as
+    freshly-accepted, unattributed risk -- exactly backwards for a
+    mechanism meant to force periodic re-review, not quietly become
+    permanent. The expiry warning is now shared (`_warn_expired_
+    suppressions`) and printed by every command that loads
+    suppressions: `diff`, `baseline`, `report`, `trend`.
+  - **The warning claimed "no longer suppressing"** even when a
+    broader rule (a wildcard `id="*"`/`url="*"`, which a mature
+    `.shroodlerignore` tends to accumulate) still covered the same
+    finding -- reworded to the claim actually supported ("this rule no
+    longer applies; another rule may still cover the finding").
+  - **`"expires": ""` (present but empty) was treated the same as the
+    key being absent** (never expires) via a truthiness check --
+    silently disabling the feature for a rule whose value got cleared
+    out or misconfigured. Presence vs. absence of the key is now
+    checked explicitly; a present-but-invalid value fails safe to
+    already-expired, like an unparseable one always did.
+  - Whitespace around a date (`" 2099-01-01 "`) no longer fails to
+    parse. The warning now says explicitly when a value was
+    unparseable (vs. a real, on-schedule expiry) and includes `owner`/
+    `reason` -- `owner` existed purely for accountability and wasn't
+    printed anywhere.
 - **Suppression rules can now carry an `expires` date**
   (`packages/crawler-py/shroodler/suppress.py`). A rule with
   `"expires": "YYYY-MM-DD"` stops suppressing once that date has

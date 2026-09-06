@@ -6,6 +6,7 @@ import json
 import pytest
 
 from shroodler.cli import (
+    cmd_baseline,
     cmd_crawl,
     cmd_diff,
     cmd_payload,
@@ -165,6 +166,32 @@ def test_cmd_diff_warns_on_expired_suppression(tmp_path, capsys):
     # this is a warning, not a silent no-op.
     assert "new finding missing-csp" in err
     assert result == 1
+
+
+def test_cmd_baseline_warns_when_regenerating_over_an_expired_suppression(tmp_path, capsys):
+    # Regression test for a real gap caught in review: regenerating a
+    # baseline after a suppression expired would silently bake the
+    # now-unsuppressed finding in as freshly-accepted, unattributed risk,
+    # with no warning anywhere -- exactly backwards for a mechanism meant
+    # to force periodic re-review rather than quietly become permanent.
+    findings = tmp_path / "f.json"
+    suppressions = tmp_path / "ignore.json"
+    findings.write_text(
+        '{"target":"http://127.0.0.1/","pages":[],'
+        '"findings":[{"id":"missing-csp","url":"http://127.0.0.1/","severity":"medium"}]}',
+        encoding="utf-8",
+    )
+    suppressions.write_text(
+        '[{"id": "missing-csp", "url": "*", "expires": "2020-01-01", "owner": "sec-team"}]',
+        encoding="utf-8",
+    )
+    ns = argparse.Namespace(
+        findings=str(findings), suppressions=str(suppressions), name=None, output=None
+    )
+    assert cmd_baseline(ns) == 0
+    err = capsys.readouterr().err
+    assert "suppression expired" in err
+    assert "sec-team" in err
 
 
 def test_cmd_report_html_and_json(tmp_path, capsys):

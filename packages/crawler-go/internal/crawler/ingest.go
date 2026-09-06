@@ -73,7 +73,7 @@ func ingestList(list []sessions.Session, target string, allowExternal bool) (*mo
 	findings = append(findings, extra...)
 	for _, key := range order {
 		res := fetchFromSession(last[key])
-		page, f, eps := pageFrom(res, rules, nil)
+		page, f, eps := pageFrom(res, rules, nil, true)
 		pages = append(pages, page)
 		findings = append(findings, f...)
 		endpoints = append(endpoints, eps...)

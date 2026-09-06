@@ -273,6 +273,15 @@ def cmd_trend(args: argparse.Namespace) -> int:
     history_dir = _history_dir(args)
     older = load_scan(history_dir, args.older)
     newer = load_scan(history_dir, args.newer)
+    rules = load_suppressions(getattr(args, "suppressions", None))
+    if rules:
+        # A finding the team has formally accepted via a suppression
+        # rule shouldn't be able to fail --gate-on-severity-increase --
+        # every other gate-capable command (diff, and the checks that
+        # feed report/baseline) honors suppressions, and this is the
+        # one CI-facing command that didn't.
+        older = dict(older, findings=filter_findings(older.get("findings", []), rules))
+        newer = dict(newer, findings=filter_findings(newer.get("findings", []), rules))
     trend = trend_diff(older, newer)
     if getattr(args, "format", "text") == "json":
         text = json.dumps(trend, indent=2) + "\n"
@@ -712,6 +721,13 @@ def build_parser() -> argparse.ArgumentParser:
     trend.add_argument("--format", choices=["text", "json"], default="text")
     trend.add_argument("--output", "-o")
     trend.add_argument("--history-dir")
+    trend.add_argument(
+        "--suppressions",
+        default=None,
+        help="Same .shroodlerignore-style file `diff`/`baseline` take -- suppressed "
+        "findings are excluded from both scans before diffing, so an accepted finding "
+        "can't fail --gate-on-severity-increase.",
+    )
     trend.add_argument(
         "--gate-on-severity-increase",
         action="store_true",

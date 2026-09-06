@@ -55,7 +55,7 @@ func TestHeadersCookiesSecretsJS(t *testing.T) {
 	if len(hf) == 0 {
 		t.Fatalf("headers %#v %#v", h, hf)
 	}
-	cks, cf := ExtractCookies([]string{"sid=1; Secure; HttpOnly; SameSite=Strict", "open=1"}, "http://127.0.0.1/")
+	cks, cf := ExtractCookies([]string{"sid=1; Secure; HttpOnly; SameSite=Strict", "open=1"}, "http://127.0.0.1/", true)
 	if len(cks) < 2 || len(cf) == 0 {
 		t.Fatalf("%v %v", cks, cf)
 	}

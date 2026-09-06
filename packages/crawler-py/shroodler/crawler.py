@@ -513,7 +513,9 @@ class Crawler:
     def _page_from_result(
         self, result: FetchResult, t0: float | None = None
     ) -> tuple[Page, list[Finding], list[JsEndpoint], FetchResult]:
-        page, findings, endpoints = page_from_fetch(result)
+        page, findings, endpoints = page_from_fetch(
+            result, cookies_attrs_reliable=self.mode != "headless"
+        )
         is_challenge = any(f.category == "waf-challenge" for f in findings)
         if (
             is_challenge
@@ -530,7 +532,9 @@ class Crawler:
             # downstream decision (redirects, spec/link discovery) sees the
             # real page instead of the stale challenge response.
             retry_result = self.fetcher.fetch(result.url)
-            retry_page, retry_findings, retry_endpoints = page_from_fetch(retry_result)
+            retry_page, retry_findings, retry_endpoints = page_from_fetch(
+                retry_result, cookies_attrs_reliable=self.mode != "headless"
+            )
             if not any(f.category == "waf-challenge" for f in retry_findings):
                 return retry_page, retry_findings, retry_endpoints, retry_result
         if not is_challenge and result.text and (
@@ -565,8 +569,12 @@ class Crawler:
         return extract_from_source_map(js_url, obj)
 
 
-def page_from_fetch(result: FetchResult) -> tuple[Page, list[Finding], list[JsEndpoint]]:
-    cookies, cookie_findings = extract_cookies(result.set_cookies, result.url)
+def page_from_fetch(
+    result: FetchResult, *, cookies_attrs_reliable: bool = True
+) -> tuple[Page, list[Finding], list[JsEndpoint]]:
+    cookies, cookie_findings = extract_cookies(
+        result.set_cookies, result.url, attrs_reliable=cookies_attrs_reliable
+    )
     headers, header_findings = extract_headers(result.headers, result.url)
 
     challenge = detect_challenge(

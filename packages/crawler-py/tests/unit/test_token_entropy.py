@@ -93,6 +93,57 @@ def test_short_values_below_minimum_length_are_ignored():
     assert findings == []
 
 
+def test_hyphenated_param_name_is_recognized():
+    # Real APIs use both reset_token and reset-token conventions -- a
+    # hyphenated name must not silently fall outside the curated list.
+    sessions = [
+        _session("https://x.example/reset?reset-token=100001"),
+        _session("https://x.example/reset?reset-token=100002"),
+    ]
+    findings = analyze_tokens(sessions)
+    assert "reset-token-sequential" in _ids(findings)
+
+
+def test_duplicate_identical_value_is_not_treated_as_multiple_samples():
+    # A proxy recording naturally captures retries/redirect chains, or a
+    # tester revisiting the same emailed link twice -- the same literal
+    # value observed 3 times is one real data point, not three, and must
+    # not trip the sequential check via a trivial span of 0.
+    sessions = [
+        _session("https://x.example/reset?token=k3Jd8fQz1mWpXv92Tn7L"),
+        _session("https://x.example/reset?token=k3Jd8fQz1mWpXv92Tn7L"),
+        _session("https://x.example/reset?token=k3Jd8fQz1mWpXv92Tn7L"),
+    ]
+    findings = analyze_tokens(sessions)
+    assert "reset-token-sequential" not in _ids(findings)
+    # Falls back to the single-sample path since there's really only one
+    # distinct value -- and this one is long/high-entropy, so no finding.
+    assert findings == []
+
+
+def test_duplicate_short_value_falls_back_to_single_sample_check():
+    sessions = [
+        _session("https://x.example/reset?token=abc123"),
+        _session("https://x.example/reset?token=abc123"),
+    ]
+    findings = analyze_tokens(sessions)
+    assert _ids(findings) == {"reset-token-short"}
+
+
+def test_path_with_varying_request_id_segment_still_groups_together():
+    # A common real API shape: /reset/<request-id>/confirm?token=... --
+    # the request id differs every time even though it's conceptually
+    # the same endpoint. Without path templating, every observation
+    # would land in its own singleton group and this tool would never
+    # run the multi-sample checks for such an endpoint at all.
+    sessions = [
+        _session("https://x.example/reset/11111111-1111-1111-1111-111111111111/confirm?token=100001"),
+        _session("https://x.example/reset/22222222-2222-2222-2222-222222222222/confirm?token=100002"),
+    ]
+    findings = analyze_tokens(sessions)
+    assert "reset-token-sequential" in _ids(findings)
+
+
 def test_non_get_or_malformed_sessions_are_skipped():
     assert analyze_tokens([{"request": {}}]) == []
     assert analyze_tokens([{}]) == []

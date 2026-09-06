@@ -76,3 +76,39 @@ def test_owner_field_is_parsed():
 def test_owner_defaults_to_empty_string():
     rules = parse_suppressions('[{"id": "missing-csp", "url": "*"}]')
     assert rules[0]["owner"] == ""
+
+
+def test_present_but_empty_expires_is_treated_as_malformed_not_absent():
+    # Regression test: a truthiness check on expires_raw treated
+    # "expires": "" (present but empty/falsy) the same as the key being
+    # entirely absent -- silently disabling the whole feature for a rule
+    # whose expires field got cleared out or misconfigured, exactly
+    # backwards for a mechanism meant to force re-review rather than
+    # silently accept risk forever.
+    rules = parse_suppressions('[{"id": "a", "url": "*", "expires": ""}]')
+    assert is_expired(rules[0], today=datetime.date(2026, 1, 1))
+
+
+def test_expires_with_whitespace_is_still_parsed():
+    rules = parse_suppressions('[{"id": "a", "url": "*", "expires": " 2099-01-01 "}]')
+    assert not is_expired(rules[0], today=datetime.date(2026, 1, 1))
+
+
+def test_absent_expires_key_is_distinct_from_present_but_empty():
+    from shroodler.suppress import expires_malformed
+
+    absent = parse_suppressions('[{"id": "a", "url": "*"}]')[0]
+    empty = parse_suppressions('[{"id": "a", "url": "*", "expires": ""}]')[0]
+    assert not expires_malformed(absent)
+    assert expires_malformed(empty)
+
+
+def test_expires_malformed_true_for_bad_string_false_for_real_dates():
+    from shroodler.suppress import expires_malformed
+
+    bad = parse_suppressions('[{"id": "a", "url": "*", "expires": "not-a-date"}]')[0]
+    good_past = parse_suppressions('[{"id": "a", "url": "*", "expires": "2020-01-01"}]')[0]
+    good_future = parse_suppressions('[{"id": "a", "url": "*", "expires": "2099-01-01"}]')[0]
+    assert expires_malformed(bad)
+    assert not expires_malformed(good_past)
+    assert not expires_malformed(good_future)

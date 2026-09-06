@@ -123,27 +123,41 @@ def cmd_crawl(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_diff(args: argparse.Namespace) -> int:
-    from shroodler.suppress import expired_suppressions
+def _warn_expired_suppressions(rules: list[dict]) -> None:
+    from shroodler.suppress import expired_suppressions, expires_malformed
 
+    # A warning, not a failure, and every command that loads
+    # suppressions prints it (not just `diff`): a rule that ages out
+    # silently is easy to miss, and worse, silently baking its
+    # now-unsuppressed finding into a NEW baseline/report as if it were
+    # freshly accepted is the failure mode this exists to prevent (a
+    # suppression is supposed to force periodic re-review, not quietly
+    # become permanent the next time someone regenerates a baseline).
+    #
+    # Deliberately does NOT claim "no longer suppressing": another,
+    # broader rule (a wildcard id="*"/url="*" a mature ignore-file tends
+    # to accumulate) may still cover the same finding, and asserting
+    # enforcement resumed when it may not have would be actively
+    # misleading rather than merely incomplete.
+    for rule in expired_suppressions(rules):
+        what = (
+            "has an unparseable expires value (expected YYYY-MM-DD), treated as expired"
+            if expires_malformed(rule)
+            else f"expired {rule['expires']!r}"
+        )
+        print(
+            f"suppression {what}: id={rule['id']!r} url={rule['url']!r} "
+            f"owner={rule['owner'] or '(unset)'!r} reason={rule['reason'] or '(none)'!r} "
+            "-- this rule no longer applies (another rule may still cover the finding)",
+            file=sys.stderr,
+        )
+
+
+def cmd_diff(args: argparse.Namespace) -> int:
     actual = load_json(args.findings)
     expected = load_json(args.expected)
     rules = load_suppressions(getattr(args, "suppressions", None))
-    expired = expired_suppressions(rules)
-    if expired:
-        # A warning, not a gate failure: an expired suppression means
-        # the finding it used to hide is now enforced again (visible
-        # below as whatever diff_outcome reports for it), which is the
-        # whole point -- but silently going back to enforcing with no
-        # visible signal that a suppression aged out would be easy to
-        # miss, especially for one whose finding happens to still not
-        # reproduce.
-        for rule in expired:
-            print(
-                f"suppression expired {rule['expires']!r} for id={rule['id']!r} "
-                f"url={rule['url']!r}: no longer suppressing",
-                file=sys.stderr,
-            )
+    _warn_expired_suppressions(rules)
     outcome = diff_outcome(
         actual,
         expected,
@@ -178,6 +192,7 @@ def cmd_report(args: argparse.Namespace) -> int:
 
     doc = load_json(args.findings)
     rules = load_suppressions(getattr(args, "suppressions", None))
+    _warn_expired_suppressions(rules)
     if rules:
         doc = dict(doc)
         doc["findings"] = filter_findings(doc.get("findings") or [], rules)
@@ -247,6 +262,13 @@ def cmd_authz_diff(args: argparse.Namespace) -> int:
 def cmd_baseline(args: argparse.Namespace) -> int:
     doc = load_json(args.findings)
     rules = load_suppressions(args.suppressions)
+    # Specifically important here, not just consistency: baseline is the
+    # command that turns "not suppressed" into "permanently accepted" --
+    # regenerating a baseline after a suppression expired silently bakes
+    # that now-unsuppressed finding in as freshly-accepted, unattributed
+    # risk, which is exactly backwards for a mechanism meant to force
+    # periodic re-review. This at least makes that visible.
+    _warn_expired_suppressions(rules)
     baseline = document_to_baseline(doc, name=args.name, suppressions=rules)
     text = json.dumps(baseline, indent=2) + "\n"
     _write(text, args.output)
@@ -291,6 +313,7 @@ def cmd_trend(args: argparse.Namespace) -> int:
     older = load_scan(history_dir, args.older)
     newer = load_scan(history_dir, args.newer)
     rules = load_suppressions(getattr(args, "suppressions", None))
+    _warn_expired_suppressions(rules)
     if rules:
         # A finding the team has formally accepted via a suppression
         # rule shouldn't be able to fail --gate-on-severity-increase --

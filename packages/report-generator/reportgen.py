@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from remediation import remediation_for
+from risk_score import compute_risk_score
 
 SEVERITY_RANK = {
     "critical": 0,
@@ -64,13 +65,15 @@ def render_html(doc: dict) -> str:
         item = dict(f)
         item["severity_rank"] = SEVERITY_RANK.get(f.get("severity", "info"), 9)
         findings.append(item)
+    grouped = group_findings(findings)
     tmpl = _env().get_template("report.html.j2")
     return tmpl.render(
         target=doc.get("target", ""),
         crawler=doc.get("crawler", {}),
         pages=doc.get("pages", []),
         findings=findings,
-        grouped=group_findings(findings),
+        grouped=grouped,
+        risk=compute_risk_score(grouped),
     )
 
 
@@ -259,12 +262,22 @@ def render_markdown(doc: dict) -> str:
     name = crawler.get("name") or ""
     version = crawler.get("version") or ""
     mode = crawler.get("mode") or ""
+    risk = compute_risk_score(group_findings(findings))
+    counts = risk["severity_counts"]
+    risk_line = (
+        f"**Risk score: {risk['score']}/100 ({risk['grade']})** -- "
+        f"{counts['critical']} critical, {counts['high']} high, {counts['medium']} medium, "
+        f"{counts['low']} low, {counts['info']} info "
+        "(by distinct finding type, not raw per-page instance count)"
+    )
     lines = [
         "# Shroodler report",
         "",
         f"Target: `{target}`",
         f"Crawler: {name} {version} ({mode})".strip(),
         f"{len(pages)} pages · {len(findings)} findings",
+        "",
+        risk_line,
         "",
     ]
     if not findings:

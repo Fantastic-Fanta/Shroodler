@@ -13,6 +13,16 @@
     .low { color: #5B9BD1; }
     .info { color: #8B8A85; }
     code { font-family: ui-monospace, monospace; }
+    .risk-summary { display: flex; align-items: center; gap: 1.5rem; margin: 1rem 0; }
+    .risk-grade {
+      font-size: 2.5rem; font-weight: bold; border-radius: 0.5rem; width: 3rem; height: 3rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: #332822;
+    }
+    .risk-grade.grade-A, .risk-grade.grade-B { color: #5B9BD1; }
+    .risk-grade.grade-C { color: #E8B339; }
+    .risk-grade.grade-D, .risk-grade.grade-F { color: #E5484D; }
+    .risk-counts span { margin-right: 1rem; }
   </style>
 </head>
 <body>
@@ -20,6 +30,24 @@
   <p>Target: <code>http://127.0.0.1:8081</code></p>
   <p>Crawler: shroodler-py 0.1.0 (static)</p>
   <p>1 pages · 5 findings · 5 distinct</p>
+  
+  <h2>Executive summary</h2>
+  <div class="risk-summary">
+    <div class="risk-grade grade-C">C</div>
+    <div class="risk-counts">
+      <span class="critical">1 critical</span>
+      <span class="high">1 high</span>
+      <span class="medium">1 medium</span>
+      <span class="low">1 low</span>
+      <span class="info">1 info</span>
+    </div>
+  </div>
+  <p style="opacity: 0.7; font-size: 0.9rem;">
+    Score 35/100, weighted by distinct finding type (not raw
+    per-page instance count) -- a rough at-a-glance signal, not a
+    substitute for reading the findings below.
+  </p>
+  
   
   <h2>Summary (by finding)</h2>
   <table>

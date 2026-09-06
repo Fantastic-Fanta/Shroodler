@@ -7,6 +7,18 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Executive-summary risk score (0-100, A-F) in HTML and Markdown
+  reports** (`packages/report-generator/risk_score.py`). Weighted by
+  DISTINCT finding id per severity (critical=20, high=10, medium=4,
+  low=1, info=0, capped at 100) using the same per-id grouping the
+  technical summary table already computes -- deliberately not raw
+  per-finding-instance count, so a single missing-CSP header repeated
+  across 500 crawled pages scores as the one real issue it is, not 500,
+  which would otherwise dwarf a scan that found five genuinely distinct
+  critical vulnerabilities on one page. The HTML report gets a grade
+  badge plus severity counts; Markdown gets a one-line summary. Pure
+  presentation over data every format already had -- no new finding
+  logic, so no correctness/false-positive surface to speak of.
 - **`shroodler tokens` substantially reworked after a deeper pentester
   review found the entropy check false-positived on almost every
   correctly-implemented numeric OTP system, among other issues.**

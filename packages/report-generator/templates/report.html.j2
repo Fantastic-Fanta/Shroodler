@@ -13,6 +13,16 @@
     .low { color: #5B9BD1; }
     .info { color: #8B8A85; }
     code { font-family: ui-monospace, monospace; }
+    .risk-summary { display: flex; align-items: center; gap: 1.5rem; margin: 1rem 0; }
+    .risk-grade {
+      font-size: 2.5rem; font-weight: bold; border-radius: 0.5rem; width: 3rem; height: 3rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: #332822;
+    }
+    .risk-grade.grade-A, .risk-grade.grade-B { color: #5B9BD1; }
+    .risk-grade.grade-C { color: #E8B339; }
+    .risk-grade.grade-D, .risk-grade.grade-F { color: #E5484D; }
+    .risk-counts span { margin-right: 1rem; }
   </style>
 </head>
 <body>
@@ -20,6 +30,24 @@
   <p>Target: <code>{{ target }}</code></p>
   <p>Crawler: {{ crawler.name }} {{ crawler.version }} ({{ crawler.mode }})</p>
   <p>{{ pages|length }} pages · {{ findings|length }} findings{% if grouped %} · {{ grouped|length }} distinct{% endif %}</p>
+  {% if risk %}
+  <h2>Executive summary</h2>
+  <div class="risk-summary">
+    <div class="risk-grade grade-{{ risk.grade }}">{{ risk.grade }}</div>
+    <div class="risk-counts">
+      <span class="critical">{{ risk.severity_counts.critical }} critical</span>
+      <span class="high">{{ risk.severity_counts.high }} high</span>
+      <span class="medium">{{ risk.severity_counts.medium }} medium</span>
+      <span class="low">{{ risk.severity_counts.low }} low</span>
+      <span class="info">{{ risk.severity_counts.info }} info</span>
+    </div>
+  </div>
+  <p style="opacity: 0.7; font-size: 0.9rem;">
+    Score {{ risk.score }}/100, weighted by distinct finding type (not raw
+    per-page instance count) -- a rough at-a-glance signal, not a
+    substitute for reading the findings below.
+  </p>
+  {% endif %}
   {% if grouped %}
   <h2>Summary (by finding)</h2>
   <table>

@@ -148,6 +148,7 @@ _shroodler() {
             '--gate-on-severity-increase[Exit 1 if a same-key finding got a worse severity]' \
             '--gate-on-waf-coverage-drop[Exit 1 if WAF challenge coverage dropped significantly]' \
             '--waf-drop-threshold[Minimum coverage drop to count as a regression]:fraction' \
+            '--gate-even-if-page-count-mismatch[Gate even when page counts differ by more than 2x]' \
             '1:older scan id or file' \
             '2:newer scan id or file'
           ;;

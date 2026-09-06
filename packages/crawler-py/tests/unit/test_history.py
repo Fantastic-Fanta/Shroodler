@@ -260,6 +260,70 @@ def test_cli_trend_gate_on_waf_coverage_drop(tmp_path):
     assert ex.value.code == 1
 
 
+def test_cli_trend_gate_on_waf_coverage_drop_skips_mismatched_page_counts(tmp_path, capsys):
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    older_pages = [f"http://x/{i}" for i in range(5)]
+    newer_pages = [f"http://x/{i}" for i in range(50)]
+    older = _doc_with_pages("http://x/", older_pages, older_pages)  # 100%, 5 pages
+    newer = _doc_with_pages("http://x/", newer_pages, newer_pages[:25])  # 50%, 50 pages
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--gate-on-waf-coverage-drop",
+            ]
+        )
+    # Not gated: page counts (5 vs 50) differ by more than 2x, so this
+    # low-confidence comparison doesn't fail the build by default.
+    assert ex.value.code == 0
+    assert "NOT gated" in capsys.readouterr().err
+
+
+def test_cli_trend_gate_even_if_page_count_mismatch_overrides(tmp_path):
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    older_pages = [f"http://x/{i}" for i in range(5)]
+    newer_pages = [f"http://x/{i}" for i in range(50)]
+    older = _doc_with_pages("http://x/", older_pages, older_pages)
+    newer = _doc_with_pages("http://x/", newer_pages, newer_pages[:25])
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--gate-on-waf-coverage-drop",
+                "--gate-even-if-page-count-mismatch",
+            ]
+        )
+    assert ex.value.code == 1
+
+
 def test_cli_trend_json_includes_waf_coverage_regression_key(tmp_path, capsys):
     import json
 

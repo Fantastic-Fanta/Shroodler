@@ -43,6 +43,15 @@ _TOKEN_WEAKNESS_IDS = {
 # so a same-scan weak-token finding is worth flagging alongside them.
 _SESSION_RELEVANT_CATEGORIES = {"auth"}
 
+# Top-level path segments too generic to mean anything on their own --
+# virtually every route on a REST API/SPA backend lives under one of
+# these (/api/v1/reset-password and /api/v1/account/settings share top-
+# level segment "api"), so matching on it alone reintroduces "any weak
+# token anywhere correlates with any auth finding anywhere" on any site
+# organized this way. A generic top segment requires agreement on the
+# SECOND segment too before two findings are considered related.
+_GENERIC_TOP_SEGMENTS = {"api", "app", "rest", "service", "services", "v1", "v2", "v3"}
+
 
 def _path_depth(url: str) -> int:
     # Decode percent-encoding before counting segments -- otherwise a
@@ -57,10 +66,34 @@ def _path_depth(url: str) -> int:
     return len([s for s in path.split("/") if s])
 
 
-def _top_level_segment(url: str) -> str:
+def _path_segments(url: str) -> tuple[str, ...]:
     path = unquote(urlparse(url).path or "/")
-    segments = [s for s in path.split("/") if s]
-    return segments[0] if segments else ""
+    return tuple(s for s in path.split("/") if s)
+
+
+def _strip_generic_prefix(segments: tuple[str, ...]) -> tuple[str, ...]:
+    """Drop leading segments too generic to identify a subsystem on
+    their own (api, v1, v2, app, ...) -- a path can stack more than one
+    (/api/v1/reset-password has two), so this strips ALL of them, not
+    just the first."""
+    i = 0
+    while i < len(segments) and segments[i].lower() in _GENERIC_TOP_SEGMENTS:
+        i += 1
+    return segments[i:]
+
+
+def _same_subsystem(url_a: str, url_b: str) -> bool:
+    """True when two URLs plausibly belong to the same subsystem: the
+    same leading path segment ONCE any purely structural/generic prefix
+    segments (api, v1, app, ...) are stripped from both -- a shared
+    "api" or "api/v1" prefix alone is not enough to correlate an
+    otherwise-unrelated weak-token finding with an otherwise-unrelated
+    auth finding, since virtually every route on a typical REST API/SPA
+    backend shares it.
+    """
+    segs_a = _strip_generic_prefix(_path_segments(url_a))
+    segs_b = _strip_generic_prefix(_path_segments(url_b))
+    return bool(segs_a) and bool(segs_b) and segs_a[0] == segs_b[0]
 
 
 def build_attack_path(doc: dict) -> dict:
@@ -70,22 +103,21 @@ def build_attack_path(doc: dict) -> dict:
     findings = doc.get("findings", [])
     weak_token_findings = [f for f in findings if f.get("id") in _TOKEN_WEAKNESS_IDS]
     weak_token_ids = sorted({f["id"] for f in weak_token_findings})
-    # Scoped to the same top-level path segment as at least one weak-
-    # token finding (e.g. both under /account/...), not "flag every
-    # auth-category finding in the whole scan off any weak token
-    # anywhere" -- an earlier version did the latter, which on a large
-    # multi-subsystem site repeats the identical boilerplate sentence on
-    # every unrelated auth finding, training readers to ignore it.
-    weak_token_segments = {_top_level_segment(f.get("url", "")) for f in weak_token_findings}
+    weak_token_urls = [f.get("url", "") for f in weak_token_findings]
 
     nodes = []
     for f in findings:
         if f.get("id") in _TOKEN_WEAKNESS_IDS:
             continue  # the token weakness itself is context, not a path node
         depth = _path_depth(f.get("url", ""))
-        relevant_token_context = (
-            f.get("category") in _SESSION_RELEVANT_CATEGORIES
-            and _top_level_segment(f.get("url", "")) in weak_token_segments
+        # Scoped to the same subsystem as at least one weak-token
+        # finding (see _same_subsystem), not "flag every auth-category
+        # finding in the whole scan off any weak token anywhere" -- an
+        # earlier version did the latter, which on a large multi-
+        # subsystem site repeats the identical boilerplate sentence on
+        # every unrelated auth finding, training readers to ignore it.
+        relevant_token_context = f.get("category") in _SESSION_RELEVANT_CATEGORIES and any(
+            _same_subsystem(f.get("url", ""), token_url) for token_url in weak_token_urls
         )
         narrative = (
             f"{f.get('id')} at {f.get('url')} is reachable ~{depth} click(s) from the "

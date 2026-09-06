@@ -63,6 +63,13 @@ _CSV_FORMULA_PAYLOADS = [
     # the CSV back into cells) would silently miss this -- included here
     # specifically to keep that check honest.
     "=1+1,cmd|'/c calc'!A1",
+    # A newline forces the same quoting requirement as a comma. A naive
+    # renderer that writes this unquoted would split the file into an
+    # extra physical line -- caught here via the row-count check
+    # (exactly 1 row expected), not the exact-cell-value check, since a
+    # split payload's fragments individually never equal the whole
+    # payload string.
+    "=cmd|calc\nEXTRA_INJECTED_LINE",
 ]
 
 
@@ -87,6 +94,19 @@ def _adversarial_doc(payload: str) -> dict:
     }
 
 
+def _adversarial_doc_crawler_field(payload: str) -> dict:
+    """Same shape as `_adversarial_doc`, but the payload goes into
+    `crawler.name` instead of a finding field -- this isn't reflected
+    from the scanned target by either crawler engine today, but a
+    renderer's escaping discipline shouldn't silently depend on that
+    staying true forever, and a prior version of this module's own
+    defensive escaping for crawler metadata regressed without any test
+    catching it."""
+    doc = _adversarial_doc("harmless")
+    doc["crawler"]["name"] = payload
+    return doc
+
+
 def _crash_finding(fmt: str, payload: str, exc: Exception) -> dict:
     return {
         "id": "self-scan-renderer-crash",
@@ -101,6 +121,24 @@ def _crash_finding(fmt: str, payload: str, exc: Exception) -> dict:
     }
 
 
+def _unescaped_html_finding(fmt: str, payload: str, *, field: str) -> dict:
+    return {
+        "id": "self-scan-unescaped-html",
+        "severity": "critical",
+        "category": "payload",
+        "url": f"report-format://{fmt}",
+        "description": (
+            f"The {fmt} report renderer echoed a hostile {field} field "
+            f"({payload!r}) into its output UNESCAPED -- since {fmt} output "
+            "is commonly rendered as rich text downstream, this is a "
+            "stored-XSS vector for content sourced from the scanned "
+            "target's own responses (or, for crawler metadata, defense in "
+            "depth against that assumption ever changing)."
+        ),
+        "evidence": payload,
+    }
+
+
 def _check_html_escaping(fmt: str, render_fn) -> list[dict]:
     findings = []
     for payload in _HTML_PAYLOADS:
@@ -110,22 +148,19 @@ def _check_html_escaping(fmt: str, render_fn) -> list[dict]:
             findings.append(_crash_finding(fmt, payload, exc))
             continue
         if payload in rendered:
-            findings.append(
-                {
-                    "id": "self-scan-unescaped-html",
-                    "severity": "critical",
-                    "category": "payload",
-                    "url": f"report-format://{fmt}",
-                    "description": (
-                        f"The {fmt} report renderer echoed a hostile finding field "
-                        f"({payload!r}) into its output UNESCAPED -- since {fmt} output "
-                        "is commonly rendered as rich text downstream, this is a "
-                        "stored-XSS vector for content sourced from the scanned "
-                        "target's own responses."
-                    ),
-                    "evidence": payload,
-                }
-            )
+            findings.append(_unescaped_html_finding(fmt, payload, field="finding"))
+
+        # Also check crawler metadata (name/version/mode) -- not
+        # currently reflected from the scanned target by either crawler
+        # engine, but a renderer's escaping discipline for it shouldn't
+        # silently depend on that staying true forever.
+        try:
+            rendered_meta = render_fn(_adversarial_doc_crawler_field(payload), fmt)
+        except Exception as exc:  # noqa: BLE001
+            findings.append(_crash_finding(fmt, payload, exc))
+            continue
+        if payload in rendered_meta:
+            findings.append(_unescaped_html_finding(fmt, payload, field="crawler metadata"))
     return findings
 
 
@@ -183,10 +218,37 @@ def _check_csv_formula_injection(render_fn) -> list[dict]:
         except csv.Error as exc:
             findings.append(_crash_finding("csv", payload, exc))
             continue
+        # csv.DictReader is lenient by design -- it raises on almost
+        # nothing, so a renderer that silently dropped the row, or (for
+        # a newline-bearing payload) split it across multiple rows,
+        # would otherwise parse "successfully" into zero or the wrong
+        # number of rows, with `vulnerable` staying False by omission
+        # rather than by an actual safety check. This doc always
+        # produces exactly one finding, so exactly one row back is the
+        # only structurally-sound outcome; anything else is a defect in
+        # its own right, distinct from (but as serious as) an
+        # unneutralized formula trigger.
+        if len(rows) != 1:
+            findings.append(
+                {
+                    "id": "self-scan-malformed-output",
+                    "severity": "high",
+                    "category": "payload",
+                    "url": "report-format://csv",
+                    "description": (
+                        f"The csv report renderer produced {len(rows)} row(s) instead "
+                        f"of 1 for a single finding whose field contained {payload!r} -- "
+                        "the row was likely dropped, or a payload containing a comma/"
+                        "newline/quote was written without the quoting CSV requires, "
+                        "silently corrupting the file's structure."
+                    ),
+                    "evidence": payload,
+                }
+            )
+            continue
         vulnerable = any(
             isinstance(cell, str) and cell == payload
-            for row in rows
-            for cell in row.values()
+            for cell in rows[0].values()
         )
         if vulnerable:
             findings.append(

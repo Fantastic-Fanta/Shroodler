@@ -43,7 +43,7 @@ _shroodler_flags_for() {
             echo "--target --format --history-dir"
             ;;
         trend)
-            echo "--format --output --history-dir --suppressions --gate-on-severity-increase --gate-on-waf-coverage-drop --waf-drop-threshold"
+            echo "--format --output --history-dir --suppressions --gate-on-severity-increase --gate-on-waf-coverage-drop --waf-drop-threshold --gate-even-if-page-count-mismatch"
             ;;
         ask)
             echo "--since"

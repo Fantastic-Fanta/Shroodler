@@ -88,3 +88,35 @@ def test_self_scan_detects_unneutralized_csv_formula(monkeypatch):
     monkeypatch.setattr("shroodler.report.render", naive_csv_render)
     result = run_self_scan(["csv"])
     assert any(f["id"] == "self-scan-csv-formula-injection" for f in result["findings"])
+
+
+def test_self_scan_detects_dropped_row_as_malformed_output(monkeypatch):
+    def dropping_render(doc, fmt):
+        return "id,evidence\n"  # header only, the finding row is missing
+
+    monkeypatch.setattr("shroodler.report.render", dropping_render)
+    result = run_self_scan(["csv"])
+    assert any(f["id"] == "self-scan-malformed-output" for f in result["findings"])
+
+
+def test_cmd_self_scan_cli_exits_zero_when_clean():
+    import argparse
+
+    from shroodler.cli import cmd_self_scan
+
+    ns = argparse.Namespace(format=["html"], output=None)
+    assert cmd_self_scan(ns) == 0
+
+
+def test_cmd_self_scan_cli_exits_one_when_findings(monkeypatch, capsys):
+    import argparse
+
+    from shroodler.cli import cmd_self_scan
+
+    def naive_render(doc, fmt):
+        return doc["findings"][0]["evidence"]
+
+    monkeypatch.setattr("shroodler.report.render", naive_render)
+    ns = argparse.Namespace(format=["html"], output=None)
+    assert cmd_self_scan(ns) == 1
+    assert "self-scan-unescaped-html" in capsys.readouterr().err

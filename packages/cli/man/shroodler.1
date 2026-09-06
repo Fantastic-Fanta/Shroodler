@@ -193,6 +193,11 @@ challenge dropped by more than
 protection silently got weaker" as a tracked regression, surfaced in
 JSON output either way as
 .BR waf_coverage_regression .
+Does NOT fail the build when the two scans' page counts differ by more
+than 2x (a low-confidence comparison by default; the regression is
+still reported) unless
+.B \-\-gate\-even\-if\-page\-count\-mismatch
+is also passed.
 .TP
 .B ask \fIQUESTION\fR \fISCAN.JSON\fR
 Ask a question over a scan/report ("show critical findings", "any secret

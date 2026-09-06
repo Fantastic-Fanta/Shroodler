@@ -100,6 +100,56 @@ def test_html_is_parseable():
     assert soup.find("html") and soup.find("table")
 
 
+def test_html_executive_summary_scores_by_distinct_finding_not_raw_instances():
+    # A single missing-CSP finding repeated across 5 pages must score as
+    # ONE medium-severity distinct issue (weight 4), not five.
+    doc = {
+        "target": "http://127.0.0.1:8081",
+        "crawler": {"name": "shroodler-py", "version": "0.1.0", "mode": "static"},
+        "pages": [{"url": f"http://127.0.0.1:8081/p{i}"} for i in range(5)],
+        "findings": [
+            {
+                "id": "missing-csp",
+                "severity": "medium",
+                "category": "header",
+                "url": f"http://127.0.0.1:8081/p{i}",
+                "description": "Missing Content-Security-Policy header",
+                "evidence": None,
+            }
+            for i in range(5)
+        ],
+    }
+    html = render_html(doc)
+    soup = BeautifulSoup(html, "lxml")
+    grade = soup.select_one(".risk-grade")
+    assert grade is not None
+    assert grade.get_text().strip() == "B"  # score 4 (one medium, weight 4)
+    assert "1 medium" in soup.select_one(".risk-counts").get_text()
+
+
+def test_html_executive_summary_grade_f_for_multiple_criticals():
+    doc = dict(ALL_SEV, findings=ALL_SEV["findings"] + [
+        {
+            "id": "another-critical",
+            "severity": "critical",
+            "category": "secret",
+            "url": "http://127.0.0.1:8081/",
+            "description": "another crit",
+            "evidence": None,
+        }
+    ])
+    html = render_html(doc)
+    soup = BeautifulSoup(html, "lxml")
+    grade_text = soup.select_one(".risk-grade").get_text().strip()
+    assert grade_text in {"C", "D", "F"}  # 2 critical (40) alone clears B
+
+
+def test_empty_scan_gets_grade_a_executive_summary():
+    html = render_html(EMPTY)
+    soup = BeautifulSoup(html, "lxml")
+    assert soup.select_one(".risk-grade").get_text().strip() == "A"
+
+
 def test_html_groups_repeated_findings_into_a_summary():
     doc = {
         "target": "http://127.0.0.1:8081",
@@ -182,6 +232,13 @@ def test_markdown_grouped_by_severity():
     empty = render(EMPTY, "md")
     assert "No findings." in empty
     assert empty.encode("utf-8").decode("utf-8") == empty
+
+
+def test_markdown_includes_risk_score():
+    md = render(ALL_SEV, "md")
+    assert "Risk score:" in md
+    empty_md = render(EMPTY, "md")
+    assert "Risk score: 0/100 (A)" in empty_md
 
 
 def test_known_finding_id_gets_specific_remediation():

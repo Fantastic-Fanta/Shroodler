@@ -102,11 +102,19 @@ def reverify(
     ]
 
     warnings: list[str] = []
-    if run_payloads and finding_id.startswith("payload-") and not parsed_url.query:
+    if run_payloads and not parsed_url.query:
+        # Deliberately NOT restricted to ids that look like built-in
+        # payload-tester findings (a prior version checked
+        # finding_id.startswith("payload-")): a custom pack loaded via
+        # --pack can set its own `id` with no "payload-" prefix at all
+        # (pack_finding_id() falls back to the bare `id` field when
+        # `finding_id` isn't set) and still be exactly as query-string-
+        # dependent. Over-warning for a header/cookie finding that
+        # genuinely doesn't care about query params is a far cheaper
+        # mistake than silently missing this for a non-default pack.
         warnings.append(
-            "url has no query string but finding_id looks like a GET-parameter-based "
-            "payload finding -- if the original finding was at a URL with query "
-            "parameters, this re-scan won't rediscover or re-fuzz them, and a "
+            "url has no query string -- if the original finding depended on a GET "
+            "query parameter, this re-scan won't rediscover or re-fuzz it, and a "
             "verified_fixed=true here would not actually prove that parameter is "
             "fixed. Pass the finding's exact original url, including its query string."
         )

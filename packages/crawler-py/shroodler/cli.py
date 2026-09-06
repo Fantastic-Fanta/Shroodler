@@ -600,6 +600,8 @@ def cmd_reverify(args: argparse.Namespace) -> int:
     )
     text = json.dumps(result, indent=2) + "\n"
     _write(text, args.output)
+    for warning in result.get("warnings", []):
+        print(f"warning: {warning}", file=sys.stderr)
     if result["verified_fixed"]:
         print(f"verified fixed: {args.finding_id} no longer present at {args.url}")
         return 0
@@ -626,6 +628,20 @@ def cmd_gen_regression_test(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 1
+    warnings = result.get("warnings", [])
+    if warnings and not getattr(args, "force", False):
+        print(
+            "refusing to generate a regression test: reverify's verified_fixed=true "
+            "came with a warning about whether this re-scan could have actually "
+            "caught a regression -- fix the underlying issue (see below) or pass "
+            "--force to generate anyway:",
+            file=sys.stderr,
+        )
+        for warning in warnings:
+            print(f"  - {warning}", file=sys.stderr)
+        return 1
+    for warning in warnings:
+        print(f"warning (forced past): {warning}", file=sys.stderr)
     text = render_regression_test(
         args.url,
         args.finding_id,
@@ -1236,6 +1252,13 @@ def build_parser() -> argparse.ArgumentParser:
     gen_test.add_argument("--allow-external", action="store_true")
     gen_test.add_argument("--no-payloads", action="store_true")
     gen_test.add_argument("--output", "-o")
+    gen_test.add_argument(
+        "--force",
+        action="store_true",
+        help="Generate the test even if reverify's verified_fixed=true came with a "
+        "warning (e.g. url has no query string, so a GET-parameter finding may not "
+        "have actually been re-tested).",
+    )
     gen_test.set_defaults(func=cmd_gen_regression_test)
 
     compare_engines = sub.add_parser(

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import argparse
 import threading
 from wsgiref.simple_server import make_server
 
+from shroodler.cli import cmd_reverify
 from shroodler.reverify import reverify
 
 
@@ -55,10 +57,14 @@ def test_query_string_present_does_not_warn(fx):
     assert result["warnings"] == []
 
 
-def test_non_payload_finding_id_does_not_warn(fx):
+def test_warns_regardless_of_finding_id_prefix(fx):
+    # Deliberately not scoped to ids that look like built-in
+    # "payload-*" findings -- a custom pack's id might not follow that
+    # convention and would otherwise be silently exempted from a
+    # warning that's just as relevant to it.
     fx.on("GET", "/search", lambda inc: (200, {}, b"clean"))
     result = reverify(fx.origin + "/search", "missing-hsts", run_payloads=True)
-    assert result["warnings"] == []
+    assert any("query string" in w for w in result["warnings"])
 
 
 def test_active_rerun_still_detects_a_second_vulnerable_param_sharing_one_pack(fx):
@@ -93,3 +99,17 @@ def test_active_rerun_still_detects_a_second_vulnerable_param_sharing_one_pack(f
     finally:
         httpd.shutdown()
     assert result["still_present"] is True
+
+
+def test_cmd_reverify_prints_warnings_to_stderr(fx, capsys):
+    fx.on("GET", "/search", lambda inc: (200, {}, b"clean"))
+    ns = argparse.Namespace(
+        url=fx.origin + "/search",
+        finding_id="payload-sql-error",
+        mode="static",
+        allow_external=False,
+        no_payloads=False,
+        output=None,
+    )
+    assert cmd_reverify(ns) == 0
+    assert "warning:" in capsys.readouterr().err

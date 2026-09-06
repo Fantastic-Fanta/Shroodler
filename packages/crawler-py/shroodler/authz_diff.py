@@ -41,25 +41,35 @@ def _confirm_ownership(
     *,
     higher_markers: list[str] | None,
     lower_markers: list[str] | None,
+    anon_body: str | None = None,
 ) -> str | None:
     """Returns the specific higher-priv marker found in `body`, or None.
     A marker that ALSO appears in the lower-priv account's own identity
     markers is skipped -- that's ambiguous (could be either account's
     data), not confirmation it's specifically the higher-priv account's.
-    Markers shorter than `_MIN_MARKER_LENGTH` are ignored entirely (too
-    likely to match by coincidence, not because it's rejected -- see
-    module docstring)."""
+    Markers shorter than `_MIN_MARKER_LENGTH` are ignored (too likely to
+    match by coincidence). A length floor alone is a weak proxy for
+    "uniquely identifies an account" though -- plenty of 8+ character
+    strings are page boilerplate (a footer's copyright line, a repeated
+    CSS class, a nav-link URL fragment common to every page). When an
+    anonymous control response is available (`anon_body`), a marker
+    found THERE too is rejected outright: boilerplate visible to a
+    logged-out visitor can never be evidence of a specific account's
+    private data, regardless of its length. This is a much stronger
+    signal than length and is nearly free since the anonymous response
+    is already fetched by the caller for the denial check.
+    """
     if not higher_markers:
         return None
     lower_set = set(lower_markers or [])
     for marker in higher_markers:
-        if (
-            marker
-            and len(marker) >= _MIN_MARKER_LENGTH
-            and marker in body
-            and marker not in lower_set
-        ):
-            return marker
+        if not marker or len(marker) < _MIN_MARKER_LENGTH:
+            continue
+        if marker not in body or marker in lower_set:
+            continue
+        if anon_body is not None and marker in anon_body:
+            continue
+        return marker
     return None
 
 
@@ -162,6 +172,7 @@ def run(
             if not _is_success(lower_resp.status_code):
                 continue
 
+            anon_resp = None
             if check_anonymous and (enforcer is None or enforcer.check(url)[0]):
                 try:
                     anon_headers = {k: v for k, v in lower_headers.items() if k != "Cookie"}
@@ -175,6 +186,7 @@ def run(
                         lower_resp.text,
                         higher_markers=higher_priv_identity_markers,
                         lower_markers=lower_priv_identity_markers,
+                        anon_body=anon_resp.text,
                     )
                     if require_identity_confirmation and marker is None:
                         continue
@@ -212,6 +224,7 @@ def run(
                 lower_resp.text,
                 higher_markers=higher_priv_identity_markers,
                 lower_markers=lower_priv_identity_markers,
+                anon_body=anon_resp.text if anon_resp is not None else None,
             )
             if require_identity_confirmation and marker is None:
                 continue

@@ -42,6 +42,11 @@ _SKIP_DIR_NAMES = {
 # count cap stops the walk itself early on a pathologically large tree.
 _MAX_FILE_BYTES = 2 * 1024 * 1024
 _MAX_FILES_SCANNED = 20_000
+# Aggregate cap across every file a SourceIndex holds in memory at once --
+# the per-file and file-count caps above don't bound the total, and many
+# files each just under the per-file cap could otherwise add up to
+# multiple GB resident for a "best-effort" CI heuristic.
+_MAX_TOTAL_INDEX_BYTES = 200 * 1024 * 1024
 
 # A route-registration line generally has BOTH an HTTP-verb-ish call name
 # (route/get/post/put/patch/delete/path/url) AND the path string itself
@@ -101,12 +106,24 @@ class SourceIndex:
     def _load(self) -> list[tuple[Path, list[str]]]:
         if self._files is None:
             loaded = []
+            total_bytes = 0
             for path in _iter_source_files(self.source_root):
+                if total_bytes >= _MAX_TOTAL_INDEX_BYTES:
+                    # The per-file (_MAX_FILE_BYTES) and file-count
+                    # (_MAX_FILES_SCANNED) caps don't bound the AGGREGATE
+                    # memory this index holds -- many files each just
+                    # under the per-file cap can still add up to a
+                    # multi-GB resident index for what's supposed to be
+                    # a cheap best-effort heuristic. Stop reading further
+                    # files once the aggregate budget is spent; whatever
+                    # was already indexed is still searched.
+                    break
                 try:
-                    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+                    text = path.read_text(encoding="utf-8", errors="ignore")
                 except OSError:
                     continue
-                loaded.append((path, lines))
+                total_bytes += len(text.encode("utf-8", errors="ignore"))
+                loaded.append((path, text.splitlines()))
             self._files = loaded
         return self._files
 

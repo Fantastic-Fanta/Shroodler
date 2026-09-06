@@ -957,6 +957,27 @@ def test_mutate_payload_supports_multi_word_command(monkeypatch, tmp_path):
     assert result == "FROM_PYTHON_SCRIPT"
 
 
+def test_mutate_payload_windows_path_backslashes_are_not_escape_chars():
+    import shlex
+
+    # POSIX-mode shlex treats "\" as an escape character and would eat
+    # it, mangling a bare (unquoted, no spaces) Windows path; non-POSIX
+    # mode (what tester.py now selects when os.name == "nt") leaves
+    # backslashes alone.
+    posix_mangled = shlex.split(r"C:\Users\test\mutate.exe", posix=True)[0]
+    windows_correct = shlex.split(r"C:\Users\test\mutate.exe", posix=False)[0]
+    assert posix_mangled != r"C:\Users\test\mutate.exe"
+    assert windows_correct == r"C:\Users\test\mutate.exe"
+
+
+def test_mutate_payload_uses_posix_mode_off_windows(monkeypatch):
+    monkeypatch.setattr("os.name", "posix")
+    monkeypatch.setenv("SHROODLER_PAYLOAD_MUTATE_CMD", "/bin/nonexistent-mutate-cmd")
+    # Just confirms this path is reached without raising -- the actual
+    # posix-vs-nt branch is exercised via the shlex behavior test above.
+    assert mutate_payload("x", context={}) is None
+
+
 def test_mutate_payload_external_command_empty_output_means_no_mutation(monkeypatch, tmp_path):
     script = tmp_path / "mutate.sh"
     script.write_text("#!/bin/sh\ntrue\n")

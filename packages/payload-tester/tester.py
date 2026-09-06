@@ -152,14 +152,21 @@ def mutate_payload(payload: str, *, context: dict) -> str | None:
     mutation"); otherwise falls back to `_default_mutate`.
     """
     import os
+    import shlex
     import subprocess
 
     cmd = os.environ.get("SHROODLER_PAYLOAD_MUTATE_CMD")
     if not cmd:
         return _default_mutate(payload)
     try:
+        argv = shlex.split(cmd)
+    except ValueError:
+        return None
+    if not argv:
+        return None
+    try:
         proc = subprocess.run(
-            [cmd],
+            argv,
             input=json.dumps({**context, "payload": payload}),
             capture_output=True,
             text=True,

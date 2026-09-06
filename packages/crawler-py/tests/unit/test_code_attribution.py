@@ -4,7 +4,13 @@ import subprocess
 
 import pytest
 
-from shroodler.code_attribution import attribute_finding, find_route_source
+from shroodler.code_attribution import (
+    _MAX_FILE_BYTES,
+    SourceIndex,
+    attribute_finding,
+    attribute_findings,
+    find_route_source,
+)
 
 
 def _git(repo, *args):
@@ -76,3 +82,37 @@ def test_attribute_finding_without_git_repo_still_resolves_source(tmp_path):
     assert result is not None
     assert result["file"] == "app.py"
     assert "commit" not in result
+
+
+def test_source_index_only_reads_files_once(flask_repo, monkeypatch):
+    from pathlib import Path as _Path
+
+    calls = {"n": 0}
+    original_read_text = _Path.read_text
+
+    def counting_read_text(self, *args, **kwargs):
+        if self.suffix == ".py":
+            calls["n"] += 1
+        return original_read_text(self, *args, **kwargs)
+
+    monkeypatch.setattr(_Path, "read_text", counting_read_text)
+    index = SourceIndex(flask_repo)
+    index.find("/export")
+    index.find("/users/42")
+    index.find("/nope")
+    assert calls["n"] == 1, "each source file should be read at most once per SourceIndex"
+
+
+def test_attribute_findings_batches_multiple_urls_with_one_index(flask_repo):
+    results = attribute_findings(
+        flask_repo,
+        ["http://x/export", "http://x/users/42", "http://x/nope"],
+    )
+    assert set(results) == {"http://x/export", "http://x/users/42"}
+    assert results["http://x/export"]["file"] == "app.py"
+
+
+def test_oversized_file_is_skipped(tmp_path):
+    big = tmp_path / "big.py"
+    big.write_text("@app.route('/export')\n" + ("x" * (_MAX_FILE_BYTES + 1)), encoding="utf-8")
+    assert find_route_source(tmp_path, "/export") is None

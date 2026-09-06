@@ -27,6 +27,15 @@ def _is_success(status: int) -> bool:
 _LOGIN_REDIRECT_HINTS = ("login", "signin", "sign-in", "log-in", "auth", "session/new")
 
 
+# A marker shorter than this is too likely to appear in almost any
+# response by coincidence (a first name, "admin", a single common word)
+# to mean anything as "confirmation" -- silently upgrading every lead to
+# confidence=confirmed off a degenerate marker would be worse than not
+# confirming at all, since "confirmed" is exactly the tier meant to tell
+# a human they can skip manual verification.
+_MIN_MARKER_LENGTH = 8
+
+
 def _confirm_ownership(
     body: str,
     *,
@@ -36,12 +45,20 @@ def _confirm_ownership(
     """Returns the specific higher-priv marker found in `body`, or None.
     A marker that ALSO appears in the lower-priv account's own identity
     markers is skipped -- that's ambiguous (could be either account's
-    data), not confirmation it's specifically the higher-priv account's."""
+    data), not confirmation it's specifically the higher-priv account's.
+    Markers shorter than `_MIN_MARKER_LENGTH` are ignored entirely (too
+    likely to match by coincidence, not because it's rejected -- see
+    module docstring)."""
     if not higher_markers:
         return None
     lower_set = set(lower_markers or [])
     for marker in higher_markers:
-        if marker and marker in body and marker not in lower_set:
+        if (
+            marker
+            and len(marker) >= _MIN_MARKER_LENGTH
+            and marker in body
+            and marker not in lower_set
+        ):
             return marker
     return None
 
@@ -96,7 +113,11 @@ def run(
     identifying strings) rules out the case where a marker match is
     coincidental because the response is just echoing the requester's
     own identity back (e.g. a generic "logged in as: X" banner) rather
-    than the higher-priv account's data.
+    than the higher-priv account's data. Markers shorter than 8
+    characters are ignored (see `_MIN_MARKER_LENGTH`) -- a short/common
+    string ("admin", a first name) would coincidentally match almost any
+    response and silently upgrade every lead to "confirmed", which
+    defeats the whole point of the tier.
 
     With `require_identity_confirmation=True`, a lead that could NOT be
     confirmed this way is dropped entirely instead of reported at lower

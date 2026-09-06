@@ -154,16 +154,20 @@ def _warn_expired_suppressions(rules: list[dict]) -> None:
 
 
 def _attribute_new_findings(new_findings: list[dict], source_root: str) -> dict[tuple, dict]:
-    from shroodler.code_attribution import attribute_finding
+    from shroodler.code_attribution import attribute_findings
     from shroodler.diffcmd import finding_key
 
     root = Path(source_root)
-    out = {}
-    for f in new_findings:
-        attribution = attribute_finding(root, f.get("url", ""))
-        if attribution is not None:
-            out[finding_key(f)] = attribution
-    return out
+    # One shared SourceIndex walk/read for every new finding in this run,
+    # not one per finding -- a --gate run with many new findings against
+    # a large repo would otherwise re-walk and re-read the whole tree
+    # once per finding.
+    by_url = attribute_findings(root, [f.get("url", "") for f in new_findings])
+    return {
+        finding_key(f): by_url[f.get("url", "")]
+        for f in new_findings
+        if f.get("url", "") in by_url
+    }
 
 
 def cmd_diff(args: argparse.Namespace) -> int:

@@ -33,6 +33,15 @@ _SKIP_DIR_NAMES = {
     "build",
     ".next",
 }
+# Bound the one-time file walk: a `--gate` run on a large monorepo with
+# many new findings would otherwise re-walk and re-read the entire tree
+# once PER FINDING with no cap at all -- a routine CI security gate has
+# no business taking minutes because of this best-effort heuristic. Files
+# above the size cap are skipped (a generated/vendored file that huge is
+# unlikely to be a hand-written route registration anyway); the file
+# count cap stops the walk itself early on a pathologically large tree.
+_MAX_FILE_BYTES = 2 * 1024 * 1024
+_MAX_FILES_SCANNED = 20_000
 
 # A route-registration line generally has BOTH an HTTP-verb-ish call name
 # (route/get/post/put/patch/delete/path/url) AND the path string itself
@@ -57,14 +66,64 @@ class BlameInfo:
 
 
 def _iter_source_files(source_root: Path):
+    scanned = 0
     for path in source_root.rglob("*"):
+        if scanned >= _MAX_FILES_SCANNED:
+            return
         if not path.is_file():
             continue
         if path.suffix not in _SOURCE_EXTENSIONS:
             continue
         if any(part in _SKIP_DIR_NAMES for part in path.parts):
             continue
+        try:
+            if path.stat().st_size > _MAX_FILE_BYTES:
+                continue
+        except OSError:
+            continue
+        scanned += 1
         yield path
+
+
+class SourceIndex:
+    """A one-time read of every candidate source file under `source_root`,
+    built once and reused across every finding attributed in a single run
+    -- `attribute_finding`/`find_route_source` used to re-walk and
+    re-read the entire tree from scratch for every finding independently,
+    which is quadratic-ish work with no shared cache on a `--gate` run
+    with many new findings against a large repo.
+    """
+
+    def __init__(self, source_root: Path) -> None:
+        self.source_root = source_root
+        self._files: list[tuple[Path, list[str]]] | None = None
+
+    def _load(self) -> list[tuple[Path, list[str]]]:
+        if self._files is None:
+            loaded = []
+            for path in _iter_source_files(self.source_root):
+                try:
+                    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+                except OSError:
+                    continue
+                loaded.append((path, lines))
+            self._files = loaded
+        return self._files
+
+    def find(self, url_path: str) -> SourceLocation | None:
+        candidates = _path_candidates(url_path)
+        for path, lines in self._load():
+            for lineno, line in enumerate(lines, start=1):
+                if not _ROUTE_KEYWORD_RE.search(line):
+                    continue
+                for candidate in candidates:
+                    if candidate and candidate in line:
+                        return SourceLocation(
+                            file=str(path.relative_to(self.source_root)),
+                            line=lineno,
+                            snippet=line.strip()[:200],
+                        )
+        return None
 
 
 def find_route_source(source_root: Path, url_path: str) -> SourceLocation | None:
@@ -76,24 +135,13 @@ def find_route_source(source_root: Path, url_path: str) -> SourceLocation | None
     with that segment replaced by a route-parameter placeholder pattern,
     since `/users/42` in a crawl almost always maps to `/users/<id>` (or
     `:id`, `{id}`, `[id]`) in source, not the literal digits.
+
+    Convenience wrapper around a throwaway `SourceIndex` for a single
+    lookup -- attributing many findings in one run should build one
+    `SourceIndex` and call `.find()` repeatedly instead (see
+    `attribute_findings`).
     """
-    candidates = _path_candidates(url_path)
-    for path in _iter_source_files(source_root):
-        try:
-            lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
-        except OSError:
-            continue
-        for lineno, line in enumerate(lines, start=1):
-            if not _ROUTE_KEYWORD_RE.search(line):
-                continue
-            for candidate in candidates:
-                if candidate and candidate in line:
-                    return SourceLocation(
-                        file=str(path.relative_to(source_root)),
-                        line=lineno,
-                        snippet=line.strip()[:200],
-                    )
-    return None
+    return SourceIndex(source_root).find(url_path)
 
 
 def _path_candidates(url_path: str) -> list[str]:
@@ -150,13 +198,7 @@ def blame(source_root: Path, location: SourceLocation) -> BlameInfo | None:
     return BlameInfo(commit=commit[:12], author=author, date=date)
 
 
-def attribute_finding(source_root: Path, url: str) -> dict | None:
-    """High-level entry point: resolve a finding's URL to a source
-    location and (if this is a git repo) the commit that last touched
-    it. Returns None if no plausible route source was found -- callers
-    should treat that as "couldn't attribute this one", not an error."""
-    url_path = urlparse(url).path or "/"
-    location = find_route_source(source_root, url_path)
+def _attribute_from_location(source_root: Path, location: SourceLocation | None) -> dict | None:
     if location is None:
         return None
     result = {"file": location.file, "line": location.line, "snippet": location.snippet}
@@ -166,3 +208,35 @@ def attribute_finding(source_root: Path, url: str) -> dict | None:
         result["author"] = info.author
         result["date"] = info.date
     return result
+
+
+def attribute_finding(source_root: Path, url: str) -> dict | None:
+    """High-level entry point for a SINGLE lookup: resolve a finding's
+    URL to a source location and (if this is a git repo) the commit that
+    last touched it. Returns None if no plausible route source was
+    found -- callers should treat that as "couldn't attribute this one",
+    not an error. Attributing several findings in one run should use
+    `attribute_findings` instead, which builds one `SourceIndex` shared
+    across all of them rather than re-walking the tree per finding.
+    """
+    url_path = urlparse(url).path or "/"
+    location = find_route_source(source_root, url_path)
+    return _attribute_from_location(source_root, location)
+
+
+def attribute_findings(source_root: Path, urls: list[str]) -> dict[str, dict]:
+    """Batch form of `attribute_finding`: builds one `SourceIndex` and
+    reuses it for every URL, instead of re-walking (and re-reading every
+    file in) `source_root` once per URL. Returns a dict keyed by the
+    URLs that were successfully attributed; a URL with no plausible
+    route source is simply absent from the result, same convention as
+    `attribute_finding` returning None.
+    """
+    index = SourceIndex(source_root)
+    out: dict[str, dict] = {}
+    for url in urls:
+        url_path = urlparse(url).path or "/"
+        attribution = _attribute_from_location(source_root, index.find(url_path))
+        if attribution is not None:
+            out[url] = attribution
+    return out

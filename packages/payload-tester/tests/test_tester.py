@@ -942,6 +942,21 @@ def test_mutate_payload_uses_external_command(monkeypatch, tmp_path):
     assert result == "MUTATED_PAYLOAD"
 
 
+def test_mutate_payload_supports_multi_word_command(monkeypatch, tmp_path):
+    # A natural configuration like "python3 mutate.py" is a single env
+    # var value with an argument, not a single executable name.
+    script = tmp_path / "mutate.py"
+    script.write_text(
+        "import sys, json\n"
+        "json.loads(sys.stdin.read())\n"
+        "sys.stdout.write('FROM_PYTHON_SCRIPT')\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("SHROODLER_PAYLOAD_MUTATE_CMD", f"{sys.executable} {script}")
+    result = mutate_payload("original", context={"finding_id": "x"})
+    assert result == "FROM_PYTHON_SCRIPT"
+
+
 def test_mutate_payload_external_command_empty_output_means_no_mutation(monkeypatch, tmp_path):
     script = tmp_path / "mutate.sh"
     script.write_text("#!/bin/sh\ntrue\n")

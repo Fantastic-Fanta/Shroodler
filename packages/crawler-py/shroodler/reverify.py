@@ -9,6 +9,23 @@ a PR, and only a `verified_fixed: true` result means the specific
 (id, url) pair that was flagged is actually gone from a fresh scan --
 not merely "the page still loads", and not "some other finding at the
 same URL disappeared instead."
+
+Known limitation, important to the trust this is built on: a finding's
+id is per (pack, route), not per (pack, parameter) -- if a page has TWO
+vulnerable query parameters that the same payload pack flags, the
+original scan reports ONE finding for that (id, url) pair, and fixing
+only one of them still leaves the finding_id "present" (good -- the
+active payload re-run above re-fuzzes every parameter the page exposes,
+so this is actually caught). The real gap is the other direction: `url`
+here MUST be the exact URL recorded on the original finding, including
+its query string -- passing a simplified/bare path instead means the
+active payload run has no query-string parameters to rediscover and
+fuzz for that page, so a still-vulnerable parameter can go untested and
+this can wrongly report `verified_fixed: true`. `reverify()` cannot
+detect that mistake after the fact; callers building automation on top
+of this (e.g. auto-merging a PR on `verified_fixed`) must pass the
+finding's own `url` field unmodified, not a hand-typed approximation of
+it.
 """
 
 from __future__ import annotations
@@ -76,12 +93,23 @@ def reverify(
         payload_out = tester.run(doc, allow_external=allow_external, enforcer=enforcer)
         findings.extend(payload_out["findings"])
 
-    target_path = urlparse(url).path or "/"
+    parsed_url = urlparse(url)
+    target_path = parsed_url.path or "/"
     still_present = [
         f
         for f in findings
         if f.get("id") == finding_id and (urlparse(f.get("url", "")).path or "/") == target_path
     ]
+
+    warnings: list[str] = []
+    if run_payloads and finding_id.startswith("payload-") and not parsed_url.query:
+        warnings.append(
+            "url has no query string but finding_id looks like a GET-parameter-based "
+            "payload finding -- if the original finding was at a URL with query "
+            "parameters, this re-scan won't rediscover or re-fuzz them, and a "
+            "verified_fixed=true here would not actually prove that parameter is "
+            "fixed. Pass the finding's exact original url, including its query string."
+        )
 
     return {
         "url": url,
@@ -91,4 +119,5 @@ def reverify(
         "matching_findings": still_present,
         "all_findings": findings,
         "guardrail": payload_out.get("guardrail") if payload_out else None,
+        "warnings": warnings,
     }

@@ -84,6 +84,25 @@ def test_identity_marker_upgrades_confidence_to_confirmed(fx):
     assert "victim@example.com" in finding["description"]
 
 
+def test_short_degenerate_marker_is_ignored(fx):
+    # A short/common marker ("admin") would coincidentally match almost
+    # any page -- must not silently upgrade every lead to "confirmed".
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b"welcome, admin panel")
+        if "session=x" in inc.cookies
+        else (403, {}, b"no"),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        higher_priv_identity_markers=["admin"],
+    )
+    assert "confidence" not in out["findings"][0]
+
+
 def test_no_marker_match_leaves_confidence_unset(fx):
     fx.on(
         "GET",

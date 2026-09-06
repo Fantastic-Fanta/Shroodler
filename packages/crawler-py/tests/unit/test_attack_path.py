@@ -23,6 +23,19 @@ def test_path_depth_computed_from_url():
     assert report["nodes"][0]["path_depth"] == 3
 
 
+def test_path_depth_decodes_percent_encoded_slashes():
+    # A genuinely deep path (/a/b/c/critical, decoded) written with
+    # percent-encoded slashes must not be miscounted as depth 1 -- that
+    # would sort a deeply-nested critical finding to the top of the
+    # report as if it were the shallowest/most-exposed one.
+    doc = {
+        "target": "http://x",
+        "findings": [_finding("payload-sql-error", "http://x/a%2Fb%2Fc%2Fcritical")],
+    }
+    report = build_attack_path(doc)
+    assert report["nodes"][0]["path_depth"] == 4
+
+
 def test_homepage_finding_has_zero_depth():
     doc = {"target": "http://x", "findings": [_finding("missing-hsts", "http://x/")]}
     report = build_attack_path(doc)
@@ -44,18 +57,37 @@ def test_weak_token_excluded_as_its_own_node_but_tracked():
     assert "authz-still-accessible" in ids
 
 
-def test_auth_category_finding_gets_token_context_note_when_weak_token_present():
+def test_auth_category_finding_gets_token_context_note_when_same_subsystem():
+    # Both under the same top-level path segment ("account") -- scoped
+    # correlation, not "any weak token anywhere in the scan".
     doc = {
         "target": "http://x",
         "findings": [
-            _finding("reset-token-short", "http://x/reset", category="auth"),
-            _finding("authz-still-accessible", "http://x/account", category="auth"),
+            _finding("reset-token-short", "http://x/account/reset", category="auth"),
+            _finding("authz-still-accessible", "http://x/account/profile", category="auth"),
         ],
     }
     report = build_attack_path(doc)
     node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
     assert node["relevant_token_context"] is True
     assert "guessable session/reset token" in node["narrative"]
+
+
+def test_auth_category_finding_not_flagged_when_different_subsystem():
+    # A weak token under /reset and an unrelated auth finding under
+    # /billing must not be correlated just because both are "auth"
+    # category somewhere in the same scan -- that's the noisy,
+    # boilerplate-inducing behavior this scoping fixes.
+    doc = {
+        "target": "http://x",
+        "findings": [
+            _finding("reset-token-short", "http://x/reset", category="auth"),
+            _finding("authz-still-accessible", "http://x/billing/account", category="auth"),
+        ],
+    }
+    report = build_attack_path(doc)
+    node = next(n for n in report["nodes"] if n["id"] == "authz-still-accessible")
+    assert node["relevant_token_context"] is False
 
 
 def test_non_auth_finding_not_flagged_even_with_weak_token_present():

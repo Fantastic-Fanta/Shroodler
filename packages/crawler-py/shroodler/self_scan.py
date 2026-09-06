@@ -55,6 +55,14 @@ _CSV_FORMULA_PAYLOADS = [
     "+SUM(1+1)",
     "-2+3",
     "@SUM(1+1)",
+    # A comma (or embedded quote) forces Python's csv module to wrap the
+    # WHOLE field in double quotes -- e.g. `=1+1,cmd|calc` serializes as
+    # `"=1+1,cmd|calc"`, so the character immediately following the
+    # preceding delimiter is `"`, not `=`. A detector that string-matches
+    # `,{payload}` against the raw serialized line (rather than parsing
+    # the CSV back into cells) would silently miss this -- included here
+    # specifically to keep that check honest.
+    "=1+1,cmd|'/c calc'!A1",
 ]
 
 
@@ -151,6 +159,9 @@ def _check_well_formed(fmt: str, render_fn, parse_fn) -> list[dict]:
 
 
 def _check_csv_formula_injection(render_fn) -> list[dict]:
+    import csv
+    import io
+
     findings = []
     for payload in _CSV_FORMULA_PAYLOADS:
         try:
@@ -158,12 +169,26 @@ def _check_csv_formula_injection(render_fn) -> list[dict]:
         except Exception as exc:  # noqa: BLE001
             findings.append(_crash_finding("csv", payload, exc))
             continue
-        # A cell value is dangerous if a line in the CSV starts with the
-        # raw formula trigger character right after the delimiter/quote --
-        # i.e. the payload appears without a neutralizing prefix
-        # (a leading apostrophe, or the whole field quoted with the
-        # trigger character escaped/prefixed) immediately before it.
-        if f",{payload}" in rendered or rendered.startswith(payload):
+        # Parse the CSV back into cells rather than string-matching the
+        # raw serialized text: Python's csv module wraps a field in
+        # double quotes whenever it contains the delimiter, a quote
+        # char, or a newline (e.g. a payload containing a comma
+        # serializes as `"=1+1,cmd|calc"`), which shifts what character
+        # immediately follows a preceding comma and would defeat a
+        # naive `f",{payload}" in rendered` substring check -- that
+        # exact gap is why _CSV_FORMULA_PAYLOADS includes a comma-
+        # bearing payload.
+        try:
+            rows = list(csv.DictReader(io.StringIO(rendered)))
+        except csv.Error as exc:
+            findings.append(_crash_finding("csv", payload, exc))
+            continue
+        vulnerable = any(
+            isinstance(cell, str) and cell == payload
+            for row in rows
+            for cell in row.values()
+        )
+        if vulnerable:
             findings.append(
                 {
                     "id": "self-scan-csv-formula-injection",

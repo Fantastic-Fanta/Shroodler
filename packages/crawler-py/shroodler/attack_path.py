@@ -30,7 +30,7 @@ choice below:
 
 from __future__ import annotations
 
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 _TOKEN_WEAKNESS_IDS = {
     "reset-token-sequential",
@@ -45,8 +45,22 @@ _SESSION_RELEVANT_CATEGORIES = {"auth"}
 
 
 def _path_depth(url: str) -> int:
-    path = urlparse(url).path or "/"
+    # Decode percent-encoding before counting segments -- otherwise a
+    # genuinely deep path written as /a%2Fb%2Fc%2Fcritical (a real,
+    # browser-decoded 4-segment path) counts as depth 1, sorting a
+    # critical finding at an obscure, deeply-nested route to the TOP of
+    # the report as if it were the shallowest/most-exposed one, actively
+    # misleading a reader who trusts the "closer to root = higher
+    # priority to check" framing this report otherwise takes pains to
+    # present honestly.
+    path = unquote(urlparse(url).path or "/")
     return len([s for s in path.split("/") if s])
+
+
+def _top_level_segment(url: str) -> str:
+    path = unquote(urlparse(url).path or "/")
+    segments = [s for s in path.split("/") if s]
+    return segments[0] if segments else ""
 
 
 def build_attack_path(doc: dict) -> dict:
@@ -54,8 +68,15 @@ def build_attack_path(doc: dict) -> dict:
     path-depth (reachability proxy) and whether the same scan found
     evidence of a guessable session/reset token."""
     findings = doc.get("findings", [])
-    has_weak_token = any(f.get("id") in _TOKEN_WEAKNESS_IDS for f in findings)
-    weak_token_ids = sorted({f["id"] for f in findings if f.get("id") in _TOKEN_WEAKNESS_IDS})
+    weak_token_findings = [f for f in findings if f.get("id") in _TOKEN_WEAKNESS_IDS]
+    weak_token_ids = sorted({f["id"] for f in weak_token_findings})
+    # Scoped to the same top-level path segment as at least one weak-
+    # token finding (e.g. both under /account/...), not "flag every
+    # auth-category finding in the whole scan off any weak token
+    # anywhere" -- an earlier version did the latter, which on a large
+    # multi-subsystem site repeats the identical boilerplate sentence on
+    # every unrelated auth finding, training readers to ignore it.
+    weak_token_segments = {_top_level_segment(f.get("url", "")) for f in weak_token_findings}
 
     nodes = []
     for f in findings:
@@ -63,7 +84,8 @@ def build_attack_path(doc: dict) -> dict:
             continue  # the token weakness itself is context, not a path node
         depth = _path_depth(f.get("url", ""))
         relevant_token_context = (
-            has_weak_token and f.get("category") in _SESSION_RELEVANT_CATEGORIES
+            f.get("category") in _SESSION_RELEVANT_CATEGORIES
+            and _top_level_segment(f.get("url", "")) in weak_token_segments
         )
         narrative = (
             f"{f.get('id')} at {f.get('url')} is reachable ~{depth} click(s) from the "

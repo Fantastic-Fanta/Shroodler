@@ -193,6 +193,12 @@ def cmd_tokens(args: argparse.Namespace) -> int:
     from shroodler.sessions import load_sessions
     from shroodler.token_entropy import analyze_tokens
 
+    # Unlike ingest-sessions/crawl, this never makes a network request or
+    # scans anything -- it only analyzes a JSONL file the user already
+    # has locally -- so there's no --allow-external-style host guard: a
+    # single recording can legitimately span several hosts (the app
+    # under test plus, e.g., a third-party IdP), and there's no "the
+    # target" to check against the way there is for a live scan.
     sessions = load_sessions(args.sessions)
     findings = analyze_tokens(sessions)
     doc = {"target": args.sessions, "findings": [f.model_dump() for f in findings]}

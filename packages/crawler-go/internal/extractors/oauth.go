@@ -1,22 +1,69 @@
 package extractors
 
 import (
+	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/shroodler/crawler-go/internal/models"
 )
 
+// rawQueryIsWellFormed rejects a query string neither engine's stdlib
+// parser can be trusted to agree on, rather than silently reasoning from
+// a partially-parsed result.
+//
+// Verified in review: Go's net/url.Values (backed by url.ParseQuery)
+// silently DROPS a pair whose value contains a bare ";" (rejected as an
+// ambiguous separator since Go 1.17) or an invalid %-escape, discarding
+// the error -- while Python's parse_qs is lenient and keeps the raw text
+// unchanged. For "state=a;b" that made Go treat state as *absent* (a
+// false oauth-missing-state on a URL that does carry a state value)
+// while Python correctly saw "a;b". Rather than trying to make one
+// stdlib parser's leniency match the other's exactly, both engines
+// refuse to assess a query with either red flag at all.
+func rawQueryIsWellFormed(query string) bool {
+	if strings.Contains(query, ";") {
+		return false
+	}
+	for i := 0; i < len(query); i++ {
+		if query[i] != '%' {
+			continue
+		}
+		if i+2 >= len(query) || !isHex(query[i+1]) || !isHex(query[i+2]) {
+			return false
+		}
+	}
+	return true
+}
+
+func isHex(b byte) bool {
+	return (b >= '0' && b <= '9') || (b >= 'a' && b <= 'f') || (b >= 'A' && b <= 'F')
+}
+
+func parseOAuthQuery(rawURL string) (url.Values, bool) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, false
+	}
+	if !rawQueryIsWellFormed(u.RawQuery) {
+		return nil, false
+	}
+	q, err := url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return nil, false
+	}
+	return q, true
+}
+
 // IsAuthorizationRequest identifies an OAuth 2.0 / OIDC authorization
 // request per RFC 6749 s4.1.1: response_type and client_id are the two
 // spec-required parameters for exactly this request type, so there is no
 // ambiguity in deciding whether a URL is one.
 func IsAuthorizationRequest(rawURL string) bool {
-	u, err := url.Parse(rawURL)
-	if err != nil {
+	q, ok := parseOAuthQuery(rawURL)
+	if !ok {
 		return false
 	}
-	q := u.Query()
 	return q.Get("response_type") != "" && q.Get("client_id") != ""
 }
 
@@ -33,15 +80,25 @@ func oauthFinding(id, severity, pageURL, description, evidence string) models.Fi
 // run_parity.py's comparison since it's simple enough to implement
 // identically in both engines.
 func CheckOAuthAuthorizeURL(pageURL string) []models.Finding {
-	u, err := url.Parse(pageURL)
-	if err != nil {
+	q, ok := parseOAuthQuery(pageURL)
+	if !ok {
 		return nil
 	}
-	q := u.Query()
 	if q.Get("response_type") == "" || q.Get("client_id") == "" {
 		return nil
 	}
 	var findings []models.Finding
+
+	// RFC 9101 (JAR) / RFC 9126 (PAR): response_type+client_id stay in
+	// the query for OAuth2 compatibility even when the actual parameters
+	// (including state) are carried inside a signed request object or
+	// left server-side, referenced only by request/request_uri -- state
+	// genuinely cannot be assessed passively here, and this is a MORE
+	// secure deployment shape, not a less secure one. Reporting
+	// oauth-missing-state against it would be a real overclaim.
+	if q.Get("request") != "" || q.Get("request_uri") != "" {
+		return findings
+	}
 
 	state := q.Get("state")
 	if strings.TrimSpace(state) == "" {
@@ -52,7 +109,7 @@ func CheckOAuthAuthorizeURL(pageURL string) []models.Finding {
 		// "plain" (or a present-but-unhashed challenge) is real PKCE
 		// syntactically but weak enough that this stays at medium rather
 		// than being treated as equivalent to a proper S256 challenge.
-		codeChallenge := q.Get("code_challenge")
+		codeChallenge := strings.TrimSpace(q.Get("code_challenge"))
 		hasStrongPKCE := codeChallenge != "" && q.Get("code_challenge_method") == "S256"
 		severity := "medium"
 		description := "OAuth/OIDC authorization request has no state parameter and no S256 " +
@@ -89,13 +146,21 @@ func CheckOAuthAuthorizeURL(pageURL string) []models.Finding {
 		if part == "token" {
 			findings = append(findings, oauthFinding(
 				"oauth-implicit-flow",
-				"low",
+				// medium, not low: a token exposed in the URL fragment is
+				// exploitable via history/referrer/redirector-log leakage
+				// and turns any open redirect on the relying party into a
+				// token-theft primitive; OAuth 2.1 removes this flow
+				// outright rather than merely discouraging it.
+				"medium",
 				pageURL,
-				"OAuth response_type includes \"token\" (implicit or hybrid flow), which "+
-					"returns an access token directly in the redirect URI fragment, exposed to "+
-					"browser history/referrer leakage/redirector logs; OAuth 2.1 and current "+
-					"best practice deprecate this in favor of the authorization code flow (+ PKCE)",
-				responseType,
+				fmt.Sprintf(
+					"OAuth response_type=%q includes \"token\" (implicit or hybrid flow), "+
+						"which returns an access token directly in the redirect URI fragment, "+
+						"exposed to browser history/referrer leakage/redirector logs; OAuth 2.1 "+
+						"removes this flow in favor of the authorization code flow (+ PKCE)",
+					responseType,
+				),
+				pageURL,
 			))
 			break
 		}

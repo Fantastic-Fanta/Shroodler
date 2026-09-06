@@ -28,13 +28,25 @@ def path_set(doc: dict) -> set[str]:
 PYTHON_ONLY_CATEGORIES = {"subresource", "tls"}
 
 
-def finding_set(doc: dict) -> set[tuple[str, str, str]]:
+def finding_set(doc: dict) -> set[tuple[str, str, str, str]]:
     # Includes severity: an engine silently regressing a finding's severity
     # (e.g. a real vulnerability downgraded to "info") would previously pass
     # parity as long as the (id, path) pair still matched, since severity
     # was never compared.
+    #
+    # Also includes the raw query string, not just the path: for a
+    # purely-passive, query-string-driven check like the OAuth
+    # authorization-request checks (extractors/oauth.py|.go), the query
+    # IS the entire signal (state present vs. absent, response_type
+    # value, ...) -- keying on path alone would let two /authorize
+    # requests with different query strings collapse into the same key,
+    # silently hiding a real divergence between engines on which query
+    # variant actually triggered a finding. Safe to include unconditionally
+    # today: no category `crawl` emits (as opposed to the separate
+    # `payload` subcommand, which parity doesn't invoke) puts a
+    # per-request-random value in its URL's query string.
     return {
-        (f["id"], urlparse(f["url"]).path, f["severity"])
+        (f["id"], urlparse(f["url"]).path, urlparse(f["url"]).query, f["severity"])
         for f in doc.get("findings", [])
         if f.get("category") not in PYTHON_ONLY_CATEGORIES
     }

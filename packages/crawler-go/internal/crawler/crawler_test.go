@@ -1294,6 +1294,40 @@ func TestCrawlFlagsChallengePageAndSkipsContentExtraction(t *testing.T) {
 	}
 }
 
+func TestCrawlFlagsOffOriginOAuthAuthorizeLinkNeverFetched(t *testing.T) {
+	// Regression test mirroring the Python-side equivalent, added after
+	// review found this check ran only on fetched same-origin URLs: the
+	// overwhelming majority of real relying parties link to a
+	// third-party IdP, which the crawler's same-origin policy never
+	// follows or fetches. Since the OAuth check is purely passive (URL
+	// inspection only), it must still fire on an off-origin authorize
+	// link discovered on a page, not just on links actually fetched.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		w.Write([]byte(`<html><body><a href="https://idp.example.invalid/authorize` +
+			`?response_type=code&client_id=abc">login</a></body></html>`))
+	}))
+	defer srv.Close()
+	res, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 5})
+	if err != nil {
+		t.Fatal(err)
+	}
+	found := false
+	for _, f := range res.Findings {
+		if f.ID == "oauth-missing-state" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("expected oauth-missing-state for the off-origin authorize link")
+	}
+	for _, p := range res.Pages {
+		if strings.HasPrefix(p.URL, "https://idp.example.invalid") {
+			t.Fatalf("off-origin authorize URL must never be queued/fetched as a page: %s", p.URL)
+		}
+	}
+}
+
 func TestSoft404SuppressesTemplatedNotFoundPage(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,57 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixes from a second, deeper pentester review of the OAuth checks --
+  four real issues, one of them a coverage gap serious enough to
+  matter on almost every real engagement.**
+  - **The check only ever ran on fetched, same-origin URLs.** In the
+    dominant real-world architecture the relying party links or
+    redirects to a *third-party* IdP (accounts.google.com, an
+    Okta/Auth0 tenant, ...) -- off-origin, so the crawler's same-origin
+    policy never fetches it, and the check (purely passive, needing no
+    request) silently examined zero real authorization requests. It now
+    also runs over every discovered link *before* the same-origin
+    filter drops it, in both engines, with a new crawler-level
+    integration test in each confirming the off-origin URL is flagged
+    without ever being queued/fetched as a page.
+  - **The self-fix from the first pass closed blank-value parity but not
+    parser-leniency parity.** Go's `url.Query()` silently drops a pair
+    whose value contains a bare `;` or an invalid `%`-escape, discarding
+    the parse error, while Python's `parse_qs` keeps the literal text --
+    for `state=a;b` that made Go treat `state` as *absent* (fabricating
+    `oauth-missing-state` against a URL that does carry a state value)
+    while Python correctly saw `"a;b"`. Both engines now refuse to
+    assess a query containing either red flag at all, rather than
+    reasoning from a partially-parsed result -- verified byte-identical
+    against each other over an adversarial corpus (malformed escapes,
+    semicolons, JAR/PAR, whitespace-only values) built during review.
+  - **`packages/parity-tests/run_parity.py` discarded the query string
+    entirely** when keying findings for comparison -- for a
+    query-string-driven check like this one, that's the only place the
+    signal lives, so two `/authorize` requests differing only by query
+    could collapse into the same key and hide a real divergence. The
+    finding key now includes the query string; verified by adding a
+    real (intentionally state-less) `/oauth/authorize` link to the
+    app4-microservices fixture (separate submodule commit) so this
+    actually gets exercised end-to-end during a live parity run, not
+    just asserted in a unit test.
+  - **RFC 9101 (JAR) / RFC 9126 (PAR) requests were flagged
+    `oauth-missing-state` even though they're a *more* secure deployment
+    shape**, not less: `response_type`/`client_id` stay in the query for
+    OAuth2 compatibility, but the real parameters (state included) live
+    inside a signed request object or server-side, referenced only by
+    `request`/`request_uri` -- state genuinely can't be assessed
+    passively there. Both engines now skip the check entirely when
+    either param is present.
+  - Also: `oauth-implicit-flow` severity raised from `low` to `medium`
+    (a token in the URL fragment is exploitable via history/referrer/
+    redirector-log leakage and turns any open redirect on the relying
+    party into a token-theft primitive; OAuth 2.1 removes this flow
+    outright) and its evidence now includes the finding's URL, not just
+    the decoded `response_type` value, so a report reader can locate it;
+    `code_challenge` is now whitespace-trimmed the same way `state` is,
+    closing a one-sided leniency where a whitespace-only PKCE challenge
+    earned the full severity downgrade.
 - **Two more OAuth check refinements, found on a second pass.** (1)
   `oauth-missing-state`'s PKCE downgrade now requires
   `code_challenge_method=S256` specifically, not just any

@@ -282,6 +282,18 @@ class Crawler:
             next_links.extend(result.discovered_urls)
 
             for link in next_links:
+                # Checked here, BEFORE the same-origin filter below drops
+                # it -- an authorization request overwhelmingly points at
+                # a third-party IdP (accounts.google.com, an Okta/Auth0
+                # tenant, ...), which is off-origin and therefore never
+                # fetched. Since this check is purely passive (URL
+                # inspection only, no request needed), restricting it to
+                # `result.url`/fetched pages would examine zero real
+                # authorization requests on the overwhelming majority of
+                # real engagements against a relying party. Duplicate
+                # off-origin links across multiple pages collapse via
+                # _dedupe_findings below (keyed on id+url).
+                findings.extend(check_oauth_authorize_url(link))
                 if not same_origin(link, origin_url):
                     continue
                 if canonical_key(link) in seen:

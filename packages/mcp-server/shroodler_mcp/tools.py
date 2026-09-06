@@ -210,6 +210,35 @@ def check_idor(args: dict) -> dict:
     )
 
 
+def reverify_fix(args: dict) -> dict:
+    """Closed-loop remediate-and-reverify: after an agent (or human)
+    patches source in response to a finding, call this on the same URL
+    before opening/merging a PR. Only `verified_fixed: true` means the
+    specific finding_id is actually gone from a FRESH re-scan of that
+    route -- not merely "a patch was applied" or "the page still
+    loads". Active payload re-runs (default on; set run_payloads=false
+    to skip) are gated by the same scan-policy consent requirement as
+    scan_route, for the same reason: this is a live-request-issuing
+    tool an agent can trigger autonomously.
+    """
+    from shroodler.reverify import reverify
+
+    url = args.get("url")
+    finding_id = args.get("finding_id")
+    if not url or not finding_id:
+        raise ValueError("reverify_fix requires 'url' and 'finding_id'")
+    run_payloads = bool(args.get("run_payloads", True))
+    enforcer = _build_enforcer(args, url) if run_payloads else None
+    return reverify(
+        url,
+        finding_id,
+        mode=args.get("mode", "static"),
+        allow_external=bool(args.get("allow_external", False)),
+        run_payloads=run_payloads,
+        enforcer=enforcer,
+    )
+
+
 def diff_since_baseline(args: dict) -> dict:
     """Compare a fresh scan against a checked-in baseline and return what
     changed -- the "what's new since Tuesday's deploy" question, without
@@ -329,6 +358,28 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["higher_priv_crawl"],
         },
         "handler": check_idor,
+    },
+    "reverify_fix": {
+        "description": "Re-scan one URL and report whether a specific finding_id is now "
+        "gone -- closed-loop remediate-and-reverify. Call after patching source in "
+        "response to a finding, before opening/merging a PR. Active payload re-runs "
+        "require a scan-policy consent manifest by default, like scan_route.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "url": {"type": "string"},
+                "finding_id": {"type": "string"},
+                "mode": {"type": "string", "enum": ["static", "headless"], "default": "static"},
+                "run_payloads": {"type": "boolean", "default": True},
+                "allow_external": {"type": "boolean", "default": False},
+                "allow_without_policy": {"type": "boolean", "default": False},
+                "policy_file": {"type": "string"},
+                "audit_log": {"type": "string"},
+            },
+            "required": ["url", "finding_id"],
+        },
+        "handler": reverify_fix,
     },
     "diff_since_baseline": {
         "description": "Compare a fresh scan against a checked-in expected-findings baseline "

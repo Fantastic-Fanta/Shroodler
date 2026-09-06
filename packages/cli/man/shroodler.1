@@ -116,6 +116,14 @@ Use a local scan-policy.json instead of fetching one from the target.
 Append a JSONL audit trail of every active request the guardrail allowed
 or blocked (scope/rate-limit decisions), each entry stamped with the
 manifest's hash as proof of which consent grant governed it.
+.TP
+.B \-\-adaptive
+On a baseline miss, retry once with an adapted payload (via
+.B $SHROODLER_PAYLOAD_MUTATE_CMD
+if set, else a built-in keyword-case/inline-comment mutator) instead of
+giving up after the pack's own static payload. Still gated by the same
+rate/blast-radius limits as every other request; never reports a
+mutated match at confidence=confirmed.
 .RE
 .TP
 .B authz\-diff \fIHIGHER_CRAWL.JSON\fR
@@ -239,6 +247,33 @@ starts failing.
 renders a ready-to-use Markdown PR body;
 .B \-\-gate
 exits 1 if any rule is expiring.
+.TP
+.B reverify \fIURL\fR \fIFINDING_ID\fR
+Re-crawls exactly
+.I URL
+(and, unless
+.BR \-\-no\-payloads ,
+re-runs active payload packs against it), then reports whether
+.I FINDING_ID
+still appears there -- closed-loop remediate-and-reverify. Exits 0 only
+when
+.B verified_fixed
+is true (the finding is actually gone from a fresh scan, not merely "a
+patch was applied"). Accepts the same
+.BR \-\-require\-policy / \-\-policy\-file / \-\-audit\-log
+guardrail flags as
+.B payload
+for its active-payload re-run.
+.TP
+.B gen\-regression\-test \fIURL\fR \fIFINDING_ID\fR
+Runs the same check as
+.BR reverify ;
+only when it confirms the finding is fixed does it write a pytest module
+(to
+.B \-\-output
+or stdout) that re-checks the same (finding_id, url) pair via
+`shroodler.reverify.reverify()` on every future test run. Refuses (exit
+1, no file written) if the finding is still present.
 .TP
 .B version
 Print the version and exit.

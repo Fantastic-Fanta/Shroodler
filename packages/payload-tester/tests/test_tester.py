@@ -18,12 +18,14 @@ from app import app as flask_app
 from tester import (
     MARKER_HOST,
     _clause_matches,
+    _default_mutate,
     _local,
     build_marker_host,
     gen_token,
     infer_confidence,
     load_packs,
     main,
+    mutate_payload,
     pack_finding_id,
     pack_matches,
     packs_dir,
@@ -911,3 +913,135 @@ def test_minimal_repro_prefers_higher_confidence_over_shorter_payload(tmp_path):
     finding = out["findings"][0]
     assert finding["confidence"] == "confirmed"
     assert finding["evidence"] == "STRONGMARKERVALUE"
+
+
+def test_default_mutate_case_flips_a_known_keyword():
+    mutated = _default_mutate("' OR 1=1 SELECT * FROM users--")
+    assert mutated != "' OR 1=1 SELECT * FROM users--"
+    assert "select" in mutated.lower()  # content preserved, only case changed
+
+
+def test_default_mutate_wraps_in_comment_when_no_keyword_matches():
+    mutated = _default_mutate("xyzxyz")
+    assert mutated == "/**/xyzxyz/**/"
+
+
+def test_mutate_payload_uses_default_when_no_env_var(monkeypatch):
+    monkeypatch.delenv("SHROODLER_PAYLOAD_MUTATE_CMD", raising=False)
+    result = mutate_payload("SELECT 1", context={})
+    assert result is not None
+    assert result != "SELECT 1"
+
+
+def test_mutate_payload_uses_external_command(monkeypatch, tmp_path):
+    script = tmp_path / "mutate.sh"
+    script.write_text("#!/bin/sh\nprintf '%s' 'MUTATED_PAYLOAD'\n")
+    script.chmod(0o755)
+    monkeypatch.setenv("SHROODLER_PAYLOAD_MUTATE_CMD", str(script))
+    result = mutate_payload("original", context={"finding_id": "x"})
+    assert result == "MUTATED_PAYLOAD"
+
+
+def test_mutate_payload_external_command_empty_output_means_no_mutation(monkeypatch, tmp_path):
+    script = tmp_path / "mutate.sh"
+    script.write_text("#!/bin/sh\ntrue\n")
+    script.chmod(0o755)
+    monkeypatch.setenv("SHROODLER_PAYLOAD_MUTATE_CMD", str(script))
+    assert mutate_payload("original", context={}) is None
+
+
+def test_adaptive_run_retries_with_mutation_on_baseline_miss(tmp_path):
+    # A pack whose static payload never matches, but a mutated variant
+    # (wrapped in /**/.../**/  via _default_mutate's fallback) does.
+    extra = tmp_path / "adaptive.yaml"
+    extra.write_text(
+        "- id: needs-mutation\n"
+        "  finding_id: payload-adaptive-probe\n"
+        "  payload: 'zzz'\n"
+        "  severity: high\n"
+        "  match:\n"
+        "    any:\n"
+        "      - body_contains: '/**/zzz/**/'\n",
+        encoding="utf-8",
+    )
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        return [f"echo: {q}".encode()]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        origin_url = f"http://127.0.0.1:{port}"
+        doc = {
+            "target": origin_url + "/",
+            "pages": [{"url": origin_url + "/search", "params": ["q"], "forms": []}],
+        }
+        packs = [p for p in load_packs(extra=[extra]) if p["finding_id"] == "payload-adaptive-probe"]
+
+        no_adapt = run(doc, packs=packs, adaptive=False)
+        assert no_adapt["findings"] == []
+
+        adapted = run(doc, packs=packs, adaptive=True)
+    finally:
+        httpd.shutdown()
+
+    assert len(adapted["findings"]) == 1
+    finding = adapted["findings"][0]
+    assert finding["confidence"] != "confirmed"
+    assert "adaptive payload mutation" in finding["description"]
+
+
+def test_adaptive_never_reports_mutated_match_as_confirmed(tmp_path):
+    extra = tmp_path / "adaptive_strong.yaml"
+    extra.write_text(
+        "- id: needs-mutation-strong\n"
+        "  finding_id: payload-adaptive-strong-probe\n"
+        "  payload: 'zzz'\n"
+        "  severity: high\n"
+        "  match:\n"
+        "    any:\n"
+        "      - body_contains: 'computed:49'\n",
+        encoding="utf-8",
+    )
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        qs = parse_qs(environ.get("QUERY_STRING", ""))
+        q = qs.get("q", [""])[0]
+        start_response("200 OK", [("Content-Type", "text/plain")])
+        # The mutated payload (wrapped in /**/.../**/") triggers a
+        # "confirmed-tier" marker match once mutated -- this would be
+        # confidence=confirmed for a non-mutated match.
+        if q.startswith("/**/"):
+            return [b"computed:49"]
+        return [f"echo: {q}".encode()]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    try:
+        origin_url = f"http://127.0.0.1:{port}"
+        doc = {
+            "target": origin_url + "/",
+            "pages": [{"url": origin_url + "/search", "params": ["q"], "forms": []}],
+        }
+        packs = [
+            p
+            for p in load_packs(extra=[extra])
+            if p["finding_id"] == "payload-adaptive-strong-probe"
+        ]
+        out = run(doc, packs=packs, adaptive=True)
+    finally:
+        httpd.shutdown()
+
+    assert len(out["findings"]) == 1
+    assert out["findings"][0]["confidence"] == "probable"

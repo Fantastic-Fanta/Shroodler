@@ -22,7 +22,13 @@ def test_initialize():
 def test_tools_list_contains_expected_tools():
     result = handle_request("tools/list", {})
     names = {t["name"] for t in result["tools"]}
-    assert names == {"scan_route", "check_idor", "diff_since_baseline", "explain_finding"}
+    assert names == {
+        "scan_route",
+        "check_idor",
+        "diff_since_baseline",
+        "explain_finding",
+        "reverify_fix",
+    }
     for tool in result["tools"]:
         assert "inputSchema" in tool
         assert tool["inputSchema"]["type"] == "object"

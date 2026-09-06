@@ -474,6 +474,7 @@ def cmd_payload(args: argparse.Namespace) -> int:
         allow_external=getattr(args, "allow_external", False),
         oob_host=getattr(args, "oob_host", None),
         enforcer=enforcer,
+        adaptive=bool(getattr(args, "adaptive", False)),
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -555,6 +556,84 @@ def cmd_sla_apply(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
         return 1
+    return 0
+
+
+def cmd_reverify(args: argparse.Namespace) -> int:
+    from shroodler.reverify import reverify
+
+    enforcer = None
+    require_policy = getattr(args, "require_policy", False)
+    policy_file = getattr(args, "policy_file", None)
+    audit_log = getattr(args, "audit_log", None)
+    run_payloads = not bool(getattr(args, "no_payloads", False))
+    if run_payloads and (require_policy or policy_file or audit_log):
+        from shroodler_guardrails.policy import (
+            PolicyEnforcer,
+            fetch_policy,
+            origin_of,
+            parse_policy,
+        )
+
+        if policy_file:
+            manifest = json.loads(Path(policy_file).read_text(encoding="utf-8"))
+            policy = parse_policy(manifest, origin=origin_of(args.url))
+        else:
+            policy = fetch_policy(args.url)
+        enforcer = PolicyEnforcer(
+            policy=policy,
+            require_policy=require_policy,
+            audit_path=Path(audit_log) if audit_log else None,
+        )
+
+    result = reverify(
+        args.url,
+        args.finding_id,
+        mode=getattr(args, "mode", "static"),
+        allow_external=bool(getattr(args, "allow_external", False)),
+        run_payloads=run_payloads,
+        enforcer=enforcer,
+    )
+    text = json.dumps(result, indent=2) + "\n"
+    _write(text, args.output)
+    if result["verified_fixed"]:
+        print(f"verified fixed: {args.finding_id} no longer present at {args.url}")
+        return 0
+    print(f"still present: {args.finding_id} at {args.url}", file=sys.stderr)
+    return 1
+
+
+def cmd_gen_regression_test(args: argparse.Namespace) -> int:
+    from shroodler.gen_regression_test import render_regression_test
+    from shroodler.reverify import reverify
+
+    run_payloads = not bool(getattr(args, "no_payloads", False))
+    result = reverify(
+        args.url,
+        args.finding_id,
+        mode=getattr(args, "mode", "static"),
+        allow_external=bool(getattr(args, "allow_external", False)),
+        run_payloads=run_payloads,
+    )
+    if not result["verified_fixed"]:
+        print(
+            f"refusing to generate a regression test: {args.finding_id} is still "
+            f"present at {args.url} -- fix it first, then regenerate",
+            file=sys.stderr,
+        )
+        return 1
+    text = render_regression_test(
+        args.url,
+        args.finding_id,
+        mode=getattr(args, "mode", "static"),
+        run_payloads=run_payloads,
+        allow_external=bool(getattr(args, "allow_external", False)),
+    )
+    if args.output:
+        Path(args.output).write_text(text, encoding="utf-8")
+        print(f"wrote {args.output}")
+    else:
+        print(text, end="")
     return 0
 
 
@@ -915,6 +994,13 @@ def build_parser() -> argparse.ArgumentParser:
         "allowed or blocked. Not implied by --require-policy/--policy-file alone -- "
         "pass this explicitly to get a durable record on disk.",
     )
+    payload.add_argument(
+        "--adaptive",
+        action="store_true",
+        help="On a baseline miss, retry once with an adapted payload instead of "
+        "giving up (SHROODLER_PAYLOAD_MUTATE_CMD if set, else a built-in mutator); "
+        "never reports a mutated match at confidence=confirmed.",
+    )
     payload.set_defaults(func=cmd_payload)
 
     authz = sub.add_parser(
@@ -1096,6 +1182,57 @@ def build_parser() -> argparse.ArgumentParser:
     )
     audit_verify.add_argument("audit_log")
     audit_verify.set_defaults(func=cmd_audit_verify)
+
+    reverify = sub.add_parser(
+        "reverify",
+        help="Re-scan one route and check whether a specific finding is now gone "
+        "(closed-loop remediate-and-reverify)",
+        description=(
+            "Re-crawls exactly URL (and, unless --no-payloads, re-runs active "
+            "payload packs against it), then reports whether FINDING_ID still "
+            "appears there. Exits 0 with verified_fixed=true only when it's "
+            "actually gone from a fresh scan -- not merely 'a patch was applied'. "
+            "Intended to gate whether an agent's auto-remediation PR should open "
+            "at all."
+        ),
+    )
+    reverify.add_argument("url")
+    reverify.add_argument("finding_id")
+    reverify.add_argument("--mode", choices=["static", "headless"], default="static")
+    reverify.add_argument("--allow-external", action="store_true")
+    reverify.add_argument(
+        "--no-payloads",
+        action="store_true",
+        help="Only re-run the passive crawl, skip active payload packs",
+    )
+    reverify.add_argument("--output", "-o")
+    reverify.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run active payloads unless the target publishes a "
+        "scan-policy consent manifest.",
+    )
+    reverify.add_argument("--policy-file", metavar="PATH")
+    reverify.add_argument("--audit-log", metavar="PATH")
+    reverify.set_defaults(func=cmd_reverify)
+
+    gen_test = sub.add_parser(
+        "gen-regression-test",
+        help="Generate a pytest regression test from a confirmed-then-fixed finding",
+        description=(
+            "Runs the same check as `reverify`; only writes a regression test if "
+            "the finding is confirmed gone. Refuses (exit 1, no file written) if "
+            "the finding is still present -- this command never generates a test "
+            "for something that isn't actually fixed yet."
+        ),
+    )
+    gen_test.add_argument("url")
+    gen_test.add_argument("finding_id")
+    gen_test.add_argument("--mode", choices=["static", "headless"], default="static")
+    gen_test.add_argument("--allow-external", action="store_true")
+    gen_test.add_argument("--no-payloads", action="store_true")
+    gen_test.add_argument("--output", "-o")
+    gen_test.set_defaults(func=cmd_gen_regression_test)
 
     compare_engines = sub.add_parser(
         "compare-engines",

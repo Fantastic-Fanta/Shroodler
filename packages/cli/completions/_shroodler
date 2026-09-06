@@ -27,6 +27,8 @@ _shroodler_commands=(
   'compare-engines:Merge Python/Go crawl JSON as a confidence signal'
   'sla:Attach ownership + SLA-escalated severity to findings'
   'suppress:Work with suppression rules beyond diff/report/baseline'
+  'reverify:Re-scan a route and check if a finding is now gone'
+  'gen-regression-test:Generate a pytest test from a confirmed-fixed finding'
   'version:Print version'
 )
 
@@ -114,6 +116,7 @@ _shroodler() {
             '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
             '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
             '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
+            '--adaptive[Retry once with an adapted payload on a baseline miss]' \
             '1:crawl json:_files'
           ;;
         authz-diff)
@@ -169,6 +172,27 @@ _shroodler() {
           ;;
         suppress)
           _values 'suppress subcommand' 'expiring[List rules expiring soon / render a PR body]'
+          ;;
+        reverify)
+          _arguments \
+            '--mode[Crawl mode]:(static headless)' \
+            '--allow-external[Allow a non-local target]' \
+            '--no-payloads[Skip active payload packs]' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--require-policy[Refuse active payloads without a scan-policy manifest]' \
+            '--policy-file[Local scan-policy.json]:file:_files' \
+            '--audit-log[Audit trail file]:file:_files' \
+            '1:url' \
+            '2:finding id'
+          ;;
+        gen-regression-test)
+          _arguments \
+            '--mode[Crawl mode]:(static headless)' \
+            '--allow-external[Allow a non-local target]' \
+            '--no-payloads[Skip active payload packs]' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '1:url' \
+            '2:finding id'
           ;;
       esac
       ;;

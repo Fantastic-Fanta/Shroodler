@@ -9,6 +9,7 @@ from shroodler_mcp.tools import (
     check_idor,
     diff_since_baseline,
     explain_finding,
+    reverify_fix,
     scan_route,
 )
 
@@ -223,3 +224,31 @@ def test_project_root_finds_git_ancestor(tmp_path, monkeypatch):
     nested.mkdir(parents=True)
     monkeypatch.chdir(nested)
     assert _project_root() == repo.resolve()
+
+
+def test_reverify_fix_requires_url_and_finding_id():
+    with pytest.raises(ValueError):
+        reverify_fix({"url": "http://127.0.0.1:1/"})
+    with pytest.raises(ValueError):
+        reverify_fix({"finding_id": "missing-hsts"})
+
+
+def test_reverify_fix_run_payloads_refuses_without_policy_by_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        reverify_fix({"url": "http://127.0.0.1:1/", "finding_id": "missing-hsts"})
+
+
+def test_reverify_fix_skips_guardrail_when_run_payloads_false(monkeypatch):
+    called = {}
+
+    def fake_reverify(url, finding_id, **kwargs):
+        called.update(kwargs)
+        return {"url": url, "finding_id": finding_id, "verified_fixed": True}
+
+    monkeypatch.setattr("shroodler.reverify.reverify", fake_reverify)
+    result = reverify_fix(
+        {"url": "http://127.0.0.1:1/", "finding_id": "missing-hsts", "run_payloads": False}
+    )
+    assert result["verified_fixed"] is True
+    assert called["enforcer"] is None

@@ -95,6 +95,83 @@ def render_payload(raw: str, *, token: str, marker_host: str = MARKER_HOST) -> s
     return raw.replace("{{TOKEN}}", token).replace("{{MARKER_HOST}}", marker_host)
 
 
+# The riskiest idea on the roadmap ("LLM-generated/adapted payload
+# mutation") is scoped deliberately narrowly here: at most ONE extra,
+# enforcer-gated request per pack per baseline miss, never a second
+# round of mutation on top of a mutation, and off unless a caller
+# explicitly opts in (`adaptive=True`). This is a place a small team
+# could plausibly beat a static-pack scanner's coverage without needing
+# CVE-signature scale -- but it's also live payload generation against a
+# real target, so the same scope/rate/blast-radius guardrail that gates
+# every other active send here gates this too (see `run()`'s
+# `request_allowed()`).
+_KEYWORD_CASE_TARGETS = (
+    "select",
+    "union",
+    "script",
+    "alert",
+    "or",
+    "and",
+    "from",
+    "where",
+)
+
+
+def _default_mutate(payload: str) -> str:
+    """Built-in fallback mutator, used when SHROODLER_PAYLOAD_MUTATE_CMD
+    isn't set: alternates the case of common filtered/signature-matched
+    keywords (SeLeCt, ScRiPt, ...) plus an inline SQL comment between two
+    of them -- classic, well-documented WAF/naive-filter evasion shapes,
+    not a claim of novel attack research. Deterministic (no randomness)
+    so a run is reproducible.
+    """
+    mutated = payload
+    for keyword in _KEYWORD_CASE_TARGETS:
+        if keyword not in mutated.lower():
+            continue
+        alternated = "".join(
+            c.upper() if i % 2 == 0 else c.lower() for i, c in enumerate(keyword)
+        )
+        # Case-insensitive single replace of the first occurrence.
+        idx = mutated.lower().find(keyword)
+        mutated = mutated[:idx] + alternated + mutated[idx + len(keyword) :]
+    if mutated == payload:
+        # No recognizable keyword to case-flip -- fall back to wrapping
+        # the payload in an inline comment, a generic filter-bypass shape
+        # that doesn't depend on recognizing specific keywords.
+        mutated = f"/**/{payload}/**/"
+    return mutated
+
+
+def mutate_payload(payload: str, *, context: dict) -> str | None:
+    """Returns an adapted payload, or None if mutation isn't applicable/
+    configured. If SHROODLER_PAYLOAD_MUTATE_CMD is set, it's invoked with
+    `context` (finding_id, pack_id, original payload, and the first
+    probe's response status/snippet) as JSON on stdin and must print a
+    single replacement payload on stdout (empty output means "no
+    mutation"); otherwise falls back to `_default_mutate`.
+    """
+    import os
+    import subprocess
+
+    cmd = os.environ.get("SHROODLER_PAYLOAD_MUTATE_CMD")
+    if not cmd:
+        return _default_mutate(payload)
+    try:
+        proc = subprocess.run(
+            [cmd],
+            input=json.dumps({**context, "payload": payload}),
+            capture_output=True,
+            text=True,
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    result = proc.stdout.strip()
+    return result or None
+
+
 def _clause_matches(
     clause: dict,
     *,
@@ -232,14 +309,20 @@ def infer_confidence(pack: dict) -> str:
 _CONFIDENCE_RANK = {"confirmed": 0, "probable": 1, "heuristic": 2}
 
 
-def _finding(pack: dict, action: str, payload: str, confidence: str) -> dict:
+def _finding(pack: dict, action: str, payload: str, confidence: str, *, mutated: bool = False) -> dict:
     ev = payload if len(payload) <= 80 else payload[:80]
+    description = pack.get("description", pack_finding_id(pack))
+    if mutated:
+        description += (
+            " (matched only after an adaptive payload mutation -- the static "
+            "pack's own payload did not trigger this; verify manually.)"
+        )
     return {
         "id": pack_finding_id(pack),
         "severity": pack.get("severity", "medium"),
         "category": "payload",
         "url": action,
-        "description": pack.get("description", pack_finding_id(pack)),
+        "description": description,
         "evidence": ev,
         "confidence": confidence,
     }
@@ -253,6 +336,7 @@ def run(
     allow_external: bool = False,
     oob_host: str | None = None,
     enforcer=None,
+    adaptive: bool = False,
 ) -> dict:
     """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
     consulted before every live request (baseline probe and each payload
@@ -260,6 +344,12 @@ def run(
     it, and every attempt -- allowed or blocked -- lands in its audit log.
     A blocked URL is skipped for the rest of this run (all of its packs),
     not just the one send that tripped the limit.
+
+    `adaptive`, if set, allows exactly ONE extra mutated-payload retry per
+    pack per baseline miss (see `mutate_payload`) -- never a second round
+    on top of that mutation, and every mutated send still goes through
+    the same `enforcer`/`request_allowed()` gate as every other request
+    here. Off by default.
     """
     target = crawl_doc.get("target", "")
 
@@ -368,8 +458,9 @@ def run(
                 # payload that matched -- a smaller repro is less noise to
                 # paste into a bug report, without needing an actual
                 # binary search over each pack's own variants.
-                best_by_id: dict[str, tuple[str, dict, int, str]] = {}
+                best_by_id: dict[str, tuple[str, dict, int, str, bool]] = {}
                 for pack in loaded:
+                    was_mutated = False
                     if not request_allowed():
                         break
                     payload = render_payload(
@@ -420,9 +511,53 @@ def run(
                         response_headers=resp.headers,
                     )
                     if not pack_matches(pack, **match_ctx):
-                        continue
+                        if not adaptive or pack.get("raw_body") or pack.get("blind"):
+                            continue
+                        if not request_allowed():
+                            continue
+                        mutated = mutate_payload(
+                            payload,
+                            context={
+                                "finding_id": pack_finding_id(pack),
+                                "pack_id": pack.get("id", ""),
+                                "response_status": resp.status_code,
+                                "response_snippet": resp.text[:500],
+                            },
+                        )
+                        if mutated is None or mutated == payload:
+                            continue
+                        data = {name: mutated for name in fields}
+                        try:
+                            resp = send(data)
+                        except httpx.HTTPError:
+                            continue
+                        elapsed_ms = resp.elapsed.total_seconds() * 1000
+                        redirected_to = resp.headers.get("location", "")
+                        match_ctx = dict(
+                            status=resp.status_code,
+                            body=resp.text,
+                            payload=mutated,
+                            elapsed_ms=elapsed_ms,
+                            redirected_to=redirected_to,
+                            baseline_status=baseline_status,
+                            baseline_body=baseline_body,
+                            baseline_elapsed_ms=baseline_elapsed_ms,
+                            marker_host=marker_host,
+                            response_headers=resp.headers,
+                        )
+                        if not pack_matches(pack, **match_ctx):
+                            continue
+                        payload = mutated
+                        was_mutated = True
                     fid = pack_finding_id(pack)
                     confidence = _confidence_for(pack, _matched_clause_kinds(pack, **match_ctx))
+                    if was_mutated and confidence == "confirmed":
+                        # An adaptively-mutated match is a scanner
+                        # improvisation, not the pack author's carefully
+                        # designed unambiguous signal -- never report it
+                        # at the top confidence tier even if the matched
+                        # clause would otherwise qualify.
+                        confidence = "probable"
                     rank = _CONFIDENCE_RANK.get(confidence, 99)
                     existing = best_by_id.get(fid)
                     # Prefer the strongest-confidence match first; only use
@@ -433,14 +568,14 @@ def run(
                     # or "minimal repro" would quietly downgrade the
                     # evidence a human actually wants to see.
                     if existing is None or (rank, len(payload)) < (existing[2], len(existing[0])):
-                        best_by_id[fid] = (payload, pack, rank, confidence)
+                        best_by_id[fid] = (payload, pack, rank, confidence, was_mutated)
 
-                for fid, (payload, pack, _rank, confidence) in best_by_id.items():
+                for fid, (payload, pack, _rank, confidence, mutated_flag) in best_by_id.items():
                     key = (fid, action)
                     if key in seen:
                         continue
                     seen.add(key)
-                    finding = _finding(pack, action, payload, confidence)
+                    finding = _finding(pack, action, payload, confidence, mutated=mutated_flag)
                     finding["minimal_repro"] = True
                     findings.append(finding)
     finally:
@@ -501,6 +636,15 @@ def main(argv: list[str] | None = None) -> int:
         help="Append a JSONL audit trail of every active request the guardrail "
         "allowed or blocked.",
     )
+    p.add_argument(
+        "--adaptive",
+        action="store_true",
+        help="On a baseline miss, retry once with an adapted payload (via "
+        "SHROODLER_PAYLOAD_MUTATE_CMD if set, else a built-in keyword-case/comment "
+        "mutator) instead of giving up after the pack's own static payload. Never "
+        "reports a mutated match at confidence=confirmed. Still gated by the same "
+        "rate/blast-radius limits as every other request.",
+    )
     args = p.parse_args(argv)
     doc = json.loads(Path(args.crawl_json).read_text(encoding="utf-8"))
     extra = [Path(x) for x in args.pack]
@@ -531,6 +675,7 @@ def main(argv: list[str] | None = None) -> int:
         allow_external=args.allow_external,
         oob_host=args.oob_host,
         enforcer=enforcer,
+        adaptive=args.adaptive,
     )
     text = json.dumps(out, indent=2) + "\n"
     if args.output:

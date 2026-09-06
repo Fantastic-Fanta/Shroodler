@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress reverify gen-regression-test version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -31,7 +31,7 @@ _shroodler_flags_for() {
             echo "--target --output --allow-external"
             ;;
         payload)
-            echo "--output --pack --allow-external --oob-host --require-policy --policy-file --audit-log"
+            echo "--output --pack --allow-external --oob-host --require-policy --policy-file --audit-log --adaptive"
             ;;
         authz-diff)
             echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation"
@@ -62,6 +62,12 @@ _shroodler_flags_for() {
             ;;
         suppress-expiring)
             echo "--days --suppressions --format --output --gate"
+            ;;
+        reverify)
+            echo "--mode --allow-external --no-payloads --output --require-policy --policy-file --audit-log"
+            ;;
+        gen-regression-test)
+            echo "--mode --allow-external --no-payloads --output"
             ;;
         *)
             echo ""

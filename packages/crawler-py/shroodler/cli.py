@@ -428,17 +428,34 @@ def cmd_trend(args: argparse.Namespace) -> int:
         older = dict(older, findings=filter_findings(older.get("findings", []), rules))
         newer = dict(newer, findings=filter_findings(newer.get("findings", []), rules))
     trend = trend_diff(older, newer)
+
+    from shroodler.waf_coverage import waf_coverage_regression
+
+    waf_finding = waf_coverage_regression(
+        older, newer, drop_threshold=float(getattr(args, "waf_drop_threshold", 0.2) or 0.2)
+    )
+    trend["waf_coverage_regression"] = waf_finding
+
     if getattr(args, "format", "text") == "json":
         text = json.dumps(trend, indent=2) + "\n"
     else:
         text = render_trend_text(trend)
+        if waf_finding:
+            text += (
+                f"\nWAF coverage regression ({waf_finding['severity']}): "
+                f"{waf_finding['description']}\n"
+            )
     _write(text, args.output)
+    failing = False
     if bool(getattr(args, "gate_on_severity_increase", False)) and trend["severity_increased"]:
         for f in trend["severity_increased"]:
             msg = f"severity increased: {f['id']} @ {f['url']}: {f['from']} -> {f['to']}"
             print(msg, file=sys.stderr)
-        return 1
-    return 0
+        failing = True
+    if bool(getattr(args, "gate_on_waf_coverage_drop", False)) and waf_finding:
+        print(f"waf coverage regression: {waf_finding['description']}", file=sys.stderr)
+        failing = True
+    return 1 if failing else 0
 
 
 def _payload_tester_dir() -> Path:
@@ -579,6 +596,36 @@ def cmd_sla_apply(args: argparse.Namespace) -> int:
                 file=sys.stderr,
             )
         return 1
+    return 0
+
+
+def cmd_self_scan(args: argparse.Namespace) -> int:
+    from shroodler.self_scan import run_self_scan
+
+    formats = list(getattr(args, "format", None) or []) or None
+    result = run_self_scan(formats)
+    text = json.dumps(result, indent=2) + "\n"
+    _write(text, args.output)
+    if result["findings"]:
+        for f in result["findings"]:
+            print(f"{f['severity']}: {f['id']} -- {f['description']}", file=sys.stderr)
+        return 1
+    print("self-scan clean: no report renderer echoed hostile input unescaped")
+    return 0
+
+
+def cmd_attack_path(args: argparse.Namespace) -> int:
+    from shroodler.attack_path import build_attack_path, render_attack_path_markdown
+
+    doc = load_json(args.findings)
+    report = build_attack_path(doc)
+    fmt = getattr(args, "format", "json") or "json"
+    text = (
+        render_attack_path_markdown(report)
+        if fmt == "markdown"
+        else json.dumps(report, indent=2) + "\n"
+    )
+    _write(text, args.output)
     return 0
 
 
@@ -1189,6 +1236,22 @@ def build_parser() -> argparse.ArgumentParser:
         "catches a same-key regression that `diff --gate` can't see, since its "
         "static baseline never recorded a severity to compare against.",
     )
+    trend.add_argument(
+        "--gate-on-waf-coverage-drop",
+        action="store_true",
+        help="Exit 1 if the fraction of crawled pages showing a WAF/bot-mitigation "
+        "challenge dropped by more than --waf-drop-threshold between the two scans "
+        "-- 'my own protection silently got weaker' as a tracked regression, not "
+        "just a quieter scan.",
+    )
+    trend.add_argument(
+        "--waf-drop-threshold",
+        type=float,
+        default=0.2,
+        metavar="FRACTION",
+        help="Minimum absolute coverage drop (0.0-1.0, default 0.2 = 20 percentage "
+        "points) to count as a regression.",
+    )
     trend.set_defaults(func=cmd_trend)
 
     version = sub.add_parser("version", help="Print version")
@@ -1221,6 +1284,44 @@ def build_parser() -> argparse.ArgumentParser:
     )
     audit_verify.add_argument("audit_log")
     audit_verify.set_defaults(func=cmd_audit_verify)
+
+    self_scan = sub.add_parser(
+        "self-scan",
+        help="Adversarial self-scan: fuzz the tool's own report renderers with "
+        "hostile finding content, catching stored-XSS-via-echoed-payload-in-report",
+        description=(
+            "Renders synthetic findings whose free-text fields contain classic "
+            "HTML/JS-injection payloads through every report format, and checks "
+            "whether any renderer echoed the payload back UNESCAPED -- a report a "
+            "human opens in a browser must never become an XSS delivery vector for "
+            "content that originated from the scanned target's own responses."
+        ),
+    )
+    self_scan.add_argument(
+        "--format",
+        action="append",
+        choices=["html", "csv", "sarif", "junit", "markdown"],
+        help="Limit to specific format(s) (repeatable); default checks all of them "
+        "('json' is excluded -- it bypasses the template renderers entirely and "
+        "isn't supposed to be HTML-escaped)",
+    )
+    self_scan.add_argument("--output", "-o")
+    self_scan.set_defaults(func=cmd_self_scan)
+
+    attack_path = sub.add_parser(
+        "attack-path",
+        help="Correlate findings with reachability + weak-token context into one report",
+        description=(
+            "Correlates every finding with its URL path-depth (a heuristic proxy "
+            "for click-distance from the target root -- not a real link-graph "
+            "traversal, since neither crawler engine persists one) and whether "
+            "this same scan found evidence of a guessable session/reset token."
+        ),
+    )
+    attack_path.add_argument("findings")
+    attack_path.add_argument("--format", choices=["json", "markdown"], default="json")
+    attack_path.add_argument("--output", "-o")
+    attack_path.set_defaults(func=cmd_attack_path)
 
     reverify = sub.add_parser(
         "reverify",

@@ -185,6 +185,14 @@ regression
 .B diff \-\-gate
 can't see, since its baseline never records a severity to compare
 against.
+.B \-\-gate\-on\-waf\-coverage\-drop
+exits 1 if the fraction of crawled pages showing a WAF/bot-mitigation
+challenge dropped by more than
+.B \-\-waf\-drop\-threshold
+(default 0.2 = 20 percentage points) between the two scans -- "my own
+protection silently got weaker" as a tracked regression, surfaced in
+JSON output either way as
+.BR waf_coverage_regression .
 .TP
 .B ask \fIQUESTION\fR \fISCAN.JSON\fR
 Ask a question over a scan/report ("show critical findings", "any secret
@@ -280,6 +288,31 @@ has no query string, so a GET-parameter finding may not have actually
 been re-tested) --
 .B \-\-force
 generates the test anyway.
+.TP
+.B attack\-path \fIFINDINGS.JSON\fR
+Correlates every finding with its URL path-depth (a heuristic proxy for
+click-distance from the target root -- path segment count, NOT a real
+crawl-link-graph traversal, since neither engine persists one) and
+whether the same scan found evidence of a guessable session/reset
+token, rendering either JSON or a
+.B \-\-format markdown
+narrative report. E.g. "this XSS is reachable ~2 clicks from the root;
+this scan also found a guessable reset token" -- a different priority
+signal than either finding read alone.
+.TP
+.B self\-scan
+Adversarial self-scan: renders synthetic hostile findings (classic
+HTML/JS-injection payloads, CSV formula-injection triggers) through
+every report renderer this tool ships and checks whether any of them
+echoed the payload back unsafely -- unescaped HTML in
+.BR html / markdown
+output, broken well-formedness in
+.BR sarif / junit
+output, or an unneutralized formula trigger in
+.B csv
+output. Exits 1 if any renderer failed. Catches "the tool's own report
+becomes a stored-XSS/CSV-injection vector for content the scanned
+target controls" -- a real, semi-famous scanner bug class.
 .TP
 .B version
 Print the version and exit.

@@ -292,10 +292,21 @@ def render_diff_sarif(errors: list[str]) -> str:
     return render_sarif({"crawler": {"name": "shroodler", "version": "0.1.0"}, "findings": findings})
 
 
+def _md_inline_code_safe(value: str) -> str:
+    """HTML-escape a value AND neutralize backticks before it's placed
+    inside a single-backtick Markdown code span. html.escape() alone
+    handles `&`/`<`/`>`/quotes but leaves backticks untouched -- a value
+    containing one could prematurely close the span and let the rest of
+    the line be parsed as ordinary Markdown structure instead of literal
+    text, on content that (for url/evidence/id) may originate from the
+    scanned target's own responses."""
+    return html.escape(str(value)).replace("`", "'")
+
+
 def render_markdown(doc: dict) -> str:
     findings = list(doc.get("findings") or [])
     crawler = doc.get("crawler") or {}
-    target = doc.get("target") or ""
+    target = _md_inline_code_safe(doc.get("target") or "")
     pages = doc.get("pages") or []
     name = crawler.get("name") or ""
     version = crawler.get("version") or ""
@@ -342,8 +353,7 @@ def render_markdown(doc: dict) -> str:
         lines.append(f"## {sev}")
         lines.append("")
         for f in rows:
-            fid = f.get("id") or "finding"
-            # url/description/evidence are free text sourced from the
+            # url/description/evidence/id are free text sourced from the
             # SCANNED TARGET's own responses (a crawled URL, a reflected
             # value) -- HTML-escaped before interpolation because a
             # Markdown report is commonly rendered as rich text
@@ -352,10 +362,25 @@ def render_markdown(doc: dict) -> str:
             # design. Without this, a target that reflects
             # "<script>...</script>" into a crawled page turns this
             # report into a stored-XSS delivery vector wherever it's
-            # rendered. `code_of_attack`/severity/id-derived cost/
-            # remediation text is not escaped since none of it is
-            # target-controlled.
-            url = html.escape(f.get("url") or "")
+            # rendered.
+            #
+            # html.escape() alone isn't enough for the three fields
+            # wrapped in single-backtick code spans (url, evidence, id):
+            # it doesn't touch backtick characters, so a value containing
+            # one could still prematurely close the span and let the
+            # rest of the line be parsed as ordinary Markdown structure
+            # instead of literal text. `_md_inline_code_safe` neutralizes
+            # backticks on top of the HTML-escaping for exactly those
+            # three fields; `description` (rendered as plain prose, not
+            # inside a code span) only needs the HTML-escaping.
+            #
+            # `id` is drawn from a fixed internal catalog today (no
+            # extractor/pack builds one from scanned-target content), so
+            # this is defense in depth, not a currently-exploitable gap
+            # -- kept safe anyway so a future dynamically-built id
+            # doesn't silently reopen this bug class.
+            fid = _md_inline_code_safe(f.get("id") or "finding")
+            url = _md_inline_code_safe(f.get("url") or "")
             desc = html.escape(f.get("description") or "")
             lines.append(f"### `{fid}`")
             lines.append("")
@@ -363,7 +388,7 @@ def render_markdown(doc: dict) -> str:
             lines.append(f"- Description: {desc}")
             ev = format_evidence(f.get("evidence"))
             if ev:
-                lines.append(f"- Evidence: `{html.escape(ev)}`")
+                lines.append(f"- Evidence: `{_md_inline_code_safe(ev)}`")
             confidence = f.get("confidence")
             if confidence:
                 lines.append(f"- Confidence: {confidence}")

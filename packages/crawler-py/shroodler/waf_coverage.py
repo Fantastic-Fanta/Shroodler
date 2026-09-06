@@ -46,23 +46,55 @@ def waf_coverage_regression(
     """Returns a finding dict if WAF coverage dropped by more than
     `drop_threshold` (as an absolute fraction, e.g. 0.2 = 20 percentage
     points) between `older` and `newer`, else None.
+
+    A coverage fraction is only meaningful if the two scans crawled a
+    comparable number of pages: an older scan blocked to 5 pages with
+    4/5 (80%) challenged, and a newer scan reaching 50 pages (WAF
+    reconfigured, or the crawler improved) with 25/50 (50%) challenged,
+    is a "30-point drop" by the raw fraction alone even though the WAF
+    triggered on 5x more pages in absolute terms -- arguably an
+    improvement, not a regression. Page counts are always included in
+    the finding's evidence/description so this isn't hidden from a
+    reader, and the finding is downgraded to at most "medium" severity
+    (never suppressed outright -- a real regression can still coincide
+    with a page-count change) when the two scans' page counts differ by
+    more than 2x in either direction.
     """
+    old_pages = len(older.get("pages", []))
+    new_pages = len(newer.get("pages", []))
     old_coverage = waf_coverage(older)
     new_coverage = waf_coverage(newer)
     drop = old_coverage - new_coverage
     if drop <= drop_threshold:
         return None
+
+    smaller, larger = sorted((old_pages, new_pages))
+    page_count_mismatch = larger > 0 and (smaller == 0 or larger / smaller > 2)
+
     severity = "critical" if drop >= 0.5 else "high" if drop >= 0.3 else "medium"
+    caveat = ""
+    if page_count_mismatch:
+        severity = "medium"
+        caveat = (
+            f" NOTE: the two scans crawled very different numbers of pages "
+            f"({old_pages} vs {new_pages}) -- this coverage comparison may not be "
+            "meaningful; verify before treating it as a real regression."
+        )
+
     return {
         "id": "waf-coverage-drop",
         "severity": severity,
         "category": "waf-challenge",
         "url": newer.get("target", ""),
         "description": (
-            f"WAF/bot-mitigation coverage dropped from {old_coverage:.0%} to "
-            f"{new_coverage:.0%} of crawled pages between scans -- investigate "
-            "whether protection was weakened, removed, or reconfigured, rather than "
-            "treating a quieter scan as good news."
+            f"WAF/bot-mitigation coverage dropped from {old_coverage:.0%} "
+            f"({old_pages} pages) to {new_coverage:.0%} ({new_pages} pages) between "
+            "scans -- investigate whether protection was weakened, removed, or "
+            f"reconfigured, rather than treating a quieter scan as good news.{caveat}"
         ),
-        "evidence": f"older={old_coverage:.4f} newer={new_coverage:.4f} drop={drop:.4f}",
+        "evidence": (
+            f"older={old_coverage:.4f} ({old_pages} pages) "
+            f"newer={new_coverage:.4f} ({new_pages} pages) drop={drop:.4f}"
+        ),
+        "page_count_mismatch": page_count_mismatch,
     }

@@ -357,6 +357,35 @@ def test_render_markdown_escapes_hostile_html_in_free_text_fields():
     assert "&lt;script&gt;" in md
 
 
+def test_render_markdown_neutralizes_backtick_code_span_breakout():
+    # Regression test: a backtick in url/evidence/id must not be able to
+    # prematurely close the single-backtick code span it's placed in --
+    # html.escape() alone doesn't touch backticks, so this needed a
+    # separate fix (_md_inline_code_safe) on top of the HTML-escaping.
+    breakout = "http://x/a`) malicious markdown **injected** [link](http://evil)"
+    doc = {
+        "target": "http://x",
+        "findings": [
+            {
+                "id": "missing-hsts",
+                "severity": "medium",
+                "category": "header",
+                "url": breakout,
+                "description": "d",
+                "evidence": "e`vil",
+            }
+        ],
+    }
+    md = render_markdown(doc)
+    # The URL line's code span must still be intact -- a backtick from
+    # the payload should never appear as a literal, unescaped backtick
+    # inside the rendered markdown.
+    url_line = next(ln for ln in md.splitlines() if ln.startswith("- URL:"))
+    assert url_line.count("`") == 2  # opening + closing span only
+    evidence_line = next(ln for ln in md.splitlines() if ln.startswith("- Evidence:"))
+    assert evidence_line.count("`") == 2
+
+
 def test_render_csv_neutralizes_formula_injection():
     # Regression test for a real bug the adversarial self-scan found:
     # a cell value starting with =, +, -, or @ is interpreted as a

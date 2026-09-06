@@ -186,6 +186,30 @@ def test_scan_route_static_mode_does_not_require_policy(monkeypatch):
     assert doc["target"] == "http://127.0.0.1:1"
 
 
+def test_check_idor_passes_through_identity_markers(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    captured = {}
+
+    def fake_authz_diff_run(doc, **kwargs):
+        captured.update(kwargs)
+        return {"target": doc.get("target", ""), "findings": []}
+
+    monkeypatch.setattr("shroodler.authz_diff.run", fake_authz_diff_run)
+    higher_doc = {"target": "http://127.0.0.1:1", "pages": []}
+    check_idor(
+        {
+            "higher_priv_crawl": higher_doc,
+            "allow_without_policy": True,
+            "higher_priv_identity_markers": ["victim@example.com"],
+            "lower_priv_identity_markers": ["me@example.com"],
+            "require_identity_confirmation": True,
+        }
+    )
+    assert captured["higher_priv_identity_markers"] == ["victim@example.com"]
+    assert captured["lower_priv_identity_markers"] == ["me@example.com"]
+    assert captured["require_identity_confirmation"] is True
+
+
 def test_project_root_uses_env_override(tmp_path, monkeypatch):
     monkeypatch.setenv("SHROODLER_MCP_ROOT", str(tmp_path))
     assert _project_root() == tmp_path.resolve()

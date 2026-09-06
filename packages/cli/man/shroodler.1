@@ -45,6 +45,17 @@ baseline. With
 exits non-zero only on findings not present in the baseline (CI mode);
 without it, also fails on baseline findings that are missing from the
 current scan.
+.BI \-\-source\-root " DIR"
+attributes each new finding (gate mode) to a source file/line by
+grepping route-registration patterns under
+.I DIR
+(Flask/FastAPI/Bottle/Express/Django-style), and if it's a git repo, the
+commit that last touched that line -- printed as "looks introduced by
+routes/export.py:44 (commit ...)" in text output, or as GitHub Actions
+.B ::error
+annotations with
+.B \-\-format github\-annotations .
+Heuristic/best-effort, not a real router analysis.
 .TP
 .B report \fIFINDINGS\fR
 Render a findings JSON document as
@@ -118,6 +129,25 @@ denied. Accepts the same
 guardrail flags as
 .B payload
 (this replays real requests too).
+.RS
+.TP
+.BI \-\-higher\-priv\-marker " STRING"
+A string uniquely identifying the higher-privilege account's own data
+(an email, username, or record value only it should see; repeatable).
+If the lower-priv session's response contains it, the lead is upgraded
+to confidence=confirmed instead of merely "reachable".
+.TP
+.BI \-\-lower\-priv\-marker " STRING"
+A string identifying the lower-priv account's own data (repeatable), to
+rule out a
+.B \-\-higher\-priv\-marker
+match that's coincidentally also the requester's own identity.
+.TP
+.B \-\-require\-identity\-confirmation
+Drop a lead entirely instead of reporting it at lower confidence when no
+.B \-\-higher\-priv\-marker
+was found in the response.
+.RE
 .TP
 .B proxy \fIARGS...\fR
 Forward arguments to the

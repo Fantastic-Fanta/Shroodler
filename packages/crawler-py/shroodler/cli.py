@@ -153,6 +153,19 @@ def _warn_expired_suppressions(rules: list[dict]) -> None:
         )
 
 
+def _attribute_new_findings(new_findings: list[dict], source_root: str) -> dict[tuple, dict]:
+    from shroodler.code_attribution import attribute_finding
+    from shroodler.diffcmd import finding_key
+
+    root = Path(source_root)
+    out = {}
+    for f in new_findings:
+        attribution = attribute_finding(root, f.get("url", ""))
+        if attribution is not None:
+            out[finding_key(f)] = attribution
+    return out
+
+
 def cmd_diff(args: argparse.Namespace) -> int:
     actual = load_json(args.findings)
     expected = load_json(args.expected)
@@ -165,6 +178,9 @@ def cmd_diff(args: argparse.Namespace) -> int:
         gate=bool(getattr(args, "gate", False)),
         suppressions=rules,
     )
+    source_root = getattr(args, "source_root", None)
+    attributions = _attribute_new_findings(outcome.new_findings, source_root) if source_root else {}
+
     fmt = getattr(args, "format", "text") or "text"
     output = getattr(args, "output", None)
     if fmt in {"junit", "sarif"}:
@@ -177,11 +193,49 @@ def cmd_diff(args: argparse.Namespace) -> int:
         )
         _write(text, output)
         return 1 if outcome.errors else 0
+    if fmt == "github-annotations":
+        from shroodler.diffcmd import finding_key
+
+        lines = []
+        for f in outcome.new_findings:
+            attribution = attributions.get(finding_key(f))
+            desc = f.get("description") or f.get("id", "")
+            if attribution:
+                lines.append(
+                    f"::error file={attribution['file']},line={attribution['line']}::"
+                    f"{f.get('id')} at {f.get('url')} -- {desc} "
+                    f"(commit {attribution.get('commit', '?')})"
+                )
+            else:
+                lines.append(f"::error::{f.get('id')} at {f.get('url')} -- {desc}")
+        for err in outcome.errors:
+            if not err.startswith("new finding"):
+                lines.append(f"::error::{err}")
+        text = "\n".join(lines) + ("\n" if lines else "")
+        _write(text, output)
+        return 1 if outcome.errors else 0
     for line in outcome.resolved:
         print(line)
     if outcome.errors:
+        from shroodler.diffcmd import finding_key
+
         for err in outcome.errors:
             print(err, file=sys.stderr)
+        for f in outcome.new_findings:
+            attribution = attributions.get(finding_key(f))
+            if attribution:
+                where = f"{attribution['file']}:{attribution['line']}"
+                commit_note = ""
+                if "commit" in attribution:
+                    commit_note = (
+                        f" (commit {attribution['commit']} by "
+                        f"{attribution['author']} on {attribution['date']})"
+                    )
+                msg = (
+                    f"  -> {f.get('id')} at {f.get('url')} "
+                    f"looks introduced by {where}{commit_note}"
+                )
+                print(msg, file=sys.stderr)
         return 1
     print("diff ok")
     return 0
@@ -278,6 +332,9 @@ def cmd_authz_diff(args: argparse.Namespace) -> int:
         check_anonymous=not bool(getattr(args, "no_anon_check", False)),
         allow_external=bool(getattr(args, "allow_external", False)),
         enforcer=enforcer,
+        higher_priv_identity_markers=list(getattr(args, "higher_priv_marker", None) or []),
+        lower_priv_identity_markers=list(getattr(args, "lower_priv_marker", None) or []),
+        require_identity_confirmation=bool(getattr(args, "require_identity_confirmation", False)),
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -724,8 +781,18 @@ def build_parser() -> argparse.ArgumentParser:
         "expired, since the finding it hid is now enforced again. Optional 'owner' is "
         "carried through for humans/tooling; this command doesn't use it.",
     )
-    diff.add_argument("--format", choices=["text", "junit", "sarif"], default="text")
+    diff.add_argument(
+        "--format", choices=["text", "junit", "sarif", "github-annotations"], default="text"
+    )
     diff.add_argument("--output", "-o")
+    diff.add_argument(
+        "--source-root",
+        metavar="DIR",
+        help="Attribute each new (--gate) finding's URL to a source file/line by grepping "
+        "route-registration patterns under this directory, and (if it's a git repo) the "
+        "commit that last touched that line -- 'this finding looks introduced by "
+        "routes/export.py:44'. Best-effort/heuristic, not a real router analysis.",
+    )
     diff.set_defaults(func=cmd_diff)
 
     report = sub.add_parser(
@@ -906,6 +973,31 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="Append a JSONL audit trail of every active request the guardrail "
         "allowed or blocked.",
+    )
+    authz.add_argument(
+        "--higher-priv-marker",
+        action="append",
+        default=[],
+        metavar="STRING",
+        help="A string that uniquely identifies the higher-privilege account's own "
+        "data (an email, username, or record value only it should see). If the "
+        "lower-priv session's response contains it, the lead is upgraded to "
+        "confidence=confirmed instead of just 'reachable' (repeatable).",
+    )
+    authz.add_argument(
+        "--lower-priv-marker",
+        action="append",
+        default=[],
+        metavar="STRING",
+        help="A string identifying the LOWER-priv account's own data, to rule out a "
+        "--higher-priv-marker match that's coincidentally also the requester's own "
+        "identity rather than the other account's (repeatable).",
+    )
+    authz.add_argument(
+        "--require-identity-confirmation",
+        action="store_true",
+        help="Drop a lead entirely instead of reporting it at lower confidence when "
+        "no --higher-priv-marker was found in the response.",
     )
     authz.set_defaults(func=cmd_authz_diff)
 

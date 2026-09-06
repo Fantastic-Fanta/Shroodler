@@ -12,6 +12,11 @@ from shroodler.suppress import path_of as _path
 class DiffOutcome:
     errors: list[str] = field(default_factory=list)
     resolved: list[str] = field(default_factory=list)
+    # The raw finding dicts behind each "new finding" error line (gate
+    # mode only) -- kept alongside the formatted error strings so a
+    # caller can look up code attribution (URL -> source file/line)
+    # without parsing it back out of "new finding {id} at {url}" text.
+    new_findings: list[dict] = field(default_factory=list)
 
     def failing(self) -> list[str]:
         return self.errors
@@ -66,6 +71,7 @@ def diff_outcome(
             key = finding_key(f)
             if key not in expected_keys:
                 out.errors.append(f"new finding {key[0]} at {key[1]}")
+                out.new_findings.append(f)
         return out
 
     expected_forms = expected.get("expected_forms", {})

@@ -183,6 +183,14 @@ def check_idor(args: dict) -> dict:
     other autonomously-triggerable active-testing tool on this surface,
     and it doesn't get a free pass just because its requests are GETs
     rather than payload sends.
+
+    Pass `higher_priv_identity_markers` (strings only the higher-priv
+    account's own data should contain -- an email, username, or record
+    value) so a lead where the lower-priv response actually contains one
+    is upgraded to confidence="confirmed" instead of just "reachable";
+    an agent that already knows both test accounts' identities can
+    supply these directly. `require_identity_confirmation: true` drops
+    an unconfirmed lead instead of reporting it.
     """
     from shroodler.authz_diff import run as authz_diff_run
 
@@ -196,6 +204,9 @@ def check_idor(args: dict) -> dict:
         check_anonymous=bool(args.get("check_anonymous", True)),
         allow_external=bool(args.get("allow_external", False)),
         enforcer=enforcer,
+        higher_priv_identity_markers=list(args.get("higher_priv_identity_markers") or []),
+        lower_priv_identity_markers=list(args.get("lower_priv_identity_markers") or []),
+        require_identity_confirmation=bool(args.get("require_identity_confirmation", False)),
     )
 
 
@@ -296,6 +307,24 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "allow_without_policy": {"type": "boolean", "default": False},
                 "policy_file": {"type": "string"},
                 "audit_log": {"type": "string"},
+                "higher_priv_identity_markers": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Strings uniquely identifying the higher-priv account's "
+                    "own data; a match in the lower-priv response upgrades the lead to "
+                    "confidence=confirmed",
+                },
+                "lower_priv_identity_markers": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Strings identifying the lower-priv account's own data, "
+                    "to rule out a coincidental higher_priv_identity_markers match",
+                },
+                "require_identity_confirmation": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Drop a lead entirely instead of reporting it unconfirmed",
+                },
             },
             "required": ["higher_priv_crawl"],
         },

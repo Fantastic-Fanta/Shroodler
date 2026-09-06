@@ -11,7 +11,6 @@ By default everything only touches local targets (127.0.0.1/localhost); pass
 - [Quickstart](docs/quickstart.md)
 - [Features](docs/features.md)
 - [Command line reference](docs/cli-reference.md)
-- [Bug bounty playbook](docs/bug-bounty-playbook.md)
 - [Changelog](CHANGELOG.md)
 
 ## License

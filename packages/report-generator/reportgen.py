@@ -84,6 +84,25 @@ def render_html(doc: dict) -> str:
     )
 
 
+_CSV_FORMULA_TRIGGERS = ("=", "+", "-", "@")
+
+
+def _csv_safe(value: str) -> str:
+    """Neutralize CSV/"formula" injection: Excel/Sheets treats a cell
+    value starting with =, +, -, or @ as a formula to evaluate when the
+    file is opened, which can execute attacker-controlled content --
+    here, content sourced from the SCANNED TARGET's own responses (a
+    crawled URL, a reflected value ending up in `description`/`evidence`).
+    Prefixing with a single-quote is the standard mitigation (OWASP CSV
+    Injection guidance): most spreadsheet apps treat a leading `'` as
+    "the rest of this is plain text", so the formula never evaluates.
+    """
+    text = str(value)
+    if text.startswith(_CSV_FORMULA_TRIGGERS):
+        return "'" + text
+    return text
+
+
 def render_csv(doc: dict) -> str:
     buf = io.StringIO()
     writer = csv.DictWriter(
@@ -110,9 +129,9 @@ def render_csv(doc: dict) -> str:
                 "severity": f.get("severity", ""),
                 "id": f.get("id", ""),
                 "category": f.get("category", ""),
-                "url": f.get("url", ""),
-                "description": f.get("description", ""),
-                "evidence": f.get("evidence") or "",
+                "url": _csv_safe(f.get("url", "")),
+                "description": _csv_safe(f.get("description", "")),
+                "evidence": _csv_safe(f.get("evidence") or ""),
                 "confidence": f.get("confidence") or "",
                 "cost_of_attack": f.get("cost_of_attack")
                 or cost_of_attack_for(f.get("id", ""), f.get("category", "")),
@@ -324,15 +343,27 @@ def render_markdown(doc: dict) -> str:
         lines.append("")
         for f in rows:
             fid = f.get("id") or "finding"
-            url = f.get("url") or ""
-            desc = f.get("description") or ""
+            # url/description/evidence are free text sourced from the
+            # SCANNED TARGET's own responses (a crawled URL, a reflected
+            # value) -- HTML-escaped before interpolation because a
+            # Markdown report is commonly rendered as rich text
+            # downstream (GitHub, a chat client, an editor preview), and
+            # CommonMark passes raw inline HTML straight through by
+            # design. Without this, a target that reflects
+            # "<script>...</script>" into a crawled page turns this
+            # report into a stored-XSS delivery vector wherever it's
+            # rendered. `code_of_attack`/severity/id-derived cost/
+            # remediation text is not escaped since none of it is
+            # target-controlled.
+            url = html.escape(f.get("url") or "")
+            desc = html.escape(f.get("description") or "")
             lines.append(f"### `{fid}`")
             lines.append("")
             lines.append(f"- URL: `{url}`")
             lines.append(f"- Description: {desc}")
             ev = format_evidence(f.get("evidence"))
             if ev:
-                lines.append(f"- Evidence: `{ev}`")
+                lines.append(f"- Evidence: `{html.escape(ev)}`")
             confidence = f.get("confidence")
             if confidence:
                 lines.append(f"- Confidence: {confidence}")

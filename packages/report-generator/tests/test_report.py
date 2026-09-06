@@ -329,3 +329,54 @@ def test_markdown_redacts_and_truncates_evidence():
     )
     assert verbose_line.endswith("…`") or "…" in verbose_line
     assert len(verbose_line) < 120
+
+
+def test_render_markdown_escapes_hostile_html_in_free_text_fields():
+    # Regression test for a real bug the adversarial self-scan found:
+    # description/url/evidence are sourced from the scanned TARGET's own
+    # responses, and markdown reports are commonly rendered as rich text
+    # downstream (GitHub, chat clients) where CommonMark passes raw
+    # inline HTML straight through -- a hostile payload must not survive
+    # verbatim into the output.
+    payload = "<script>alert('xss')</script>"
+    doc = {
+        "target": "http://x",
+        "findings": [
+            {
+                "id": "missing-hsts",
+                "severity": "medium",
+                "category": "header",
+                "url": f"http://x/{payload}",
+                "description": f"reflected: {payload}",
+                "evidence": payload,
+            }
+        ],
+    }
+    md = render_markdown(doc)
+    assert payload not in md
+    assert "&lt;script&gt;" in md
+
+
+def test_render_csv_neutralizes_formula_injection():
+    # Regression test for a real bug the adversarial self-scan found:
+    # a cell value starting with =, +, -, or @ is interpreted as a
+    # formula by Excel/Sheets -- content sourced from the scanned
+    # target must be neutralized (OWASP CSV Injection guidance: a
+    # leading apostrophe) before being written.
+    doc = {
+        "target": "http://x",
+        "findings": [
+            {
+                "id": "missing-hsts",
+                "severity": "medium",
+                "category": "header",
+                "url": "http://x/a",
+                "description": "=cmd|'/c calc'!A1",
+                "evidence": "+SUM(1+1)",
+            }
+        ],
+    }
+    text = render_csv(doc)
+    rows = list(csv.DictReader(io.StringIO(text)))
+    assert rows[0]["description"] == "'=cmd|'/c calc'!A1"
+    assert rows[0]["evidence"] == "'+SUM(1+1)"

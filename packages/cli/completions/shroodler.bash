@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress reverify gen-regression-test version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress reverify gen-regression-test attack-path self-scan version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -43,7 +43,7 @@ _shroodler_flags_for() {
             echo "--target --format --history-dir"
             ;;
         trend)
-            echo "--format --output --history-dir --gate-on-severity-increase"
+            echo "--format --output --history-dir --suppressions --gate-on-severity-increase --gate-on-waf-coverage-drop --waf-drop-threshold"
             ;;
         ask)
             echo "--since"
@@ -68,6 +68,12 @@ _shroodler_flags_for() {
             ;;
         gen-regression-test)
             echo "--mode --allow-external --no-payloads --output --force"
+            ;;
+        attack-path)
+            echo "--format --output"
+            ;;
+        self-scan)
+            echo "--format --output"
             ;;
         *)
             echo ""
@@ -146,8 +152,11 @@ _shroodler_complete() {
                 crawl) COMPREPLY=($(compgen -W "json html csv sarif junit" -- "$cur")) ;;
                 diff) COMPREPLY=($(compgen -W "text junit sarif github-annotations" -- "$cur")) ;;
                 report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown" -- "$cur")) ;;
-                history-list|trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
+                history-list) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
+                trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 suppress-expiring) COMPREPLY=($(compgen -W "text json github-pr-body" -- "$cur")) ;;
+                attack-path) COMPREPLY=($(compgen -W "json markdown" -- "$cur")) ;;
+                self-scan) COMPREPLY=($(compgen -W "html csv sarif junit markdown" -- "$cur")) ;;
             esac
             return
             ;;

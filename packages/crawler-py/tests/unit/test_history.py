@@ -210,3 +210,83 @@ def test_trend_diff_unrecognized_severity_does_not_fabricate_an_increase():
     older2 = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "critical"}])
     newer2 = _doc("http://x/", [{"id": "a", "url": "http://x/", "severity": "Weird"}])
     assert trend_diff(older2, newer2)["severity_increased"] == []
+
+
+def _doc_with_pages(target: str, pages: list[str], challenged: list[str]) -> dict:
+    return {
+        "target": target,
+        "scan_finished_at": "2026-01-01T00:00:00Z",
+        "pages": [{"url": u} for u in pages],
+        "findings": [
+            {
+                "id": "waf-challenge-detected",
+                "severity": "info",
+                "category": "waf-challenge",
+                "url": u,
+                "description": "d",
+                "evidence": None,
+            }
+            for u in challenged
+        ],
+    }
+
+
+def test_cli_trend_gate_on_waf_coverage_drop(tmp_path):
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    pages = ["http://x/a", "http://x/b"]
+    older = _doc_with_pages("http://x/", pages, pages)  # 100% coverage
+    newer = _doc_with_pages("http://x/", pages, [])  # 0% coverage
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--gate-on-waf-coverage-drop",
+            ]
+        )
+    assert ex.value.code == 1
+
+
+def test_cli_trend_json_includes_waf_coverage_regression_key(tmp_path, capsys):
+    import json
+
+    import pytest
+
+    from shroodler.cli import main
+
+    hdir = tmp_path / "hist"
+    pages = ["http://x/a", "http://x/b"]
+    older = _doc_with_pages("http://x/", pages, pages)
+    newer = _doc_with_pages("http://x/", pages, pages)  # no drop
+    older_path = tmp_path / "older.json"
+    newer_path = tmp_path / "newer.json"
+    older_path.write_text(json.dumps(older), encoding="utf-8")
+    newer_path.write_text(json.dumps(newer), encoding="utf-8")
+    with pytest.raises(SystemExit) as ex:
+        main(
+            [
+                "trend",
+                str(older_path),
+                str(newer_path),
+                "--history-dir",
+                str(hdir),
+                "--format",
+                "json",
+            ]
+        )
+    assert ex.value.code == 0
+    out = json.loads(capsys.readouterr().out)
+    assert out["waf_coverage_regression"] is None

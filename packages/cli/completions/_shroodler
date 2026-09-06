@@ -29,6 +29,8 @@ _shroodler_commands=(
   'suppress:Work with suppression rules beyond diff/report/baseline'
   'reverify:Re-scan a route and check if a finding is now gone'
   'gen-regression-test:Generate a pytest test from a confirmed-fixed finding'
+  'attack-path:Correlate findings with reachability + weak-token context'
+  'self-scan:Fuzz the tool'"'"'s own report renderers with hostile content'
   'version:Print version'
 )
 
@@ -142,7 +144,10 @@ _shroodler() {
             '--format[Output format]:(text json)' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--history-dir[Override history directory]:dir:_files -/' \
+            '--suppressions[Suppression rules file]:file:_files' \
             '--gate-on-severity-increase[Exit 1 if a same-key finding got a worse severity]' \
+            '--gate-on-waf-coverage-drop[Exit 1 if WAF challenge coverage dropped significantly]' \
+            '--waf-drop-threshold[Minimum coverage drop to count as a regression]:fraction' \
             '1:older scan id or file' \
             '2:newer scan id or file'
           ;;
@@ -194,6 +199,17 @@ _shroodler() {
             '--force[Generate even if reverify returned a warning]' \
             '1:url' \
             '2:finding id'
+          ;;
+        attack-path)
+          _arguments \
+            '--format[Output format]:(json markdown)' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '1:findings json:_files'
+          ;;
+        self-scan)
+          _arguments \
+            '*--format[Limit to specific format(s)]:(html csv sarif junit markdown)' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files'
           ;;
       esac
       ;;

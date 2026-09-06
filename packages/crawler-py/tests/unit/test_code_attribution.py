@@ -104,12 +104,13 @@ def test_source_index_only_reads_files_once(flask_repo, monkeypatch):
 
 
 def test_attribute_findings_batches_multiple_urls_with_one_index(flask_repo):
-    results = attribute_findings(
+    batch = attribute_findings(
         flask_repo,
         ["http://x/export", "http://x/users/42", "http://x/nope"],
     )
-    assert set(results) == {"http://x/export", "http://x/users/42"}
-    assert results["http://x/export"]["file"] == "app.py"
+    assert set(batch.by_url) == {"http://x/export", "http://x/users/42"}
+    assert batch.by_url["http://x/export"]["file"] == "app.py"
+    assert batch.exhausted is False
 
 
 def test_oversized_file_is_skipped(tmp_path):
@@ -132,3 +133,21 @@ def test_aggregate_byte_budget_stops_indexing_further_files(tmp_path, monkeypatc
     # At least the first file made it in; the aggregate cap must have
     # stopped the walk before both were indexed.
     assert 0 < len(loaded) < 2
+    assert index.exhausted is True
+
+
+def test_exhausted_flag_propagates_through_attribute_findings(tmp_path, monkeypatch):
+    import shroodler.code_attribution as mod
+
+    monkeypatch.setattr(mod, "_MAX_TOTAL_INDEX_BYTES", 10)
+    (tmp_path / "a.py").write_text("@app.route('/first')\n" * 5, encoding="utf-8")
+    (tmp_path / "b.py").write_text("@app.route('/second')\n" * 5, encoding="utf-8")
+
+    batch = attribute_findings(tmp_path, ["http://x/first", "http://x/second"])
+    assert batch.exhausted is True
+
+
+def test_not_exhausted_when_everything_fits(flask_repo):
+    index = SourceIndex(flask_repo)
+    index.find("/export")
+    assert index.exhausted is False

@@ -188,6 +188,48 @@ def test_cmd_diff_gate_with_source_root_prints_attribution(tmp_path, capsys):
     assert "app.py:1" in err
 
 
+def test_cmd_diff_notes_when_attribution_budget_exhausted(tmp_path, monkeypatch, capsys):
+    (tmp_path / "app.py").write_text("x = 1\n", encoding="utf-8")
+
+    actual = tmp_path / "a.json"
+    expected = tmp_path / "e.json"
+    actual.write_text(
+        json.dumps(
+            {
+                "pages": [],
+                "findings": [
+                    {
+                        "id": "payload-sql-error",
+                        "severity": "high",
+                        "category": "payload",
+                        "url": "http://x/export",
+                        "description": "d",
+                        "evidence": "e",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    expected.write_text(json.dumps({"expected_findings": []}), encoding="utf-8")
+
+    from shroodler.code_attribution import AttributionBatch
+
+    monkeypatch.setattr(
+        "shroodler.code_attribution.attribute_findings",
+        lambda *_a, **_k: AttributionBatch(by_url={}, exhausted=True),
+    )
+    ns = argparse.Namespace(
+        findings=str(actual),
+        expected=str(expected),
+        pages_only=False,
+        gate=True,
+        source_root=str(tmp_path),
+    )
+    assert cmd_diff(ns) == 1
+    assert "budget" in capsys.readouterr().err
+
+
 def test_cmd_diff_warns_on_expired_suppression(tmp_path, capsys):
     actual = tmp_path / "a.json"
     expected = tmp_path / "e.json"

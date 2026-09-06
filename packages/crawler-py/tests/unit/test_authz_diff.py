@@ -84,6 +84,28 @@ def test_identity_marker_upgrades_confidence_to_confirmed(fx):
     assert "victim@example.com" in finding["description"]
 
 
+def test_marker_never_confirms_when_anon_check_disabled(fx):
+    # Without an anonymous control response to cross-check against, a
+    # marker must never confirm a lead -- even a genuinely unique one --
+    # so results stay reproducible regardless of whether check_anonymous
+    # happens to run on a given call.
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b'{"owner_email": "victim@example.com"}'),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        check_anonymous=False,
+        higher_priv_identity_markers=["victim@example.com"],
+    )
+    finding = out["findings"][0]
+    assert finding["id"] == "authz-still-accessible"
+    assert "confidence" not in finding
+
+
 def test_short_degenerate_marker_is_ignored(fx):
     # A short/common marker ("admin") would coincidentally match almost
     # any page -- must not silently upgrade every lead to "confirmed".

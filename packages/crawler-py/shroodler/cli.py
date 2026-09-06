@@ -153,7 +153,7 @@ def _warn_expired_suppressions(rules: list[dict]) -> None:
         )
 
 
-def _attribute_new_findings(new_findings: list[dict], source_root: str) -> dict[tuple, dict]:
+def _attribute_new_findings(new_findings: list[dict], source_root: str) -> tuple[dict, bool]:
     from shroodler.code_attribution import attribute_findings
     from shroodler.diffcmd import finding_key
 
@@ -162,12 +162,13 @@ def _attribute_new_findings(new_findings: list[dict], source_root: str) -> dict[
     # not one per finding -- a --gate run with many new findings against
     # a large repo would otherwise re-walk and re-read the whole tree
     # once per finding.
-    by_url = attribute_findings(root, [f.get("url", "") for f in new_findings])
-    return {
-        finding_key(f): by_url[f.get("url", "")]
+    batch = attribute_findings(root, [f.get("url", "") for f in new_findings])
+    attributions = {
+        finding_key(f): batch.by_url[f.get("url", "")]
         for f in new_findings
-        if f.get("url", "") in by_url
+        if f.get("url", "") in batch.by_url
     }
+    return attributions, batch.exhausted
 
 
 def cmd_diff(args: argparse.Namespace) -> int:
@@ -183,7 +184,12 @@ def cmd_diff(args: argparse.Namespace) -> int:
         suppressions=rules,
     )
     source_root = getattr(args, "source_root", None)
-    attributions = _attribute_new_findings(outcome.new_findings, source_root) if source_root else {}
+    attributions: dict = {}
+    attribution_exhausted = False
+    if source_root:
+        attributions, attribution_exhausted = _attribute_new_findings(
+            outcome.new_findings, source_root
+        )
 
     fmt = getattr(args, "format", "text") or "text"
     output = getattr(args, "output", None)
@@ -215,6 +221,12 @@ def cmd_diff(args: argparse.Namespace) -> int:
         for err in outcome.errors:
             if not err.startswith("new finding"):
                 lines.append(f"::error::{err}")
+        if attribution_exhausted:
+            lines.append(
+                "::warning::--source-root attribution hit its file-count/memory "
+                "budget before finishing -- some findings above may be unattributed "
+                "only because the walk was cut short"
+            )
         text = "\n".join(lines) + ("\n" if lines else "")
         _write(text, output)
         return 1 if outcome.errors else 0
@@ -240,6 +252,13 @@ def cmd_diff(args: argparse.Namespace) -> int:
                     f"looks introduced by {where}{commit_note}"
                 )
                 print(msg, file=sys.stderr)
+        if attribution_exhausted:
+            print(
+                "note: --source-root attribution hit its file-count/memory budget "
+                "before finishing -- some findings above may be unattributed only "
+                "because the walk was cut short, not because no route source exists",
+                file=sys.stderr,
+            )
         return 1
     print("diff ok")
     return 0

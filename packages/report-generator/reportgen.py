@@ -265,11 +265,18 @@ def render_markdown(doc: dict) -> str:
     risk = compute_risk_score(group_findings(findings))
     counts = risk["severity_counts"]
     risk_line = (
-        f"**Risk score: {risk['score']}/100 ({risk['grade']})** -- "
+        f"**Grade: {risk['grade']}** ({risk['score']} risk points) -- "
         f"{counts['critical']} critical, {counts['high']} high, {counts['medium']} medium, "
         f"{counts['low']} low, {counts['info']} info "
-        "(by distinct finding type, not raw per-page instance count)"
+        "(by distinct finding type, not raw per-page instance count; floored by the "
+        "single worst severity present)"
     )
+    if risk["partial_coverage"]:
+        risk_line += (
+            ". **This scan reports it could not fully test the target** (a WAF "
+            "challenge, a skipped probe, or a truncated redirect chain appears below) "
+            "-- treat this grade as a lower bound, not a clean bill of health"
+        )
     lines = [
         "# Shroodler report",
         "",

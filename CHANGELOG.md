@@ -7,6 +7,35 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fixes from a pentester review of the executive-summary risk score --
+  the two real ones were both genuinely misleading, not stylistic.**
+  - **A single critical finding could grade the same "B" as a pile of
+    unrelated mediums/lows.** `jwt-weak-secret` (full auth bypass: forge
+    any user's token) scored 20 points, same band as e.g. 5 low-severity
+    notes -- both landed on the same blue "B" badge. The grade is now
+    floored by the single worst severity present (critical -> at worst
+    F, high -> at worst D, medium -> at worst C), so volume of minor
+    findings can never outrank the presence of one severe one.
+  - **An unrecognized severity string was silently invisible.** A typo,
+    a hand-edited findings file, or a future new severity level created
+    an extra key in `severity_counts` that the template never reads --
+    a report could show "4 findings" directly above "0 critical, 0
+    high, 0 medium, 0 low, 0 info". Unrecognized severities are now
+    bucketed into "medium" (counted, and still trips the severity
+    floor) instead of vanishing.
+  - **Added a `partial_coverage` flag and caveat** for when the scan
+    itself reports it couldn't fully test the target (a WAF challenge,
+    a skipped probe, a truncated redirect chain) -- a clean grade on a
+    scan that was blocked out of half its checks was the most expensive
+    possible misread this feature could cause, and the original version
+    never said so.
+  - **Reworded away from "Score N/100"**, which reads on a universal
+    "higher is better" convention exactly backwards from what the grade
+    means -- now "Grade: X (N risk points)".
+  - Test suite now pins exact grades (not membership checks like
+    `grade in {"C","D","F"}`) and adds the boundary cases the fixes
+    above required: a single critical, an unrecognized severity string,
+    and the partial-coverage flag.
 - **Executive-summary risk score (0-100, A-F) in HTML and Markdown
   reports** (`packages/report-generator/risk_score.py`). Weighted by
   DISTINCT finding id per severity (critical=20, high=10, medium=4,

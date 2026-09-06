@@ -173,7 +173,8 @@
             "payload",
             "scan-note",
             "auth",
-            "waf-challenge"
+            "waf-challenge",
+            "subresource"
           ]
         },
         "url": { "type": "string", "minLength": 1 },

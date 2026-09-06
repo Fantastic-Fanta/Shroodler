@@ -27,6 +27,7 @@ def test_finding_in_both_engines_is_marked_agreed():
         "only_python": 0,
         "only_go": 0,
         "total_distinct": 1,
+        "engine_verification": "unverified",
     }
 
 
@@ -126,4 +127,32 @@ def test_correct_argument_order_is_accepted():
 def test_missing_crawler_metadata_does_not_block_merge():
     py_doc = {"target": "http://x", "findings": []}
     go_doc = {"target": "http://x", "findings": []}
-    merge_engine_results(py_doc, go_doc)  # no raise -- unknown engine name isn't an error
+    merged = merge_engine_results(py_doc, go_doc)  # no raise -- unknown engine name isn't an error
+    # ...but it's not silently treated as verified either.
+    assert merged["engine_agreement"]["engine_verification"] == "unverified"
+
+
+def test_correct_names_are_marked_verified():
+    py_doc = {"target": "http://x", "crawler": {"name": "shroodler-py"}, "findings": []}
+    go_doc = {"target": "http://x", "crawler": {"name": "shroodler-go"}, "findings": []}
+    merged = merge_engine_results(py_doc, go_doc)
+    assert merged["engine_agreement"]["engine_verification"] == "verified"
+
+
+def test_substring_evasion_of_the_old_heuristic_is_no_longer_possible():
+    # A name like "shroodler-go-copy" contains "py" (via "co-py") and
+    # "go" both -- a naive substring check on either side could miss a
+    # real swap. Exact-name comparison against the canonical opposite
+    # name has no such gap: this name isn't literally "shroodler-go" or
+    # "shroodler-py", so it's correctly treated as unrecognized (not
+    # silently trusted as either engine) rather than falsely cleared.
+    py_doc = {"target": "http://x", "crawler": {"name": "shroodler-go-copy"}, "findings": []}
+    go_doc = {"target": "http://x", "crawler": {"name": "shroodler-go"}, "findings": []}
+    merged = merge_engine_results(py_doc, go_doc)  # not literally "shroodler-go" -> no raise
+    assert merged["engine_agreement"]["engine_verification"] == "unverified"
+
+    # But an ACTUAL swap using the exact canonical names is still caught.
+    swapped_py = {"target": "http://x", "crawler": {"name": "shroodler-go"}, "findings": []}
+    swapped_go = {"target": "http://x", "crawler": {"name": "shroodler-py"}, "findings": []}
+    with pytest.raises(EngineOrderError):
+        merge_engine_results(swapped_py, swapped_go)

@@ -78,8 +78,9 @@ _shroodler() {
             '--pages-only[Only compare page coverage]' \
             '--gate[CI mode: fail on new findings]' \
             '--suppressions[Suppression rules file]:file:_files' \
-            '--format[Output format]:(text junit sarif)' \
+            '--format[Output format]:(text junit sarif github-annotations)' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--source-root[Attribute new findings to source file/line under this dir]:dir:_files -/' \
             '1:findings json:_files' \
             '2:expected json:_files'
           ;;
@@ -125,6 +126,9 @@ _shroodler() {
             '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
             '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
             '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
+            '*--higher-priv-marker[Higher-priv identity string; a match confirms the lead]:string' \
+            '*--lower-priv-marker[Lower-priv identity string, rules out coincidental matches]:string' \
+            '--require-identity-confirmation[Drop unconfirmed leads instead of reporting them]' \
             '1:higher-priv crawl json:_files'
           ;;
         history)

@@ -136,6 +136,58 @@ def test_cmd_diff_ok_and_fail(tmp_path):
     assert cmd_diff(ns) == 1
 
 
+def test_cmd_diff_gate_with_source_root_prints_attribution(tmp_path, capsys):
+    import subprocess
+
+    (tmp_path / "app.py").write_text(
+        "@app.route('/export')\ndef export(): pass\n", encoding="utf-8"
+    )
+    subprocess.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+    subprocess.run(
+        ["git", "-c", "user.email=t@x", "-c", "user.name=T", "add", "app.py"],
+        cwd=tmp_path,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "-c", "user.email=t@x", "-c", "user.name=T", "commit", "-q", "-m", "x"],
+        cwd=tmp_path,
+        check=True,
+    )
+
+    actual = tmp_path / "a.json"
+    expected = tmp_path / "e.json"
+    actual.write_text(
+        json.dumps(
+            {
+                "pages": [],
+                "findings": [
+                    {
+                        "id": "payload-sql-error",
+                        "severity": "high",
+                        "category": "payload",
+                        "url": "http://x/export",
+                        "description": "d",
+                        "evidence": "e",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    expected.write_text(json.dumps({"expected_findings": []}), encoding="utf-8")
+
+    ns = argparse.Namespace(
+        findings=str(actual),
+        expected=str(expected),
+        pages_only=False,
+        gate=True,
+        source_root=str(tmp_path),
+    )
+    assert cmd_diff(ns) == 1
+    err = capsys.readouterr().err
+    assert "app.py:1" in err
+
+
 def test_cmd_diff_warns_on_expired_suppression(tmp_path, capsys):
     actual = tmp_path / "a.json"
     expected = tmp_path / "e.json"

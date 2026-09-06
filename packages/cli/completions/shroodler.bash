@@ -19,7 +19,7 @@ _shroodler_flags_for() {
             echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --seed-from --cookies-from"
             ;;
         diff)
-            echo "--pages-only --gate --suppressions --format --output"
+            echo "--pages-only --gate --suppressions --format --output --source-root"
             ;;
         report)
             echo "--format --output --suppressions"
@@ -34,7 +34,7 @@ _shroodler_flags_for() {
             echo "--output --pack --allow-external --oob-host --require-policy --policy-file --audit-log"
             ;;
         authz-diff)
-            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log"
+            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation"
             ;;
         history-record)
             echo "--label --history-dir"
@@ -138,7 +138,7 @@ _shroodler_complete() {
         --format)
             case "$subcmd" in
                 crawl) COMPREPLY=($(compgen -W "json html csv sarif junit" -- "$cur")) ;;
-                diff) COMPREPLY=($(compgen -W "text junit sarif" -- "$cur")) ;;
+                diff) COMPREPLY=($(compgen -W "text junit sarif github-annotations" -- "$cur")) ;;
                 report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown" -- "$cur")) ;;
                 history-list|trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 suppress-expiring) COMPREPLY=($(compgen -W "text json github-pr-body" -- "$cur")) ;;
@@ -153,7 +153,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

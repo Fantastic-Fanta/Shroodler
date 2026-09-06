@@ -27,6 +27,25 @@ def _is_success(status: int) -> bool:
 _LOGIN_REDIRECT_HINTS = ("login", "signin", "sign-in", "log-in", "auth", "session/new")
 
 
+def _confirm_ownership(
+    body: str,
+    *,
+    higher_markers: list[str] | None,
+    lower_markers: list[str] | None,
+) -> str | None:
+    """Returns the specific higher-priv marker found in `body`, or None.
+    A marker that ALSO appears in the lower-priv account's own identity
+    markers is skipped -- that's ambiguous (could be either account's
+    data), not confirmation it's specifically the higher-priv account's."""
+    if not higher_markers:
+        return None
+    lower_set = set(lower_markers or [])
+    for marker in higher_markers:
+        if marker and marker in body and marker not in lower_set:
+            return marker
+    return None
+
+
 def _is_denied(status: int, location: str = "") -> bool:
     """A response counts as "denied" only when it's an explicit 401/403, or
     a redirect that specifically looks like a bounce to a login/auth page.
@@ -53,12 +72,39 @@ def run(
     allow_external: bool = False,
     client: httpx.Client | None = None,
     enforcer=None,
+    higher_priv_identity_markers: list[str] | None = None,
+    lower_priv_identity_markers: list[str] | None = None,
+    require_identity_confirmation: bool = False,
 ) -> dict:
     """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
     consulted before every live request this replay makes (both the
     lower-privilege and the anonymous control request) -- authz-diff fires
     real requests against a real target just like the payload tester does,
     so it is gated by the same scope/rate/blast-radius guardrail.
+
+    This tool's own documented limitation is that it can't prove a
+    reachable URL actually returns someone ELSE's data from a single
+    replay -- it only proves the URL is reachable. `higher_priv_identity_markers`
+    closes that gap when the caller (a human, or an agent that already
+    knows both accounts' identities) supplies strings that uniquely
+    identify the higher-privileged account's own data (an email,
+    username, or record value only that account should see). If the
+    lower-privileged session's response contains one of those markers,
+    the lead is upgraded to `confidence: "confirmed"` -- this is no
+    longer just "reachable", it's "returned the other account's data".
+    `lower_priv_identity_markers` (the lower-priv account's OWN
+    identifying strings) rules out the case where a marker match is
+    coincidental because the response is just echoing the requester's
+    own identity back (e.g. a generic "logged in as: X" banner) rather
+    than the higher-priv account's data.
+
+    With `require_identity_confirmation=True`, a lead that could NOT be
+    confirmed this way is dropped entirely instead of reported at lower
+    confidence -- "confirm or drop", per the caller's explicit choice,
+    since an unconfirmed "reachable" signal may just as easily be a
+    generic/public response as leaked cross-account data. Off by
+    default: without markers, this parameter has no effect and every
+    existing caller's behavior is unchanged.
     """
     target = higher_doc.get("target", "")
     if not allow_external and not is_loopback_or_local(target):
@@ -68,7 +114,7 @@ def run(
         )
     http = client or httpx.Client(timeout=8.0, follow_redirects=False)
     own = client is None
-    findings: list[Finding] = []
+    findings: list[dict] = []
     seen: set[str] = set()
     lower_headers = dict(extra_headers or {})
     if cookie_header:
@@ -104,24 +150,36 @@ def run(
                 if anon_resp is not None and _is_denied(
                     anon_resp.status_code, anon_resp.headers.get("location", "")
                 ):
-                    findings.append(
-                        Finding(
-                            id="authz-broken-access-control",
-                            severity="high",
-                            category="auth",
-                            url=url,
-                            description=(
-                                f"URL discovered under the privileged session is also "
-                                f"reachable (status {lower_resp.status_code}) with the "
-                                f"lower-privilege session, while an anonymous request to "
-                                f"the same URL was denied (status {anon_resp.status_code}) "
-                                "-- this endpoint enforces *some* session but not the "
-                                "*right* one. Verify whether the lower-privilege session "
-                                "should be able to see this resource."
-                            ),
-                            evidence=f"lower={lower_resp.status_code} anon={anon_resp.status_code}",
-                        )
+                    marker = _confirm_ownership(
+                        lower_resp.text,
+                        higher_markers=higher_priv_identity_markers,
+                        lower_markers=lower_priv_identity_markers,
                     )
+                    if require_identity_confirmation and marker is None:
+                        continue
+                    finding = Finding(
+                        id="authz-broken-access-control",
+                        severity="high",
+                        category="auth",
+                        url=url,
+                        description=(
+                            f"URL discovered under the privileged session is also "
+                            f"reachable (status {lower_resp.status_code}) with the "
+                            f"lower-privilege session, while an anonymous request to "
+                            f"the same URL was denied (status {anon_resp.status_code}) "
+                            "-- this endpoint enforces *some* session but not the "
+                            "*right* one. Verify whether the lower-privilege session "
+                            "should be able to see this resource."
+                        ),
+                        evidence=f"lower={lower_resp.status_code} anon={anon_resp.status_code}",
+                    ).model_dump()
+                    if marker is not None:
+                        finding["confidence"] = "confirmed"
+                        finding["description"] += (
+                            f" CONFIRMED: response body contains the higher-privilege "
+                            f"account's own identity marker ({marker!r})."
+                        )
+                    findings.append(finding)
                     continue
                 if anon_resp is not None and _is_success(anon_resp.status_code):
                     # Anonymous access already succeeds -- this resource is
@@ -129,23 +187,35 @@ def run(
                     # too isn't a finding.
                     continue
 
-            findings.append(
-                Finding(
-                    id="authz-still-accessible",
-                    severity="medium",
-                    category="auth",
-                    url=url,
-                    description=(
-                        f"URL discovered under the privileged session was also reachable "
-                        f"(status {lower_resp.status_code}) with the lower-privilege "
-                        "session. Manually verify this is intentionally shared/public "
-                        "access, not an access-control gap."
-                    ),
-                    evidence=f"lower={lower_resp.status_code}",
-                )
+            marker = _confirm_ownership(
+                lower_resp.text,
+                higher_markers=higher_priv_identity_markers,
+                lower_markers=lower_priv_identity_markers,
             )
+            if require_identity_confirmation and marker is None:
+                continue
+            finding = Finding(
+                id="authz-still-accessible",
+                severity="medium",
+                category="auth",
+                url=url,
+                description=(
+                    f"URL discovered under the privileged session was also reachable "
+                    f"(status {lower_resp.status_code}) with the lower-privilege "
+                    "session. Manually verify this is intentionally shared/public "
+                    "access, not an access-control gap."
+                ),
+                evidence=f"lower={lower_resp.status_code}",
+            ).model_dump()
+            if marker is not None:
+                finding["confidence"] = "confirmed"
+                finding["description"] += (
+                    f" CONFIRMED: response body contains the higher-privilege "
+                    f"account's own identity marker ({marker!r})."
+                )
+            findings.append(finding)
     finally:
         if own:
             http.close()
 
-    return {"target": target, "findings": [f.model_dump() for f in findings]}
+    return {"target": target, "findings": findings}

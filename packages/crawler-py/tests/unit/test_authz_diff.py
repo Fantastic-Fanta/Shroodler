@@ -64,6 +64,84 @@ def test_flags_broken_access_control_when_anon_denied(fx):
     assert "authz-broken-access-control" in ids
 
 
+def test_identity_marker_upgrades_confidence_to_confirmed(fx):
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b'{"owner_email": "victim@example.com", "data": "secret"}')
+        if "session=x" in inc.cookies
+        else (403, {}, b"no"),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        higher_priv_identity_markers=["victim@example.com"],
+    )
+    finding = out["findings"][0]
+    assert finding["id"] == "authz-broken-access-control"
+    assert finding["confidence"] == "confirmed"
+    assert "victim@example.com" in finding["description"]
+
+
+def test_no_marker_match_leaves_confidence_unset(fx):
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b"generic content")
+        if "session=x" in inc.cookies
+        else (403, {}, b"no"),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        higher_priv_identity_markers=["victim@example.com"],
+    )
+    finding = out["findings"][0]
+    assert "confidence" not in finding
+
+
+def test_require_identity_confirmation_drops_unconfirmed_lead(fx):
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b"generic content, no identity markers here")
+        if "session=x" in inc.cookies
+        else (403, {}, b"no"),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        higher_priv_identity_markers=["victim@example.com"],
+        require_identity_confirmation=True,
+    )
+    assert out["findings"] == []
+
+
+def test_lower_priv_own_marker_does_not_count_as_confirmation(fx):
+    # If the "higher-priv" marker happens to equal something the LOWER-
+    # priv account also legitimately sees (e.g. a shared placeholder),
+    # it must not count as confirmation of cross-account leakage.
+    fx.on(
+        "GET",
+        "/admin/report/1",
+        lambda inc: (200, {}, b"shared@example.com")
+        if "session=x" in inc.cookies
+        else (403, {}, b"no"),
+    )
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="session=x",
+        higher_priv_identity_markers=["shared@example.com"],
+        lower_priv_identity_markers=["shared@example.com"],
+        require_identity_confirmation=True,
+    )
+    assert out["findings"] == []
+
+
 def test_no_finding_when_anon_also_allowed(fx):
     fx.on("GET", "/public/page", lambda inc: (200, {}, b"public"))
     doc = _doc(fx.origin, [fx.origin + "/public/page"])

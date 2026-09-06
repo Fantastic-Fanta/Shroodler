@@ -169,3 +169,54 @@ def test_cookie_prefix_false_positives():
     )
     assert "cookie-missing-host-prefix" not in prefs
     assert "cookie-missing-secure-prefix" not in prefs
+
+
+def test_cookie_secure_prefix_violation():
+    ids = _ids(["__Secure-id=abc; Path=/"], "https://app.example.com/")
+    assert "cookie-secure-prefix-violation" in ids
+
+
+def test_cookie_secure_prefix_with_secure_is_clean():
+    ids = _ids(["__Secure-id=abc; Path=/; Secure"], "https://app.example.com/")
+    assert "cookie-secure-prefix-violation" not in ids
+
+
+def test_cookie_host_prefix_violation_missing_secure():
+    ids = _ids(["__Host-id=abc; Path=/"], "https://app.example.com/")
+    assert "cookie-host-prefix-violation" in ids
+
+
+def test_cookie_host_prefix_violation_has_domain():
+    ids = _ids(
+        ["__Host-id=abc; Path=/; Secure; Domain=example.com"],
+        "https://app.example.com/",
+    )
+    assert "cookie-host-prefix-violation" in ids
+
+
+def test_cookie_host_prefix_violation_wrong_path():
+    ids = _ids(
+        ["__Host-id=abc; Path=/account; Secure"],
+        "https://app.example.com/account",
+    )
+    assert "cookie-host-prefix-violation" in ids
+
+
+def test_cookie_host_prefix_violation_missing_path():
+    # __Host- requires an EXPLICIT Path=/ -- omitting Path entirely is
+    # itself a violation, not a safe default.
+    ids = _ids(["__Host-id=abc; Secure"], "https://app.example.com/")
+    assert "cookie-host-prefix-violation" in ids
+
+
+def test_cookie_host_prefix_compliant_is_clean():
+    ids = _ids(["__Host-id=abc; Path=/; Secure"], "https://app.example.com/")
+    assert "cookie-host-prefix-violation" not in ids
+
+
+def test_cookie_prefix_violation_applies_regardless_of_session_name_heuristic():
+    # The prefix contract is enforced by the browser for ANY cookie name
+    # carrying the prefix, not just ones this tool's is_session_cookie()
+    # heuristic happens to recognize.
+    ids = _ids(["__Host-not_a_session_name=abc; Path=/account; Secure"], "https://app.example.com/account")
+    assert "cookie-host-prefix-violation" in ids

@@ -7,6 +7,19 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **New `__Secure-`/`__Host-` cookie-prefix violation checks, in both
+  engines** (`packages/crawler-py/shroodler/extractors/cookies.py`,
+  `packages/crawler-go/internal/extractors/cookies.go`). Distinct from
+  the existing `cookie-missing-*-prefix` suggestions (adopt a prefix
+  that isn't there): this catches a Set-Cookie whose name already
+  carries the prefix but doesn't meet its contract (RFC 6265bis
+  s4.1.3) -- `__Secure-` without `Secure`, or `__Host-` without
+  `Secure`, with a `Domain`, or without an explicit `Path=/` (an
+  omitted `Path` is itself a violation, the prefix requires it
+  explicitly). Browsers reject such a Set-Cookie outright, so the
+  application silently never has the cookie it thinks it set. Fully
+  deterministic from the header alone, and applies regardless of
+  whether the name matches this tool's own session-cookie heuristic.
 - **Fixes from a pentester review of the executive-summary risk score --
   the two real ones were both genuinely misleading, not stylistic.**
   - **A single critical finding could grade the same "B" as a pile of

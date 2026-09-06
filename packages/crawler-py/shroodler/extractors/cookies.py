@@ -174,6 +174,53 @@ def extract_cookies(
         path_norm = path.strip() if path is not None else None
         if path_norm == "":
             path_norm = "/"
+
+        # __Secure-/__Host- are contracts a browser enforces at parse
+        # time, not hardening advice: a Set-Cookie whose name carries
+        # the prefix but doesn't meet the prefix's requirements is
+        # REJECTED outright (RFC 6265bis s4.1.3) -- the app thinks it
+        # set a cookie and it silently never existed. Deterministic
+        # from the header alone, independent of whether this looks like
+        # a "session" cookie, and distinct from cookie-missing-*-prefix
+        # below (a suggestion to adopt a prefix that isn't there yet).
+        if cookie.name.startswith("__Secure-") and not cookie.secure:
+            findings.append(
+                _finding(
+                    "cookie-secure-prefix-violation",
+                    "medium",
+                    page_url,
+                    cookie.name,
+                    f"Cookie {cookie.name} uses the __Secure- prefix but is missing the "
+                    "Secure flag -- browsers reject this Set-Cookie entirely, so the "
+                    "application likely thinks it set a cookie that was never actually stored",
+                )
+            )
+        if cookie.name.startswith("__Host-"):
+            violations = []
+            if not cookie.secure:
+                violations.append("is missing Secure")
+            if domain:
+                violations.append(f"has Domain={domain}")
+            if path_norm != "/":
+                # The __Host- prefix requires an EXPLICIT Path=/
+                # attribute (RFC 6265bis), so an omitted Path
+                # (path_norm is None) is itself a violation, not just
+                # Path != "/".
+                violations.append(f"has Path={path_norm or '(none)'} (must be /)")
+            if violations:
+                findings.append(
+                    _finding(
+                        "cookie-host-prefix-violation",
+                        "medium",
+                        page_url,
+                        cookie.name,
+                        f"Cookie {cookie.name} uses the __Host- prefix but "
+                        f"{' and '.join(violations)} -- browsers reject this Set-Cookie "
+                        "entirely, so the application likely thinks it set a cookie that "
+                        "was never actually stored",
+                    )
+                )
+
         session = is_session_cookie(cookie.name)
         if session and path_norm == "/":
             findings.append(

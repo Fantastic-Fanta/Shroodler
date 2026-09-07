@@ -7,6 +7,14 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **URL-embedded-token false-positive reduction** for `generic-api-key`.
+  A long opaque value that appears only as a query-string parameter named
+  something known-benign (`bookmark`, `cursor`, `session`, tracking ids,
+  ...) is no longer flagged as a leaked key -- the City of Vienna
+  `bookmark=` map-link case. A high-signal name (`api_key`, `secret`,
+  `access_token`, ...) in a URL still fires, and a token that also
+  appears outside a query string still fires.
+
 - **Auth-stack fingerprinting + next-auth callbackUrl probe.** Crawl now
   detects next-auth / Keycloak / Auth0 from cookie and path signatures
   and, for next-auth, GETs `/api/auth/signin?callbackUrl=` with a marker

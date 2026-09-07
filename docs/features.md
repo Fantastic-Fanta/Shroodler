@@ -10,6 +10,11 @@
   and required custom headers. Emits JSON, a table, or a crawl-ready
   host list (`--format hosts` / `--hosts-out`). Does not crawl or fire
   payloads.
+- **Secret detection** — known-prefix keys plus an entropy heuristic,
+  with ASP.NET ViewState and known-benign URL query params (`bookmark`,
+  `cursor`, tracking IDs) excluded from `generic-api-key` so they don't
+  drown real leaked tokens. High-signal query names (`api_key`,
+  `secret`, ...) still fire.
 - **Auth-stack fingerprinting** — detects next-auth, Keycloak, and Auth0
   from cookie/path signatures during a crawl, and for next-auth runs the
   known `callbackUrl` → callback-url-cookie probe automatically.

@@ -7,6 +7,13 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Confidence-graded findings** on crawl JSON. Passive checks now stamp
+  `confidence` (`confirmed` / `probable` / `heuristic`) so reports no
+  longer show an empty Confidence column for a crawl. Header/cookie/TLS
+  observations are confirmed; IDOR/authz leads are probable; entropy
+  `generic-api-key` and auth-stack fingerprints are heuristic. Payload
+  tester and authz identity-marker stamps are left alone.
+
 - **URL-embedded-token false-positive reduction** for `generic-api-key`.
   A long opaque value that appears only as a query-string parameter named
   something known-benign (`bookmark`, `cursor`, `session`, tracking ids,

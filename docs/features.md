@@ -1,5 +1,12 @@
 # Features
 
+- **Confidence-graded findings** (`confirmed` / `probable` /
+  `heuristic`) on crawl JSON as well as payload hits, so the report
+  Confidence column is populated for passive checks too: header/cookie/
+  TLS observations are `confirmed`, IDOR/authz leads are `probable`,
+  entropy `generic-api-key` and auth-stack fingerprints are `heuristic`.
+  An already-stamped value (payload tester, authz identity marker) wins.
+
 - **Triage** (`shroodler triage`) — a fast pre-crawl pass over a host
   list or `--discover` apex: passive Certificate Transparency expansion,
   DNS/CNAME classification (including dangling-CNAME takeover

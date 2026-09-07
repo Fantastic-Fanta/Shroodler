@@ -214,7 +214,7 @@ def run(
                             "should be able to see this resource."
                         ),
                         evidence=f"lower={lower_resp.status_code} anon={anon_resp.status_code}",
-                    ).model_dump()
+                    ).model_dump(exclude_none=True)
                     if marker is not None:
                         finding["confidence"] = "confirmed"
                         finding["description"] += (
@@ -249,7 +249,7 @@ def run(
                     "access, not an access-control gap."
                 ),
                 evidence=f"lower={lower_resp.status_code}",
-            ).model_dump()
+            ).model_dump(exclude_none=True)
             if marker is not None:
                 finding["confidence"] = "confirmed"
                 finding["description"] += (

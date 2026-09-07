@@ -993,7 +993,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     crawl.add_argument(
         "--login-recipe",
-        help="JSON {url, method, fields} posted once before crawling (merges hidden fields)",
+        help="JSON {url, method, fields} posted once before crawling (merges hidden "
+        "fields). If a later fetch returns 401 or a login redirect, the recipe is "
+        "re-run once and that URL retried.",
     )
     crawl.add_argument(
         "--user-agent",

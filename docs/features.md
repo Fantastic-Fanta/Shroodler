@@ -36,7 +36,9 @@
   `payload`, or `$SHROODLER_PLUGIN_PATH`).
 - **Crawl** — static (HTML parse) or headless (real browser, for SPAs)
   crawling with configurable depth/page/time budgets, robots/sitemap
-  handling, scripted login, cookie/header/session-state injection,
+  handling, scripted login (re-runs the login recipe once if a mid-crawl
+  fetch returns 401 or a login redirect), cookie/header/session-state
+  injection,
   configurable User-Agent (`--user-agent`), and named safe/balanced/
   aggressive profiles.
 - **Cookie prefix contracts** — `__Secure-`/`__Host-` Set-Cookie

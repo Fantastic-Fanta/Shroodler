@@ -7,6 +7,11 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Authenticated-scan auto re-auth.** With `--login-recipe`, a mid-crawl
+  401 or login redirect re-runs the recipe once and retries that URL.
+  Further expiry in the same crawl is not retried. 403 is left alone
+  (authorization, not session death).
+
 - **`shroodler ticket file` / `ticket sync`**: turn new findings into
   GitHub issues (deduped by the same id+path key as `diff --gate`) and
   close them when a later scan no longer reports the finding. Dry-run

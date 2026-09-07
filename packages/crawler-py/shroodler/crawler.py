@@ -19,6 +19,7 @@ from shroodler.auth import (
     parse_header_lines,
     resolve_recipe_url,
     run_login_httpx,
+    session_looks_expired,
 )
 from shroodler.extractors.auth_stack import probe_auth_stack
 from shroodler.extractors.challenge import detect_challenge, has_challenge_cookie
@@ -161,6 +162,8 @@ class Crawler:
         self._cookie_jar = cookie_jar
         self._storage_state = storage_state
         self._login_recipe_path = login_recipe
+        self._resolved_recipe = None
+        self._reauth_used = False
         self._session_findings: list[Finding] = []
         extra_headers = parse_header_lines(headers)
         self.http = StaticFetcher(user_agent=user_agent, proxy=proxy, extra_headers=extra_headers)
@@ -248,6 +251,8 @@ class Crawler:
                 family_counts[fam] += 1
 
             result = self._fetch_with_retries(url, t0)
+            if self._maybe_reauth(result, seed):
+                result = self._fetch_with_retries(url, t0)
             if result.status_code != 200 and is_probe_url(url):
                 continue
             page, page_findings, page_eps, result = self._page_from_result(result, t0)
@@ -490,6 +495,7 @@ class Crawler:
         if not self._login_recipe_path:
             return
         recipe = resolve_recipe_url(load_login_recipe(self._login_recipe_path), seed)
+        self._resolved_recipe = recipe
         if self.mode == "headless":
             login_fn = getattr(self.fetcher, "login", None)
             if login_fn is not None:
@@ -527,6 +533,43 @@ class Crawler:
                     stale_cookie_header=stale_header,
                 )
             )
+
+    def _maybe_reauth(self, result: FetchResult, seed: str) -> bool:
+        """Re-run the login recipe at most once if the session looks expired."""
+        recipe = self._resolved_recipe
+        if recipe is None or self._reauth_used:
+            return False
+        if not session_looks_expired(
+            result.status_code,
+            result.redirect_to,
+            page_url=result.url,
+            login_url=recipe.url,
+        ):
+            return False
+        self._reauth_used = True
+        if self.mode == "headless":
+            login_fn = getattr(self.fetcher, "login", None)
+            if login_fn is not None:
+                login_fn(recipe)
+            else:
+                run_login_httpx(self.http.client, recipe)
+        else:
+            run_login_httpx(self.http.client, recipe)
+        self._session_findings.append(
+            Finding(
+                id="session-reauthenticated",
+                severity="info",
+                category="scan-note",
+                url=result.url,
+                description=(
+                    "Session looked expired mid-crawl (401 or login redirect); "
+                    "the login recipe was re-run once and the URL retried. "
+                    "Further expiry in this crawl is not retried."
+                ),
+                evidence=f"status={result.status_code} redirect={result.redirect_to or ''}",
+            )
+        )
+        return True
 
     def _budget_hit(self, t0: float, n_pages: int) -> str | None:
         if self.max_time is not None and (monotonic() - t0) >= self.max_time:

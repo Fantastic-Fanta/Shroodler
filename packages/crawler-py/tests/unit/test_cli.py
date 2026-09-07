@@ -93,6 +93,13 @@ def test_payload_and_proxy_parse():
     assert "version" in text
 
 
+def test_nuclei_ingest_parses():
+    p = build_parser()
+    args = p.parse_args(["nuclei-ingest", "a.yaml", "b.yaml", "-o", "pack.yaml"])
+    assert args.templates == ["a.yaml", "b.yaml"]
+    assert args.output == "pack.yaml"
+
+
 def test_authz_diff_parses():
     p = build_parser()
     args = p.parse_args(

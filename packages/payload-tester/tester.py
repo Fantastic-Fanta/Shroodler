@@ -27,6 +27,17 @@ def packs_dir() -> Path:
 
 def _load_pack_file(path: Path) -> list[dict]:
     loaded = yaml.safe_load(path.read_text(encoding="utf-8")) or []
+    if isinstance(loaded, dict):
+        from nuclei_ingest import is_nuclei_template, to_packs
+
+        if is_nuclei_template(loaded):
+            packs = to_packs(loaded)
+            if not packs:
+                raise ValueError(
+                    f"{path} looks like a Nuclei HTTP template but produced no payload packs"
+                )
+            return packs
+        raise TypeError(f"{path} must be a YAML list of packs")
     if not isinstance(loaded, list):
         raise TypeError(f"{path} must be a YAML list of packs")
     packs: list[dict] = []

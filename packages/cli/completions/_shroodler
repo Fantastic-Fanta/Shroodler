@@ -20,6 +20,7 @@ _shroodler_commands=(
   'cadence:Print recommended flags for a PR/nightly/weekly scan'
   'triage:Classify a host list before spending crawl budget'
   'payload:Run YAML payload packs against crawl JSON'
+  'nuclei-ingest:Convert local Nuclei HTTP YAML into a payload pack'
   'authz-diff:Replay a privileged crawl under a second session'
   'proxy:Forward to shroodler-proxy'
   'history:Record and list local scan history'
@@ -155,6 +156,11 @@ _shroodler() {
             '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
             '--adaptive[Retry once with an adapted payload on a baseline miss]' \
             '1:crawl json:_files'
+          ;;
+        nuclei-ingest)
+          _arguments \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '*:nuclei yaml:_files'
           ;;
         authz-diff)
           _arguments \

@@ -7,6 +7,10 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler nuclei-ingest`**: convert local Nuclei HTTP YAML templates
+  into a payload pack. `payload --pack` also auto-detects a Nuclei-shaped
+  file. A loader, not a CVE library — does not download templates.
+
 - **`shroodler cadence --tier pr|nightly|weekly`**: prints recommended
   crawl/payload flags for a PR-time passive scan, a nightly active
   scan, or a weekly aggressive+adaptive scan. Packaging only; does not

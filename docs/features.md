@@ -1,5 +1,15 @@
 # Features
 
+- **Triage** (`shroodler triage`) — a fast pre-crawl pass over a host
+  list or `--discover` apex: passive Certificate Transparency expansion,
+  DNS/CNAME classification (including dangling-CNAME takeover
+  candidates), and one gentle HTTP probe per live host that labels
+  redirect aliases, WAF/challenge walls, SSO/auth gates, and live
+  unauthenticated content. Bounded concurrency + rate, proxy-aware,
+  WAF-polite (pauses a zone on challenge/429), identifying User-Agent
+  and required custom headers. Emits JSON, a table, or a crawl-ready
+  host list (`--format hosts` / `--hosts-out`). Does not crawl or fire
+  payloads.
 - **Crawl** — static (HTML parse) or headless (real browser, for SPAs)
   crawling with configurable depth/page/time budgets, robots/sitemap
   handling, scripted login, cookie/header/session-state injection,

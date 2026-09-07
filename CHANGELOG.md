@@ -7,6 +7,19 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler triage`**: a fast, low-touch pre-crawl pass that turns a
+  host list (and/or `--discover` apex / `*.wildcard`) into a ranked,
+  classified table -- dead, dangling-CNAME takeover candidate,
+  third-party SaaS, redirect-alias, WAF-challenge-gated, SSO/auth-gated,
+  or live unauthenticated content -- so crawl/payload budget goes only
+  to hosts worth it. Discovery is passive (Certificate Transparency);
+  the only contact with a target is one HTTP probe per live host,
+  skippable with `--no-active`. Concurrency and request rate are bounded
+  and clamped (never an unbounded fan-out); a local egress proxy is
+  detected and drops default parallelism; a WAF challenge or 429 pauses
+  the rest of that zone. `--header` / `--user-agent` cover per-program
+  required identifiers. Local-only by default.
+
 - **Fixes from a pentester/CI-reviewer pass on the suppression-expiry
   feature.** The core mechanism (expiry reaching the real `diff --gate`
   enforcement path, boundary date handling, `date.min` fail-safe) held

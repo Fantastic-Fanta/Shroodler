@@ -5,6 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 Severity = Literal["info", "low", "medium", "high", "critical"]
+Confidence = Literal["confirmed", "probable", "heuristic"]
 Category = Literal[
     "header",
     "cookie",
@@ -76,6 +77,7 @@ class Finding(BaseModel):
     url: str
     description: str
     evidence: str | None = None
+    confidence: Confidence | None = None
 
 
 class JsEndpoint(BaseModel):
@@ -105,4 +107,7 @@ class CrawlResult(BaseModel):
         data = self.model_dump(mode="json")
         if data.get("stats") is None:
             data.pop("stats", None)
+        from shroodler.confidence import stamp_findings
+
+        stamp_findings(data.get("findings") or [])
         return data

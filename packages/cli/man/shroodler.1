@@ -478,6 +478,8 @@ JSON
 posted once before crawling; merges hidden form fields. May also declare
 .BR logout_url / logout_method / protected_url
 to enable session-fixation and logout-invalidation checks.
+If a later fetch returns 401 or a login redirect, the recipe is re-run
+once and that URL is retried (capped at one re-auth per crawl).
 .TP
 .BI \-\-proxy " URL"
 Route crawl traffic through an HTTP proxy, e.g. the bundled

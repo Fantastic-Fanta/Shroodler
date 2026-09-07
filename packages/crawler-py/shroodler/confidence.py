@@ -36,6 +36,7 @@ _BY_ID: dict[str, str] = {
     "graphql-probe-skipped": "heuristic",
     "cors-probe-skipped": "heuristic",
     "session-checks-skipped-headless": "heuristic",
+    "session-reauthenticated": "confirmed",
     "redirect-chain-truncated": "heuristic",
     "off-origin-redirect-not-followed": "heuristic",
     "robots-blocked-crawl": "heuristic",

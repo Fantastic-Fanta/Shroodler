@@ -205,3 +205,105 @@ def test_headers_do_not_bypass_local_only():
             headers=["X-Lab-Auth: open"],
             cookies=["lab_auth=open"],
         )
+
+
+def _login_handlers(fx, logins: dict):
+    def login(req):
+        if req.method == "GET":
+            body = (
+                b'<form method="POST" action="/login">'
+                b'<input name="user">'
+                b'<input type="hidden" name="csrf" value="tok">'
+                b"</form>"
+            )
+            return 200, {"Content-Type": "text/html; charset=utf-8"}, body
+        logins["n"] += 1
+        return 302, {"Location": "/", "Set-Cookie": "auth=yes; Path=/"}, b""
+
+    fx.on("GET", "/login", login)
+    fx.on("POST", "/login", login)
+    return fx.origin + "/login"
+
+
+def test_reauth_on_401_retries_once(fx, tmp_path):
+    from urllib.parse import urlparse
+
+    logins = {"n": 0}
+    login_url = _login_handlers(fx, logins)
+    fx.html("/", '<a href="/secret">s</a>')
+
+    def secret(req):
+        if logins["n"] < 2:
+            return 401, {"Content-Type": "text/plain"}, b"expired"
+        html = (
+            b'<form><input name="after_reauth"></form>'
+            if "auth=yes" in req.cookies
+            else b"<p>wall</p>"
+        )
+        return 200, {"Content-Type": "text/html; charset=utf-8"}, html
+
+    fx.on("GET", "/secret", secret)
+    recipe = tmp_path / "recipe.json"
+    recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
+    result = crawl_url(
+        fx.origin + "/",
+        depth=1,
+        ignore_robots=True,
+        login_recipe=str(recipe),
+    )
+    assert logins["n"] == 2
+    names = {f.name for p in result.pages for form in p.forms for f in form.fields}
+    assert "after_reauth" in names
+    assert "/secret" in {urlparse(p.url).path for p in result.pages}
+    assert any(f.id == "session-reauthenticated" for f in result.findings)
+
+
+def test_reauth_on_login_redirect(fx, tmp_path):
+    logins = {"n": 0}
+    login_url = _login_handlers(fx, logins)
+    fx.html("/", '<a href="/secret">s</a>')
+
+    def secret(req):
+        if logins["n"] < 2:
+            return 302, {"Location": "/login"}, b""
+        return 200, {"Content-Type": "text/html; charset=utf-8"}, b"<p>ok</p>"
+
+    fx.on("GET", "/secret", secret)
+    recipe = tmp_path / "recipe.json"
+    recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
+    result = crawl_url(
+        fx.origin + "/",
+        depth=1,
+        ignore_robots=True,
+        login_recipe=str(recipe),
+    )
+    assert logins["n"] == 2
+    assert any(f.id == "session-reauthenticated" for f in result.findings)
+
+
+def test_reauth_capped_at_one_retry(fx, tmp_path):
+    logins = {"n": 0}
+    login_url = _login_handlers(fx, logins)
+    fx.html("/", '<a href="/a">a</a><a href="/b">b</a>')
+
+    def always_401(_req):
+        return 401, {"Content-Type": "text/plain"}, b"no"
+
+    fx.on("GET", "/a", always_401)
+    fx.on("GET", "/b", always_401)
+    recipe = tmp_path / "recipe.json"
+    recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
+    crawl_url(
+        fx.origin + "/",
+        depth=1,
+        ignore_robots=True,
+        login_recipe=str(recipe),
+    )
+    assert logins["n"] == 2  # prime + one mid-crawl re-auth, not one per 401
+
+
+def test_no_reauth_without_login_recipe(fx):
+    fx.html("/", '<a href="/secret">s</a>')
+    fx.on("GET", "/secret", lambda _req: (401, {"Content-Type": "text/plain"}, b"no"))
+    result = crawl_url(fx.origin + "/", depth=1, ignore_robots=True)
+    assert not any(f.id == "session-reauthenticated" for f in result.findings)

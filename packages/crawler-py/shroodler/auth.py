@@ -161,6 +161,44 @@ def resolve_recipe_url(recipe: LoginRecipe, seed: str) -> LoginRecipe:
     )
 
 
+_LOGIN_PATH_HINTS = (
+    "/login",
+    "/signin",
+    "/sign-in",
+    "/log-in",
+    "/auth/",
+    "/sso",
+    "/session/new",
+)
+
+
+def session_looks_expired(
+    status: int,
+    location: str | None,
+    *,
+    page_url: str,
+    login_url: str,
+) -> bool:
+    """True when a mid-crawl response looks like the session died (401 or
+    a redirect to the login recipe / a login-ish path). The login URL
+    itself never counts -- that would re-auth in a loop on the login page.
+    403 is left alone: that is usually authorization, not expiry.
+    """
+    page_path = (urlparse(page_url).path or "/").rstrip("/") or "/"
+    login_path = (urlparse(login_url).path or "/login").rstrip("/") or "/"
+    if page_path == login_path:
+        return False
+    if status == 401:
+        return True
+    if status in {301, 302, 303, 307, 308} and location:
+        loc_path = (urlparse(location).path or "/").rstrip("/").lower() or "/"
+        if loc_path == login_path.lower():
+            return True
+        loc = location.lower()
+        return any(hint in loc for hint in _LOGIN_PATH_HINTS)
+    return False
+
+
 def host_of(url: str) -> str:
     return urlparse(url).hostname or "127.0.0.1"
 

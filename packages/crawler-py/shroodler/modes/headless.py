@@ -121,8 +121,8 @@ class HeadlessFetcher:
                 # DataDome/Cloudflare keep polling the network indefinitely, so
                 # networkidle never fires.  A brief extra wait lets the JS
                 # challenge complete before we make the API call.
-                page.goto(login_page_url, wait_until="load", timeout=30000)
-                page.wait_for_timeout(5000)
+                page.goto(login_page_url, wait_until="domcontentloaded", timeout=30000)
+                page.wait_for_timeout(6000)
                 # POST via fetch() inside the live browser context.
                 result = page.evaluate(
                     """

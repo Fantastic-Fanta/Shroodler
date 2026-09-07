@@ -22,7 +22,9 @@ shroodler report out.json --format html --output out.html
 
 # Active payloads (SQLi/XSS/SSTI/path-traversal/SSRF/open-redirect/XXE/
 # command-injection/CRLF-header-injection)
-shroodler payload out.json -o hits.json
+shroodler payload out.json --pack extra.yaml -o hits.json
+shroodler nuclei-ingest ./nuclei-http.yaml -o from-nuclei.yaml
+shroodler payload out.json --pack from-nuclei.yaml -o hits.json
 shroodler payload out.json --oob-host collab.example.com -o hits.json   # blind checks
 shroodler payload out.json --require-policy -o hits.json   # refuse without a consent manifest
 shroodler payload out.json --audit-log audit.jsonl -o hits.json   # record every allow/block decision

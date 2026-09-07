@@ -491,6 +491,21 @@ def _payload_tester_dir() -> Path:
     raise FileNotFoundError("payload-tester not found; set SHROODLER_PAYLOAD_DIR")
 
 
+def cmd_nuclei_ingest(args: argparse.Namespace) -> int:
+    tester_dir = _payload_tester_dir()
+    if str(tester_dir) not in sys.path:
+        sys.path.insert(0, str(tester_dir))
+    import nuclei_ingest
+
+    paths = [Path(p) for p in args.templates]
+    packs, skipped = nuclei_ingest.convert_files(paths)
+    for note in skipped:
+        print(f"warning: {note}", file=sys.stderr)
+    text = nuclei_ingest.dumps_pack(packs)
+    _write(text, args.output)
+    return 0 if packs else 1
+
+
 def cmd_payload(args: argparse.Namespace) -> int:
     tester_dir = _payload_tester_dir()
     if str(tester_dir) not in sys.path:
@@ -1333,6 +1348,24 @@ def build_parser() -> argparse.ArgumentParser:
         "never reports a mutated match at confidence=confirmed.",
     )
     payload.set_defaults(func=cmd_payload)
+
+    nuclei = sub.add_parser(
+        "nuclei-ingest",
+        help="Convert local Nuclei HTTP YAML templates into a payload pack",
+        description=(
+            "A loader, not a CVE library: converts Nuclei HTTP templates you "
+            "already have on disk into the YAML list `payload --pack` consumes. "
+            "`payload --pack` also auto-detects a Nuclei-shaped file. Does not "
+            "download templates."
+        ),
+    )
+    nuclei.add_argument(
+        "templates",
+        nargs="+",
+        help="Local Nuclei YAML template file(s)",
+    )
+    nuclei.add_argument("--output", "-o", help="Write converted pack YAML (default stdout)")
+    nuclei.set_defaults(func=cmd_nuclei_ingest)
 
     authz = sub.add_parser(
         "authz-diff",

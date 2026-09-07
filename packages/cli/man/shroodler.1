@@ -175,6 +175,14 @@ rate/blast-radius limits as every other request; never reports a
 mutated match at confidence=confirmed.
 .RE
 .TP
+.B nuclei\-ingest \fITEMPLATE.yaml\fR
+Convert local Nuclei HTTP YAML templates into the payload-pack YAML list
+.B payload \-\-pack
+consumes. A loader, not a CVE library: does not download templates.
+.B payload \-\-pack
+also auto-detects a Nuclei-shaped file. Templates with no injectable
+payload are skipped (warning on stderr); exit 1 if nothing converted.
+.TP
 .B authz\-diff \fIHIGHER_CRAWL.JSON\fR
 Replay every page URL from a crawl done under one session (e.g. an admin
 account) using a second, lower-privileged session's

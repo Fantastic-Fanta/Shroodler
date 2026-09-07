@@ -1,5 +1,10 @@
 # Features
 
+- **Nuclei ingest** (`shroodler nuclei-ingest`) — converts local Nuclei
+  HTTP YAML templates into payload-pack YAML. `payload --pack` also
+  auto-detects a Nuclei-shaped file. Does not vendor or download a
+  template library.
+
 - **Cadence** (`shroodler cadence --tier pr|nightly|weekly`) — prints
   recommended crawl/payload flags for a PR-time passive scan, a nightly
   active scan, or a weekly aggressive+adaptive scan. Does not itself

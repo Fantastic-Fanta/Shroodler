@@ -29,6 +29,10 @@ shroodler payload out.json --audit-log audit.jsonl -o hits.json   # record every
 # Password-reset/verification-token predictability, from a recorded proxy session
 shroodler tokens /tmp/sess.jsonl -o token-findings.json
 
+# Auto-file GitHub issues from new findings (dry-run; add --apply to call gh)
+shroodler ticket file out.json --baseline expected_findings.json
+shroodler ticket sync out.json --baseline expected_findings.json --owners owners.yml
+
 # Baseline-in-git for any local app (fail CI on new findings)
 shroodler baseline out.json -o expected_findings.json --name my-app
 shroodler diff out.json expected_findings.json --gate   # plus optional .shroodlerignore

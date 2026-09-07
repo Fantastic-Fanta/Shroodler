@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens triage payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress reverify gen-regression-test attack-path self-scan version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens triage payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -65,6 +65,9 @@ _shroodler_flags_for() {
             ;;
         sla-apply)
             echo "--output --history-dir --owners --gate"
+            ;;
+        ticket-file|ticket-sync)
+            echo "--baseline --state --owners --suppressions --repo --apply --output"
             ;;
         suppress-expiring)
             echo "--days --suppressions --format --output --gate"
@@ -122,6 +125,21 @@ _shroodler_complete() {
         subcmd="history-$hsub"
     fi
 
+    # `ticket` has its own nested subcommand (file|sync) before any flags.
+    if [[ "$subcmd" == "ticket" ]]; then
+        local tsub=""
+        for ((i = 1; i < COMP_CWORD; i++)); do
+            case "${COMP_WORDS[i]}" in
+                file|sync) tsub="${COMP_WORDS[i]}"; break ;;
+            esac
+        done
+        if [[ -z "$tsub" ]]; then
+            COMPREPLY=($(compgen -W "file sync" -- "$cur"))
+            return
+        fi
+        subcmd="ticket-$tsub"
+    fi
+
     # `sla` has its own nested subcommand (apply) before any flags.
     if [[ "$subcmd" == "sla" ]]; then
         local ssub=""
@@ -175,7 +193,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

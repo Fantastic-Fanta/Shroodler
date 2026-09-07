@@ -1,5 +1,11 @@
 # Features
 
+- **Tickets** (`shroodler ticket file` / `ticket sync`) — open GitHub
+  issues for new findings (the same id+path key `diff --gate` uses) and
+  close them when a later scan no longer reports the finding. Dry-run by
+  default; `--apply` calls `gh`. Dedup state lives in
+  `.shroodler-tickets.json`.
+
 - **Confidence-graded findings** (`confirmed` / `probable` /
   `heuristic`) on crawl JSON as well as payload hits, so the report
   Confidence column is populated for passive checks too: header/cookie/

@@ -47,6 +47,7 @@ _BY_ID: dict[str, str] = {
     "authz-broken-access-control": "medium",
     "idor-adjacent-id-accessible": "medium",
     "oauth-implicit-flow": "medium",
+    "next-auth-callback-url-unvalidated": "none",
     # Session fixation and a missing OAuth "state" parameter are both
     # anonymous, CSRF-style attacks: the attacker crafts a request/link
     # of their own and lures the victim into completing it, needing

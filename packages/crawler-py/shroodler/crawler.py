@@ -20,6 +20,7 @@ from shroodler.auth import (
     resolve_recipe_url,
     run_login_httpx,
 )
+from shroodler.extractors.auth_stack import probe_auth_stack
 from shroodler.extractors.challenge import detect_challenge, has_challenge_cookie
 from shroodler.extractors.common_paths import (
     probe_mutations,
@@ -369,6 +370,11 @@ class Crawler:
         findings.extend(mut_findings)
         findings.extend(
             probe_cors(origin_url, self.http, cors_candidates, allow_external=self.allow_external)
+        )
+        findings.extend(
+            probe_auth_stack(
+                origin_url, self.http, pages, allow_external=self.allow_external
+            )
         )
 
         if not self._budget_hit(t0, len(pages)):

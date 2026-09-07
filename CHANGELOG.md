@@ -7,6 +7,14 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Auth-stack fingerprinting + next-auth callbackUrl probe.** Crawl now
+  detects next-auth / Keycloak / Auth0 from cookie and path signatures
+  and, for next-auth, GETs `/api/auth/signin?callbackUrl=` with a marker
+  host to see whether the unvalidated URL is written into the
+  callback-url cookie -- the check that previously had to be rebuilt from
+  memory against each next-auth target. Keycloak/Auth0 are fingerprint
+  only for now. Same local-only / `--allow-external` gate as CORS.
+
 - **Plugin/extension API** for extra payload packs, secret rules, and
   optional Python `check()` hooks, loadable via `crawl --plugin` /
   `payload --plugin` or `$SHROODLER_PLUGIN_PATH`. A directory with

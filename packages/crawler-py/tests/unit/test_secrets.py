@@ -152,6 +152,29 @@ def test_url_embedded_benign_params_are_not_generic_api_keys():
     assert "generic-api-key" in _ids(scan_text(both, "http://127.0.0.1/"))
 
 
+def test_false_positive_patterns_not_reported():
+    """Tokens that look high-entropy but are known public/structured identifiers."""
+    # Google OAuth Client ID — public, always suffixed with .apps.googleusercontent.com
+    google_oauth = (
+        '"GOOGLE_ONETAP_CLIENT_ID":"1070319902608-plmm2pme29to6s18v4emc53r0h5aknkc'
+        '.apps.googleusercontent.com"'
+    )
+    assert "generic-api-key" not in _ids(scan_text(google_oauth, "http://127.0.0.1/"))
+
+    # Salesforce LiveAgent DevName — structured component identifier, not a secret
+    salesforce = 'devName: "EmbeddedServiceLiveAgent_Parent04I080000008P5rEAE_17efd1661c0"'
+    assert "generic-api-key" not in _ids(scan_text(salesforce, "http://127.0.0.1/"))
+
+    # Webpack CSS module class names — auto-generated, use __ separator
+    css_module = 'class="index-module-scss-module__KdAblW__root"'
+    assert "generic-api-key" not in _ids(scan_text(css_module, "http://127.0.0.1/"))
+
+    # A real random key in the same page must still fire
+    real_key = "xK9mP2qR7vL4nB8cJ5tH3wY6uA1dF0eG"
+    combined = google_oauth + "\n" + salesforce + "\n" + css_module + "\n" + real_key
+    assert "generic-api-key" in _ids(scan_text(combined, "http://127.0.0.1/"))
+
+
 def test_redaction_never_stores_full_secret():
     findings = scan_text(AWS, "http://127.0.0.1/")
     assert findings

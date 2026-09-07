@@ -8,6 +8,42 @@ from shroodler.urls import canonical_key, is_loopback_or_local, same_origin
 
 ATTACKER_ORIGIN = "https://evil.example"
 MAX_CORS_PROBES = 32
+
+
+def _attacker_origins_for(target_origin: str) -> list[str]:
+    """Return the ordered list of Origin header values to probe for a target.
+
+    Beyond the baseline https://evil.example we test the four patterns that
+    bypass the most common server-side CORS implementations:
+
+    1. Suffix-append  — server checks endsWith(".example.com") so
+       "https://evil.example.com" passes.  For a target like
+       "https://api.foo.com" we send "https://evil.api.foo.com".
+    2. Prefix-append  — server uses indexOf() so "https://foo.com.evil.example"
+       passes a naive `origin.contains("foo.com")` check.
+    3. Subdomain-bypass — server has *.target.com trusted; we send a crafted
+       sub that looks like target's own subdomain space.
+    4. null            — sandboxed <iframe sandbox> sends null; many servers
+       allowlist it explicitly.
+    """
+    parsed = urlparse(target_origin)
+    host = parsed.hostname or ""
+    scheme = parsed.scheme or "https"
+    origins: list[str] = [ATTACKER_ORIGIN]
+    if host:
+        # Pattern 1: evil. prefix on the real host (bypasses endsWith check)
+        origins.append(f"{scheme}://evil.{host}")
+        # Pattern 2: real host as prefix on evil domain (bypasses contains/indexOf check)
+        origins.append(f"{scheme}://{host}.evil.example")
+        # Pattern 3: subdomain-look-alike under the real TLD
+        # e.g. api.foo.com → notfoo.foo.com
+        parts = host.split(".")
+        if len(parts) >= 2:
+            root = ".".join(parts[-2:])
+            origins.append(f"{scheme}://shroodler-test.{root}")
+    # Pattern 4: null origin (sandboxed iframe)
+    origins.append("null")
+    return origins
 STATIC_SUFFIXES = (
     ".js",
     ".css",
@@ -59,13 +95,17 @@ def candidate_from_endpoint(page_url: str, endpoint: str) -> str:
     return urljoin(page_url, endpoint)
 
 
-def findings_from_cors_headers(headers: dict[str, str], page_url: str) -> list[Finding]:
+def findings_from_cors_headers(
+    headers: dict[str, str],
+    page_url: str,
+    probed_origin: str = ATTACKER_ORIGIN,
+) -> list[Finding]:
     acao = header_get(headers, "access-control-allow-origin")
     acac = header_get(headers, "access-control-allow-credentials")
     if not acao:
         return []
     creds = acac.lower() == "true"
-    evidence = f"ACAO={acao}"
+    evidence = f"Origin: {probed_origin} → ACAO={acao}"
     if acac:
         evidence += f" ACAC={acac}"
     out: list[Finding] = []
@@ -94,14 +134,27 @@ def findings_from_cors_headers(headers: dict[str, str], page_url: str) -> list[F
                 evidence=evidence,
             )
         )
-    if acao == ATTACKER_ORIGIN:
+    # Server reflected our probed origin (or null) back — this is a finding
+    # regardless of which bypass variant triggered it.
+    if acao == probed_origin and probed_origin != "*":
+        severity = "high" if creds else "medium"
+        if probed_origin == ATTACKER_ORIGIN:
+            desc = "Access-Control-Allow-Origin reflects the attacker Origin"
+        elif probed_origin == "null":
+            desc = "Access-Control-Allow-Origin allows null origin (sandboxed iframe exploit)"
+            severity = "high" if creds else "low"
+        else:
+            desc = (
+                f"Access-Control-Allow-Origin reflects bypass variant '{probed_origin}' — "
+                "server's origin validation is bypassable"
+            )
         out.append(
             Finding(
                 id="cors-reflect-origin",
-                severity="high" if creds else "medium",
+                severity=severity,
                 category="header",
                 url=page_url,
-                description="Access-Control-Allow-Origin reflects the attacker Origin",
+                description=desc,
                 evidence=evidence,
             )
         )
@@ -132,6 +185,7 @@ def probe_cors(
     findings: list[Finding] = []
     seen: set[str] = set()
     n = 0
+    attacker_origins = _attacker_origins_for(origin)
     for url in candidates:
         if n >= MAX_CORS_PROBES:
             break
@@ -146,17 +200,25 @@ def probe_cors(
             continue
         seen.add(key)
         n += 1
-        findings.extend(findings_from_cors_headers(_probe_headers(fetcher, url), url))
+        for attacker_origin in attacker_origins:
+            hdrs = _probe_headers(fetcher, url, attacker_origin)
+            new = findings_from_cors_headers(hdrs, url, probed_origin=attacker_origin)
+            if new:
+                findings.extend(new)
+                # Found a bypass for this URL; no need to try remaining variants
+                break
     return findings
 
 
-def _probe_headers(fetcher: StaticFetcher, url: str) -> dict[str, str]:
+def _probe_headers(
+    fetcher: StaticFetcher, url: str, attacker_origin: str = ATTACKER_ORIGIN
+) -> dict[str, str]:
     extra = {
-        "Origin": ATTACKER_ORIGIN,
+        "Origin": attacker_origin,
         "Access-Control-Request-Method": "GET",
     }
     opt = fetcher.request("OPTIONS", url, extra)
     if header_get(opt.headers, "access-control-allow-origin"):
         return opt.headers
-    got = fetcher.request("GET", url, {"Origin": ATTACKER_ORIGIN})
+    got = fetcher.request("GET", url, {"Origin": attacker_origin})
     return got.headers

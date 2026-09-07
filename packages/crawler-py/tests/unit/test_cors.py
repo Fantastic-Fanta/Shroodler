@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 from shroodler.crawler import crawl_url
 from shroodler.extractors.cors import (
     ATTACKER_ORIGIN,
+    _attacker_origins_for,
     findings_from_cors_headers,
     is_api_ish,
     is_static_asset,
@@ -109,6 +110,71 @@ def test_allow_external_permits_non_local_origin():
     )
     assert out == []
     assert calls, "expected the probe to actually fire when allow_external=True"
+
+
+def test_attacker_origins_for_variants():
+    origins = _attacker_origins_for("https://api.foo.com")
+    assert ATTACKER_ORIGIN in origins         # baseline
+    assert "https://evil.api.foo.com" in origins  # suffix-append bypass
+    assert "https://api.foo.com.evil.example" in origins  # prefix-append bypass
+    assert "https://shroodler-test.foo.com" in origins  # subdomain bypass
+    assert "null" in origins                  # sandboxed iframe
+
+
+def test_bypass_variant_detected():
+    # Server reflects back a bypass-variant origin — must still fire
+    bypass = "https://evil.api.foo.com"
+    findings = findings_from_cors_headers(
+        {"Access-Control-Allow-Origin": bypass, "Access-Control-Allow-Credentials": "true"},
+        "https://api.foo.com/v1/me",
+        probed_origin=bypass,
+    )
+    assert findings
+    assert findings[0].id == "cors-reflect-origin"
+    assert findings[0].severity == "high"
+    assert bypass in (findings[0].evidence or "")
+
+
+def test_null_origin_detected():
+    findings = findings_from_cors_headers(
+        {"Access-Control-Allow-Origin": "null"},
+        "https://api.foo.com/v1/me",
+        probed_origin="null",
+    )
+    assert findings
+    assert findings[0].id == "cors-reflect-origin"
+    assert "null" in findings[0].description
+
+
+def test_probe_cors_stops_on_first_bypass(fx):
+    """Once a bypass is found for a URL, remaining origin variants are skipped."""
+    calls = []
+
+    class Recorder:
+        def request(self, method, url, headers=None):
+            calls.append((method, url, (headers or {}).get("Origin", "")))
+
+            class Resp:
+                headers: dict[str, str] = {}
+
+                def __init__(self, origin):
+                    if origin == ATTACKER_ORIGIN:
+                        self.headers = {"Access-Control-Allow-Origin": ATTACKER_ORIGIN}
+
+            return Resp((headers or {}).get("Origin", ""))
+
+    probe_cors(
+        "http://127.0.0.1:9999/",
+        Recorder(),
+        ["http://127.0.0.1:9999/api/me"],
+        allow_external=True,
+    )
+    origins_tried = [h for _m, _u, h in calls]
+    # First origin (evil.example) triggers a finding — later variants not tried
+    assert ATTACKER_ORIGIN in origins_tried
+    assert not any("evil.127" in o for o in origins_tried), (
+        "should have stopped after first bypass"
+    )
 
 
 def test_crawl_maps_each_cors_id(fx):

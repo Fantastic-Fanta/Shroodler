@@ -188,7 +188,6 @@ class Crawler:
 
     def crawl(self, start_url: str) -> CrawlResult:
         started = _now()
-        t0 = monotonic()
         stopped = "complete"
         if not self.allow_external and not is_loopback_or_local(start_url):
             raise ValueError(
@@ -196,7 +195,11 @@ class Crawler:
             )
         seed = start_url if "://" in start_url else "http://" + start_url
         origin_url = seed
+        # Authenticate before starting the budget clock so headless login
+        # time (which can be 30s+ for WAF-protected sites) doesn't eat the
+        # crawl budget.
         self._prime_auth(seed)
+        t0 = monotonic()
         rp = None
         robots_body = ""
         if not self.ignore_robots or not self.no_sitemap:

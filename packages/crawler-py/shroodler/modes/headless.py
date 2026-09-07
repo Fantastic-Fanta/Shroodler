@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from urllib.parse import urlparse
 
 from playwright.sync_api import sync_playwright
@@ -98,52 +97,44 @@ class HeadlessFetcher:
 
     def login(self, recipe: LoginRecipe) -> None:
         if recipe.content_type == "json":
-            # JSON-API login (e.g. eToro's /api/sts/v2/login) has no HTML form.
-            # The target site may be behind a WAF/bot-challenge (e.g. Cloudflare)
-            # that requires a real browser session before an API call is accepted.
-            # Strategy:
-            #   1. Navigate to the login page with Playwright, wait for networkidle
-            #      so any JS challenge (Cloudflare Turnstile, DataDome, etc.) is
-            #      solved and clearance cookies are in the browser's jar.
-            #   2. Execute the JSON POST via fetch() from INSIDE that page so it
-            #      carries the challenge cookies and looks like a browser request.
-            #      credentials:"include" ensures Set-Cookie from the login response
-            #      is committed to the shared browser context cookie jar.
+            # JSON-API login recipe: the recipe URL points to a JSON API
+            # endpoint, but WAF/bot-detection (DataDome, Cloudflare, etc.)
+            # blocks direct API calls.  Instead navigate to the site's visual
+            # login page and fill the form — the browser navigates through the
+            # challenge naturally.  Use the recipe field names as selectors
+            # first (many sites do use name= on their inputs), then fall back to
+            # semantic type= selectors for username/password.
             parsed = urlparse(recipe.url)
             origin_url = f"{parsed.scheme}://{parsed.netloc}"
-            # Guess the login page: either the recipe URL's path stripped to
-            # /login, or just the origin if the URL is already the API endpoint.
             login_page_url = origin_url + "/login"
             page = self._context.new_page()
             try:
-                # Load the login page so WAF/bot-detection challenges run and
-                # clearance cookies are set.  Use "load" (not "networkidle") —
-                # DataDome/Cloudflare keep polling the network indefinitely, so
-                # networkidle never fires.  A brief extra wait lets the JS
-                # challenge complete before we make the API call.
                 page.goto(login_page_url, wait_until="domcontentloaded", timeout=30000)
-                page.wait_for_timeout(6000)
-                # POST via fetch() inside the live browser context.
-                result = page.evaluate(
-                    """
-                    async ([url, body]) => {
-                        const r = await fetch(url, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify(body),
-                            credentials: "include",
-                        });
-                        return {ok: r.ok, status: r.status};
-                    }
-                    """,
-                    [recipe.url, dict(recipe.fields)],
-                )
+                # Give React/Next.js time to render the form.
+                page.wait_for_timeout(3000)
+                for name, value in recipe.fields.items():
+                    loc = page.locator(f'[name="{name}"]')
+                    if loc.count():
+                        loc.first.fill(value)
+                        continue
+                    # Fallback: match by input type for common credential fields.
+                    nl = name.lower()
+                    if any(k in nl for k in ("user", "email", "login", "account")):
+                        fb = page.locator('input[type="email"], input[type="text"][autocomplete="username"]')
+                        if fb.count():
+                            fb.first.fill(value)
+                    elif "pass" in nl:
+                        fb = page.locator('input[type="password"]')
+                        if fb.count():
+                            fb.first.fill(value)
+                submit = page.locator('button[type="submit"], input[type="submit"], form button')
+                if submit.count():
+                    submit.first.click(timeout=5000)
+                else:
+                    page.keyboard.press("Enter")
+                page.wait_for_load_state("domcontentloaded", timeout=20000)
             finally:
                 page.close()
-            if not result.get("ok"):
-                raise RuntimeError(
-                    f"JSON login to {recipe.url} failed: HTTP {result.get('status')}"
-                )
             return
 
         page = self._context.new_page()

@@ -76,6 +76,7 @@ _shroodler() {
             '--login-recipe[Login recipe JSON]:file:_files' \
             '--proxy[HTTP proxy URL]:url' \
             '*--seed[Extra same-origin URL to enqueue]:url' \
+            '*--spec[Local OpenAPI or Postman collection to seed from]:file:_files' \
             '--seed-from[Proxy session JSONL]:file:_files' \
             '--cookies-from[Proxy session JSONL]:file:_files' \
             '*--plugin[Plugin dir or file]:file:_files' \

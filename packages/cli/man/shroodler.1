@@ -488,6 +488,13 @@ Route crawl traffic through an HTTP proxy, e.g. the bundled
 .BI \-\-seed " URL"
 Extra same-origin URL to enqueue, repeatable.
 .TP
+.BI \-\-spec " FILE"
+Local OpenAPI/Swagger document or Postman collection; same-origin paths
+are enqueued as extra crawl seeds. Repeatable. Does not fetch the spec
+from the target (crawl already probes
+.I /openapi.json
+on its own).
+.TP
 .BI \-\-seed\-from " FILE"
 Seed URLs from a captured proxy session JSONL.
 .TP

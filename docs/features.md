@@ -39,8 +39,9 @@
   handling, scripted login (re-runs the login recipe once if a mid-crawl
   fetch returns 401 or a login redirect), cookie/header/session-state
   injection,
-  configurable User-Agent (`--user-agent`), and named safe/balanced/
-  aggressive profiles.
+  configurable User-Agent (`--user-agent`), named safe/balanced/
+  aggressive profiles, and `--spec` to seed extra same-origin paths from
+  a local OpenAPI/Swagger document or Postman collection.
 - **Cookie prefix contracts** — `__Secure-`/`__Host-` Set-Cookie
   violations (browsers reject these outright), distinct from the
   existing "could adopt a prefix" suggestions.

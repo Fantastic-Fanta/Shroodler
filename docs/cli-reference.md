@@ -10,7 +10,7 @@ shroodler crawl http://127.0.0.1:8081 --plugin ./my-checks --output out.json
 shroodler payload out.json --plugin ./my-checks -o hits.json
 shroodler mcp-server --list-tools
 shroodler mcp-server   # stdio JSON-RPC; driven by an MCP client
-shroodler crawl http://127.0.0.1:8081 --output out.json
+shroodler crawl http://127.0.0.1:8081 --spec ./openapi.json --output out.json
 shroodler crawl http://127.0.0.1:8081 --user-agent "Mozilla/5.0 (compatible; my-scan/1.0)" --output out.json
 shroodler crawl http://127.0.0.1:8081 --login-recipe packages/target-apps/app1-server-rendered/login-recipe.json --output authed.json
 shroodler crawl http://127.0.0.1:8082 --mode headless --output spa.json

@@ -108,6 +108,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
         check_idor=bool(getattr(args, "check_idor", False)),
         plugins=list(getattr(args, "plugin", None) or []),
+        exclude_paths=list(getattr(args, "exclude_path", None) or []),
         **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
@@ -1040,6 +1041,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Extra same-origin URL to enqueue (repeatable)",
+    )
+    crawl.add_argument(
+        "--exclude-path",
+        action="append",
+        default=[],
+        metavar="PREFIX",
+        help="Skip any URL whose path starts with PREFIX (repeatable). "
+        "Example: --exclude-path /markets/ to avoid crawling the entire "
+        "markets section when you want to focus on authenticated paths.",
     )
     crawl.add_argument(
         "--spec",

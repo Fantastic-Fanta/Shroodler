@@ -74,6 +74,10 @@ def cmd_crawl(args: argparse.Namespace) -> int:
     cookies = list(getattr(args, "cookie", None) or [])
     headers = list(getattr(args, "header", None) or [])
     extra_seeds = list(getattr(args, "seed", None) or [])
+    for spec_path in getattr(args, "spec", None) or []:
+        from shroodler.extractors.openapi import urls_from_seed_file
+
+        extra_seeds.extend(urls_from_seed_file(args.url, spec_path))
     cookies_from = getattr(args, "cookies_from", None)
     seed_from = getattr(args, "seed_from", None)
     if cookies_from or seed_from:
@@ -1009,6 +1013,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         default=[],
         help="Extra same-origin URL to enqueue (repeatable)",
+    )
+    crawl.add_argument(
+        "--spec",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="Local OpenAPI/Swagger or Postman collection; enqueue same-origin "
+        "paths as extra crawl seeds (repeatable)",
     )
     crawl.add_argument("--seed-from", help="Proxy session JSONL; enqueue captured same-origin URLs")
     crawl.add_argument(

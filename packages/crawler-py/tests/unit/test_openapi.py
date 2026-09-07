@@ -3,7 +3,7 @@ from __future__ import annotations
 from urllib.parse import urlparse
 
 from shroodler.crawler import crawl_url
-from shroodler.extractors.openapi import parse_spec_paths, urls_from_spec
+from shroodler.extractors.openapi import parse_spec_paths, urls_from_seed_text, urls_from_spec
 
 OPENAPI3 = """
 {
@@ -95,3 +95,73 @@ def test_missing_spec_not_recorded(fx):
     result = crawl_url(fx.origin + "/", depth=0)
     paths = {urlparse(p.url).path for p in result.pages}
     assert paths == {"/"}
+
+
+POSTMAN = """
+{
+  "info": {
+    "name": "demo",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "users",
+      "request": {"method": "GET", "url": "{{baseUrl}}/postman-users"}
+    },
+    {
+      "name": "folder",
+      "item": [
+        {
+          "name": "nested",
+          "request": {
+            "method": "GET",
+            "url": {"raw": "{{baseUrl}}/postman-nested", "path": ["postman-nested"]}
+          }
+        }
+      ]
+    },
+    {
+      "name": "off-origin",
+      "request": {"method": "GET", "url": "https://example.com/nope"}
+    }
+  ]
+}
+"""
+
+
+def test_postman_and_openapi_seed_text():
+    urls = urls_from_seed_text("http://127.0.0.1:9/", POSTMAN)
+    assert urls == [
+        "http://127.0.0.1:9/postman-users",
+        "http://127.0.0.1:9/postman-nested",
+    ]
+    urls2 = urls_from_seed_text("http://127.0.0.1:9/", OPENAPI3)
+    assert "/users" in "".join(urls2)
+    assert urls_from_seed_text("http://127.0.0.1:9/", NOT_A_SPEC) == []
+
+
+def test_local_spec_file_seeds_unlinked_path(fx, tmp_path):
+    fx.html("/", "<h1>home</h1>")
+    fx.route(
+        "/from-spec",
+        lambda _req: (200, {"Content-Type": "application/json"}, b'{"ok":true}'),
+    )
+    spec = tmp_path / "api.json"
+    spec.write_text(
+        '{"openapi":"3.0.3","info":{"title":"d","version":"1"},'
+        '"paths":{"/from-spec":{"get":{}}}}',
+        encoding="utf-8",
+    )
+    extra = urls_from_seed_text(fx.origin + "/", spec.read_text(encoding="utf-8"))
+    result = crawl_url(fx.origin + "/", depth=0, ignore_robots=True, extra_seeds=extra)
+    paths = {urlparse(p.url).path for p in result.pages}
+    assert "/from-spec" in paths
+
+
+def test_cli_parses_spec_flag():
+    from shroodler.cli import build_parser
+
+    args = build_parser().parse_args(
+        ["crawl", "http://127.0.0.1:8081", "--spec", "a.yaml", "--spec", "b.json"]
+    )
+    assert args.spec == ["a.yaml", "b.json"]

@@ -7,6 +7,12 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`--spec` crawl seed.** `crawl --spec FILE` imports a local
+  OpenAPI/Swagger document or Postman collection and enqueues same-origin
+  paths as extra seeds (in addition to the existing in-crawl
+  `/openapi.json` probe). Off-origin URLs in a Postman collection are
+  dropped.
+
 - **Authenticated-scan auto re-auth.** With `--login-recipe`, a mid-crawl
   401 or login redirect re-runs the recipe once and retries that URL.
   Further expiry in the same crawl is not retried. 403 is left alone

@@ -8,11 +8,12 @@ from typing import Any
 from shroodler import __version__
 from shroodler.crawler import page_from_fetch
 from shroodler.extractors.secrets import scan_text
-from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats
+from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats, Form, FormField
 from shroodler.modes.static import FetchResult, _decode_body
 from shroodler.urls import canonical_key, is_loopback_or_local, origin, same_origin
 
 _SKIP_METHODS = {"CONNECT", "OPTIONS"}
+_BODY_METHODS = {"POST", "PUT", "PATCH"}
 _SET_COOKIE_SPLIT = re.compile(r", (?=[^ ;,]+=)")
 
 
@@ -162,6 +163,39 @@ def fetch_result_from_session(sess: dict[str, Any]) -> FetchResult:
     )
 
 
+def json_body_form(sess: dict[str, Any]) -> Form | None:
+    """`payload`'s fuzzer already walks Page.forms and Page.params, but
+    those only ever came from HTML <form> tags and URL query strings --
+    never a POST/PUT/PATCH JSON request body. A captured proxy session is
+    the one place real JSON body field names (e.g. a REST API's `url`,
+    `name`, `enabled` fields) are actually available, so surface them here
+    as a synthetic Form the same way probe_urls/page_from_fetch already
+    synthesize GET-only forms from query params. `enctype` carries the
+    original request Content-Type so the payload sender knows to
+    re-encode fuzzed values as JSON (see tester.py's `send()`) instead of
+    defaulting to form-urlencoded.
+    """
+    req = sess.get("request") or {}
+    method = str(req.get("method") or "GET").upper()
+    if method not in _BODY_METHODS:
+        return None
+    content_type = header_get(req.get("headers"), "Content-Type")
+    if "json" not in content_type.lower():
+        return None
+    body_text = _body_text(req.get("body"))
+    if not body_text.strip():
+        return None
+    try:
+        parsed = json.loads(body_text)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(parsed, dict) or not parsed:
+        return None
+    url = str(req.get("url") or "")
+    fields = [FormField(name=k, type="json", hidden=False) for k in parsed]
+    return Form(action=url, method=method, fields=fields, enctype=content_type)
+
+
 def ingest_sessions(
     path: str | Path,
     *,
@@ -220,6 +254,9 @@ def ingest_sessions(
     endpoints = []
     for key in order:
         page, page_findings, page_eps = page_from_fetch(fetch_result_from_session(last_by_key[key]))
+        body_form = json_body_form(last_by_key[key])
+        if body_form:
+            page.forms.append(body_form)
         pages.append(page)
         findings.extend(page_findings)
         endpoints.extend(page_eps)

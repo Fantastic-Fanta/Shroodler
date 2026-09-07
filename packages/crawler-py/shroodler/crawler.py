@@ -196,6 +196,7 @@ class Crawler:
         # finding instead of silently eating page-budget slots one hop at a
         # time until --max-pages/--max-time happens to run out.
         redirect_chain_depth: dict[str, int] = {}
+        robots_blocked: list[str] = []
 
         while queue:
             hit = self._budget_hit(t0, len(pages))
@@ -209,6 +210,7 @@ class Crawler:
             if not same_origin(url, origin_url):
                 continue
             if not self.ignore_robots and not allowed(rp, url, self.user_agent):
+                robots_blocked.append(url)
                 continue
             if is_pagination_trap(url, family_counts):
                 continue
@@ -365,6 +367,11 @@ class Crawler:
         sitewide = _sitewide_challenge_finding(seed, pages_challenged, len(pages), challenge_hits)
         if sitewide:
             deduped_findings.append(sitewide)
+        robots_finding = _robots_blocked_finding(
+            seed, robots_blocked, canonical_key(seed), len(pages)
+        )
+        if robots_finding:
+            deduped_findings.append(robots_finding)
         return CrawlResult(
             target=seed,
             scan_started_at=started,
@@ -679,6 +686,43 @@ def _sitewide_challenge_finding(
             "operator to allowlist the scanner before re-running."
         ),
         evidence=f"{pages_challenged}/{total_pages} pages challenged",
+    )
+
+
+def _robots_blocked_finding(
+    seed: str, robots_blocked: list[str], seen_seed_key: str, total_pages: int
+) -> Finding | None:
+    """robots.txt disallow is a crawler courtesy setting, not a security
+    control, but honoring it can silently zero out a crawl -- pages_crawled=0
+    with stopped_reason="complete" looks identical to "this target genuinely
+    has nothing," when it may just mean robots.txt said Disallow: /. Surface
+    it explicitly rather than let a clean-looking empty result pass as a
+    real finding of "no attack surface"."""
+    if not robots_blocked:
+        return None
+    seed_blocked = any(canonical_key(u) == seen_seed_key for u in robots_blocked)
+    if total_pages > 0 and not seed_blocked:
+        return None
+    return Finding(
+        id="robots-blocked-crawl",
+        severity="info",
+        category="scan-note",
+        url=seed,
+        description=(
+            (
+                "robots.txt disallowed the seed URL and this crawl respected "
+                "it, so no pages were fetched at all -- this scan's other "
+                "findings (or lack of them) do not reflect the target's real "
+                "attack surface."
+                if total_pages == 0
+                else "robots.txt disallowed the seed URL itself, though other "
+                "in-scope pages were still reachable and crawled."
+            )
+            + " robots.txt is a crawler courtesy convention, not a security "
+            "boundary -- if you are authorized to test this target, pass "
+            "--ignore-robots to actually crawl it."
+        ),
+        evidence=f"{len(robots_blocked)} URL(s) skipped due to robots.txt",
     )
 
 

@@ -29,6 +29,11 @@ class LoginRecipe:
     logout_method: str = "GET"
     protected_url: str | None = None
     content_type: str = "form"  # "form" or "json"
+    local_storage: dict[str, str] = field(default_factory=dict)
+    # Text that must appear in protected_url body (after JS renders) to
+    # confirm auth succeeded.  Handles SPA login overlays that return HTTP 200
+    # even when the user is not authenticated.
+    auth_marker: str | None = None
 
 
 def parse_header_lines(lines: list[str] | None) -> dict[str, str]:
@@ -80,6 +85,10 @@ def load_login_recipe(path: str) -> LoginRecipe:
     content_type = str(data.get("content_type") or "form").lower()
     if content_type not in {"form", "json"}:
         raise ValueError(f"login recipe content_type must be 'form' or 'json', got {content_type!r}")
+    local_storage = data.get("local_storage") or {}
+    if not isinstance(local_storage, dict):
+        raise ValueError("login recipe local_storage must be an object")
+    auth_marker = data.get("auth_marker")
     return LoginRecipe(
         url=str(data["url"]),
         method=str(data.get("method") or "POST"),
@@ -89,6 +98,8 @@ def load_login_recipe(path: str) -> LoginRecipe:
         logout_method=str(data.get("logout_method") or "GET"),
         protected_url=str(protected_url) if protected_url else None,
         content_type=content_type,
+        local_storage={str(k): str(v) for k, v in local_storage.items()},
+        auth_marker=str(auth_marker) if auth_marker else None,
     )
 
 
@@ -164,6 +175,8 @@ def resolve_recipe_url(recipe: LoginRecipe, seed: str) -> LoginRecipe:
         logout_url=_resolve_one(recipe.logout_url, seed),
         logout_method=recipe.logout_method,
         protected_url=_resolve_one(recipe.protected_url, seed),
+        local_storage=dict(recipe.local_storage),
+        auth_marker=recipe.auth_marker,
     )
 
 

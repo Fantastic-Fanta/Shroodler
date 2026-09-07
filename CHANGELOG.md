@@ -7,6 +7,25 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler peer-write`**: replay captured POST/PUT/PATCH/DELETE
+  requests against *known* object ids as a second session. Each write is
+  also sent to a nonsense id — the same 200 as the fake id is
+  dummy-success, not a finding; `success: false` is a write-failure. A
+  peer 2xx that differs from the control is `peer-write-idor`; an owner
+  re-read that changed upgrades it to confirmed. Not n±1 enumeration.
+  Accepts a playbook JSON, HAR, or proxy JSONL (`--from-sessions`) plus
+  Playwright `storageState` / Netscape / JSONL cookie files. Default
+  1 req/s. MCP tool `peer_write`.
+
+- **`shroodler js-routes`**: extract `{userId}` / `{pk}` / `:id` /
+  `<int:pk>` URL templates from a local JS bundle. Templates only — does
+  not fetch or enumerate ids. MCP tool `extract_js_routes`.
+
+- **`shroodler paced-fetch`**: GET/HEAD/OPTIONS a URL list at a capped
+  rate (default 1 req/s) so agent/Playwright loops do not stampede a
+  1-req/s program. Does not solve captchas. MCP tool `paced_fetch`
+  (cap 20).
+
 - **`shroodler nuclei-ingest`**: convert local Nuclei HTTP YAML templates
   into a payload pack. `payload --pack` also auto-detects a Nuclei-shaped
   file. A loader, not a CVE library — does not download templates.

@@ -65,7 +65,7 @@ def _resolve_safe_path(raw: str) -> Path:
 
 def _build_enforcer(args: dict, target: str):
     """Shared by every tool that fires live requests at a target
-    (scan_route's payload run, check_idor's replay): refuse to proceed
+    (scan_route's payload run, check_idor's replay, peer_write, paced_fetch): refuse to proceed
     unless the target publishes a scan-policy consent manifest, unless
     the caller explicitly opts out via `allow_without_policy`. This is
     the one guardrail an MCP client/agent can't skip by just not passing
@@ -270,6 +270,87 @@ def diff_since_baseline(args: dict) -> dict:
     return {"errors": outcome.errors, "resolved": outcome.resolved, "clean": not outcome.errors}
 
 
+def peer_write(args: dict) -> dict:
+    """Replay known-object writes as a peer session. Not n±1 enumeration.
+
+    Requires a scan-policy consent manifest unless allow_without_policy is
+    set. A 200 that matches the nonsense-id control is dummy-success, not
+    a finding. Does not solve captchas.
+    """
+    from shroodler.peer_write import load_playbook
+    from shroodler.peer_write import run as peer_write_run
+
+    playbook: dict[str, Any] = {}
+    if args.get("playbook") is not None:
+        playbook = _load_doc(args.get("playbook"))
+    sessions_path = None
+    if args.get("from_sessions"):
+        sessions_path = str(_resolve_safe_path(str(args["from_sessions"])))
+    if not playbook and not sessions_path:
+        raise ValueError("peer_write requires 'playbook' or 'from_sessions'")
+    if args.get("target"):
+        playbook["target"] = args["target"]
+    merged = load_playbook(
+        playbook,
+        sessions_path=sessions_path,
+        target=str(playbook.get("target") or args.get("target") or ""),
+        only_id=args.get("only_id"),
+    )
+    target = str(merged.get("target") or "")
+    if not target:
+        raise ValueError("peer_write needs a target (playbook.target or target)")
+    enforcer = _build_enforcer(args, target)
+    return peer_write_run(
+        merged,
+        owner_cookie=str(args.get("owner_cookie") or ""),
+        peer_cookie=str(args.get("peer_cookie") or ""),
+        allow_external=bool(args.get("allow_external", False)),
+        enforcer=enforcer,
+        rate=float(args.get("rate") or 1.0),
+        user_agent_suffix=str(args.get("user_agent_suffix") or ""),
+        nonsense_id=str(args.get("nonsense_id") or "1"),
+        only_id=args.get("only_id"),
+    )
+
+
+def extract_js_routes(args: dict) -> dict:
+    """Mine {userId}/{pk}/:id URL templates from a local JS file. File only."""
+    from shroodler.extractors.js_routes import extract_js_routes_file
+
+    raw = args.get("file")
+    if not raw:
+        raise ValueError("extract_js_routes requires 'file'")
+    return extract_js_routes_file(_resolve_safe_path(str(raw)))
+
+
+def paced_fetch(args: dict) -> dict:
+    """GET a short URL list at a capped rate (default 1 req/s). Cap 20.
+
+    Same scan-policy gate as check_idor. GET/HEAD/OPTIONS only. Does not
+    solve captchas.
+    """
+    from shroodler.paced_fetch import MCP_MAX_URLS, fetch_urls
+
+    urls = list(args.get("urls") or [])
+    if args.get("url"):
+        urls.append(str(args["url"]))
+    urls = [u for u in (str(u).strip() for u in urls) if u]
+    if not urls:
+        raise ValueError("paced_fetch requires 'urls' or 'url'")
+    target = urls[0]
+    enforcer = _build_enforcer(args, target)
+    return fetch_urls(
+        urls,
+        method=str(args.get("method") or "GET"),
+        cookie_header=str(args.get("cookie") or ""),
+        allow_external=bool(args.get("allow_external", False)),
+        enforcer=enforcer,
+        rate=float(args.get("rate") or 1.0),
+        user_agent_suffix=str(args.get("user_agent_suffix") or ""),
+        max_urls=MCP_MAX_URLS,
+    )
+
+
 def explain_finding(args: dict) -> dict:
     """Static remediation guidance for a finding id/category -- lets an
     agent ask "what do I do about this" without a human opening the docs."""
@@ -368,6 +449,79 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["higher_priv_crawl"],
         },
         "handler": check_idor,
+    },
+    "peer_write": {
+        "description": "Replay captured writes against known object ids as a second "
+        "session. Compares each write to a nonsense-id control so a dummy 200 is "
+        "not a finding. Not n±1 enumeration. Requires a scan-policy consent "
+        "manifest unless allow_without_policy is set.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "playbook": {
+                    "description": "Playbook object, or a path to one, with target + writes",
+                },
+                "from_sessions": {
+                    "type": "string",
+                    "description": "HAR or proxy JSONL path; extract writes that name an id",
+                },
+                "target": {"type": "string"},
+                "owner_cookie": {
+                    "type": "string",
+                    "description": "Cookie header for the owner verify re-read",
+                },
+                "peer_cookie": {
+                    "type": "string",
+                    "description": "Cookie header for the peer write replay",
+                },
+                "only_id": {"type": "string"},
+                "rate": {"type": "number", "default": 1},
+                "nonsense_id": {"type": "string", "default": "1"},
+                "user_agent_suffix": {"type": "string"},
+                "allow_external": {"type": "boolean", "default": False},
+                "allow_without_policy": {"type": "boolean", "default": False},
+                "policy_file": {"type": "string"},
+                "audit_log": {"type": "string"},
+            },
+        },
+        "handler": peer_write,
+    },
+    "extract_js_routes": {
+        "description": "Extract parameterized URL templates ({userId}, {pk}, :id) "
+        "from a local JavaScript file. Does not fetch or enumerate ids.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "file": {"type": "string", "description": "Path to a local JS file"},
+            },
+            "required": ["file"],
+        },
+        "handler": extract_js_routes,
+    },
+    "paced_fetch": {
+        "description": "GET a short list of URLs at a capped rate (default 1 req/s, "
+        "max 20). For agent/Playwright loops against 1-req/s programs. Does not "
+        "solve captchas. Requires a scan-policy consent manifest unless "
+        "allow_without_policy is set.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "urls": {"type": "array", "items": {"type": "string"}},
+                "url": {"type": "string"},
+                "method": {"type": "string", "enum": ["GET", "HEAD", "OPTIONS"], "default": "GET"},
+                "cookie": {"type": "string"},
+                "rate": {"type": "number", "default": 1},
+                "user_agent_suffix": {"type": "string"},
+                "allow_external": {"type": "boolean", "default": False},
+                "allow_without_policy": {"type": "boolean", "default": False},
+                "policy_file": {"type": "string"},
+                "audit_log": {"type": "string"},
+            },
+        },
+        "handler": paced_fetch,
     },
     "reverify_fix": {
         "description": "Re-scan one URL and report whether a specific finding_id is now "

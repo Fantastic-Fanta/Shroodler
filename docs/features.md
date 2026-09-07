@@ -102,6 +102,21 @@
   medium-severity lead to manually confirm (a single session can't tell
   whether the adjacent ID belongs to a different account), not a proven
   vulnerability.
+- **Peer-write replay** (`shroodler peer-write`, Python-only) — replay
+  captured writes against *known* object ids as a second session, with a
+  nonsense-id control and an optional owner re-read. A dummy 200 that
+  matches the fake id, or `{"success": false}`, is not a finding. This
+  is not an enumerator and does not invent adjacent ids. Cookie jars
+  come from Playwright `storageState`, Netscape, HAR, or proxy JSONL —
+  no crawl required. MCP: `peer_write`.
+- **JS route templates** (`shroodler js-routes`) — mine `{userId}`,
+  `{collectionId}`, `{pk}`, `${var}`, `:id`, and `<int:pk>` URL
+  templates from a webpack/SPA bundle so a peer-write playbook has a
+  map. Does not fetch or enumerate ids. MCP: `extract_js_routes`.
+- **Paced fetch** (`shroodler paced-fetch`) — GET/HEAD/OPTIONS a URL
+  list at a capped rate (default 1 req/s) so an agent loop does not
+  trip a program's rate limit. Does not solve captchas. MCP:
+  `paced_fetch` (max 20 URLs).
 - **OAuth 2.0/OIDC checks** (both engines) — missing/empty `state` param
   (CSRF risk) and deprecated implicit-flow (`response_type=token`)
   detection on any crawled authorization-request URL.

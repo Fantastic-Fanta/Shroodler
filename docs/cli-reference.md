@@ -48,6 +48,16 @@ shroodler report out.json --format junit -o results.xml
 # Authz diff: replay a privileged session's URLs as a lower-priv session
 shroodler authz-diff higher-priv-crawl.json --cookie session=abc123
 
+# Known-object peer-write replay (not n±1 enum). Nonsense-id control + owner re-read.
+shroodler peer-write playbook.json --peer-cookie session=b --owner-cookie session=a --rate 1
+shroodler peer-write --from-sessions captured.har --peer-cookies-from b-state.json --only-id 10464573 --allow-external
+
+# Parameterized URL templates from a JS bundle (no fetch)
+shroodler js-routes app.bundle.js -o routes.json
+
+# Rate-limited GETs for a 1-req/s program (does not solve captchas)
+shroodler paced-fetch --url http://127.0.0.1:8081/a --url http://127.0.0.1:8081/b --rate 1 --user-agent-suffix Bugcrowd-handle
+
 # History and trend
 shroodler history record out.json --name my-app
 shroodler history list
@@ -57,7 +67,7 @@ shroodler trend <scan-a> <scan-b>
 shroodler ask "show critical findings" out.json
 shroodler ask "what's new since" out.json --since older.json
 
-# MCP server (scan_route, check_idor, diff_since_baseline, explain_finding) for agent clients
+# MCP server (scan_route, check_idor, peer_write, extract_js_routes, paced_fetch, ...)
 shroodler mcp-server
 
 # Go crawler (same subcommands, faster)

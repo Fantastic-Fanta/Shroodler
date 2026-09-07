@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens cadence triage payload nuclei-ingest authz-diff proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens cadence triage payload nuclei-ingest authz-diff peer-write js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -47,6 +47,15 @@ _shroodler_flags_for() {
             ;;
         authz-diff)
             echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation"
+            ;;
+        peer-write)
+            echo "--output --target --from-sessions --only-id --owner-cookie --peer-cookie --owner-cookies-from --peer-cookies-from --header --rate --nonsense-id --user-agent --user-agent-suffix --allow-external --require-policy --policy-file --audit-log"
+            ;;
+        js-routes)
+            echo "--output"
+            ;;
+        paced-fetch)
+            echo "--url --urls-file --output --method --cookie --header --rate --user-agent --user-agent-suffix --allow-external --require-policy --policy-file --audit-log"
             ;;
         history-record)
             echo "--label --history-dir"

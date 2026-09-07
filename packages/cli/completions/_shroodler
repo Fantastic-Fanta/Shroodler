@@ -22,6 +22,9 @@ _shroodler_commands=(
   'payload:Run YAML payload packs against crawl JSON'
   'nuclei-ingest:Convert local Nuclei HTTP YAML into a payload pack'
   'authz-diff:Replay a privileged crawl under a second session'
+  'peer-write:Replay known-object writes as a second session'
+  'js-routes:Extract parameterized URL templates from a JS bundle'
+  'paced-fetch:GET a URL list at a capped request rate'
   'proxy:Forward to shroodler-proxy'
   'history:Record and list local scan history'
   'trend:Diff findings between two recorded scans'
@@ -177,6 +180,48 @@ _shroodler() {
             '*--lower-priv-marker[Lower-priv identity string, rules out coincidental matches]:string' \
             '--require-identity-confirmation[Drop unconfirmed leads instead of reporting them]' \
             '1:higher-priv crawl json:_files'
+          ;;
+        peer-write)
+          _arguments \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--target[Override playbook target]:url' \
+            '--from-sessions[HAR or proxy JSONL]:file:_files' \
+            '--only-id[Only replay this known object id]:id' \
+            '*--owner-cookie[Owner session cookie name=value]:cookie' \
+            '*--peer-cookie[Peer session cookie name=value]:cookie' \
+            '--owner-cookies-from[Owner cookies file]:file:_files' \
+            '--peer-cookies-from[Peer cookies file]:file:_files' \
+            '*--header[Extra header]:header' \
+            '--rate[Minimum seconds between requests]:seconds' \
+            '--nonsense-id[Control id substituted into the same write]:id' \
+            '--user-agent[Override User-Agent]:ua' \
+            '--user-agent-suffix[Appended to User-Agent]:suffix' \
+            '--allow-external[Allow replaying against a non-local target]' \
+            '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
+            '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
+            '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
+            '1:playbook json:_files'
+          ;;
+        js-routes)
+          _arguments \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '1:javascript file:_files'
+          ;;
+        paced-fetch)
+          _arguments \
+            '*--url[URL to fetch]:url' \
+            '--urls-file[Text file of URLs]:file:_files' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--method[Safe method]:(GET HEAD OPTIONS)' \
+            '*--cookie[Cookie name=value]:cookie' \
+            '*--header[Extra header]:header' \
+            '--rate[Minimum seconds between requests]:seconds' \
+            '--user-agent[Override User-Agent]:ua' \
+            '--user-agent-suffix[Appended to User-Agent]:suffix' \
+            '--allow-external[Allow fetching a non-local target]' \
+            '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
+            '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
+            '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files'
           ;;
         history)
           _values 'history subcommand' 'record[Save a scan into history]' 'list[List recorded scans]'

@@ -43,6 +43,8 @@ docs/*
 !docs/quickstart.md
 !docs/features.md
 !docs/cli-reference.md
+# Review artifact for the 2026-09-07 roadmap implementation pass
+!docs/roadmap-audit.md
 
 # Proxy CA / captured sessions — never commit
 packages/proxy-go/data/

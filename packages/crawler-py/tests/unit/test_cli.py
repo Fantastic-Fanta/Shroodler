@@ -117,3 +117,18 @@ def test_authz_diff_parses():
     assert args.no_anon_check is True
     assert args.allow_external is True
     assert "authz-diff" in p.format_help()
+
+
+def test_plugin_and_mcp_server_flags_parse():
+    p = build_parser()
+    args = p.parse_args(["crawl", "http://127.0.0.1:8081", "--plugin", "./plug"])
+    assert args.plugin == ["./plug"]
+    args = p.parse_args(["payload", "scan.json", "--plugin", "./plug", "--pack", "x.yaml"])
+    assert args.plugin == ["./plug"]
+    args = p.parse_args(["mcp-server", "--list-tools"])
+    assert args.list_tools is True
+    mcp_help = p._subparsers._group_actions[0].choices["mcp-server"].format_help()
+    assert "scan_route" in mcp_help
+    assert "check_idor" in mcp_help
+    assert "reverify_fix" in mcp_help
+    assert "--list-tools" in mcp_help

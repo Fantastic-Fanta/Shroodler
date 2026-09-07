@@ -123,6 +123,7 @@ class Crawler:
         no_sitemap: bool = False,
         check_rate_limit: bool = False,
         check_idor: bool = False,
+        plugins: list[str] | None = None,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -141,6 +142,20 @@ class Crawler:
         self.no_sitemap = no_sitemap
         self.check_rate_limit = check_rate_limit
         self.check_idor = check_idor
+        self._plugin_secret_rules: list[dict] = []
+        self._plugin_checks: list = []
+        from shroodler.plugins import (
+            load_plugins,
+            merge_checks,
+            merge_secret_rules,
+            plugin_paths_from_env,
+        )
+
+        plugin_dirs = plugin_paths_from_env(plugins)
+        if plugin_dirs:
+            loaded = load_plugins(plugin_dirs)
+            self._plugin_secret_rules = merge_secret_rules(loaded)
+            self._plugin_checks = merge_checks(loaded)
         self._cookie_args = cookies or []
         self._cookie_jar = cookie_jar
         self._storage_state = storage_state
@@ -543,7 +558,10 @@ class Crawler:
         self, result: FetchResult, t0: float | None = None
     ) -> tuple[Page, list[Finding], list[JsEndpoint], FetchResult]:
         page, findings, endpoints = page_from_fetch(
-            result, cookies_attrs_reliable=self.mode != "headless"
+            result,
+            cookies_attrs_reliable=self.mode != "headless",
+            extra_secret_rules=self._plugin_secret_rules,
+            plugin_checks=self._plugin_checks,
         )
         is_challenge = any(f.category == "waf-challenge" for f in findings)
         if (
@@ -562,7 +580,10 @@ class Crawler:
             # real page instead of the stale challenge response.
             retry_result = self.fetcher.fetch(result.url)
             retry_page, retry_findings, retry_endpoints = page_from_fetch(
-                retry_result, cookies_attrs_reliable=self.mode != "headless"
+                retry_result,
+                cookies_attrs_reliable=self.mode != "headless",
+                extra_secret_rules=self._plugin_secret_rules,
+                plugin_checks=self._plugin_checks,
             )
             if not any(f.category == "waf-challenge" for f in retry_findings):
                 return retry_page, retry_findings, retry_endpoints, retry_result
@@ -599,7 +620,11 @@ class Crawler:
 
 
 def page_from_fetch(
-    result: FetchResult, *, cookies_attrs_reliable: bool = True
+    result: FetchResult,
+    *,
+    cookies_attrs_reliable: bool = True,
+    extra_secret_rules: list[dict] | None = None,
+    plugin_checks: list | None = None,
 ) -> tuple[Page, list[Finding], list[JsEndpoint]]:
     cookies, cookie_findings = extract_cookies(
         result.set_cookies, result.url, attrs_reliable=cookies_attrs_reliable
@@ -655,7 +680,7 @@ def page_from_fetch(
         if is_js or is_html:
             endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
     verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
-    secret_findings = scan_text(result.text, result.url)
+    secret_findings = scan_text(result.text, result.url, extra_rules=extra_secret_rules)
     jwt_findings = audit_jwts(result.text, result.url)
     markup_findings = extract_html_markup(result.text, result.url)
     oauth_findings = check_oauth_authorize_url(result.url)
@@ -681,6 +706,16 @@ def page_from_fetch(
         + subresource_findings
         + ep_findings
     )
+    if plugin_checks and result.text:
+        from shroodler.plugins import run_checks
+
+        all_f = all_f + run_checks(
+            plugin_checks,
+            url=result.url,
+            body=result.text,
+            headers=result.headers,
+            status_code=result.status_code,
+        )
     return page, all_f, endpoints
 
 

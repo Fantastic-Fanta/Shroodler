@@ -10,6 +10,9 @@
   and required custom headers. Emits JSON, a table, or a crawl-ready
   host list (`--format hosts` / `--hosts-out`). Does not crawl or fire
   payloads.
+- **Plugins** — extra payload packs, secret rules, and optional Python
+  page checks loadable from a local directory (`--plugin` on `crawl` /
+  `payload`, or `$SHROODLER_PLUGIN_PATH`).
 - **Crawl** — static (HTML parse) or headless (real browser, for SPAs)
   crawling with configurable depth/page/time budgets, robots/sitemap
   handling, scripted login, cookie/header/session-state injection,

@@ -152,6 +152,37 @@ def serve(in_stream: TextIO | None = None, out_stream: TextIO | None = None) -> 
 
 
 def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="shroodler mcp-server",
+        description=(
+            "MCP server exposing Shroodler as agent tools over stdio JSON-RPC 2.0.\n"
+            "\n"
+            "Tools:\n"
+            "  scan_route            Crawl one URL (optional active payloads)\n"
+            "  check_idor            Confirm or drop an IDOR lead (second session)\n"
+            "  reverify_fix          Re-scan a route; report whether a finding is gone\n"
+            "  diff_since_baseline   Compare a scan against a checked-in baseline\n"
+            "  explain_finding       Static remediation guidance for a finding id\n"
+            "\n"
+            "Active tools require a scan-policy consent manifest by default.\n"
+            "This process speaks MCP on stdin/stdout; do not run it interactively\n"
+            "unless an MCP client is driving it. Use --list-tools to inspect the\n"
+            "catalog without starting the loop."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--list-tools",
+        action="store_true",
+        help="Print the tool catalog as JSON and exit",
+    )
+    args = parser.parse_args(argv)
+    if args.list_tools:
+        json.dump({"tools": _tool_list_payload()}, sys.stdout, indent=2)
+        sys.stdout.write("\n")
+        return 0
     serve()
     return 0
 

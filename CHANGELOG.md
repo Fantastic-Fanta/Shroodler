@@ -7,6 +7,18 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Plugin/extension API** for extra payload packs, secret rules, and
+  optional Python `check()` hooks, loadable via `crawl --plugin` /
+  `payload --plugin` or `$SHROODLER_PLUGIN_PATH`. A directory with
+  `plugin.yaml` is the explicit form; a bare dir of YAML files is
+  classified by shape. Plugins are trusted local operator code, not
+  remote content.
+- **`shroodler mcp-server --help` / `--list-tools`**: the MCP subcommand
+  was a bare parser with no flags and no tool list. `--help` now names
+  every tool (`scan_route`, `check_idor`, `reverify_fix`,
+  `diff_since_baseline`, `explain_finding`); `--list-tools` prints the
+  catalog (descriptions + input schemas) as JSON and exits.
+
 - **`shroodler triage`**: a fast, low-touch pre-crawl pass that turns a
   host list (and/or `--discover` apex / `*.wildcard`) into a ranked,
   classified table -- dead, dangling-CNAME takeover candidate,

@@ -103,6 +103,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         no_sitemap=bool(getattr(args, "no_sitemap", False)),
         check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
         check_idor=bool(getattr(args, "check_idor", False)),
+        plugins=list(getattr(args, "plugin", None) or []),
         **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
@@ -493,6 +494,11 @@ def cmd_payload(args: argparse.Namespace) -> int:
     import tester
 
     extra = [Path(x) for x in (getattr(args, "pack", None) or [])]
+    from shroodler.plugins import load_plugins, merge_payload_paths, plugin_paths_from_env
+
+    plugin_dirs = plugin_paths_from_env(getattr(args, "plugin", None) or [])
+    if plugin_dirs:
+        extra.extend(merge_payload_paths(load_plugins(plugin_dirs)))
     doc = load_json(args.crawl_json)
     packs = tester.load_packs(extra=extra) if extra else tester.load_packs()
 
@@ -825,10 +831,13 @@ def cmd_ask(args: argparse.Namespace) -> int:
     return 0
 
 
-def cmd_mcp_server(_args: argparse.Namespace) -> int:
+def cmd_mcp_server(args: argparse.Namespace) -> int:
     from shroodler_mcp.server import main as mcp_main
 
-    return mcp_main()
+    argv: list[str] = []
+    if getattr(args, "list_tools", False):
+        argv.append("--list-tools")
+    return mcp_main(argv)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -975,6 +984,14 @@ def build_parser() -> argparse.ArgumentParser:
     crawl.add_argument(
         "--cookies-from",
         help="Proxy session JSONL; Cookie header from captured Set-Cookie / Cookie",
+    )
+    crawl.add_argument(
+        "--plugin",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Plugin dir or file (payload packs, secret rules, Python checks). "
+        "Repeatable. Also reads $SHROODLER_PLUGIN_PATH.",
     )
     crawl.set_defaults(func=cmd_crawl)
 
@@ -1187,6 +1204,14 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         metavar="PATH",
         help="Extra YAML pack file or directory (repeatable)",
+    )
+    payload.add_argument(
+        "--plugin",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help="Plugin dir or file supplying extra payload packs. Repeatable. "
+        "Also reads $SHROODLER_PLUGIN_PATH.",
     )
     payload.add_argument(
         "--allow-external",
@@ -1424,8 +1449,26 @@ def build_parser() -> argparse.ArgumentParser:
 
     mcp_server = sub.add_parser(
         "mcp-server",
-        help="Run the MCP server exposing scan_route/check_idor/diff_since_baseline/"
-        "explain_finding as agent tools over stdio",
+        help="Run the MCP server exposing Shroodler as agent tools over stdio",
+        description=(
+            "MCP (Model Context Protocol) server on stdio JSON-RPC 2.0. An MCP-"
+            "speaking coding agent can call these tools without shelling out to "
+            "the CLI:\n"
+            "  scan_route          crawl one URL (optional active payloads)\n"
+            "  check_idor          confirm or drop an IDOR lead with a second session\n"
+            "  reverify_fix        re-scan one route and report if a finding is gone\n"
+            "  diff_since_baseline compare a scan to a checked-in baseline\n"
+            "  explain_finding     static remediation guidance for a finding id\n"
+            "Active tools require a scan-policy consent manifest by default. "
+            "Pass --list-tools to print names, descriptions, and input schemas "
+            "and exit, without starting the stdio loop."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    mcp_server.add_argument(
+        "--list-tools",
+        action="store_true",
+        help="Print the tool catalog (name, description, input schema) and exit",
     )
     mcp_server.set_defaults(func=cmd_mcp_server)
 

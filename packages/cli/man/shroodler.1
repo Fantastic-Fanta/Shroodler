@@ -113,7 +113,12 @@ open-redirect, XXE) against every form in a crawl's output.
 .B \-\-allow\-external
 is required to target a non-local host;
 .B \-\-pack
-adds extra pack files or directories.
+adds extra pack files or directories;
+.B \-\-plugin
+loads a plugin directory (see
+.B \-\-plugin
+under
+.BR crawl ).
 .RS
 .TP
 .BI \-\-oob\-host " HOST"
@@ -237,10 +242,15 @@ instead.
 Run an MCP (Model Context Protocol) server on stdio exposing
 .BR scan_route ,
 .BR check_idor ,
+.BR reverify_fix ,
 .BR diff_since_baseline ", and"
 .B explain_finding
 as tools an MCP-speaking coding agent can call directly, instead of
-shelling out to this CLI and parsing text output.
+shelling out to this CLI and parsing text output. Active tools require
+a scan-policy consent manifest by default.
+.B \-\-list\-tools
+prints the catalog (names, descriptions, input schemas) as JSON and
+exits without starting the stdio loop.
 .TP
 .B audit\-verify \fIAUDIT_LOG.JSONL\fR
 Replay a guardrail
@@ -454,6 +464,16 @@ Seed URLs from a captured proxy session JSONL.
 .TP
 .BI \-\-cookies\-from " FILE"
 Cookies from a captured proxy session JSONL.
+.TP
+.BI \-\-plugin " PATH"
+Load a plugin directory or file (repeatable). A plugin supplies extra
+payload packs, secret-detection rules, and/or a trusted Python
+.B check()
+hook. Also reads
+.BR $SHROODLER_PLUGIN_PATH
+(colon-separated). Same flag exists on
+.BR payload
+for packs only.
 .SH FILES
 .TP
 .I ~/.shroodlerrc

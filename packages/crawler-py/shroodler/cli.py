@@ -640,6 +640,45 @@ def cmd_attack_path(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_triage(args: argparse.Namespace) -> int:
+    from shroodler.triage import render_hosts, render_text, run_triage
+
+    doc = run_triage(
+        list(getattr(args, "targets", None) or []),
+        discover=list(getattr(args, "discover", None) or []),
+        allow_external=bool(getattr(args, "allow_external", False)),
+        no_active=bool(getattr(args, "no_active", False)),
+        concurrency=getattr(args, "concurrency", None),
+        rate=getattr(args, "rate", None),
+        timeout=float(getattr(args, "timeout", 8.0) or 8.0),
+        proxy=getattr(args, "proxy", None),
+        user_agent=getattr(args, "user_agent", None),
+        headers=list(getattr(args, "header", None) or []),
+    )
+    fmt = getattr(args, "format", "text") or "text"
+    if fmt == "json":
+        text = json.dumps(doc, indent=2) + "\n"
+    elif fmt == "hosts":
+        text = render_hosts(doc)
+    else:
+        text = render_text(doc)
+    _write(text, args.output)
+    hosts_out = getattr(args, "hosts_out", None)
+    if hosts_out:
+        Path(hosts_out).write_text(render_hosts(doc), encoding="utf-8")
+    hosts = doc.get("hosts") or []
+    if not hosts:
+        return 1
+    if doc.get("skipped_external") and doc["skipped_external"] == len(hosts):
+        print(
+            "error: every host was skipped as non-local; pass --allow-external "
+            "to probe remote hosts you are authorized to test",
+            file=sys.stderr,
+        )
+        return 1
+    return 0
+
+
 def cmd_reverify(args: argparse.Namespace) -> int:
     from shroodler.reverify import reverify
 
@@ -1042,6 +1081,98 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tokens.add_argument("--output", "-o")
     tokens.set_defaults(func=cmd_tokens)
+
+    from shroodler.triage import (
+        DEFAULT_CONCURRENCY,
+        DEFAULT_PROXY_CONCURRENCY,
+        DEFAULT_RATE_RPS,
+        MAX_CONCURRENCY,
+        MAX_RATE_RPS,
+    )
+
+    triage = sub.add_parser(
+        "triage",
+        help="Classify a host list (dead / redirect-alias / WAF / SSO / live) "
+        "before spending crawl budget",
+        description=(
+            "A fast, low-touch pre-crawl pass: passive Certificate Transparency "
+            "discovery, DNS/CNAME analysis, and one gentle HTTP probe per live "
+            "host. It classifies; it does not crawl or fire payloads. Concurrency "
+            "and request rate are bounded and clamped (never an unbounded fan-out); "
+            "a local egress proxy is detected and stays under a lower connection "
+            "ceiling; a WAF challenge or 429 pauses the rest of that zone; "
+            "identifying User-Agent and per-program required headers are supported. "
+            "Local-only by default."
+        ),
+    )
+    triage.add_argument(
+        "targets",
+        nargs="*",
+        help="Hostnames, URLs, and/or a file of them (one per line). "
+        "A *.apex wildcard is treated as a --discover seed.",
+    )
+    triage.add_argument(
+        "--discover",
+        action="append",
+        default=[],
+        metavar="APEX",
+        help="Expand this apex via Certificate Transparency (crt.sh) — contacts "
+        "CT logs, not the target. Repeatable. Requires --allow-external.",
+    )
+    triage.add_argument(
+        "--no-active",
+        action="store_true",
+        help="Skip the HTTP classification probe; DNS/CT only",
+    )
+    triage.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow DNS/HTTP (and CT discovery) against non-local hosts; off by default",
+    )
+    triage.add_argument(
+        "--concurrency",
+        type=int,
+        default=None,
+        help=f"Max parallel probes (default {DEFAULT_CONCURRENCY}, "
+        f"{DEFAULT_PROXY_CONCURRENCY} when a proxy is detected; clamped at "
+        f"{MAX_CONCURRENCY})",
+    )
+    triage.add_argument(
+        "--rate",
+        type=float,
+        default=None,
+        metavar="RPS",
+        help=f"Global HTTP requests/second cap (default {DEFAULT_RATE_RPS}; "
+        f"clamped at {MAX_RATE_RPS})",
+    )
+    triage.add_argument(
+        "--timeout",
+        type=float,
+        default=8.0,
+        help="Per-request timeout in seconds (default 8)",
+    )
+    triage.add_argument("--proxy", help="HTTP proxy URL (also honors HTTP_PROXY/HTTPS_PROXY)")
+    triage.add_argument("--user-agent", help="Identifying User-Agent for every probe")
+    triage.add_argument(
+        "--header",
+        action="append",
+        default=[],
+        metavar="'Name: value'",
+        help="Required custom header (repeatable), e.g. Bugcrowd: <uuid>",
+    )
+    triage.add_argument("--output", "-o")
+    triage.add_argument(
+        "--format",
+        choices=["text", "json", "hosts"],
+        default="text",
+        help="text table (default), json, or a crawl-ready host list",
+    )
+    triage.add_argument(
+        "--hosts-out",
+        metavar="FILE",
+        help="Also write the worth-crawling URL list (same as --format hosts) to FILE",
+    )
+    triage.set_defaults(func=cmd_triage)
 
     payload = sub.add_parser(
         "payload",

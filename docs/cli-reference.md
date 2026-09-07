@@ -1,6 +1,11 @@
 # Command line
 
 ```bash
+# Scope triage before a crawl (classifies; does not crawl or payload)
+shroodler triage hosts.txt --format hosts --hosts-out seeds.txt
+shroodler triage --discover example.local --allow-external --no-active
+shroodler triage http://127.0.0.1:8081 --header "Bugcrowd: <uuid>" -o triage.json --format json
+
 # Crawl and report
 shroodler crawl http://127.0.0.1:8081 --output out.json
 shroodler crawl http://127.0.0.1:8081 --user-agent "Mozilla/5.0 (compatible; my-scan/1.0)" --output out.json

@@ -83,6 +83,30 @@ flow multiple times (e.g. request several password resets) to get more
 than one sample, since only 2+ samples let this test for a sequential or
 low-entropy generation pattern rather than a weaker length-only estimate.
 .TP
+.B triage \fIHOSTS...\fR
+Classify a program's host list before spending crawl budget. Passive
+Certificate Transparency discovery (\fB\-\-discover\fR), DNS/CNAME
+analysis (dead / dangling-CNAME takeover / third-party SaaS / resolves),
+and one gentle HTTP probe per live host (redirect-alias, WAF-challenge,
+SSO/auth-gated, live-content). Does not crawl or fire payloads.
+Concurrency and request rate are bounded and clamped; a detected egress
+proxy drops the default parallelism; a WAF challenge or HTTP 429 pauses
+the rest of that DNS zone instead of fanning out into a block.
+.B \-\-header
+attaches per-program required headers (e.g. Bugcrowd's identifying
+header);
+.B \-\-no\-active
+skips the HTTP probe entirely.
+.B \-\-format hosts
+(or
+.BR \-\-hosts\-out )
+emits the worth-crawling URL list for piping into
+.BR crawl .
+Local-only by default;
+.B \-\-allow\-external
+is required for remote hosts and for CT discovery (which contacts
+crt.sh, not the target).
+.TP
 .B payload \fICRAWL.JSON\fR
 Run the bundled YAML payload packs (SQLi, XSS, SSTI, path-traversal, SSRF,
 open-redirect, XXE) against every form in a crawl's output.

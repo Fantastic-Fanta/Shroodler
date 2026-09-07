@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress reverify gen-regression-test attack-path self-scan version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens triage payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines sla suppress reverify gen-regression-test attack-path self-scan version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -29,6 +29,12 @@ _shroodler_flags_for() {
             ;;
         ingest-sessions)
             echo "--target --output --allow-external"
+            ;;
+        tokens)
+            echo "--output"
+            ;;
+        triage)
+            echo "--discover --no-active --allow-external --concurrency --rate --timeout --proxy --user-agent --header --output --format --hosts-out"
             ;;
         payload)
             echo "--output --pack --allow-external --oob-host --require-policy --policy-file --audit-log --adaptive"
@@ -153,6 +159,7 @@ _shroodler_complete() {
                 diff) COMPREPLY=($(compgen -W "text junit sarif github-annotations" -- "$cur")) ;;
                 report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown" -- "$cur")) ;;
                 history-list) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
+                triage) COMPREPLY=($(compgen -W "text json hosts" -- "$cur")) ;;
                 trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 suppress-expiring) COMPREPLY=($(compgen -W "text json github-pr-body" -- "$cur")) ;;
                 attack-path) COMPREPLY=($(compgen -W "json markdown" -- "$cur")) ;;
@@ -168,7 +175,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

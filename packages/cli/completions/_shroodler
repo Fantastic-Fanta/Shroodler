@@ -16,6 +16,8 @@ _shroodler_commands=(
   'baseline:Write expected_findings.json from a scan'
   'expected:Write expected_findings.json from a scan (alias of baseline)'
   'ingest-sessions:Turn captured proxy JSONL into findings'
+  'tokens:Analyze reset/verification token predictability from proxy JSONL'
+  'triage:Classify a host list before spending crawl budget'
   'payload:Run YAML payload packs against crawl JSON'
   'authz-diff:Replay a privileged crawl under a second session'
   'proxy:Forward to shroodler-proxy'
@@ -108,6 +110,27 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--allow-external[Allow ingesting a non-local session]' \
             '1:sessions jsonl:_files'
+          ;;
+        tokens)
+          _arguments \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '1:sessions jsonl:_files'
+          ;;
+        triage)
+          _arguments \
+            '*--discover[Expand apex via Certificate Transparency]:apex' \
+            '--no-active[Skip the HTTP classification probe]' \
+            '--allow-external[Allow non-local hosts and CT discovery]' \
+            '--concurrency[Max parallel probes]:count' \
+            '--rate[Global requests/second cap]:rps' \
+            '--timeout[Per-request timeout seconds]:seconds' \
+            '--proxy[HTTP proxy URL]:url' \
+            '--user-agent[Identifying User-Agent]:user-agent' \
+            '*--header[Required custom header]:header' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--format[Output format]:(text json hosts)' \
+            '--hosts-out[Write worth-crawling URL list]:file:_files' \
+            '*:host or hosts file:_files'
           ;;
         payload)
           _arguments \

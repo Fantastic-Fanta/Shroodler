@@ -83,6 +83,26 @@ flow multiple times (e.g. request several password resets) to get more
 than one sample, since only 2+ samples let this test for a sequential or
 low-entropy generation pattern rather than a weaker length-only estimate.
 .TP
+.B cadence
+Print the recommended
+.B crawl
+/
+.B payload
+flags for a
+.B \-\-tier
+of
+.BR pr
+(passive,
+.B \-\-profile safe ,
+skip payloads),
+.B nightly
+(balanced + IDOR + default packs), or
+.B weekly
+(aggressive + adaptive payloads). Prints commands; does not scan.
+Still local-only unless you add
+.B \-\-allow\-external
+yourself.
+.TP
 .B triage \fIHOSTS...\fR
 Classify a program's host list before spending crawl budget. Passive
 Certificate Transparency discovery (\fB\-\-discover\fR), DNS/CNAME

@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens triage payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens cadence triage payload authz-diff proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -32,6 +32,9 @@ _shroodler_flags_for() {
             ;;
         tokens)
             echo "--output"
+            ;;
+        cadence)
+            echo "--tier --url --format --output"
             ;;
         triage)
             echo "--discover --no-active --allow-external --concurrency --rate --timeout --proxy --user-agent --header --output --format --hosts-out"
@@ -177,6 +180,7 @@ _shroodler_complete() {
                 diff) COMPREPLY=($(compgen -W "text junit sarif github-annotations" -- "$cur")) ;;
                 report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown" -- "$cur")) ;;
                 history-list) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
+                cadence) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 triage) COMPREPLY=($(compgen -W "text json hosts" -- "$cur")) ;;
                 trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 suppress-expiring) COMPREPLY=($(compgen -W "text json github-pr-body" -- "$cur")) ;;

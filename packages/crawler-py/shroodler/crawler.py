@@ -54,7 +54,15 @@ from shroodler.extractors.sourcemap import (
 from shroodler.extractors.subresource import extract_subresource_findings
 from shroodler.extractors.tls import check_tls
 from shroodler.extractors.verbose import extract_verbose_errors
-from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats, Finding, JsEndpoint, Page
+from shroodler.models import (
+    CrawlerInfo,
+    CrawlResult,
+    CrawlStats,
+    Finding,
+    HeaderAnalysis,
+    JsEndpoint,
+    Page,
+)
 from shroodler.modes.static import FetchResult, StaticFetcher
 from shroodler.robots import (
     DEFAULT_UA,
@@ -258,9 +266,23 @@ class Crawler:
                             evidence=f"redirecting to {loc}",
                         )
                     )
+                elif not same_origin(loc, origin_url):
+                    findings.append(
+                        Finding(
+                            id="off-origin-redirect-not-followed",
+                            severity="info",
+                            category="scan-note",
+                            url=result.url,
+                            description=(
+                                "This URL redirects to a different origin, which is out "
+                                "of scope and was not followed or fetched."
+                            ),
+                            evidence=f"redirects to {loc}",
+                        )
+                    )
                 else:
                     loc_key = canonical_key(loc)
-                    if loc_key not in seen and same_origin(loc, origin_url):
+                    if loc_key not in seen:
                         redirect_chain_depth[loc_key] = depth_so_far
                         queue.append((loc, depth))
 
@@ -582,7 +604,15 @@ def page_from_fetch(
     cookies, cookie_findings = extract_cookies(
         result.set_cookies, result.url, attrs_reliable=cookies_attrs_reliable
     )
-    headers, header_findings = extract_headers(result.headers, result.url)
+    # A failed fetch (connection error, TLS failure, timeout -- see
+    # FetchResult.error) carries an empty headers dict, not evidence the
+    # target actually omitted every security header. Treating that as
+    # "missing-csp", "missing-hsts", etc. is a false finding manufactured
+    # from the absence of a response, not from the response itself.
+    if result.status_code == 0:
+        headers, header_findings = HeaderAnalysis(present=[], missing=[]), []
+    else:
+        headers, header_findings = extract_headers(result.headers, result.url)
 
     challenge = detect_challenge(
         result.headers, result.text, result.status_code, result.set_cookies

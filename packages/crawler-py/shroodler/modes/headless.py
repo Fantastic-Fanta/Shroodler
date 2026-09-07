@@ -118,6 +118,23 @@ class HeadlessFetcher:
             response = page.goto(url, wait_until="networkidle", timeout=15000)
             status = response.status if response else 0
             headers = dict(response.headers) if response else {}
+            if not same_origin(page.url, url):
+                # The page navigated itself off-origin after load (client-side
+                # SSO/redirect JS, not an HTTP 30x we could see from outside).
+                # Treat like any other off-origin redirect target: record that
+                # it happened, but never extract content/links from a host
+                # that's out of scope, and never queue it for a follow-up
+                # fetch.
+                return FetchResult(
+                    url=url,
+                    status_code=status,
+                    headers={k.title(): v for k, v in headers.items()},
+                    body=b"",
+                    text="",
+                    redirect_to=page.url,
+                    set_cookies=[],
+                    discovered_urls=[],
+                )
             discovered = self._enumerate_routes(page, url)
             body = page.content().encode("utf-8")
             set_cookies = []

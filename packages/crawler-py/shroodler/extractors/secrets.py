@@ -58,14 +58,34 @@ def _shannon(s: str) -> float:
 
 _ENTROPY_TOKEN = re.compile(r"\b[A-Za-z0-9_\-/+=]{32,64}\b")
 
+# ASP.NET WebForms' own postback plumbing (__VIEWSTATE, __EVENTVALIDATION,
+# __VIEWSTATEGENERATOR) is a long base64 blob by design -- naturally high
+# entropy, but it's serialized page state round-tripped to the same client,
+# not a secret. Every classic ASP.NET site (still common in enterprise/
+# government targets) would otherwise spam a "possible API key" finding on
+# nearly every page. Matched by the field's own value= attribute span
+# specifically (not a flat lookbehind window), so a real secret sitting in
+# nearby markup shortly after a ViewState field still fires normally.
+_ASPNET_STATE_VALUE = re.compile(
+    r'(?:name|id)=["\']__(?:VIEWSTATE|EVENTVALIDATION)\w*["\'][^>]*?'
+    r'value=["\']([^"\']*)["\']'
+)
+
+
+def _aspnet_state_spans(text: str) -> list[tuple[int, int]]:
+    return [m.span(1) for m in _ASPNET_STATE_VALUE.finditer(text)]
+
 
 def _entropy_hits(text: str) -> list[str]:
     hits = []
+    state_spans = _aspnet_state_spans(text)
     for m in _ENTROPY_TOKEN.finditer(text):
         token = m.group(0)
         if token.startswith("eyJ"):
             continue
         if token.startswith("AKIA"):
+            continue
+        if any(start <= m.start() and m.end() <= end for start, end in state_spans):
             continue
         if _shannon(token) >= 4.2 and len(set(token)) >= 16:
             hits.append(token)

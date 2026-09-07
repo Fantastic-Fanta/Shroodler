@@ -51,7 +51,13 @@ def extract_forms(html: str, page_url: str) -> tuple[list[Form], list[Finding]]:
         method = (form.get("method") or "GET").upper()
         enctype = form.get("enctype")
         fields: list[FormField] = []
-        for tag in form.find_all(["input", "select", "textarea"]):
+        # Besides the classic form-control tags, also catch custom-element
+        # form fields (e.g. <wm-input name="q">) -- the Custom Elements
+        # spec requires a hyphen in the tag name, so this is a precise
+        # signal rather than a guess at every element bearing a `name`.
+        for tag in form.find_all(
+            lambda t: t.name in ("input", "select", "textarea") or "-" in t.name
+        ):
             field = _field_from_tag(tag)
             if field:
                 fields.append(field)

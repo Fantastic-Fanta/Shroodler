@@ -266,6 +266,33 @@ independently reproduced it. Agreement between two independent
 implementations is a confidence signal; disagreement isn't itself proof
 of a false positive (one engine may simply lack a check the other has).
 .TP
+\fBticket file\fR \fIFINDINGS.JSON\fR, \fBticket sync\fR \fIFINDINGS.JSON\fR
+Open GitHub issues for findings that would fail
+.B diff \-\-gate
+(or every visible finding if
+.B \-\-baseline
+is omitted), deduped by the same (id, path) key used everywhere else.
+.B ticket sync
+also closes issues recorded in
+.B \-\-state
+whose finding is gone from the current scan.
+Dry-run by default: prints a JSON plan and does not call
+.BR gh .
+.B \-\-apply
+invokes
+.B gh issue create
+/
+.B gh issue close
+and writes
+.BR \-\-state
+(default
+.IR .shroodler\-tickets.json ).
+.B \-\-owners
+assigns matching findings; 
+.B \-\-repo
+is passed through to
+.BR gh .
+.TP
 \fBsla apply\fR \fISCAN.JSON\fR
 Resolves each finding's owner (from an
 .B \-\-owners

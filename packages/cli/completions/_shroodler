@@ -27,6 +27,7 @@ _shroodler_commands=(
   'mcp-server:Run the MCP server exposing Shroodler as agent tools'
   'audit-verify:Verify a guardrail audit-log hash chain is intact'
   'compare-engines:Merge Python/Go crawl JSON as a confidence signal'
+  'ticket:File or sync GitHub issues from findings (dry-run by default)'
   'sla:Attach ownership + SLA-escalated severity to findings'
   'suppress:Work with suppression rules beyond diff/report/baseline'
   'reverify:Re-scan a route and check if a finding is now gone'
@@ -198,6 +199,11 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '1:python crawl json:_files' \
             '2:go crawl json:_files'
+          ;;
+        ticket)
+          _values 'ticket subcommand' \
+            'file[Open issues for new findings]' \
+            'sync[File new findings and close resolved tickets]'
           ;;
         sla)
           _values 'sla subcommand' 'apply[Resolve owner + SLA-escalated severity]'

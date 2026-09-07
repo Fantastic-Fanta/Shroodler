@@ -576,6 +576,34 @@ def cmd_suppress_expiring(args: argparse.Namespace) -> int:
     return 1 if (args.gate and expiring) else 0
 
 
+def _ticket_common(args: argparse.Namespace, *, close_resolved: bool) -> int:
+    from shroodler.sla import load_ownership_rules
+    from shroodler.suppress import load_suppressions
+    from shroodler.tickets import run_ticket_command
+
+    result = run_ticket_command(
+        findings_path=args.findings,
+        baseline_path=getattr(args, "baseline", None),
+        state_path=getattr(args, "state", None) or ".shroodler-tickets.json",
+        owners=load_ownership_rules(getattr(args, "owners", None)),
+        suppressions=load_suppressions(getattr(args, "suppressions", None)),
+        close_resolved=close_resolved,
+        apply=bool(getattr(args, "apply", False)),
+        repo=getattr(args, "repo", None),
+    )
+    text = json.dumps(result, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def cmd_ticket_file(args: argparse.Namespace) -> int:
+    return _ticket_common(args, close_resolved=False)
+
+
+def cmd_ticket_sync(args: argparse.Namespace) -> int:
+    return _ticket_common(args, close_resolved=True)
+
+
 def cmd_sla_apply(args: argparse.Namespace) -> int:
     from shroodler.history import default_history_dir
     from shroodler.sla import apply_sla, load_ownership_rules, wildcard_rules
@@ -1584,6 +1612,62 @@ def build_parser() -> argparse.ArgumentParser:
     compare_engines.add_argument("go_crawl_json")
     compare_engines.add_argument("--output", "-o")
     compare_engines.set_defaults(func=cmd_compare_engines)
+
+    ticket = sub.add_parser(
+        "ticket",
+        help="File or sync GitHub issues from scan findings (dry-run by default)",
+    )
+    ticket_sub = ticket.add_subparsers(dest="ticket_command", required=True)
+
+    def _ticket_flags(p: argparse.ArgumentParser) -> None:
+        p.add_argument("findings", help="Crawl / findings JSON")
+        p.add_argument(
+            "--baseline",
+            help="expected_findings.json; only findings that would fail "
+            "diff --gate are filed. Without this, every visible finding is a candidate.",
+        )
+        p.add_argument(
+            "--state",
+            default=".shroodler-tickets.json",
+            help="Local JSON mapping finding keys to issue numbers "
+            "(default .shroodler-tickets.json)",
+        )
+        p.add_argument(
+            "--owners",
+            help="Ownership-rules file; matching owner is assigned on the issue",
+        )
+        p.add_argument("--suppressions", default=None)
+        p.add_argument("--repo", help="GitHub owner/name passed to gh --repo")
+        p.add_argument(
+            "--apply",
+            action="store_true",
+            help="Actually call `gh issue create`/`close` and write --state. "
+            "Without this flag the command is a dry-run.",
+        )
+        p.add_argument("--output", "-o")
+
+    tfile = ticket_sub.add_parser(
+        "file",
+        help="Open issues for new findings (deduped by id+path)",
+        description=(
+            "Turns findings that would fail `diff --gate` into GitHub issues, "
+            "deduped by the same (id, path) key. Dry-run by default; pass "
+            "--apply to invoke `gh`. Never talks to GitHub without --apply."
+        ),
+    )
+    _ticket_flags(tfile)
+    tfile.set_defaults(func=cmd_ticket_file)
+
+    tsync = ticket_sub.add_parser(
+        "sync",
+        help="File new findings and close tickets whose findings are gone",
+        description=(
+            "Like `ticket file`, then closes issues recorded in --state whose "
+            "finding key is no longer in the current scan. Dry-run by default."
+        ),
+    )
+    _ticket_flags(tsync)
+    tsync.set_defaults(func=cmd_ticket_sync)
 
     sla = sub.add_parser(
         "sla",

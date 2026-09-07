@@ -7,6 +7,12 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler ticket file` / `ticket sync`**: turn new findings into
+  GitHub issues (deduped by the same id+path key as `diff --gate`) and
+  close them when a later scan no longer reports the finding. Dry-run
+  by default; `--apply` is required to invoke `gh`. `--owners` assigns;
+  local state is `.shroodler-tickets.json`.
+
 - **Confidence-graded findings** on crawl JSON. Passive checks now stamp
   `confidence` (`confirmed` / `probable` / `heuristic`) so reports no
   longer show an empty Confidence column for a crawl. Header/cookie/TLS

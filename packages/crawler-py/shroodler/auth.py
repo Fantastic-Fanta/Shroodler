@@ -190,7 +190,6 @@ def playwright_cookie_payload(cookies: list[CookieSpec], page_url: str) -> list[
             item["path"] = spec.path or "/"
         else:
             item["url"] = origin
-            item["path"] = spec.path or "/"
         if spec.same_site:
             item["sameSite"] = spec.same_site
         out.append(item)

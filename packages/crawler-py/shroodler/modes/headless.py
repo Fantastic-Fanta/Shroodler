@@ -99,24 +99,38 @@ class HeadlessFetcher:
     def login(self, recipe: LoginRecipe) -> None:
         if recipe.content_type == "json":
             # JSON-API login (e.g. eToro's /api/sts/v2/login) has no HTML form.
-            # Use Playwright's own request API so the POST carries real browser
-            # headers (User-Agent, Origin, etc.) and bypasses bot-detection that
-            # would block a plain httpx call.  Cookies set by the response are
-            # automatically stored in the browser context.
+            # Strategy: navigate to the site's home page first so the browser
+            # acquires any bot-detection cookies / fingerprinting state, then
+            # execute the JSON POST via page.evaluate() — this runs inside the
+            # browser's JS context so it carries all real browser headers
+            # (TLS fingerprint, Sec-Fetch-*, Cookie) and the Set-Cookie response
+            # is automatically committed to the browser context's cookie jar.
             parsed = urlparse(recipe.url)
             origin_url = f"{parsed.scheme}://{parsed.netloc}"
-            resp = self._context.request.post(
-                recipe.url,
-                data=json.dumps(dict(recipe.fields)),
-                headers={
-                    "Content-Type": "application/json",
-                    "Origin": origin_url,
-                    "Referer": origin_url + "/",
-                },
-            )
-            if not resp.ok:
+            page = self._context.new_page()
+            try:
+                # Warm up: load the origin so bot-detection cookies are set.
+                page.goto(origin_url, wait_until="domcontentloaded", timeout=20000)
+                # POST via fetch() inside the browser so all headers look native.
+                result = page.evaluate(
+                    """
+                    async ([url, body]) => {
+                        const r = await fetch(url, {
+                            method: "POST",
+                            headers: {"Content-Type": "application/json"},
+                            body: JSON.stringify(body),
+                            credentials: "include",
+                        });
+                        return {ok: r.ok, status: r.status};
+                    }
+                    """,
+                    [recipe.url, dict(recipe.fields)],
+                )
+            finally:
+                page.close()
+            if not result.get("ok"):
                 raise RuntimeError(
-                    f"JSON login to {recipe.url} failed: HTTP {resp.status}"
+                    f"JSON login to {recipe.url} failed: HTTP {result.get('status')}"
                 )
             return
 

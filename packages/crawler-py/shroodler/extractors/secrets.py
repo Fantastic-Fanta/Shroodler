@@ -72,6 +72,13 @@ _UUID_RE = re.compile(
 # use short prefixes ("sk", "pk", "gh") or start with random characters.
 _CAMEL_WORD_START = re.compile(r"^[A-Z][a-z]{7,}")
 
+# Feature flag / config key identifiers (e.g. LaunchDarkly flag names like
+# "CopyRestrictionCheckAsFirstPriorityEnabled", "disableReviewProfileButton...").
+# They are structured camelCase with many words — real secrets have random
+# characters and cannot parse as 4+ consecutive CamelCase word segments.
+# Both PascalCase (caps-first) and lowerCamelCase (lower-first) are detected.
+_CAMEL_WORDS = re.compile(r"[A-Z][a-z]+")
+
 # ASP.NET WebForms' own postback plumbing (__VIEWSTATE, __EVENTVALIDATION,
 # __VIEWSTATEGENERATOR) is a long base64 blob by design -- naturally high
 # entropy, but it's serialized page state round-tripped to the same client,
@@ -196,6 +203,17 @@ def _entropy_hits(text: str, url: str = "") -> list[str]:
         # short uppercase prefixes or fully random characters.
         if _CAMEL_WORD_START.match(token):
             continue
+        # Feature flag / config key names (e.g. LaunchDarkly, LaunchDarkly-style
+        # keys like "CopyRestrictionCheckAsFirstPriorityEnabled") have 4+ distinct
+        # CamelCase word segments. Real secrets are random and cannot parse as
+        # multi-word human-readable identifiers.
+        if len(_CAMEL_WORDS.findall(token)) >= 4:
+            continue
+        # URL-encoded path fragment: the entropy regex word-boundary fires after
+        # a %-character, so "%2Fpage..." matches as token "2Fpage...". A real
+        # token is never preceded by % in the source text.
+        if m.start() > 0 and text[m.start() - 1] == "%":
+            continue
         if any(start <= m.start() and m.end() <= end for start, end in state_spans):
             continue
         if _shannon(token) >= 4.2 and len(set(token)) >= 16:
@@ -220,7 +238,13 @@ def _looks_like_benign_query_assignment(token: str) -> bool:
         return False
     if _is_high_signal_param(name):
         return False
-    return _normalize_param(name) in _BENIGN_QUERY_NAMES
+    if _normalize_param(name) in _BENIGN_QUERY_NAMES:
+        return True
+    # name=UUID — the UUID is a structured identifier, not a secret, regardless
+    # of the param name (as long as it's not a high-signal name checked above).
+    if _UUID_RE.match(rest):
+        return True
+    return False
 
 
 def _query_params_holding_token(text: str, url: str, token: str) -> set[str]:

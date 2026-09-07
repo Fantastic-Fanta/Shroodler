@@ -1,0 +1,17 @@
+{
+  "url": "https://www.etoro.com/api/sts/v2/login",
+  "method": "POST",
+  "fields": {
+    "Username": "gmaxresonance@bugcrowdninja.com",
+    "Password": "gmaxresonance",
+    "additionalfields": "f",
+    "redirect": "from-seo"
+  },
+  "content_type": "json",
+  "include_hidden": false,
+  "logout_url": "https://www.etoro.com/api/sts/v2/logout",
+  "logout_method": "POST",
+  "protected_url": "https://www.etoro.com/portfolio",
+  "auth_marker": "gmaxresonance",
+  "_comment_local_storage": "DataDome blocks the headless login form. To bypass, export the 'loginData' key from a real browser session's localStorage and add it below as: \"local_storage\": {\"loginData\": \"eyJhbGci...\"}"
+}

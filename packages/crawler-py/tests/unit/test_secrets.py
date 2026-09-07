@@ -169,6 +169,21 @@ def test_false_positive_patterns_not_reported():
     css_module = 'class="index-module-scss-module__KdAblW__root"'
     assert "generic-api-key" not in _ids(scan_text(css_module, "http://127.0.0.1/"))
 
+    # Feature flag / config key names (LaunchDarkly-style camelCase identifiers)
+    # have 4+ CamelCase word segments and are not secrets
+    feature_flag = "compliance.CopyRestrictionCheckAsFirstPriorityEnabled"
+    assert "generic-api-key" not in _ids(scan_text(feature_flag, "http://127.0.0.1/"))
+    feature_flag2 = '"disableReviewProfileButtonOnBlockedPopupForRegulations":"[1,10]"'
+    assert "generic-api-key" not in _ids(scan_text(feature_flag2, "http://127.0.0.1/"))
+
+    # param=UUID should not fire (UUID is a structured identifier, not a secret)
+    param_uuid = "affiliatePartnerId=84714d4e-4ee9-44cf-a90c-7a7095995d36"
+    assert "generic-api-key" not in _ids(scan_text(param_uuid, "http://127.0.0.1/"))
+
+    # URL-encoded path fragments (token preceded by %) are not secrets
+    encoded_path = "https://example.com%2Fsome-long-path-slug-goes-here-with-content"
+    assert "generic-api-key" not in _ids(scan_text(encoded_path, "http://127.0.0.1/"))
+
     # A real random key in the same page must still fire
     real_key = "xK9mP2qR7vL4nB8cJ5tH3wY6uA1dF0eG"
     combined = google_oauth + "\n" + salesforce + "\n" + css_module + "\n" + real_key

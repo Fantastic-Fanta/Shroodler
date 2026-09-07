@@ -211,14 +211,27 @@ class Crawler:
                     rp = load_robots(robots_body, seed)
 
         queue: deque[tuple[str, int]] = deque([(seed, 0)])
+        # `queued` tracks URLs that have already been placed in the queue so we
+        # never enqueue the same URL twice (even when many pages discover it
+        # before it's dequeued). Distinct from `seen` which tracks URLs that
+        # have been *fetched*, and is checked again at dequeue time as a safety
+        # net for any items that slip through (e.g. initial seeds added to the
+        # queue before `queued` exists, or race-windows in future code).
+        queued: set[str] = {canonical_key(seed)}
         for extra in self.extra_seeds:
             if same_origin(extra, origin_url):
-                queue.append((extra, 0))
+                extra_key = canonical_key(extra)
+                if extra_key not in queued:
+                    queued.add(extra_key)
+                    queue.append((extra, 0))
         for spec in probe_urls(seed):
-            queue.append((spec, 0))
+            spec_key = canonical_key(spec)
+            if spec_key not in queued:
+                queued.add(spec_key)
+                queue.append((spec, 0))
         seen: set[str] = set()
         if not self.no_sitemap:
-            self._enqueue_sitemap_seeds(seed, origin_url, robots_body, queue, seen)
+            self._enqueue_sitemap_seeds(seed, origin_url, robots_body, queue, seen, queued)
         pages: list[Page] = []
         findings: list[Finding] = []
         js_endpoints: list = []
@@ -267,6 +280,14 @@ class Crawler:
                 result = self._fetch_with_retries(url, t0)
             if result.status_code != 200 and is_probe_url(url):
                 continue
+            # In headless mode, same-origin JS/browser redirects are followed
+            # transparently: the returned `result.url` may differ from `url`.
+            # Mark the final URL in both `seen` and `queued` so it is not
+            # fetched a second time when it is also independently enqueued.
+            if result.url and result.url != url:
+                final_key = canonical_key(result.url)
+                seen.add(final_key)
+                queued.add(final_key)
             page, page_findings, page_eps, result = self._page_from_result(result, t0)
             pages.append(page)
             findings.extend(page_findings)
@@ -315,16 +336,19 @@ class Crawler:
                     )
                 else:
                     loc_key = canonical_key(loc)
-                    if loc_key not in seen:
+                    if loc_key not in queued:
                         redirect_chain_depth[loc_key] = depth_so_far
+                        queued.add(loc_key)
                         queue.append((loc, depth))
 
             if result.status_code == 200:
                 for spec_url in urls_from_spec(origin_url, result.text):
-                    if canonical_key(spec_url) in seen:
+                    spec_key = canonical_key(spec_url)
+                    if spec_key in queued:
                         continue
                     if is_pagination_trap(spec_url, family_counts):
                         continue
+                    queued.add(spec_key)
                     queue.append((spec_url, depth))
 
             if self.depth is not None and depth >= self.depth:
@@ -353,10 +377,12 @@ class Crawler:
                 findings.extend(check_oauth_authorize_url(link))
                 if not same_origin(link, origin_url):
                     continue
-                if canonical_key(link) in seen:
+                link_key = canonical_key(link)
+                if link_key in queued:
                     continue
                 if is_pagination_trap(link, family_counts):
                     continue
+                queued.add(link_key)
                 queue.append((link, depth + 1))
 
         # Fingerprinted once and shared by both probe phases below, so a
@@ -456,6 +482,7 @@ class Crawler:
         robots_body: str,
         queue: deque[tuple[str, int]],
         seen: set[str],
+        queued: set[str] | None = None,
     ) -> None:
         pending: list[str] = []
         queued_sitemaps: set[str] = set()
@@ -487,10 +514,14 @@ class Crawler:
             url_locs, nested = parse_sitemap_xml(res.text)
             for loc in nested:
                 offer_sitemap(loc, sm_url)
+            q_set = queued if queued is not None else seen
             for loc in url_locs:
                 page = normalize_url(sm_url, loc)
                 if page and same_origin(page, origin_url):
-                    queue.append((page, 0))
+                    pg_key = canonical_key(page)
+                    if pg_key not in q_set:
+                        q_set.add(pg_key)
+                        queue.append((page, 0))
 
     def _prime_auth(self, seed: str) -> None:
         specs: list[CookieSpec] = []
@@ -859,19 +890,25 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
     # absent Referrer-Policy that apply to an entire domain, not a single page.
     # Categories whose findings are sitewide by nature (same rule fires
     # on many pages due to a server/policy issue, not a per-URL bug).
-    _SITEWIDE_CATEGORIES = frozenset({"header", "subresource"})
+    # Cookie security flags (insecure-cookie, cookie-not-httponly) are domain-
+    # level policy decisions: every page that touches the cookie has the same
+    # flag missing. Collapse them sitewide the same way header findings are.
+    _SITEWIDE_CATEGORIES = frozenset({"header", "subresource", "cookie"})
 
-    header_by_key: dict[tuple[str, str], list[Finding]] = {}
+    header_by_key: dict[tuple[str, str, str], list[Finding]] = {}
     rest: list[Finding] = []
     for f in findings:
         if f.category in _SITEWIDE_CATEGORIES:
-            key = (f.id, origin_of(f.url))
+            # Cookie findings: include evidence (cookie name) in the key so
+            # distinct cookies are separate rows even with the same finding id.
+            ev = f.evidence if f.category == "cookie" else ""
+            key = (f.id, origin_of(f.url), ev)
             header_by_key.setdefault(key, []).append(f)
         else:
             rest.append(f)
 
     collapsed: list[Finding] = []
-    for (fid, orig), group in header_by_key.items():
+    for (fid, orig, _ev), group in header_by_key.items():
         first = group[0]
         n = len(group)
         if n == 1:

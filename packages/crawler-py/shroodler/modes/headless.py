@@ -135,6 +135,8 @@ class HeadlessFetcher:
                 page.wait_for_load_state("domcontentloaded", timeout=20000)
             finally:
                 page.close()
+            if recipe.protected_url:
+                self._verify_auth(recipe.protected_url, login_page_url)
             return
 
         page = self._context.new_page()
@@ -152,6 +154,22 @@ class HeadlessFetcher:
             page.wait_for_load_state("networkidle", timeout=15000)
         finally:
             page.close()
+
+    def _verify_auth(self, protected_url: str, login_url: str) -> None:
+        """Navigate to protected_url and raise if we were redirected to login."""
+        page = self._context.new_page()
+        try:
+            page.goto(protected_url, wait_until="domcontentloaded", timeout=15000)
+            page.wait_for_timeout(2000)
+            final = page.url
+        finally:
+            page.close()
+        login_indicators = ("/login", "/signin", "/sign-in", "/auth/login")
+        if any(ind in final.lower() for ind in login_indicators):
+            raise RuntimeError(
+                f"Headless login failed: navigating to {protected_url!r} "
+                f"redirected to {final!r} — check credentials or form selectors"
+            )
 
     def fetch(self, url: str) -> FetchResult:
         self.requests += 1

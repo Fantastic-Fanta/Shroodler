@@ -25,6 +25,9 @@ def test_tools_list_contains_expected_tools():
     assert names == {
         "scan_route",
         "check_idor",
+        "peer_write",
+        "extract_js_routes",
+        "paced_fetch",
         "diff_since_baseline",
         "explain_finding",
         "reverify_fix",
@@ -115,6 +118,9 @@ def test_list_tools_flag_prints_catalog(capsys):
     assert names == {
         "scan_route",
         "check_idor",
+        "peer_write",
+        "extract_js_routes",
+        "paced_fetch",
         "reverify_fix",
         "diff_since_baseline",
         "explain_finding",
@@ -137,6 +143,9 @@ def test_help_names_every_tool(capsys):
     for name in (
         "scan_route",
         "check_idor",
+        "peer_write",
+        "extract_js_routes",
+        "paced_fetch",
         "reverify_fix",
         "diff_since_baseline",
         "explain_finding",

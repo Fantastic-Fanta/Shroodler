@@ -214,6 +214,99 @@ Drop a lead entirely instead of reporting it at lower confidence when no
 was found in the response.
 .RE
 .TP
+.B peer\-write \fI[PLAYBOOK.JSON]\fR
+Replay captured POST/PUT/PATCH/DELETE requests against
+.I known
+object ids as a second session. Each write is also sent to a nonsense id:
+the same 200 body as the fake id is dummy-success, not a finding;
+.B success: false
+is a write-failure. A peer 2xx that differs from the control is
+.BR peer-write-idor ;
+an owner re-read that changed is confirmation. Does not invent adjacent
+ids. Accepts
+.B \-\-from\-sessions
+(HAR or proxy JSONL),
+.BR \-\-owner\-cookie / \-\-peer\-cookie
+or
+.BR \-\-owner\-cookies\-from / \-\-peer\-cookies\-from
+(Playwright storageState, Netscape jar, HAR, or JSONL),
+.BR \-\-only\-id ,
+.BR \-\-rate
+(default 1 req/s),
+.BR \-\-user\-agent\-suffix ,
+and the same
+.BR \-\-require\-policy / \-\-policy\-file / \-\-audit\-log
+guardrail flags as
+.BR authz\-diff .
+.TP
+.B js\-routes \fIFILE.js\fR
+Extract parameterized URL templates
+.RI ( {userId} ,
+.IR {pk} ,
+.IR :id ,
+.IR <int:pk> )
+from a local JavaScript bundle. Templates only; does not fetch or
+enumerate ids.
+.TP
+.B paced\-fetch
+GET/HEAD/OPTIONS a URL list
+.RB ( \-\-url
+repeatable,
+.BR \-\-urls\-file )
+at a capped request rate
+.RB ( \-\-rate ,
+default 1 req/s). For agent/Playwright loops against a 1-req/s program.
+Does not solve captchas. Writes are refused; use
+.BR peer\-write .
+Accepts the same
+.BR \-\-require\-policy / \-\-policy\-file / \-\-audit\-log
+guardrail flags as
+.BR authz\-diff .
+.TP
+.B js\-routes \fIFILE.JS\fR
+Mine parameterised URL templates ({userId}/{id}, ${var}, :id, <int:pk>)
+from a webpack or SPA JavaScript bundle. Outputs a JSON array of
+templates. Does not fetch live URLs or enumerate IDs.
+.TP
+.B paced\-fetch \fIURL...\fR
+Rate-limited GET/HEAD/OPTIONS a list of URLs (default 1 req/s). Designed
+for agent or Playwright loops where a plain
+.BR curl (1)
+would flood the target. Write methods are refused -- use
+.B peer\-write
+instead.
+.TP
+.B mcp\-server
+Start a stdio JSON-RPC 2.0 MCP (Model Context Protocol) server so a
+coding agent can call Shroodler tools without shelling out to the CLI.
+Pass
+.B \-\-list\-tools
+to print available tool names, descriptions, and input schemas and exit.
+Active tools require a scan-policy consent manifest by default.
+.TP
+.B audit\-verify \fIAUDIT\-LOG\fR
+Replay a guardrail
+.B \-\-audit\-log
+and confirm its hash chain is intact, catching tampering or truncation.
+Exits 1 and prints each discrepancy if the log has been modified.
+.TP
+.B compare\-engines \fIPYTHON_CRAWL.JSON\fR \fIGO_CRAWL.JSON\fR
+Merge and compare findings from the Python and Go crawler engines,
+highlighting coverage gaps where one engine found pages or findings
+the other missed.
+.TP
+.B attack\-path \fIFINDINGS.JSON\fR
+Correlate every finding with its URL path-depth (a heuristic proxy for
+click-distance from the target root) and the presence of a guessable
+session/reset-token finding in the same scan. Output ranks findings by
+exploitability heuristic, not confirmed reachability.
+.TP
+.B gen\-regression\-test \fIFINDING_ID\fR \fIURL\fR
+Re-check one finding against the live target; if it is confirmed gone,
+emit a regression-test JSON stub. Refuses (exits 1) if the finding is
+still present -- the command never generates a test for something that
+is not actually fixed.
+.TP
 .B proxy \fIARGS...\fR
 Forward arguments to the
 .B shroodler\-proxy
@@ -270,6 +363,9 @@ instead.
 Run an MCP (Model Context Protocol) server on stdio exposing
 .BR scan_route ,
 .BR check_idor ,
+.BR peer_write ,
+.BR extract_js_routes ,
+.BR paced_fetch ,
 .BR reverify_fix ,
 .BR diff_since_baseline ", and"
 .B explain_finding

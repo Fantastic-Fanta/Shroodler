@@ -95,7 +95,40 @@ class HeadlessFetcher:
         if payload:
             self._context.add_cookies(payload)
 
+    def set_local_storage(self, origin_url: str, items: dict[str, str]) -> None:
+        """Inject key/value pairs into localStorage for the given origin.
+
+        Navigates to the origin first (required — localStorage is per-origin
+        and cannot be written before the page has loaded), then evaluates
+        localStorage.setItem for each pair.
+        """
+        if not items:
+            return
+        page = self._context.new_page()
+        try:
+            page.goto(origin_url, wait_until="domcontentloaded", timeout=20000)
+            page.wait_for_timeout(1000)
+            for key, value in items.items():
+                page.evaluate("([k, v]) => localStorage.setItem(k, v)", [key, value])
+        finally:
+            page.close()
+
     def login(self, recipe: LoginRecipe) -> None:
+        # localStorage injection: works independently of (or alongside) form login.
+        # Used for sites that store Bearer tokens in localStorage (e.g. eToro),
+        # bypassing bot-detection that blocks the login form in headless browsers.
+        if recipe.local_storage:
+            parsed = urlparse(recipe.url)
+            origin_url = f"{parsed.scheme}://{parsed.netloc}"
+            self.set_local_storage(origin_url, recipe.local_storage)
+            if recipe.protected_url:
+                self._verify_auth(
+                    recipe.protected_url,
+                    origin_url + "/login",
+                    auth_marker=recipe.auth_marker,
+                )
+            return
+
         if recipe.content_type == "json":
             # JSON-API login recipe: the recipe URL points to a JSON API
             # endpoint, but WAF/bot-detection (DataDome, Cloudflare, etc.)
@@ -136,7 +169,11 @@ class HeadlessFetcher:
             finally:
                 page.close()
             if recipe.protected_url:
-                self._verify_auth(recipe.protected_url, login_page_url)
+                self._verify_auth(
+                    recipe.protected_url,
+                    login_page_url,
+                    auth_marker=recipe.auth_marker,
+                )
             return
 
         page = self._context.new_page()
@@ -155,13 +192,28 @@ class HeadlessFetcher:
         finally:
             page.close()
 
-    def _verify_auth(self, protected_url: str, login_url: str) -> None:
-        """Navigate to protected_url and raise if we were redirected to login."""
+    def _verify_auth(
+        self,
+        protected_url: str,
+        login_url: str,
+        auth_marker: str | None = None,
+    ) -> None:
+        """Navigate to protected_url and raise if auth appears to have failed.
+
+        Two checks are performed:
+        1. URL redirect: if the final URL contains a login-path indicator the
+           session was never established.
+        2. Content marker: if auth_marker is set, the rendered page body must
+           contain that string — this handles SPAs that return HTTP 200 even
+           when unauthenticated (e.g. a login overlay rendered by JavaScript).
+        """
         page = self._context.new_page()
         try:
             page.goto(protected_url, wait_until="domcontentloaded", timeout=15000)
-            page.wait_for_timeout(2000)
+            # Wait for SPA to finish rendering (covers React/Next.js hydration).
+            page.wait_for_timeout(3000)
             final = page.url
+            body = page.content() if auth_marker else ""
         finally:
             page.close()
         login_indicators = ("/login", "/signin", "/sign-in", "/auth/login")
@@ -169,6 +221,12 @@ class HeadlessFetcher:
             raise RuntimeError(
                 f"Headless login failed: navigating to {protected_url!r} "
                 f"redirected to {final!r} — check credentials or form selectors"
+            )
+        if auth_marker and auth_marker not in body:
+            raise RuntimeError(
+                f"Headless login failed: {protected_url!r} loaded (no redirect) "
+                f"but auth marker {auth_marker!r} not found in rendered body — "
+                f"the session was not established (SPA login overlay still active?)"
             )
 
     def fetch(self, url: str) -> FetchResult:

@@ -46,6 +46,7 @@ _BY_ID: dict[str, str] = {
     "authz-still-accessible": "medium",
     "authz-broken-access-control": "medium",
     "idor-adjacent-id-accessible": "medium",
+    "peer-write-idor": "medium",
     "oauth-implicit-flow": "medium",
     "next-auth-callback-url-unvalidated": "none",
     # Session fixation and a missing OAuth "state" parameter are both

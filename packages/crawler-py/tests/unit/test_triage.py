@@ -173,6 +173,8 @@ def test_clamps_and_proxy_detect(monkeypatch):
     assert clamp_concurrency(None, proxy=False) == DEFAULT_CONCURRENCY
     assert clamp_concurrency(None, proxy=True) == DEFAULT_PROXY_CONCURRENCY
     assert clamp_rate(999) == MAX_RATE_RPS
+    for _k in ("HTTPS_PROXY", "HTTP_PROXY", "https_proxy", "http_proxy"):
+        monkeypatch.delenv(_k, raising=False)
     monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:8888")
     assert detect_proxy(None) == "http://127.0.0.1:8888"
     assert detect_proxy("http://explicit:1") == "http://explicit:1"

@@ -71,6 +71,17 @@ def cmd_crawl(args: argparse.Namespace) -> int:
     depth = None if args.depth < 0 else args.depth
     max_pages = getattr(args, "max_pages", 400)
     max_time = getattr(args, "max_time", 0) or None
+    # The safe profile's 60s budget is calibrated for static mode; headless
+    # pages each take ~30s to render, so silently raise it to 600s when the
+    # user combined --profile safe with --mode headless without an explicit
+    # --max-time override.  balanced/aggressive already have no time limit.
+    if (
+        max_time is not None
+        and max_time <= 60
+        and getattr(args, "mode", "static") == "headless"
+        and getattr(args, "profile", None) == "safe"
+    ):
+        max_time = 600.0
     cookies = list(getattr(args, "cookie", None) or [])
     headers = list(getattr(args, "header", None) or [])
     extra_seeds = list(getattr(args, "seed", None) or [])

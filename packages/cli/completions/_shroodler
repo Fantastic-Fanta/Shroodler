@@ -82,6 +82,7 @@ _shroodler() {
             '--seed-from[Proxy session JSONL]:file:_files' \
             '--cookies-from[Proxy session JSONL]:file:_files' \
             '*--plugin[Plugin dir or file]:file:_files' \
+            '*--exclude-path[Exclude URLs matching this path prefix]:path' \
             '1:target url'
           ;;
         diff)

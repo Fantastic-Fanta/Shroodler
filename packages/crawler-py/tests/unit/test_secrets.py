@@ -136,6 +136,22 @@ def test_aspnet_viewstate_is_not_a_secret_hit():
     )
 
 
+def test_url_embedded_benign_params_are_not_generic_api_keys():
+    # Map-bookmark / pagination-cursor / tracking IDs trip the same entropy
+    # heuristic as a leaked key, with no field name as reliable as ViewState.
+    bookmark = f'<a href="/map.aspx?x=1&bookmark={ENTROPY}">map</a>'
+    assert "generic-api-key" not in _ids(scan_text(bookmark, "http://127.0.0.1/map"))
+    cursor = f'fetch("/items?cursor={ENTROPY}")'
+    assert "generic-api-key" not in _ids(scan_text(cursor, "http://127.0.0.1/"))
+    # A high-signal param name in a URL is still a finding -- a leaked key
+    # that happens to live in a query string must not be silenced.
+    leaked = f'<a href="/hook?api_key={ENTROPY}">k</a>'
+    assert "generic-api-key" in _ids(scan_text(leaked, "http://127.0.0.1/"))
+    # Same token also sitting outside the query string still fires.
+    both = f'<a href="/map?bookmark={ENTROPY}"></a><script>const k="{ENTROPY}"</script>'
+    assert "generic-api-key" in _ids(scan_text(both, "http://127.0.0.1/"))
+
+
 def test_redaction_never_stores_full_secret():
     findings = scan_text(AWS, "http://127.0.0.1/")
     assert findings

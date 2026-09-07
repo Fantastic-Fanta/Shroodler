@@ -4,6 +4,7 @@ import math
 import re
 from functools import lru_cache
 from pathlib import Path
+from urllib.parse import parse_qsl, urlparse
 
 import yaml
 
@@ -71,12 +72,87 @@ _ASPNET_STATE_VALUE = re.compile(
     r'value=["\']([^"\']*)["\']'
 )
 
+# Query-param names that routinely carry long opaque values which are
+# not secrets (map bookmarks, pagination cursors, click-ids). A token
+# that appears ONLY as a value of these names is not reported as
+# generic-api-key. High-signal names (api_key, secret, ...) still fire
+# even when they live in a URL -- a leaked key in a query string is a
+# real finding.
+_BENIGN_QUERY_NAMES = {
+    "bookmark",
+    "cursor",
+    "page",
+    "offset",
+    "ref",
+    "referrer",
+    "fbclid",
+    "gclid",
+    "msclkid",
+    "dclid",
+    "twclid",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "utm_id",
+    "session",
+    "sessionid",
+    "session_id",
+    "nonce",
+    "state",
+    "hash",
+    "next",
+    "prev",
+    "start",
+    "end",
+    "cb",
+    "cachebust",
+    "cache_bust",
+    "ver",
+    "version",
+    "qid",
+    "rid",
+    "nid",
+    "cid",
+}
+_HIGH_SIGNAL_QUERY_NAMES = {
+    "api_key",
+    "apikey",
+    "access_token",
+    "accesstoken",
+    "secret",
+    "password",
+    "private_key",
+    "privatekey",
+    "authorization",
+    "auth_token",
+    "authtoken",
+    "client_secret",
+    "secret_key",
+    "secretkey",
+    "aws_secret_access_key",
+}
+
+
+def _normalize_param(name: str) -> str:
+    return name.lower().replace("-", "_")
+
+
+def _is_high_signal_param(name: str) -> bool:
+    n = _normalize_param(name)
+    if n in _HIGH_SIGNAL_QUERY_NAMES:
+        return True
+    if n.endswith("_key") or n.endswith("_secret"):
+        return True
+    return False
+
 
 def _aspnet_state_spans(text: str) -> list[tuple[int, int]]:
     return [m.span(1) for m in _ASPNET_STATE_VALUE.finditer(text)]
 
 
-def _entropy_hits(text: str) -> list[str]:
+def _entropy_hits(text: str, url: str = "") -> list[str]:
     hits = []
     state_spans = _aspnet_state_spans(text)
     for m in _ENTROPY_TOKEN.finditer(text):
@@ -88,8 +164,62 @@ def _entropy_hits(text: str) -> list[str]:
         if any(start <= m.start() and m.end() <= end for start, end in state_spans):
             continue
         if _shannon(token) >= 4.2 and len(set(token)) >= 16:
+            if _looks_like_benign_query_assignment(token):
+                continue
+            if _token_only_in_benign_query(text, url, token):
+                continue
             hits.append(token)
     return hits
+
+
+def _looks_like_benign_query_assignment(token: str) -> bool:
+    """The entropy regex's character class includes `=`, so `bookmark=VALUE`
+    often matches as one token. Treat that as the query-param case.
+    """
+    if "=" not in token:
+        return False
+    name, _, rest = token.partition("=")
+    if not rest or not name or len(name) > 40:
+        return False
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_\-]*", name):
+        return False
+    if _is_high_signal_param(name):
+        return False
+    return _normalize_param(name) in _BENIGN_QUERY_NAMES
+
+
+def _query_params_holding_token(text: str, url: str, token: str) -> set[str]:
+    names: set[str] = set()
+    for k, v in parse_qsl(urlparse(url or "").query, keep_blank_values=True):
+        if v == token:
+            names.add(_normalize_param(k))
+    for m in re.finditer(
+        r"[?&]([A-Za-z][A-Za-z0-9_\-]{0,40})=" + re.escape(token),
+        (url or "") + "\n" + (text or ""),
+    ):
+        names.add(_normalize_param(m.group(1)))
+    return names
+
+
+def _token_only_in_benign_query(text: str, url: str, token: str) -> bool:
+    """True when every occurrence of `token` is a query-string value of a
+    known-benign param name (bookmark, cursor, tracking ids, ...), and
+    none of those names is high-signal (api_key, secret, ...).
+    """
+    params = _query_params_holding_token(text, url, token)
+    if not params:
+        return False
+    if any(_is_high_signal_param(p) for p in params):
+        return False
+    if not params <= _BENIGN_QUERY_NAMES:
+        return False
+    haystack = (url or "") + "\n" + (text or "")
+    assigned = len(
+        re.findall(r"[?&][A-Za-z][A-Za-z0-9_\-]{0,40}=" + re.escape(token), haystack)
+    )
+    if assigned == 0:
+        return False
+    return haystack.count(token) <= assigned
 
 
 def scan_text(
@@ -107,7 +237,7 @@ def scan_text(
         severity = SEVERITY.get(str(rule.get("severity", "medium")), "medium")
         desc = rule.get("description", rid)
         if pattern == "__ENTROPY__":
-            for token in _entropy_hits(text):
+            for token in _entropy_hits(text, url):
                 findings.append(
                     Finding(
                         id=rid,

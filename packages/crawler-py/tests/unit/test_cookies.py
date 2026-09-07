@@ -300,3 +300,26 @@ def test_page_from_fetch_passes_cookies_attrs_reliable_false_in_headless_mode():
     _, findings_static, _ = page_from_fetch(result, cookies_attrs_reliable=True)
     ids_static = {f.id for f in findings_static}
     assert "cookie-host-prefix-violation" in ids_static
+
+
+def test_failed_fetch_reports_no_missing_header_findings():
+    # status_code=0 means the fetch itself failed (connection/TLS error,
+    # timeout) -- an empty headers dict here is "we never got a response",
+    # not "the target set zero security headers". The latter would fire
+    # missing-csp/missing-hsts/etc. on every unreachable host, which is a
+    # false finding manufactured from the absence of data.
+    from shroodler.crawler import page_from_fetch
+    from shroodler.modes.static import FetchResult
+
+    result = FetchResult(
+        url="https://unreachable.example.com/",
+        status_code=0,
+        headers={},
+        body=b"",
+        text="",
+        redirect_to=None,
+        error="SSL_ERROR_SYSCALL",
+    )
+    page, findings, _ = page_from_fetch(result)
+    assert findings == []
+    assert page.headers.missing == []

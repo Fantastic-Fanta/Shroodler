@@ -164,6 +164,29 @@ def test_page_with_form_and_own_query_params_is_not_double_tested(counting_refle
     assert hits["n"] == 2
 
 
+def test_same_form_action_across_many_pages_is_tested_once(counting_reflect_origin, tmp_path):
+    # A header search box's <form action="/search"> shows up on every
+    # crawled page verbatim. Without cross-page dedup, N pages sharing
+    # that one real endpoint fires baseline+full-pack N times against a
+    # live target for zero extra coverage over firing it once.
+    origin_url, hits = counting_reflect_origin
+    packs = load_packs(extra=[_reflect_pack(tmp_path)])
+    form = {"action": "/search", "method": "GET", "fields": [{"name": "q"}]}
+    doc = {
+        "target": origin_url + "/",
+        "pages": [
+            {"url": origin_url + "/", "forms": [form]},
+            {"url": origin_url + "/about", "forms": [form]},
+            {"url": origin_url + "/contact", "forms": [form]},
+        ],
+    }
+    out = run(doc, packs=[p for p in packs if p["id"] == "reflect-probe"])
+    found = [f for f in out["findings"] if f["id"] == "payload-reflect-probe"]
+    assert len(found) == 1
+    # baseline + 1 payload request for the single deduped target, not 3x.
+    assert hits["n"] == 2
+
+
 def test_page_with_neither_params_nor_forms_produces_no_findings(tmp_path):
     packs = load_packs(extra=[_reflect_pack(tmp_path)])
     doc = {

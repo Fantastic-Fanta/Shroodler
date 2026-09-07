@@ -386,6 +386,13 @@ def run(
     findings = []
     oob_probes = []
     seen: set[tuple[str, str]] = set()
+    # A form's own action is absolute/page-independent (e.g. a header
+    # search box's action="/en/search" shows up on every crawled page),
+    # so without this, the same real endpoint gets baseline+full-pack
+    # fired once per page it happened to appear on -- N pages sharing one
+    # search box turns one injection point into N redundant full test
+    # runs against a live target instead of one.
+    tested_targets: set[tuple[str, str, tuple[str, ...]]] = set()
     loaded = packs if packs is not None else load_packs()
     token = gen_token()
     marker_host = build_marker_host(token, oob_host)
@@ -448,6 +455,10 @@ def run(
                 fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
                 if not fields:
                     fields = ["q"]
+                target_key = (method, action, tuple(sorted(fields)))
+                if target_key in tested_targets:
+                    continue
+                tested_targets.add(target_key)
                 # A form synthesized from a captured JSON request body (see
                 # sessions.json_body_form) carries its original Content-Type
                 # in enctype -- e.g. a REST API's PATCH/POST accepting

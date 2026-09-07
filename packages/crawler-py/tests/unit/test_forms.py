@@ -85,6 +85,26 @@ def test_nested_and_multiple_forms():
     assert "/inner" in actions or any(ff.name == "i" for f in forms for ff in f.fields)
 
 
+def test_custom_element_field():
+    html = """
+    <form action="/suche" method="GET">
+      <wm-input name="q" label="Suche"></wm-input>
+    </form>
+    """
+    forms, _ = extract_forms(html, "http://127.0.0.1/")
+    names = {f.name for f in forms[0].fields}
+    assert names == {"q"}
+
+
+def test_anchor_inside_form_not_treated_as_field():
+    html = """
+    <form action="/f"><input name="q"><a name="anchor" href="#top">top</a></form>
+    """
+    forms, _ = extract_forms(html, "http://127.0.0.1/")
+    names = {f.name for f in forms[0].fields}
+    assert names == {"q"}
+
+
 def test_static_mode_misses_js_injected_form():
     html = (
         '<div id="root"></div>'

@@ -118,6 +118,24 @@ def test_high_entropy_not_always_secret():
     assert "generic-api-key" not in _ids(scan_text(repeated, "http://127.0.0.1/"))
 
 
+def test_aspnet_viewstate_is_not_a_secret_hit():
+    # __VIEWSTATE/__EVENTVALIDATION are ASP.NET WebForms' own base64
+    # postback state, naturally high-entropy but round-tripped to the
+    # same client -- not a secret. Every classic ASP.NET site would
+    # otherwise spam a false "possible API key" finding.
+    html = (
+        '<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" '
+        'value="/wEPDwULLTEzNjE4NjMyODFkZNppL3g3vRvyvtsdFh7YkbNIpPK9c8XyzAbQwErTyU">'
+        '<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" '
+        'value="/wEdAAKp7hN3mQxLzVtRfWbGcJdKsHnYaEoIuPlXoCrTsUvWyBnDqFhZjKmNpQrStUv">'
+    )
+    assert "generic-api-key" not in _ids(scan_text(html, "http://127.0.0.1/default.aspx"))
+    # A real high-entropy token elsewhere on the same page must still fire.
+    assert "generic-api-key" in _ids(
+        scan_text(html + ENTROPY, "http://127.0.0.1/default.aspx")
+    )
+
+
 def test_redaction_never_stores_full_secret():
     findings = scan_text(AWS, "http://127.0.0.1/")
     assert findings

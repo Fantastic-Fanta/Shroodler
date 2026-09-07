@@ -186,6 +186,11 @@ def _entropy_hits(text: str, url: str = "") -> list[str]:
         # UI library for aria-controls/id pairs; never secrets.
         if token.startswith("radix-"):
             continue
+        # Next.js internal chunk/route identifiers: _ngcXXXeNav, _nxt..., etc.
+        # They are build-time JS module hashes injected into every Next.js page,
+        # not secrets.
+        if token.startswith("_ngc") or token.startswith("_nxt"):
+            continue
         if _UUID_RE.match(token):
             continue
         # Real API/secret tokens don't contain forward slashes; those are URL

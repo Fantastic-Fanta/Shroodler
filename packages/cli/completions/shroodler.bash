@@ -16,7 +16,7 @@ _shroodler_commands="crawl diff report baseline expected ingest-sessions tokens 
 _shroodler_flags_for() {
     case "$1" in
         crawl)
-            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --spec --seed-from --cookies-from --plugin"
+            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --spec --seed-from --cookies-from --plugin --exclude-path"
             ;;
         diff)
             echo "--pages-only --gate --suppressions --format --output --source-root"

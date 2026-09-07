@@ -16,7 +16,7 @@ _shroodler_commands="crawl diff report baseline expected ingest-sessions tokens 
 _shroodler_flags_for() {
     case "$1" in
         crawl)
-            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --seed-from --cookies-from"
+            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --seed-from --cookies-from --plugin"
             ;;
         diff)
             echo "--pages-only --gate --suppressions --format --output --source-root"
@@ -37,7 +37,7 @@ _shroodler_flags_for() {
             echo "--discover --no-active --allow-external --concurrency --rate --timeout --proxy --user-agent --header --output --format --hosts-out"
             ;;
         payload)
-            echo "--output --pack --allow-external --oob-host --require-policy --policy-file --audit-log --adaptive"
+            echo "--output --pack --plugin --allow-external --oob-host --require-policy --policy-file --audit-log --adaptive"
             ;;
         authz-diff)
             echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation"
@@ -55,7 +55,7 @@ _shroodler_flags_for() {
             echo "--since"
             ;;
         mcp-server)
-            echo ""
+            echo "--list-tools"
             ;;
         audit-verify)
             echo ""

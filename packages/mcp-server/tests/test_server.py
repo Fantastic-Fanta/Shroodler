@@ -104,3 +104,42 @@ def test_ping():
 def test_malformed_json_line_gets_parse_error():
     [resp] = _send("not json\n")
     assert resp["error"]["code"] == -32700
+
+
+def test_list_tools_flag_prints_catalog(capsys):
+    from shroodler_mcp.server import main
+
+    assert main(["--list-tools"]) == 0
+    payload = json.loads(capsys.readouterr().out)
+    names = {t["name"] for t in payload["tools"]}
+    assert names == {
+        "scan_route",
+        "check_idor",
+        "reverify_fix",
+        "diff_since_baseline",
+        "explain_finding",
+    }
+    for tool in payload["tools"]:
+        assert tool["description"]
+        assert tool["inputSchema"]["type"] == "object"
+
+
+def test_help_names_every_tool(capsys):
+    from shroodler_mcp.server import main
+
+    try:
+        main(["--help"])
+    except SystemExit as exc:
+        assert exc.code == 0
+    else:
+        raise AssertionError("--help should SystemExit 0")
+    text = capsys.readouterr().out
+    for name in (
+        "scan_route",
+        "check_idor",
+        "reverify_fix",
+        "diff_since_baseline",
+        "explain_finding",
+        "--list-tools",
+    ):
+        assert name in text

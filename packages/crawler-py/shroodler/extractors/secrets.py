@@ -92,11 +92,16 @@ def _entropy_hits(text: str) -> list[str]:
     return hits
 
 
-def scan_text(text: str, url: str) -> list[Finding]:
+def scan_text(
+    text: str, url: str, extra_rules: list[dict] | None = None
+) -> list[Finding]:
     if not text:
         return []
     findings: list[Finding] = []
-    for rule in load_rules():
+    rules = list(load_rules())
+    if extra_rules:
+        rules.extend(extra_rules)
+    for rule in rules:
         rid = rule["id"]
         pattern = rule["pattern"]
         severity = SEVERITY.get(str(rule.get("severity", "medium")), "medium")

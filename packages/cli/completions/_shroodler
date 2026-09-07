@@ -77,6 +77,7 @@ _shroodler() {
             '*--seed[Extra same-origin URL to enqueue]:url' \
             '--seed-from[Proxy session JSONL]:file:_files' \
             '--cookies-from[Proxy session JSONL]:file:_files' \
+            '*--plugin[Plugin dir or file]:file:_files' \
             '1:target url'
           ;;
         diff)
@@ -136,6 +137,7 @@ _shroodler() {
           _arguments \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '*--pack[Extra YAML pack file or directory]:file:_files' \
+            '*--plugin[Plugin dir or file supplying extra packs]:file:_files' \
             '--allow-external[Allow sending payloads to a non-local target]' \
             '--oob-host[Your own collaborator-style server for blind SSRF/XXE checks]:host' \
             '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
@@ -185,7 +187,8 @@ _shroodler() {
             '2:scan json:_files'
           ;;
         mcp-server)
-          _message 'no arguments (speaks JSON-RPC over stdio)'
+          _arguments \
+            '--list-tools[Print the tool catalog as JSON and exit]'
           ;;
         audit-verify)
           _arguments '1:audit log jsonl:_files'

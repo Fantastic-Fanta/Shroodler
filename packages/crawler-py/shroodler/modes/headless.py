@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import json
+from urllib.parse import urlparse
+
 from playwright.sync_api import sync_playwright
 
 from shroodler.auth import CookieSpec, LoginRecipe, playwright_cookie_payload
@@ -94,6 +97,29 @@ class HeadlessFetcher:
             self._context.add_cookies(payload)
 
     def login(self, recipe: LoginRecipe) -> None:
+        if recipe.content_type == "json":
+            # JSON-API login (e.g. eToro's /api/sts/v2/login) has no HTML form.
+            # Use Playwright's own request API so the POST carries real browser
+            # headers (User-Agent, Origin, etc.) and bypasses bot-detection that
+            # would block a plain httpx call.  Cookies set by the response are
+            # automatically stored in the browser context.
+            parsed = urlparse(recipe.url)
+            origin_url = f"{parsed.scheme}://{parsed.netloc}"
+            resp = self._context.request.post(
+                recipe.url,
+                data=json.dumps(dict(recipe.fields)),
+                headers={
+                    "Content-Type": "application/json",
+                    "Origin": origin_url,
+                    "Referer": origin_url + "/",
+                },
+            )
+            if not resp.ok:
+                raise RuntimeError(
+                    f"JSON login to {recipe.url} failed: HTTP {resp.status}"
+                )
+            return
+
         page = self._context.new_page()
         try:
             page.goto(recipe.url, wait_until="networkidle", timeout=15000)

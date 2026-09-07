@@ -127,6 +127,7 @@ class Crawler:
         check_rate_limit: bool = False,
         check_idor: bool = False,
         plugins: list[str] | None = None,
+        exclude_paths: list[str] | None = None,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -145,6 +146,9 @@ class Crawler:
         self.no_sitemap = no_sitemap
         self.check_rate_limit = check_rate_limit
         self.check_idor = check_idor
+        self.exclude_paths: list[str] = [
+            p if p.startswith("/") else "/" + p for p in (exclude_paths or [])
+        ]
         self._plugin_secret_rules: list[dict] = []
         self._plugin_checks: list = []
         from shroodler.plugins import (
@@ -237,6 +241,10 @@ class Crawler:
                 continue
             if not same_origin(url, origin_url):
                 continue
+            if self.exclude_paths:
+                url_path = urlparse(url).path
+                if any(url_path.startswith(ep) for ep in self.exclude_paths):
+                    continue
             if not self.ignore_robots and not allowed(rp, url, self.user_agent):
                 robots_blocked.append(url)
                 continue

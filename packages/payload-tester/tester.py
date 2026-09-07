@@ -448,10 +448,25 @@ def run(
                 fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
                 if not fields:
                     fields = ["q"]
+                # A form synthesized from a captured JSON request body (see
+                # sessions.json_body_form) carries its original Content-Type
+                # in enctype -- e.g. a REST API's PATCH/POST accepting
+                # {"url": "...", "name": "..."}. Replaying it as
+                # form-urlencoded `data=` instead of `json=` would send a
+                # differently-shaped body than the real endpoint expects and
+                # every baseline/payload probe would just 4xx identically,
+                # silently producing zero coverage of exactly the field
+                # (e.g. a webhook URL) that most needed fuzzing.
+                enctype = str(form.get("enctype") or "")
+                is_json_body = "json" in enctype.lower() and method != "GET"
 
-                def send(values: dict) -> httpx.Response:
+                def send(values: dict, _enctype: str = enctype) -> httpx.Response:
                     if method == "GET":
                         return http.get(action, params=values)
+                    if is_json_body:
+                        return http.request(
+                            method, action, json=values, headers={"Content-Type": _enctype}
+                        )
                     return http.post(action, data=values)
 
                 baseline_data = {name: BASELINE_VALUE for name in fields}

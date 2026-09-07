@@ -678,6 +678,18 @@ def cmd_attack_path(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_cadence(args: argparse.Namespace) -> int:
+    from shroodler.cadence import recommend, render_text
+
+    rec = recommend(args.tier, url=args.url)
+    if args.format == "json":
+        text = json.dumps(rec, indent=2) + "\n"
+    else:
+        text = render_text(rec)
+    _write(text, args.output)
+    return 0
+
+
 def cmd_triage(args: argparse.Namespace) -> int:
     from shroodler.triage import render_hosts, render_text, run_triage
 
@@ -1140,6 +1152,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     tokens.add_argument("--output", "-o")
     tokens.set_defaults(func=cmd_tokens)
+
+    cadence = sub.add_parser(
+        "cadence",
+        help="Print recommended crawl/payload flags for a PR, nightly, or weekly scan",
+        description=(
+            "Packaging for the existing profiles: which flags to use on a PR "
+            "(passive/safe), nightly (balanced + payload), or weekly "
+            "(aggressive + adaptive payload). Prints commands; does not scan."
+        ),
+    )
+    cadence.add_argument(
+        "--tier",
+        required=True,
+        choices=["pr", "nightly", "weekly"],
+        help="Which cadence slot to print flags for",
+    )
+    cadence.add_argument(
+        "--url",
+        default="http://127.0.0.1:8081",
+        help="Placeholder target URL in the printed command (default http://127.0.0.1:8081)",
+    )
+    cadence.add_argument("--format", choices=["text", "json"], default="text")
+    cadence.add_argument("--output", "-o")
+    cadence.set_defaults(func=cmd_cadence)
 
     from shroodler.triage import (
         DEFAULT_CONCURRENCY,

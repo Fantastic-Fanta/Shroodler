@@ -17,6 +17,7 @@ _shroodler_commands=(
   'expected:Write expected_findings.json from a scan (alias of baseline)'
   'ingest-sessions:Turn captured proxy JSONL into findings'
   'tokens:Analyze reset/verification token predictability from proxy JSONL'
+  'cadence:Print recommended flags for a PR/nightly/weekly scan'
   'triage:Classify a host list before spending crawl budget'
   'payload:Run YAML payload packs against crawl JSON'
   'authz-diff:Replay a privileged crawl under a second session'
@@ -118,6 +119,13 @@ _shroodler() {
           _arguments \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '1:sessions jsonl:_files'
+          ;;
+        cadence)
+          _arguments \
+            '--tier[Cadence slot]:(pr nightly weekly)' \
+            '--url[Placeholder target URL in the printed command]:url' \
+            '--format[Output format]:(text json)' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files'
           ;;
         triage)
           _arguments \

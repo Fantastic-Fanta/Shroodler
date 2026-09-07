@@ -7,6 +7,11 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler cadence --tier pr|nightly|weekly`**: prints recommended
+  crawl/payload flags for a PR-time passive scan, a nightly active
+  scan, or a weekly aggressive+adaptive scan. Packaging only; does not
+  scan. Weekly still omits `--allow-external`.
+
 - **`--spec` crawl seed.** `crawl --spec FILE` imports a local
   OpenAPI/Swagger document or Postman collection and enqueues same-origin
   paths as extra seeds (in addition to the existing in-crawl

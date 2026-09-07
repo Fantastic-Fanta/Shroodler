@@ -1,6 +1,10 @@
 # Command line
 
 ```bash
+# Recommended flags for a PR / nightly / weekly slot (prints; does not scan)
+shroodler cadence --tier pr
+shroodler cadence --tier nightly --format json
+
 # Scope triage before a crawl (classifies; does not crawl or payload)
 shroodler triage hosts.txt --format hosts --hosts-out seeds.txt
 shroodler triage --discover example.local --allow-external --no-active

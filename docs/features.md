@@ -1,5 +1,10 @@
 # Features
 
+- **Cadence** (`shroodler cadence --tier pr|nightly|weekly`) — prints
+  recommended crawl/payload flags for a PR-time passive scan, a nightly
+  active scan, or a weekly aggressive+adaptive scan. Does not itself
+  crawl.
+
 - **Tickets** (`shroodler ticket file` / `ticket sync`) — open GitHub
   issues for new findings (the same id+path key `diff --gate` uses) and
   close them when a later scan no longer reports the finding. Dry-run by

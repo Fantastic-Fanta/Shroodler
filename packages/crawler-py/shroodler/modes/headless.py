@@ -116,8 +116,13 @@ class HeadlessFetcher:
             login_page_url = origin_url + "/login"
             page = self._context.new_page()
             try:
-                # Load the login page so WAF challenges run and cookies are set.
-                page.goto(login_page_url, wait_until="networkidle", timeout=30000)
+                # Load the login page so WAF/bot-detection challenges run and
+                # clearance cookies are set.  Use "load" (not "networkidle") —
+                # DataDome/Cloudflare keep polling the network indefinitely, so
+                # networkidle never fires.  A brief extra wait lets the JS
+                # challenge complete before we make the API call.
+                page.goto(login_page_url, wait_until="load", timeout=30000)
+                page.wait_for_timeout(5000)
                 # POST via fetch() inside the live browser context.
                 result = page.evaluate(
                     """

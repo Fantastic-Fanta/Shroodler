@@ -10,6 +10,9 @@
   and required custom headers. Emits JSON, a table, or a crawl-ready
   host list (`--format hosts` / `--hosts-out`). Does not crawl or fire
   payloads.
+- **Auth-stack fingerprinting** — detects next-auth, Keycloak, and Auth0
+  from cookie/path signatures during a crawl, and for next-auth runs the
+  known `callbackUrl` → callback-url-cookie probe automatically.
 - **Plugins** — extra payload packs, secret rules, and optional Python
   page checks loadable from a local directory (`--plugin` on `crawl` /
   `payload`, or `$SHROODLER_PLUGIN_PATH`).

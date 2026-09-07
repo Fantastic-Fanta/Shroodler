@@ -69,6 +69,10 @@ _BY_ID: dict[str, str] = {
     "reset-token-short": "Lengthen the reset/verification token (aim for 128+ bits of real entropy) and confirm it's generated with a CSPRNG.",
     "reset-token-in-url": "Deliver the token via a one-time POST body or a single-use, immediately-consumed redirect instead of a persistent URL, to avoid Referer/log/history leakage.",
     "oauth-implicit-flow": "Migrate off the implicit flow (response_type=token) to the authorization code flow with PKCE; the implicit flow exposes the access token in the URL fragment.",
+    "auth-stack-next-auth": "Informational fingerprint: next-auth is in use. Review callbackUrl handling and cookie prefix contracts for this stack.",
+    "next-auth-callback-url-unvalidated": "Allowlist callbackUrl against the app's own origin (next-auth AUTH_URL / AUTH_ALLOWED_CALLBACKS) so an attacker-controlled URL cannot land in the callback-url cookie or post-login redirect.",
+    "auth-stack-keycloak": "Informational fingerprint: Keycloak is in use. Review redirect_uri allowlists and token-endpoint auth separately.",
+    "auth-stack-auth0": "Informational fingerprint: Auth0 is in use. Review allowed callback URLs in the Auth0 application settings.",
 }
 
 # Category fallback for ids not listed above (new payload/secret pack ids

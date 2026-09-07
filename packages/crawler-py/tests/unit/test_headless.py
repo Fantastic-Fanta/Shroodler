@@ -6,26 +6,28 @@ from shroodler.crawler import crawl_url
 
 
 def test_headless_json_login_injects_auth_cookies(fx, tmp_path):
-    """JSON-POST login (content_type=json) must authenticate the Playwright
-    browser context so subsequent page navigations carry the session cookie."""
+    """JSON-POST recipe (content_type=json) must authenticate the Playwright
+    browser context via the visual login form at /login (WAF-safe path)."""
+    # Fixture: /login serves an HTML form; POST to /do-login sets the cookie.
+    fx.html(
+        "/login",
+        '<form method="POST" action="/do-login">'
+        '<input name="Username" type="text">'
+        '<input name="Password" type="password">'
+        '<button type="submit">Login</button></form>',
+    )
 
-    def login_handler(req):
-        if req.method == "POST":
-            return (
-                200,
-                {"Content-Type": "application/json", "Set-Cookie": "session=auth-ok; Path=/"},
-                b'{"ok": true}',
-            )
-        return 405, {}, b""
+    def do_login(req):
+        return 302, {"Location": "/", "Set-Cookie": "session=auth-ok; Path=/"}, b""
 
-    fx.on("POST", "/api/login", login_handler)
+    fx.on("POST", "/do-login", do_login)
     fx.html("/", '<a href="/protected">enter</a>')
     fx.on(
         "GET",
         "/protected",
         lambda req: (
             (200, {}, b"<p>welcome</p>")
-            if req.headers.get("Cookie", "").startswith("session=")
+            if "session=" in req.headers.get("Cookie", "")
             else (401, {}, b"<p>not auth</p>")
         ),
     )
@@ -34,9 +36,9 @@ def test_headless_json_login_injects_auth_cookies(fx, tmp_path):
     recipe.write_text(
         json.dumps(
             {
-                "url": fx.origin + "/api/login",
+                "url": fx.origin + "/api/login",  # API URL (origin extracted from it)
                 "method": "POST",
-                "fields": {"user": "test"},
+                "fields": {"Username": "test@example.com", "Password": "secret"},
                 "content_type": "json",
                 "include_hidden": False,
             }

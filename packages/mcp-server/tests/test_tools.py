@@ -9,6 +9,9 @@ from shroodler_mcp.tools import (
     check_idor,
     diff_since_baseline,
     explain_finding,
+    extract_js_routes,
+    paced_fetch,
+    peer_write,
     reverify_fix,
     scan_route,
 )
@@ -209,6 +212,73 @@ def test_check_idor_passes_through_identity_markers(monkeypatch):
     assert captured["higher_priv_identity_markers"] == ["victim@example.com"]
     assert captured["lower_priv_identity_markers"] == ["me@example.com"]
     assert captured["require_identity_confirmation"] is True
+
+
+def test_peer_write_requires_playbook_or_sessions():
+    with pytest.raises(ValueError, match="playbook|from_sessions"):
+        peer_write({})
+
+
+def test_peer_write_refuses_without_policy_by_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        peer_write({"playbook": {"target": "http://127.0.0.1:1", "writes": []}})
+
+
+def test_peer_write_allow_without_policy_reaches_engine(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    called = {}
+
+    def fake_run(doc, **kwargs):
+        called["enforcer"] = kwargs.get("enforcer")
+        return {"target": doc.get("target", ""), "findings": [], "checked": []}
+
+    monkeypatch.setattr("shroodler.peer_write.run", fake_run)
+    result = peer_write(
+        {"playbook": {"target": "http://127.0.0.1:1", "writes": []}, "allow_without_policy": True}
+    )
+    assert result["findings"] == []
+    assert called["enforcer"] is not None
+
+
+def test_extract_js_routes_requires_file():
+    with pytest.raises(ValueError, match="file"):
+        extract_js_routes({})
+
+
+def test_extract_js_routes_reads_local_file(tmp_path, monkeypatch):
+    monkeypatch.setenv("SHROODLER_MCP_ROOT", str(tmp_path))
+    js = tmp_path / "app.js"
+    js.write_text('const u = "/users/{userId}";', encoding="utf-8")
+    out = extract_js_routes({"file": str(js)})
+    assert out["routes"][0]["params"] == ["userId"]
+
+
+def test_paced_fetch_requires_urls():
+    with pytest.raises(ValueError, match="urls"):
+        paced_fetch({})
+
+
+def test_paced_fetch_refuses_without_policy_by_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        paced_fetch({"urls": ["http://127.0.0.1:1/"]})
+
+
+def test_paced_fetch_allow_without_policy_reaches_engine(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    called = {}
+
+    def fake_fetch(urls, **kwargs):
+        called["enforcer"] = kwargs.get("enforcer")
+        called["max_urls"] = kwargs.get("max_urls")
+        return {"results": [{"url": urls[0], "status": 200}], "rate": 1}
+
+    monkeypatch.setattr("shroodler.paced_fetch.fetch_urls", fake_fetch)
+    result = paced_fetch({"urls": ["http://127.0.0.1:1/"], "allow_without_policy": True})
+    assert result["results"][0]["status"] == 200
+    assert called["enforcer"] is not None
+    assert called["max_urls"] == 20
 
 
 def test_project_root_uses_env_override(tmp_path, monkeypatch):

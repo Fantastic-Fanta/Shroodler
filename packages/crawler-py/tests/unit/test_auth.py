@@ -52,6 +52,27 @@ def test_load_login_recipe(tmp_path):
     assert recipe.url == "/login"
     assert recipe.fields["username"] == "admin"
     assert recipe.include_hidden is True
+    assert recipe.local_storage == {}
+    assert recipe.auth_marker is None
+
+
+def test_load_login_recipe_local_storage_and_auth_marker(tmp_path):
+    p = tmp_path / "login.json"
+    p.write_text(
+        json.dumps({
+            "url": "https://example.com/api/login",
+            "content_type": "json",
+            "fields": {},
+            "local_storage": {"loginData": "eyJhbGci..."},
+            "auth_marker": "myusername",
+            "protected_url": "https://example.com/dashboard",
+        }),
+        encoding="utf-8",
+    )
+    recipe = load_login_recipe(str(p))
+    assert recipe.local_storage == {"loginData": "eyJhbGci..."}
+    assert recipe.auth_marker == "myusername"
+    assert recipe.protected_url == "https://example.com/dashboard"
 
 
 def test_cookie_jar_unlocks_gated_form(fx, tmp_path):

@@ -28,6 +28,7 @@ _BY_ID: dict[str, str] = {
     "idor-adjacent-id-accessible": "probable",
     "authz-still-accessible": "probable",
     "authz-broken-access-control": "probable",
+    "peer-write-idor": "probable",
     "html-comment": "heuristic",
     "meta-generator": "heuristic",
     "js-endpoint": "heuristic",

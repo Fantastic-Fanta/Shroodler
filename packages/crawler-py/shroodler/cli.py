@@ -381,6 +381,127 @@ def cmd_authz_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def _policy_enforcer(args: argparse.Namespace, target: str):
+    require_policy = getattr(args, "require_policy", False)
+    policy_file = getattr(args, "policy_file", None)
+    audit_log = getattr(args, "audit_log", None)
+    if not (require_policy or policy_file or audit_log):
+        return None
+    from shroodler_guardrails.policy import (
+        PolicyEnforcer,
+        fetch_policy,
+        origin_of,
+        parse_policy,
+    )
+
+    if policy_file:
+        manifest = json.loads(Path(policy_file).read_text(encoding="utf-8"))
+        policy = parse_policy(manifest, origin=origin_of(target))
+    else:
+        policy = fetch_policy(target)
+    return PolicyEnforcer(
+        policy=policy,
+        require_policy=require_policy,
+        audit_path=Path(audit_log) if audit_log else None,
+    )
+
+
+def cmd_peer_write(args: argparse.Namespace) -> int:
+    from shroodler.auth import parse_header_lines
+    from shroodler.cookie_source import resolve_cookie_header
+    from shroodler.peer_write import load_playbook
+    from shroodler.peer_write import run as peer_write_run
+
+    playbook: dict = {}
+    if getattr(args, "playbook", None):
+        playbook = load_json(args.playbook)
+        if not isinstance(playbook, dict):
+            raise ValueError("playbook must be a JSON object")
+    if not playbook and not getattr(args, "from_sessions", None):
+        raise ValueError("peer-write needs a playbook.json or --from-sessions")
+    if args.target:
+        playbook["target"] = args.target
+
+    merged = load_playbook(
+        playbook,
+        sessions_path=getattr(args, "from_sessions", None),
+        target=str(playbook.get("target") or args.target or ""),
+        only_id=getattr(args, "only_id", None),
+    )
+    target = str(merged.get("target") or "")
+    owner_cookie = resolve_cookie_header(
+        pairs=list(getattr(args, "owner_cookie", None) or []),
+        path=getattr(args, "owner_cookies_from", None),
+        origin_url=target,
+    )
+    peer_cookie = resolve_cookie_header(
+        pairs=list(getattr(args, "peer_cookie", None) or []),
+        path=getattr(args, "peer_cookies_from", None),
+        origin_url=target,
+    )
+    extra_headers = parse_header_lines(list(getattr(args, "header", None) or []))
+    out = peer_write_run(
+        merged,
+        owner_cookie=owner_cookie,
+        peer_cookie=peer_cookie,
+        extra_headers=extra_headers,
+        allow_external=bool(getattr(args, "allow_external", False)),
+        enforcer=_policy_enforcer(args, target),
+        rate=float(getattr(args, "rate", 1.0) or 1.0),
+        user_agent=getattr(args, "user_agent", None) or "",
+        user_agent_suffix=getattr(args, "user_agent_suffix", None) or "",
+        nonsense_id=str(getattr(args, "nonsense_id", None) or "1"),
+        only_id=getattr(args, "only_id", None),
+    )
+    text = json.dumps(out, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def cmd_js_routes(args: argparse.Namespace) -> int:
+    from shroodler.extractors.js_routes import extract_js_routes_file
+
+    out = extract_js_routes_file(args.js_file)
+    text = json.dumps(out, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def cmd_paced_fetch(args: argparse.Namespace) -> int:
+    from shroodler.auth import parse_cookie_pairs, parse_header_lines
+    from shroodler.cookie_source import cookie_header_from_specs
+    from shroodler.paced_fetch import fetch_urls
+
+    urls = list(getattr(args, "url", None) or [])
+    urls_file = getattr(args, "urls_file", None)
+    if urls_file:
+        urls.extend(
+            ln.strip()
+            for ln in Path(urls_file).read_text(encoding="utf-8").splitlines()
+            if ln.strip() and not ln.strip().startswith("#")
+        )
+    if not urls:
+        raise ValueError("paced-fetch needs --url or --urls-file")
+    cookie_pairs = parse_cookie_pairs(list(getattr(args, "cookie", None) or []))
+    cookie_header = cookie_header_from_specs(cookie_pairs)
+    extra_headers = parse_header_lines(list(getattr(args, "header", None) or []))
+    target = next((u for u in urls if "://" in u), urls[0])
+    out = fetch_urls(
+        urls,
+        method=getattr(args, "method", None) or "GET",
+        cookie_header=cookie_header,
+        extra_headers=extra_headers,
+        allow_external=bool(getattr(args, "allow_external", False)),
+        enforcer=_policy_enforcer(args, target),
+        rate=float(getattr(args, "rate", 1.0) or 1.0),
+        user_agent=getattr(args, "user_agent", None) or "",
+        user_agent_suffix=getattr(args, "user_agent_suffix", None) or "",
+    )
+    text = json.dumps(out, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
 def cmd_baseline(args: argparse.Namespace) -> int:
     doc = load_json(args.findings)
     rules = load_suppressions(args.suppressions)
@@ -1472,6 +1593,193 @@ def build_parser() -> argparse.ArgumentParser:
     )
     authz.set_defaults(func=cmd_authz_diff)
 
+    peer = sub.add_parser(
+        "peer-write",
+        help="Replay known-object writes as a second session (not n±1 enum)",
+        description=(
+            "Replay captured POST/PUT/PATCH/DELETE requests against *known* "
+            "object ids as a peer session. Each write is also sent to a "
+            "nonsense id: the same 200 body as the fake id is dummy-success, "
+            "not a finding. success:false is a write-failure. A peer 2xx that "
+            "differs from the control is an IDOR lead; an owner re-read that "
+            "changed is confirmation. Does not invent adjacent ids."
+        ),
+    )
+    peer.add_argument(
+        "playbook",
+        nargs="?",
+        default=None,
+        help="JSON playbook with target + writes[{method,url,body,id_value,verify}]",
+    )
+    peer.add_argument("--output", "-o")
+    peer.add_argument("--target", help="Override playbook target / infer from --from-sessions")
+    peer.add_argument(
+        "--from-sessions",
+        metavar="PATH",
+        help="HAR or proxy JSONL; extract writes that already name an object id",
+    )
+    peer.add_argument(
+        "--only-id",
+        metavar="ID",
+        help="Only replay writes whose known object id equals this value",
+    )
+    peer.add_argument(
+        "--owner-cookie",
+        action="append",
+        default=[],
+        metavar="name=value",
+        help="Owner session cookie for the verify re-read (repeatable)",
+    )
+    peer.add_argument(
+        "--peer-cookie",
+        action="append",
+        default=[],
+        metavar="name=value",
+        help="Peer session cookie used for the write replay (repeatable)",
+    )
+    peer.add_argument(
+        "--owner-cookies-from",
+        metavar="PATH",
+        help="Owner cookies from Playwright storageState, Netscape jar, HAR, or JSONL",
+    )
+    peer.add_argument(
+        "--peer-cookies-from",
+        metavar="PATH",
+        help="Peer cookies from Playwright storageState, Netscape jar, HAR, or JSONL",
+    )
+    peer.add_argument(
+        "--header",
+        action="append",
+        default=[],
+        metavar="'Name: value'",
+        help="Extra header on peer (and owner verify) requests (repeatable)",
+    )
+    peer.add_argument(
+        "--rate",
+        type=float,
+        default=1.0,
+        help="Minimum seconds between live requests (default 1 = 1 req/s)",
+    )
+    peer.add_argument(
+        "--nonsense-id",
+        default="1",
+        help="Control id substituted into the same write (default 1)",
+    )
+    peer.add_argument("--user-agent", help="Override User-Agent (suffix is still appended)")
+    peer.add_argument(
+        "--user-agent-suffix",
+        help="Appended to User-Agent (e.g. Bugcrowd-handle)",
+    )
+    peer.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow replaying against a non-local target; off by default",
+    )
+    peer.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run unless the target publishes a "
+        ".well-known/scan-policy.json consent manifest.",
+    )
+    peer.add_argument(
+        "--policy-file",
+        metavar="PATH",
+        help="Use a local scan-policy.json instead of fetching one from the target.",
+    )
+    peer.add_argument(
+        "--audit-log",
+        metavar="PATH",
+        help="Append a JSONL audit trail of every active request the guardrail "
+        "allowed or blocked.",
+    )
+    peer.set_defaults(func=cmd_peer_write)
+
+    js_routes = sub.add_parser(
+        "js-routes",
+        help="Extract parameterized URL templates from a JS bundle",
+        description=(
+            "Mine {userId}/{collectionId}/{pk}, ${var}, :id, and <int:pk> "
+            "route templates from webpack/SPA JS. Templates only — does not "
+            "fetch or enumerate ids."
+        ),
+    )
+    js_routes.add_argument("js_file", help="Local JavaScript file to scan")
+    js_routes.add_argument("--output", "-o", help="Write routes JSON (default stdout)")
+    js_routes.set_defaults(func=cmd_js_routes)
+
+    paced = sub.add_parser(
+        "paced-fetch",
+        help="GET a URL list at a capped request rate (default 1 req/s)",
+        description=(
+            "Rate-limited GET/HEAD/OPTIONS for agent or Playwright loops. "
+            "Does not solve captchas. Writes are refused — use peer-write."
+        ),
+    )
+    paced.add_argument(
+        "--url",
+        action="append",
+        default=[],
+        metavar="URL",
+        help="URL to fetch (repeatable)",
+    )
+    paced.add_argument(
+        "--urls-file",
+        metavar="PATH",
+        help="Text file of URLs, one per line",
+    )
+    paced.add_argument("--output", "-o")
+    paced.add_argument(
+        "--method",
+        default="GET",
+        choices=["GET", "HEAD", "OPTIONS"],
+        help="Safe method only (default GET)",
+    )
+    paced.add_argument(
+        "--cookie",
+        action="append",
+        default=[],
+        metavar="name=value",
+        help="Cookie (repeatable)",
+    )
+    paced.add_argument(
+        "--header",
+        action="append",
+        default=[],
+        metavar="'Name: value'",
+        help="Extra header (repeatable)",
+    )
+    paced.add_argument(
+        "--rate",
+        type=float,
+        default=1.0,
+        help="Minimum seconds between requests (default 1)",
+    )
+    paced.add_argument("--user-agent")
+    paced.add_argument("--user-agent-suffix")
+    paced.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow fetching a non-local target; off by default",
+    )
+    paced.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run unless the target publishes a "
+        ".well-known/scan-policy.json consent manifest.",
+    )
+    paced.add_argument(
+        "--policy-file",
+        metavar="PATH",
+        help="Use a local scan-policy.json instead of fetching one from the target.",
+    )
+    paced.add_argument(
+        "--audit-log",
+        metavar="PATH",
+        help="Append a JSONL audit trail of every active request the guardrail "
+        "allowed or blocked.",
+    )
+    paced.set_defaults(func=cmd_paced_fetch)
+
     proxy = sub.add_parser(
         "proxy",
         help="Forward to shroodler-proxy (start, ca, replay)",
@@ -1588,6 +1896,9 @@ def build_parser() -> argparse.ArgumentParser:
             "the CLI:\n"
             "  scan_route          crawl one URL (optional active payloads)\n"
             "  check_idor          confirm or drop an IDOR lead with a second session\n"
+            "  peer_write          replay known-object writes as a peer session\n"
+            "  extract_js_routes   mine {id} URL templates from a local JS file\n"
+            "  paced_fetch         GET a short URL list at 1 req/s\n"
             "  reverify_fix        re-scan one route and report if a finding is gone\n"
             "  diff_since_baseline compare a scan to a checked-in baseline\n"
             "  explain_finding     static remediation guidance for a finding id\n"

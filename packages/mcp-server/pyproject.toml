@@ -1,7 +1,7 @@
 [project]
 name = "shroodler-mcp"
 version = "0.1.0"
-description = "MCP server exposing Shroodler (scan_route, check_idor, diff_since_baseline, explain_finding) as agent tools over stdio JSON-RPC"
+description = "MCP server exposing Shroodler (scan_route, check_idor, peer_write, extract_js_routes, paced_fetch, diff_since_baseline, explain_finding) as agent tools over stdio JSON-RPC"
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "The Shroodler Authors" }]

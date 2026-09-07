@@ -42,6 +42,7 @@ _AUTH_LEAD_IDS = {
     "authz-still-accessible",
     "authz-broken-access-control",
     "idor-adjacent-id-accessible",
+    "peer-write-idor",
 }
 
 

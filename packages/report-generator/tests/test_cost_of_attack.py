@@ -21,6 +21,7 @@ def test_jwt_forgery_needs_no_account():
 
 def test_idor_needs_a_session():
     assert cost_of_attack_for("idor-adjacent-id-accessible", "auth") == "medium"
+    assert cost_of_attack_for("peer-write-idor", "auth") == "medium"
 
 
 def test_unknown_id_falls_back_to_category():

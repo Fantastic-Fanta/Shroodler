@@ -126,6 +126,66 @@ def test_authz_diff_parses():
     assert "authz-diff" in p.format_help()
 
 
+def test_peer_write_parses():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "peer-write",
+            "play.json",
+            "--from-sessions",
+            "sess.jsonl",
+            "--peer-cookie",
+            "session=b",
+            "--owner-cookie",
+            "session=a",
+            "--only-id",
+            "10464573",
+            "--rate",
+            "1",
+            "--allow-external",
+        ]
+    )
+    assert args.playbook == "play.json"
+    assert args.from_sessions == "sess.jsonl"
+    assert args.peer_cookie == ["session=b"]
+    assert args.owner_cookie == ["session=a"]
+    assert args.only_id == "10464573"
+    assert args.rate == 1.0
+    assert args.allow_external is True
+    assert "peer-write" in p.format_help()
+
+
+def test_js_routes_parses():
+    p = build_parser()
+    args = p.parse_args(["js-routes", "app.js", "-o", "routes.json"])
+    assert args.js_file == "app.js"
+    assert args.output == "routes.json"
+    assert "js-routes" in p.format_help()
+
+
+def test_paced_fetch_parses():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "paced-fetch",
+            "--url",
+            "http://127.0.0.1/a",
+            "--urls-file",
+            "urls.txt",
+            "--rate",
+            "1",
+            "--user-agent-suffix",
+            "Bugcrowd-handle",
+        ]
+    )
+    assert args.url == ["http://127.0.0.1/a"]
+    assert args.urls_file == "urls.txt"
+    assert args.rate == 1.0
+    assert args.user_agent_suffix == "Bugcrowd-handle"
+    assert args.method == "GET"
+    assert "paced-fetch" in p.format_help()
+
+
 def test_plugin_and_mcp_server_flags_parse():
     p = build_parser()
     args = p.parse_args(["crawl", "http://127.0.0.1:8081", "--plugin", "./plug"])
@@ -137,5 +197,8 @@ def test_plugin_and_mcp_server_flags_parse():
     mcp_help = p._subparsers._group_actions[0].choices["mcp-server"].format_help()
     assert "scan_route" in mcp_help
     assert "check_idor" in mcp_help
+    assert "peer_write" in mcp_help
+    assert "extract_js_routes" in mcp_help
+    assert "paced_fetch" in mcp_help
     assert "reverify_fix" in mcp_help
     assert "--list-tools" in mcp_help

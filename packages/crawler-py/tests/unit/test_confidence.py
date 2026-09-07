@@ -22,6 +22,7 @@ def test_named_secret_falls_back_to_confirmed():
 def test_idor_and_authz_are_probable():
     assert confidence_for("idor-adjacent-id-accessible", "auth") == "probable"
     assert confidence_for("authz-still-accessible", "auth") == "probable"
+    assert confidence_for("peer-write-idor", "auth") == "probable"
 
 
 def test_auth_stack_fingerprint_is_heuristic():

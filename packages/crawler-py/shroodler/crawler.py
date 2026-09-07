@@ -83,6 +83,7 @@ from shroodler.urls import (
     canonical_key,
     is_loopback_or_local,
     normalize_url,
+    origin as origin_of,
     query_param_names,
     same_origin,
 )
@@ -841,9 +842,47 @@ def _robots_blocked_finding(
 
 
 def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
-    out: list[Finding] = []
-    seen: set[tuple[str, str]] = set()
+    # Header-category findings that are sitewide (same rule fires on many pages)
+    # get collapsed to one finding per origin with a count in evidence. This
+    # prevents 50+ identical rows in reports for issues like missing CSP or
+    # absent Referrer-Policy that apply to an entire domain, not a single page.
+    # Categories whose findings are sitewide by nature (same rule fires
+    # on many pages due to a server/policy issue, not a per-URL bug).
+    _SITEWIDE_CATEGORIES = frozenset({"header", "subresource"})
+
+    header_by_key: dict[tuple[str, str], list[Finding]] = {}
+    rest: list[Finding] = []
     for f in findings:
+        if f.category in _SITEWIDE_CATEGORIES:
+            key = (f.id, origin_of(f.url))
+            header_by_key.setdefault(key, []).append(f)
+        else:
+            rest.append(f)
+
+    collapsed: list[Finding] = []
+    for (fid, orig), group in header_by_key.items():
+        first = group[0]
+        n = len(group)
+        if n == 1:
+            collapsed.append(first)
+        else:
+            sample = first.url
+            collapsed.append(
+                Finding(
+                    id=fid,
+                    severity=first.severity,
+                    category=first.category,
+                    url=orig,
+                    description=first.description,
+                    evidence=f"Affects {n} pages; sample: {sample}",
+                    confidence=first.confidence,
+                )
+            )
+
+    # Deduplicate non-header findings by (id, url) as before
+    out: list[Finding] = list(collapsed)
+    seen: set[tuple[str, str]] = set()
+    for f in rest:
         key = (f.id, f.url)
         if key in seen:
             continue

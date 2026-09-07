@@ -28,6 +28,7 @@ class LoginRecipe:
     logout_url: str | None = None
     logout_method: str = "GET"
     protected_url: str | None = None
+    content_type: str = "form"  # "form" or "json"
 
 
 def parse_header_lines(lines: list[str] | None) -> dict[str, str]:
@@ -76,6 +77,9 @@ def load_login_recipe(path: str) -> LoginRecipe:
         raise ValueError("login recipe fields must be an object")
     logout_url = data.get("logout_url")
     protected_url = data.get("protected_url")
+    content_type = str(data.get("content_type") or "form").lower()
+    if content_type not in {"form", "json"}:
+        raise ValueError(f"login recipe content_type must be 'form' or 'json', got {content_type!r}")
     return LoginRecipe(
         url=str(data["url"]),
         method=str(data.get("method") or "POST"),
@@ -84,6 +88,7 @@ def load_login_recipe(path: str) -> LoginRecipe:
         logout_url=str(logout_url) if logout_url else None,
         logout_method=str(data.get("logout_method") or "GET"),
         protected_url=str(protected_url) if protected_url else None,
+        content_type=content_type,
     )
 
 
@@ -253,12 +258,15 @@ def merge_hidden_fields(html: str, fields: dict[str, str]) -> dict[str, str]:
 
 def run_login_httpx(client, recipe: LoginRecipe) -> None:
     fields = dict(recipe.fields)
-    if recipe.include_hidden:
+    use_json = recipe.content_type == "json"
+    if recipe.include_hidden and not use_json:
         res = client.get(recipe.url)
         if res.status_code < 400 and res.text:
             fields = merge_hidden_fields(res.text, fields)
     method = recipe.method.upper()
     if method == "GET":
         client.get(recipe.url, params=fields, follow_redirects=True)
+    elif use_json:
+        client.post(recipe.url, json=fields, follow_redirects=True)
     else:
         client.post(recipe.url, data=fields, follow_redirects=True)

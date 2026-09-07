@@ -174,7 +174,8 @@
             "scan-note",
             "auth",
             "waf-challenge",
-            "subresource"
+            "subresource",
+            "tls"
           ]
         },
         "url": { "type": "string", "minLength": 1 },

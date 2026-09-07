@@ -59,6 +59,19 @@ def _shannon(s: str) -> float:
 
 _ENTROPY_TOKEN = re.compile(r"\b[A-Za-z0-9_\-/+=]{32,64}\b")
 
+# UUID format: 8-4-4-4-12 hex groups — deployment IDs, build IDs, resource
+# identifiers. High entropy but never secrets; filtering them here prevents the
+# URL-path UUID false positive pattern (CDN paths like /static/<uuid>/_next/...).
+_UUID_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
+
+# Structured named identifiers (e.g. Salesforce component DevNames like
+# "EmbeddedServiceLiveAgent_Parent...") start with a capitalized English
+# word (8+ lowercase letters following the initial capital). Real secrets
+# use short prefixes ("sk", "pk", "gh") or start with random characters.
+_CAMEL_WORD_START = re.compile(r"^[A-Z][a-z]{7,}")
+
 # ASP.NET WebForms' own postback plumbing (__VIEWSTATE, __EVENTVALIDATION,
 # __VIEWSTATEGENERATOR) is a long base64 blob by design -- naturally high
 # entropy, but it's serialized page state round-tripped to the same client,
@@ -152,6 +165,7 @@ def _aspnet_state_spans(text: str) -> list[tuple[int, int]]:
     return [m.span(1) for m in _ASPNET_STATE_VALUE.finditer(text)]
 
 
+
 def _entropy_hits(text: str, url: str = "") -> list[str]:
     hits = []
     state_spans = _aspnet_state_spans(text)
@@ -160,6 +174,27 @@ def _entropy_hits(text: str, url: str = "") -> list[str]:
         if token.startswith("eyJ"):
             continue
         if token.startswith("AKIA"):
+            continue
+        if _UUID_RE.match(token):
+            continue
+        # Real API/secret tokens don't contain forward slashes; those are URL
+        # path separators or base64 (caught by dedicated rules). Skip to avoid
+        # CDN path hashes firing as generic-api-key wherever they appear.
+        if "/" in token:
+            continue
+        # CSS module class names (webpack CSS modules use `__` as the
+        # component/hash separator) and structured platform identifiers like
+        # Salesforce DevNames use double-underscore. Real secrets don't.
+        if "__" in token:
+            continue
+        # Google OAuth Client IDs are intentionally embedded in public pages.
+        # They are always followed by ".apps.googleusercontent.com".
+        if text[m.end() : m.end() + 25].startswith(".apps.googleusercontent"):
+            continue
+        # Named structured identifiers (Salesforce DevNames, internal component
+        # names) start with a long CamelCase English word. Real API keys use
+        # short uppercase prefixes or fully random characters.
+        if _CAMEL_WORD_START.match(token):
             continue
         if any(start <= m.start() and m.end() <= end for start, end in state_spans):
             continue

@@ -176,6 +176,10 @@ def test_false_positive_patterns_not_reported():
     feature_flag2 = '"disableReviewProfileButtonOnBlockedPopupForRegulations":"[1,10]"'
     assert "generic-api-key" not in _ids(scan_text(feature_flag2, "http://127.0.0.1/"))
 
+    # Radix UI / React hydration element IDs — auto-generated, never secrets
+    radix_id = 'aria-controls="radix-_R_5lbsnmivpivb_-content-0"'
+    assert "generic-api-key" not in _ids(scan_text(radix_id, "http://127.0.0.1/"))
+
     # param=UUID should not fire (UUID is a structured identifier, not a secret)
     param_uuid = "affiliatePartnerId=84714d4e-4ee9-44cf-a90c-7a7095995d36"
     assert "generic-api-key" not in _ids(scan_text(param_uuid, "http://127.0.0.1/"))

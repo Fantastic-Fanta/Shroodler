@@ -1,0 +1,15 @@
+# eToro Bugcrowd scope: *.etoro.com (wildcard - all subdomains in scope)
+# Seed these with --seed flags or iterate per-subdomain
+https://www.etoro.com/
+https://www.etoro.com/portfolio
+https://www.etoro.com/watchlists
+https://www.etoro.com/markets/stocks
+https://www.etoro.com/markets/crypto
+https://www.etoro.com/copytrader
+https://www.etoro.com/social-trading/club
+https://www.etoro.com/api/v1/user/
+https://www.etoro.com/api/v1/portfolio/
+https://api.etoro.com/
+https://partners.etoro.com/
+https://business.etoro.com/
+https://help.etoro.com/

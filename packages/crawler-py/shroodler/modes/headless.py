@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 from urllib.parse import urlparse
 
+import httpx
 from playwright.sync_api import sync_playwright
 
 from shroodler.auth import CookieSpec, LoginRecipe, playwright_cookie_payload
@@ -99,39 +101,38 @@ class HeadlessFetcher:
     def login(self, recipe: LoginRecipe) -> None:
         if recipe.content_type == "json":
             # JSON-API login (e.g. eToro's /api/sts/v2/login) has no HTML form.
-            # Strategy: navigate to the site's home page first so the browser
-            # acquires any bot-detection cookies / fingerprinting state, then
-            # execute the JSON POST via page.evaluate() — this runs inside the
-            # browser's JS context so it carries all real browser headers
-            # (TLS fingerprint, Sec-Fetch-*, Cookie) and the Set-Cookie response
-            # is automatically committed to the browser context's cookie jar.
+            # Use an httpx client (respecting HTTP_PROXY) to POST the credentials,
+            # then inject the resulting Set-Cookie values into the Playwright
+            # context so subsequent page navigations are authenticated.
+            # We intentionally honour trust_env=True here so that any system
+            # proxy (e.g. Burp, mitmproxy) that the operator uses for testing
+            # is also applied to the login step.
             parsed = urlparse(recipe.url)
             origin_url = f"{parsed.scheme}://{parsed.netloc}"
-            page = self._context.new_page()
-            try:
-                # Warm up: load the origin so bot-detection cookies are set.
-                page.goto(origin_url, wait_until="domcontentloaded", timeout=20000)
-                # POST via fetch() inside the browser so all headers look native.
-                result = page.evaluate(
-                    """
-                    async ([url, body]) => {
-                        const r = await fetch(url, {
-                            method: "POST",
-                            headers: {"Content-Type": "application/json"},
-                            body: JSON.stringify(body),
-                            credentials: "include",
-                        });
-                        return {ok: r.ok, status: r.status};
-                    }
-                    """,
-                    [recipe.url, dict(recipe.fields)],
-                )
-            finally:
-                page.close()
-            if not result.get("ok"):
-                raise RuntimeError(
-                    f"JSON login to {recipe.url} failed: HTTP {result.get('status')}"
-                )
+            with httpx.Client(
+                headers={
+                    "User-Agent": self.user_agent,
+                    "Origin": origin_url,
+                    "Referer": origin_url + "/",
+                    "Content-Type": "application/json",
+                },
+                follow_redirects=True,
+                trust_env=True,
+            ) as client:
+                resp = client.post(recipe.url, json=dict(recipe.fields))
+                if not resp.is_success:
+                    raise RuntimeError(
+                        f"JSON login to {recipe.url} failed: HTTP {resp.status_code}"
+                    )
+                seen: set[str] = set()
+                cookies_to_inject = []
+                for name, value in list(resp.cookies.items()) + list(client.cookies.items()):
+                    if name in seen:
+                        continue
+                    seen.add(name)
+                    cookies_to_inject.append({"name": name, "value": value, "url": origin_url})
+                if cookies_to_inject:
+                    self._context.add_cookies(cookies_to_inject)
             return
 
         page = self._context.new_page()

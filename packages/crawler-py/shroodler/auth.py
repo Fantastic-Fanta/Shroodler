@@ -160,6 +160,7 @@ def resolve_recipe_url(recipe: LoginRecipe, seed: str) -> LoginRecipe:
         method=recipe.method,
         fields=dict(recipe.fields),
         include_hidden=recipe.include_hidden,
+        content_type=recipe.content_type,
         logout_url=_resolve_one(recipe.logout_url, seed),
         logout_method=recipe.logout_method,
         protected_url=_resolve_one(recipe.protected_url, seed),

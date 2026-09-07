@@ -503,6 +503,14 @@ func (s *Server) forward(req *http.Request, https bool) (*HTTPMsg, error) {
 	decoded := decodeEnc(raw, enc)
 	hdrs := map[string]string{}
 	for k, vs := range resp.Header {
+		if strings.EqualFold(k, "Set-Cookie") {
+			// Set-Cookie can't be comma-folded like other headers (Expires
+			// dates contain commas), so join multiple values with "\n" as an
+			// internal sentinel; writeResp splits this back into separate
+			// Set-Cookie lines.
+			hdrs[k] = strings.Join(vs, "\n")
+			continue
+		}
 		hdrs[k] = strings.Join(vs, ", ")
 	}
 	return &HTTPMsg{StatusCode: resp.StatusCode, Headers: hdrs, HTTPVersion: resp.Proto, Body: encodeBody(decoded, hdrs["Content-Type"])}, nil
@@ -587,7 +595,16 @@ func writeResp(w io.Writer, resp *HTTPMsg) {
 	}
 	fmt.Fprintf(w, "HTTP/1.1 %d OK\r\n", resp.StatusCode)
 	for k, v := range resp.Headers {
-		if strings.EqualFold(k, "Content-Length") || strings.EqualFold(k, "Transfer-Encoding") {
+		// Body is always already-decoded (see forward/decodeEnc); the original
+		// Content-Encoding no longer describes it and would make the client
+		// try to re-decode plain bytes (e.g. ERR_CONTENT_DECODING_FAILED).
+		if strings.EqualFold(k, "Content-Length") || strings.EqualFold(k, "Transfer-Encoding") || strings.EqualFold(k, "Content-Encoding") {
+			continue
+		}
+		if strings.EqualFold(k, "Set-Cookie") {
+			for _, cookie := range strings.Split(v, "\n") {
+				fmt.Fprintf(w, "%s: %s\r\n", k, cookie)
+			}
 			continue
 		}
 		fmt.Fprintf(w, "%s: %s\r\n", k, v)

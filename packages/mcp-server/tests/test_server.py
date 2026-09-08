@@ -36,6 +36,7 @@ def test_tools_list_contains_expected_tools():
         "program_state",
         "coverage_gaps",
         "run_agent",
+        "discover_scope",
     }
     for tool in result["tools"]:
         assert "inputSchema" in tool
@@ -134,6 +135,7 @@ def test_list_tools_flag_prints_catalog(capsys):
         "program_state",
         "coverage_gaps",
         "run_agent",
+        "discover_scope",
     }
     for tool in payload["tools"]:
         assert tool["description"]
@@ -164,6 +166,7 @@ def test_help_names_every_tool(capsys):
         "program_state",
         "coverage_gaps",
         "run_agent",
+        "discover_scope",
         "--list-tools",
     ):
         assert name in text

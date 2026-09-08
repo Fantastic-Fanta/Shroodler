@@ -630,6 +630,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         owner_cookie=getattr(args, "owner_cookie", None),
         peer_cookie=getattr(args, "peer_cookie", None),
         dry_run=bool(getattr(args, "dry_run", False)),
+        llm_triage=bool(getattr(args, "llm_triage", False)),
+        run_discovery=bool(getattr(args, "run_discovery", False)),
     )
     result = run_agent(config)
     payload: dict = {
@@ -640,6 +642,33 @@ def cmd_agent(args: argparse.Namespace) -> int:
     if result.errors:
         payload["errors"] = result.errors
     print(json.dumps(payload))
+    return 0
+
+
+def cmd_discover(args: argparse.Namespace) -> int:
+    from shroodler.discovery import DiscoveryConfig, discover
+    from shroodler.program import load
+
+    state = load(str(args.program))
+    config = DiscoveryConfig(
+        target=str(args.target),
+        max_subdomains=int(getattr(args, "max_subdomains", 300) or 300),
+        probe_workers=int(getattr(args, "probe_workers", 20) or 20),
+        skip_crtsh=bool(getattr(args, "skip_crtsh", False)),
+        skip_js_surface=bool(getattr(args, "skip_js_surface", False)),
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
+    result = discover(state, str(args.target), config)
+    print(
+        json.dumps(
+            {
+                "subdomains_found": len(result.subdomains_found),
+                "subdomains_added": result.subdomains_added_to_state,
+                "endpoints_found": len(result.endpoints_found),
+                "elapsed_ms": result.elapsed_ms,
+            }
+        )
+    )
     return 0
 
 
@@ -2317,7 +2346,66 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Print the planned action each iteration; make no requests",
     )
+    agent.add_argument(
+        "--llm-triage",
+        action="store_true",
+        help="Rank unconfirmed leads with Claude before acting (requires ANTHROPIC_API_KEY)",
+    )
+    agent.add_argument(
+        "--run-discovery",
+        action="store_true",
+        help="Run subdomain/JS discovery before the first iteration",
+    )
     agent.set_defaults(func=cmd_agent)
+
+    discover = sub.add_parser(
+        "discover",
+        help="Find live subdomains and JS API endpoints for a program",
+        description=(
+            "Query crt.sh for the target's apex domain, probe candidate FQDNs, "
+            "and expand JS API surface from the latest scan's pages. Merges new "
+            "scope URLs and endpoints into program state so the agent loop can "
+            "pick them up. --dry-run prints counts without writing state. JSON "
+            "summary goes to stdout."
+        ),
+    )
+    discover.add_argument("--program", required=True, metavar="SLUG", help="Program slug")
+    discover.add_argument(
+        "--target",
+        required=True,
+        metavar="URL",
+        help="Base URL (apex derived from this)",
+    )
+    discover.add_argument(
+        "--max-subdomains",
+        type=int,
+        default=300,
+        metavar="N",
+        help="Cap candidate FQDNs before probing (default 300)",
+    )
+    discover.add_argument(
+        "--probe-workers",
+        type=int,
+        default=20,
+        metavar="N",
+        help="Concurrent live probes (default 20)",
+    )
+    discover.add_argument(
+        "--skip-crtsh",
+        action="store_true",
+        help="Skip Certificate Transparency (crt.sh) discovery",
+    )
+    discover.add_argument(
+        "--skip-js-surface",
+        action="store_true",
+        help="Skip JS API surface expansion",
+    )
+    discover.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would be added; do not write program state",
+    )
+    discover.set_defaults(func=cmd_discover)
 
     trend = sub.add_parser(
         "trend",
@@ -2412,6 +2500,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  program_state       compact engagement briefing for a program slug\n"
             "  coverage_gaps       untested endpoints from program memory\n"
             "  run_agent           autonomous crawl/authz-diff/peer-write loop\n"
+            "  discover_scope      live subdomains (crt.sh) + JS API endpoints\n"
             "Active tools require a scan-policy consent manifest by default. "
             "Finding tools default to compact summary output (summary=false for full JSON). "
             "Pass --list-tools to print names, descriptions, and input schemas "

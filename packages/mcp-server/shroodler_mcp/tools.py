@@ -65,7 +65,8 @@ def _resolve_safe_path(raw: str) -> Path:
 
 def _build_enforcer(args: dict, target: str):
     """Shared by every tool that fires live requests at a target
-    (scan_route's payload run, check_idor's replay, peer_write, paced_fetch): refuse to proceed
+    (scan_route's payload run, check_idor's replay, peer_write, paced_fetch,
+    discover_scope): refuse to proceed
     unless the target publishes a scan-policy consent manifest, unless
     the caller explicitly opts out via `allow_without_policy`. This is
     the one guardrail an MCP client/agent can't skip by just not passing
@@ -755,6 +756,8 @@ def run_agent(args: dict) -> dict:
         target=str(target),
         max_iterations=int(max_iterations),
         dry_run=bool(args.get("dry_run", False)),
+        llm_triage=bool(args.get("llm_triage", False)),
+        run_discovery=bool(args.get("run_discovery", False)),
     )
     result = run_loop(config)
     from shroodler.program import load as load_program
@@ -780,6 +783,39 @@ def run_agent(args: dict) -> dict:
         "log": result.log,
         "state_path": result.state_path,
     }
+
+
+def discover_scope(args: dict) -> dict:
+    """Discover live subdomains (crt.sh CT logs) and new JS API endpoints for a
+    program's target domain. Merges results into program state so the agent
+    loop picks them up on the next run.
+    """
+    from dataclasses import asdict
+
+    from shroodler.discovery import DiscoveryConfig, discover
+    from shroodler.program import load
+
+    slug = args.get("program") or args.get("slug")
+    target = args.get("target")
+    if not slug:
+        raise ValueError("discover_scope requires 'program'")
+    if not target:
+        raise ValueError("discover_scope requires 'target'")
+    dry_run = bool(args.get("dry_run", False))
+    enforcer = _build_enforcer(args, str(target))
+    state = load(str(slug))
+    result = discover(
+        state,
+        str(target),
+        DiscoveryConfig(
+            target=str(target),
+            skip_crtsh=bool(args.get("skip_crtsh", False)),
+            skip_js_surface=bool(args.get("skip_js_surface", False)),
+            dry_run=dry_run,
+            enforcer=enforcer,
+        ),
+    )
+    return asdict(result)
 
 
 TOOLS: dict[str, dict[str, Any]] = {
@@ -1215,6 +1251,16 @@ TOOLS: dict[str, dict[str, Any]] = {
                     "default": False,
                     "description": "Print planned actions without making requests",
                 },
+                "llm_triage": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Rank unconfirmed leads with Claude (requires ANTHROPIC_API_KEY)",
+                },
+                "run_discovery": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Run subdomain/JS discovery before the first iteration",
+                },
                 "summary": {
                     "type": "boolean",
                     "default": True,
@@ -1226,5 +1272,54 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["program", "target"],
         },
         "handler": run_agent,
+    },
+    "discover_scope": {
+        "description": "Discover live subdomains (crt.sh CT logs) and new JS API "
+        "endpoints for a program's target domain. Merges results into program "
+        "state so the agent loop picks them up on the next run. Makes live HTTP "
+        "requests and is refused unless the target publishes a scan-policy "
+        "consent manifest, or allow_without_policy is set.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "program": {
+                    "type": "string",
+                    "description": "Program slug",
+                },
+                "target": {
+                    "type": "string",
+                    "description": "Base URL whose apex domain is expanded",
+                },
+                "dry_run": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Compute results without writing program state",
+                },
+                "skip_crtsh": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Skip Certificate Transparency (crt.sh) discovery",
+                },
+                "skip_js_surface": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Skip JS API surface expansion",
+                },
+                "allow_without_policy": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Allow live probes even without a scan-policy manifest "
+                    "(only for targets you already know you're authorized to test)",
+                },
+                "policy_file": {
+                    "type": "string",
+                    "description": "Local scan-policy.json path instead of fetching one from the target",
+                },
+                "audit_log": {"type": "string", "description": "Path to append a JSONL audit trail to"},
+            },
+            "required": ["program", "target"],
+        },
+        "handler": discover_scope,
     },
 }

@@ -663,3 +663,63 @@ def test_run_agent_requires_program_and_target():
         run_agent({"target": "http://127.0.0.1/"})
     with pytest.raises(ValueError, match="target"):
         run_agent({"program": "lab"})
+
+
+def test_run_agent_schema_exposes_llm_triage():
+    from shroodler_mcp.tools import TOOLS
+
+    props = TOOLS["run_agent"]["input_schema"]["properties"]
+    assert props["llm_triage"]["type"] == "boolean"
+    assert props["llm_triage"]["default"] is False
+    assert props["run_discovery"]["type"] == "boolean"
+
+
+def test_discover_scope_requires_program_and_target():
+    from shroodler_mcp.tools import discover_scope
+
+    with pytest.raises(ValueError, match="program"):
+        discover_scope({"target": "http://127.0.0.1/"})
+    with pytest.raises(ValueError, match="target"):
+        discover_scope({"program": "lab"})
+
+
+def test_discover_scope_refuses_without_policy_by_default(monkeypatch):
+    from shroodler_mcp.tools import discover_scope
+
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    with pytest.raises(ValueError, match="require-policy|scan-policy|consent"):
+        discover_scope({"program": "lab", "target": "http://127.0.0.1:1/"})
+
+
+def test_discover_scope_allow_without_policy_reaches_engine(tmp_path, monkeypatch):
+    from shroodler.discovery import DiscoveryResult
+
+    from shroodler_mcp.tools import discover_scope
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    called = {}
+
+    def fake_discover(state, target, config):
+        called["enforcer"] = config.enforcer
+        called["dry_run"] = config.dry_run
+        return DiscoveryResult(
+            subdomains_found=["www.example.com"],
+            subdomains_added_to_state=1,
+            endpoints_found=[],
+            elapsed_ms=3,
+        )
+
+    monkeypatch.setattr("shroodler.discovery.discover", fake_discover)
+    result = discover_scope(
+        {
+            "program": "lab",
+            "target": "http://127.0.0.1:1/",
+            "allow_without_policy": True,
+            "dry_run": True,
+        }
+    )
+    assert called["enforcer"] is not None
+    assert called["dry_run"] is True
+    assert result["subdomains_found"] == ["www.example.com"]
+    assert result["subdomains_added_to_state"] == 1

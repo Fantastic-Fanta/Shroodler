@@ -1,8 +1,0 @@
-{
-  "url": "http://localhost:8080/WebGoat/login",
-  "method": "POST",
-  "fields": {"username": "shroodler-peer", "password": "Shrood1!"},
-  "content_type": "form",
-  "protected_url": "http://localhost:8080/WebGoat/service/lessonoverview.mvc",
-  "auth_marker": "shroodler-peer"
-}

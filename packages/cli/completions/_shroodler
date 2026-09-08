@@ -42,6 +42,7 @@ _shroodler_commands=(
   'gen-regression-test:Generate a pytest test from a confirmed-fixed finding'
   'attack-path:Correlate findings with reachability + weak-token context'
   'self-scan:Fuzz the tool'"'"'s own report renderers with hostile content'
+  'program:Per-program engagement memory (endpoints, object IDs, coverage)'
   'version:Print version'
 )
 
@@ -82,6 +83,8 @@ _shroodler() {
             '--cookie-jar[Cookie jar file]:file:_files' \
             '--storage-state[Playwright storageState JSON]:file:_files' \
             '--login-recipe[Login recipe JSON]:file:_files' \
+            '--reauth-max-retries[Max mid-crawl login-recipe retries (default 3)]:n' \
+            '--program[Merge crawl into program engagement memory]:slug' \
             '--proxy[HTTP proxy URL]:url' \
             '*--seed[Extra same-origin URL to enqueue]:url' \
             '*--spec[Local OpenAPI or Postman collection to seed from]:file:_files' \
@@ -202,6 +205,7 @@ _shroodler() {
             '--require-identity-confirmation[Drop unconfirmed leads instead of reporting them]' \
             '*--gql-schema[Clairvoyance / introspection JSON for GraphQL field names]:file:_files' \
             '*--gql-wordlist[GraphQL field-name wordlist]:file:_files' \
+            '--program[Mark replayed URLs as tested_authz in program memory]:slug' \
             '1:higher-priv crawl json:_files'
           ;;
         peer-write)
@@ -227,6 +231,8 @@ _shroodler() {
             '--no-csrf[Do not harvest or attach a CSRF token]' \
             '--require-confirm[Only emit a finding when the owner re-read changed]' \
             '--allow-unconfirmed[Emit probable leads even when both jars are set]' \
+            '--program[Mark replayed write URLs as tested_peer_write]:slug' \
+            '--from-program[Pull stored object IDs from program memory]:slug' \
             '1:playbook json:_files'
           ;;
         session-export)
@@ -261,6 +267,13 @@ _shroodler() {
           ;;
         history)
           _values 'history subcommand' 'record[Save a scan into history]' 'list[List recorded scans]'
+          ;;
+        program)
+          _values 'program subcommand' \
+            'init[Create program state]' \
+            'status[Print coverage and stale sessions]' \
+            'merge[Ingest a crawl JSON]' \
+            'add-session[Record a session jar path]'
           ;;
         trend)
           _arguments \

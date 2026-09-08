@@ -48,6 +48,7 @@ _BY_ID: dict[str, str] = {
     "cors-probe-skipped": "heuristic",
     "session-checks-skipped-headless": "heuristic",
     "session-reauthenticated": "confirmed",
+    "session-died": "confirmed",
     "redirect-chain-truncated": "heuristic",
     "off-origin-redirect-not-followed": "heuristic",
     "robots-blocked-crawl": "heuristic",

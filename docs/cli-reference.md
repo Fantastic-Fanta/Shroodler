@@ -18,7 +18,8 @@ shroodler crawl http://127.0.0.1:8081 --spec ./openapi.json --output out.json
 shroodler crawl http://127.0.0.1:8081 --gql-schema ./clairvoyance.json --output out.json
 shroodler crawl http://127.0.0.1:8081 --seed-from captured.har --output out.json
 shroodler crawl http://127.0.0.1:8081 --user-agent "Mozilla/5.0 (compatible; my-scan/1.0)" --output out.json
-shroodler crawl http://127.0.0.1:8081 --login-recipe packages/target-apps/app1-server-rendered/login-recipe.json --output authed.json
+shroodler crawl http://127.0.0.1:8081 --login-recipe packages/target-apps/app1-server-rendered/login-recipe.json --reauth-max-retries 3 --output authed.json
+shroodler crawl http://127.0.0.1:8081 --program etoro-bugcrowd --output out.json
 shroodler crawl http://127.0.0.1:8082 --mode headless --output spa.json
 shroodler report out.json --format html --output out.html
 
@@ -53,12 +54,19 @@ shroodler report out.json --format sarif -o results.sarif
 shroodler report out.json --format junit -o results.xml
 
 # Authz diff: replay a privileged session's URLs as a lower-priv session
-shroodler authz-diff higher-priv-crawl.json --cookie session=abc123
+shroodler authz-diff higher-priv-crawl.json --cookie session=abc123 --program etoro-bugcrowd
 
 # Known-object peer-write replay (not n±1 enum). Nonsense-id control + owner re-read.
-shroodler peer-write playbook.json --peer-cookie session=b --owner-cookie session=a --rate 1
+shroodler peer-write playbook.json --peer-cookie session=b --owner-cookie session=a --rate 1 --program etoro-bugcrowd
+shroodler peer-write playbook.json --from-program etoro-bugcrowd --peer-cookie session=b
 shroodler peer-write --from-sessions captured.har --peer-cookies-from b-state.json --only-id 10464573 --allow-external
 shroodler peer-write playbook.json --peer-cookies-from b.json --owner-cookies-from a.json --require-confirm --csrf-from https://app.example/edit
+
+# Engagement memory
+shroodler program init etoro-bugcrowd --scope-file scope.txt
+shroodler program merge etoro-bugcrowd out.json
+shroodler program add-session etoro-bugcrowd owner.json --label owner --expires 2026-09-09
+shroodler program status etoro-bugcrowd
 
 # Dump a replayable Playwright storageState (HttpOnly cookies included)
 shroodler crawl http://127.0.0.1:8081 --from-capture /tmp/sess.jsonl --proxy http://127.0.0.1:8888 --output out.json
@@ -80,7 +88,7 @@ shroodler trend <scan-a> <scan-b>
 shroodler ask "show critical findings" out.json
 shroodler ask "what's new since" out.json --since older.json
 
-# MCP server (scan_route, check_idor, peer_write, extract_js_routes, paced_fetch, ...)
+# MCP server (scan_route, check_idor, peer_write, program_state, coverage_gaps, ...)
 shroodler mcp-server
 
 # Go crawler (same subcommands, faster)

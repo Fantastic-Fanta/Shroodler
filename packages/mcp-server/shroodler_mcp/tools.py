@@ -109,6 +109,143 @@ def _load_doc(value: Any) -> dict:
     raise ValueError("expected a crawl-document object or a path to one")
 
 
+_SEV_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+
+def _finding_confidence(finding: dict) -> str:
+    existing = finding.get("confidence")
+    if existing in {"confirmed", "probable", "heuristic"}:
+        return existing
+    try:
+        from shroodler.confidence import confidence_for
+
+        return confidence_for(str(finding.get("id") or ""), str(finding.get("category") or ""))
+    except Exception:
+        return "heuristic"
+
+
+def _one_line(text: str, limit: int = 160) -> str:
+    line = " ".join(str(text or "").split())
+    if len(line) <= limit:
+        return line
+    return line[: limit - 1] + "…"
+
+
+def _curl_repro(finding: dict) -> str:
+    url = str(finding.get("url") or "")
+    return f"curl -sS {json.dumps(url)}" if url else "curl -sS"
+
+
+def _collect_findings(result: dict) -> list[dict]:
+    findings = result.get("findings")
+    if isinstance(findings, list):
+        return [f for f in findings if isinstance(f, dict)]
+    errors = result.get("errors")
+    if isinstance(errors, list) and errors:
+        out: list[dict] = []
+        for err in errors:
+            out.append(
+                {
+                    "id": "diff-new-finding",
+                    "severity": "medium",
+                    "url": "",
+                    "description": str(err),
+                    "confidence": "probable",
+                }
+            )
+        return out
+    return []
+
+
+def _next_step(tool: str, *, leads: int, confirmed: int, probable: int) -> str:
+    if tool == "diff_since_baseline":
+        if leads:
+            return (
+                f"{leads} new finding(s) since baseline — triage the top items "
+                "and update suppressions or file tickets."
+            )
+        return "No new findings since baseline. Check coverage_gaps."
+    if tool == "check_idor":
+        if confirmed:
+            return (
+                f"{confirmed} confirmed leads — call peer_write with the object "
+                "IDs above to test cross-account access"
+            )
+        if probable:
+            return (
+                f"{probable} probable IDOR leads — supply higher_priv_identity_markers "
+                "to confirm, or call peer_write"
+            )
+        return "No leads. Expand crawl depth or check coverage_gaps."
+    if tool == "peer_write":
+        if confirmed:
+            return f"{confirmed} confirmed peer-write IDORs — draft a report."
+        if probable:
+            return (
+                f"{probable} probable leads — re-run with owner_cookie and "
+                "peer_cookie to confirm."
+            )
+        return "No leads. Try more object IDs from program_state."
+    if tool == "scan_route":
+        if confirmed or probable:
+            n = confirmed + probable
+            return (
+                f"{n} findings — call check_idor on authenticated routes or "
+                "expand crawl depth."
+            )
+        if leads:
+            return f"{leads} heuristic/info findings — review top items or expand crawl depth."
+        return "No leads. Expand crawl depth or check coverage_gaps."
+    if confirmed:
+        return f"{confirmed} confirmed leads — inspect the top items, then call peer_write or file a report."
+    if probable:
+        return f"{probable} probable leads — confirm with a second session or identity markers."
+    if leads:
+        return f"{leads} leads — inspect the top items."
+    return "No leads. Expand crawl depth or check coverage_gaps."
+
+
+def summarize_result(result: dict, *, tool: str) -> dict:
+    findings = _collect_findings(result)
+    confirmed_n = 0
+    probable_n = 0
+    for finding in findings:
+        conf = _finding_confidence(finding)
+        if conf == "confirmed":
+            confirmed_n += 1
+        elif conf == "probable":
+            probable_n += 1
+    ranked = sorted(
+        findings,
+        key=lambda f: (_SEV_RANK.get(str(f.get("severity") or "info"), 9), f.get("id") or ""),
+    )
+    top = []
+    for finding in ranked[:3]:
+        top.append(
+            {
+                "id": finding.get("id"),
+                "severity": finding.get("severity"),
+                "url": finding.get("url"),
+                "description": _one_line(str(finding.get("description") or "")),
+                "curl_repro": _curl_repro(finding),
+            }
+        )
+    leads = len(findings)
+    return {
+        "leads": leads,
+        "confirmed": confirmed_n,
+        "probable": probable_n,
+        "top": top,
+        "next_step": _next_step(tool, leads=leads, confirmed=confirmed_n, probable=probable_n),
+    }
+
+
+def _maybe_summarize(result: dict, args: dict, tool: str) -> dict:
+    if args.get("summary") is False:
+        return result
+    return summarize_result(result, tool=tool)
+
+
 def scan_route(args: dict) -> dict:
     """Crawl exactly one URL (no link-following) and optionally run active
     payload packs against what it finds. This is the "agent wants to check
@@ -167,7 +304,7 @@ def scan_route(args: dict) -> dict:
         doc["oob_probes"] = payload_out.get("oob_probes", [])
         doc["guardrail"] = payload_out.get("guardrail")
 
-    return doc
+    return _maybe_summarize(doc, args, "scan_route")
 
 
 def check_idor(args: dict) -> dict:
@@ -208,7 +345,7 @@ def check_idor(args: dict) -> dict:
         from shroodler.extractors.graphql import load_graphql_field_names
 
         gql_names.extend(load_graphql_field_names(paths))
-    return authz_diff_run(
+    out = authz_diff_run(
         higher_doc,
         cookie_header=args.get("lower_priv_cookie", ""),
         check_anonymous=bool(args.get("check_anonymous", True)),
@@ -219,6 +356,7 @@ def check_idor(args: dict) -> dict:
         require_identity_confirmation=bool(args.get("require_identity_confirmation", False)),
         gql_field_names=gql_names,
     )
+    return _maybe_summarize(out, args, "check_idor")
 
 
 def reverify_fix(args: dict) -> dict:
@@ -278,7 +416,11 @@ def diff_since_baseline(args: dict) -> dict:
         gate=bool(args.get("gate", True)),
         suppressions=suppressions,
     )
-    return {"errors": outcome.errors, "resolved": outcome.resolved, "clean": not outcome.errors}
+    return _maybe_summarize(
+        {"errors": outcome.errors, "resolved": outcome.resolved, "clean": not outcome.errors},
+        args,
+        "diff_since_baseline",
+    )
 
 
 def peer_write(args: dict) -> dict:
@@ -311,7 +453,7 @@ def peer_write(args: dict) -> dict:
     if not target:
         raise ValueError("peer_write needs a target (playbook.target or target)")
     enforcer = _build_enforcer(args, target)
-    return peer_write_run(
+    out = peer_write_run(
         merged,
         owner_cookie=str(args.get("owner_cookie") or ""),
         peer_cookie=str(args.get("peer_cookie") or ""),
@@ -333,6 +475,7 @@ def peer_write(args: dict) -> dict:
         ),
         allow_unconfirmed=bool(args.get("allow_unconfirmed", False)),
     )
+    return _maybe_summarize(out, args, "peer_write")
 
 
 def session_export(args: dict) -> dict:
@@ -541,6 +684,44 @@ def explain_finding(args: dict) -> dict:
     }
 
 
+def program_state(args: dict) -> dict:
+    """Orient step: compact briefing for ~/.shroodler/programs/<slug>."""
+    from shroodler.program import as_briefing, load
+
+    slug = args.get("slug")
+    if not slug:
+        raise ValueError("program_state requires 'slug'")
+    briefing = as_briefing(load(str(slug)))
+    gaps = briefing.get("coverage_gap_count") or 0
+    leads = briefing.get("unconfirmed_leads") or 0
+    if briefing.get("stale_session_warning"):
+        next_step = briefing["stale_session_warning"]
+    elif gaps:
+        next_step = (
+            f"{gaps} coverage gaps — call coverage_gaps and run authz-diff or "
+            "peer_write on the oldest-untested endpoints."
+        )
+    elif leads:
+        next_step = f"{leads} unconfirmed leads — call check_idor or peer_write to confirm."
+    else:
+        next_step = "No coverage gaps. Crawl for new endpoints or merge a fresh scan."
+    briefing["next_step"] = next_step
+    return briefing
+
+
+def coverage_gaps(args: dict) -> dict:
+    """Prioritized untested endpoints from program engagement memory."""
+    from shroodler.program import coverage_gaps as gaps_for
+    from shroodler.program import load
+
+    slug = args.get("slug")
+    if not slug:
+        raise ValueError("coverage_gaps requires 'slug'")
+    state = load(str(slug))
+    gaps = gaps_for(state)
+    return {"slug": state.slug, "count": len(gaps), "gaps": gaps}
+
+
 TOOLS: dict[str, dict[str, Any]] = {
     "scan_route": {
         "description": "Crawl a single route/URL (no link-following) for passive findings, "
@@ -573,6 +754,11 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "allow_external": {"type": "boolean", "default": False},
                 "cookies": {"type": "array", "items": {"type": "string"}},
                 "headers": {"type": "array", "items": {"type": "string"}},
+                "summary": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "If true (default), return compact {leads, confirmed, probable, top, next_step} instead of the full crawl JSON.",
+                },
             },
             "required": ["url"],
         },
@@ -631,6 +817,11 @@ TOOLS: dict[str, dict[str, Any]] = {
                     "type": "string",
                     "description": "Path to a plain field-name wordlist (one name per line)",
                 },
+                "summary": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "If true (default), return compact {leads, confirmed, probable, top, next_step} instead of the full authz-diff JSON.",
+                },
             },
             "required": ["higher_priv_crawl"],
         },
@@ -687,6 +878,11 @@ TOOLS: dict[str, dict[str, Any]] = {
                     "type": "boolean",
                     "default": False,
                     "description": "Emit probable leads even when both owner and peer cookies are set",
+                },
+                "summary": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "If true (default), return compact {leads, confirmed, probable, top, next_step} instead of the full peer-write JSON.",
                 },
             },
         },
@@ -800,6 +996,11 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "baseline": {"description": "Baseline object, or a path to one on disk"},
                 "gate": {"type": "boolean", "default": True},
                 "suppressions_file": {"type": "string"},
+                "summary": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "If true (default), return compact {leads, confirmed, probable, top, next_step} instead of {errors, resolved, clean}.",
+                },
             },
             "required": ["crawl", "baseline"],
         },
@@ -894,5 +1095,38 @@ TOOLS: dict[str, dict[str, Any]] = {
             },
         },
         "handler": explain_finding,
+    },
+    "program_state": {
+        "description": "Load engagement memory for a program slug: scope, endpoint "
+        "count, top coverage gaps, unconfirmed leads, and a stale-session warning. "
+        "Call this at the start of every agent session as the orient step.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "description": "Program identifier (e.g. etoro-bugcrowd)",
+                },
+            },
+            "required": ["slug"],
+        },
+        "handler": program_state,
+    },
+    "coverage_gaps": {
+        "description": "Prioritized list of endpoints in a program that have not "
+        "yet been tested for authz-diff or peer-write, sorted by last_seen desc.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "slug": {
+                    "type": "string",
+                    "description": "Program identifier (e.g. etoro-bugcrowd)",
+                },
+            },
+            "required": ["slug"],
+        },
+        "handler": coverage_gaps,
     },
 }

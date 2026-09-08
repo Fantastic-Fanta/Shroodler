@@ -278,4 +278,45 @@ def test_plugin_and_mcp_server_flags_parse():
     assert "extract_js_routes" in mcp_help
     assert "paced_fetch" in mcp_help
     assert "reverify_fix" in mcp_help
+    assert "program_state" in mcp_help
+    assert "coverage_gaps" in mcp_help
     assert "--list-tools" in mcp_help
+
+
+def test_reauth_and_program_flags_parse():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "crawl",
+            "http://127.0.0.1:8081",
+            "--login-recipe",
+            "login.json",
+            "--reauth-max-retries",
+            "5",
+            "--program",
+            "etoro-bugcrowd",
+        ]
+    )
+    assert args.reauth_max_retries == 5
+    assert args.program == "etoro-bugcrowd"
+    args = p.parse_args(["authz-diff", "admin.json", "--program", "lab"])
+    assert args.program == "lab"
+    args = p.parse_args(
+        ["peer-write", "play.json", "--program", "lab", "--from-program", "lab"]
+    )
+    assert args.program == "lab"
+    assert args.from_program == "lab"
+    args = p.parse_args(["program", "init", "etoro-bugcrowd", "--scope-file", "scope.txt"])
+    assert args.slug == "etoro-bugcrowd"
+    assert args.scope_file == "scope.txt"
+    args = p.parse_args(["program", "status", "etoro-bugcrowd"])
+    assert args.func.__name__ == "cmd_program_status"
+    args = p.parse_args(["program", "merge", "lab", "out.json"])
+    assert args.crawl_json == "out.json"
+    args = p.parse_args(
+        ["program", "add-session", "lab", "owner.json", "--label", "owner", "--expires", "2026-12-01"]
+    )
+    assert args.path == "owner.json"
+    assert args.label == "owner"
+    assert args.expires == "2026-12-01"
+    assert "program" in p.format_help()

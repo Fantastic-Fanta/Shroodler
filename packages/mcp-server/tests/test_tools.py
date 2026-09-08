@@ -7,6 +7,7 @@ from shroodler_mcp.tools import (
     _project_root,
     _resolve_safe_path,
     check_idor,
+    check_ws_idor,
     diff_since_baseline,
     explain_finding,
     extract_js_routes,
@@ -322,3 +323,87 @@ def test_reverify_fix_skips_guardrail_when_run_payloads_false(monkeypatch):
     )
     assert result["verified_fixed"] is True
     assert called["enforcer"] is None
+
+
+# ---------------------------------------------------------------------------
+# check_ws_idor tests — use a local asyncio echo server so no network needed
+# ---------------------------------------------------------------------------
+
+def _make_tlcp_server(port: int, allowed_sub_ids: set):
+    """Minimal Lightstreamer TLCP stub: accepts SUBOK for own sub_ids, REQERR for others."""
+    import asyncio
+    import threading
+    import websockets.asyncio.server as ws_server
+
+    async def handler(ws):
+        async for raw in ws:
+            msg = str(raw)
+            if msg.strip() == "wsok":
+                await ws.send("WSOK\r\n")
+            elif msg.startswith("create_session"):
+                await ws.send("CONOK,Stest,150000,10000,*\r\n")
+            elif msg.startswith("control"):
+                # parse LS_subId=N
+                import re
+                m = re.search(r"LS_subId=(\d+)", msg)
+                sid = m.group(1) if m else "0"
+                if int(sid) in allowed_sub_ids:
+                    await ws.send(f"SUBOK,{sid},1,1\r\n")
+                else:
+                    await ws.send(f"REQERR,{sid},-2,SubscriptionNotAllowed\r\n")
+
+    ready = threading.Event()
+    loop = asyncio.new_event_loop()
+
+    async def _serve():
+        async with ws_server.serve(handler, "127.0.0.1", port):
+            ready.set()
+            await asyncio.Future()
+
+    t = threading.Thread(target=lambda: loop.run_until_complete(_serve()), daemon=True)
+    t.start()
+    ready.wait(timeout=3)
+    return t
+
+
+def test_check_ws_idor_requires_ws_url():
+    with pytest.raises(ValueError, match="ws_url"):
+        check_ws_idor({})
+
+
+def test_check_ws_idor_access_control_enforced():
+    _make_tlcp_server(18765, allowed_sub_ids={1, 2})
+    result = check_ws_idor({
+        "ws_url": "ws://127.0.0.1:18765",
+        "handshake_messages": ["wsok", "create_session\r\nLS_adapter_set=TEST"],
+        "own_subscriptions": [
+            {"id": "own-chan", "sub_id": 1, "message": "control\r\nLS_reqId=1&LS_op=add&LS_subId=1&LS_group=own"},
+            {"id": "own-chan2", "sub_id": 2, "message": "control\r\nLS_reqId=2&LS_op=add&LS_subId=2&LS_group=own2"},
+        ],
+        "victim_subscriptions": [
+            {"id": "victim-chan", "sub_id": 100, "message": "control\r\nLS_reqId=100&LS_op=add&LS_subId=100&LS_group=victim"},
+        ],
+        "collect_seconds": 2.0,
+    })
+    assert result["verdict"] == "access_control_enforced"
+    assert result["severity"] == "none"
+    assert result["own_baseline_ok"] is True
+    assert result["victim_subscriptions"][0]["status"] == "denied"
+
+
+def test_check_ws_idor_confirmed():
+    _make_tlcp_server(18766, allowed_sub_ids={1, 200})  # victim sub 200 accidentally allowed
+    result = check_ws_idor({
+        "ws_url": "ws://127.0.0.1:18766",
+        "handshake_messages": ["wsok", "create_session\r\nLS_adapter_set=TEST"],
+        "own_subscriptions": [
+            {"id": "own", "sub_id": 1, "message": "control\r\nLS_reqId=1&LS_op=add&LS_subId=1&LS_group=own"},
+        ],
+        "victim_subscriptions": [
+            {"id": "victim", "sub_id": 200, "message": "control\r\nLS_reqId=200&LS_op=add&LS_subId=200&LS_group=victim"},
+        ],
+        "collect_seconds": 2.0,
+    })
+    assert result["verdict"] == "IDOR_CONFIRMED"
+    assert result["severity"] == "high"
+    assert result["victim_subscriptions"][0]["status"] == "allowed"

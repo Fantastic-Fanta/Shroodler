@@ -71,3 +71,4 @@ out.csv
 # Coverage artifacts
 coverage/
 coverage.xml
+reports/

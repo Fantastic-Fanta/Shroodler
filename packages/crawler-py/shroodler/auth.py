@@ -103,6 +103,16 @@ def load_login_recipe(path: str) -> LoginRecipe:
     )
 
 
+def _json_flag(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes"}
+    if isinstance(value, (int, float)):
+        return value != 0
+    return False
+
+
 def cookies_from_json(data: object, default_domain: str = "") -> list[CookieSpec]:
     items: object = data
     if isinstance(data, dict):
@@ -123,8 +133,8 @@ def cookies_from_json(data: object, default_domain: str = "") -> list[CookieSpec
                 value=str(item.get("value") or ""),
                 domain=domain,
                 path=str(item.get("path") or "/"),
-                secure=bool(item.get("secure")),
-                http_only=bool(item.get("httpOnly") or item.get("http_only")),
+                secure=_json_flag(item.get("secure")),
+                http_only=_json_flag(item.get("httpOnly") or item.get("http_only")),
                 same_site=str(same) if same else None,
             )
         )

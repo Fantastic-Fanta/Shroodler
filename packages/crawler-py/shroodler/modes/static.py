@@ -61,12 +61,26 @@ class StaticFetcher:
         return self.request("GET", url)
 
     def request(
-        self, method: str, url: str, extra_headers: dict[str, str] | None = None
+        self, method: str, url: str, extra_headers: dict[str, str] | None = None,
+        *,
+        anonymous: bool = False,
     ) -> FetchResult:
         self.requests += 1
         try:
-            resp = self.client.request(method, url, headers=extra_headers or {})
-        except httpx.RequestError as exc:
+            if anonymous:
+                kwargs: dict = {
+                    "timeout": self.client.timeout,
+                    "follow_redirects": False,
+                    "trust_env": False,
+                    "headers": {"User-Agent": self.user_agent},
+                }
+                if self.proxy:
+                    kwargs["proxy"] = self.proxy
+                with httpx.Client(**kwargs) as anon:
+                    resp = anon.request(method, url, headers=extra_headers or {})
+            else:
+                resp = self.client.request(method, url, headers=extra_headers or {})
+        except (httpx.RequestError, httpx.InvalidURL, ValueError) as exc:
             return _error_result(url, exc)
         return _from_response(url, resp)
 

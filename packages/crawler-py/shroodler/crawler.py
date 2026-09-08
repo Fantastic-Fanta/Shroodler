@@ -35,10 +35,10 @@ from shroodler.extractors.cors import (
     is_api_path,
     probe_cors,
 )
-from shroodler.extractors.csrf import csrf_findings
+from shroodler.extractors.csrf import confirm_csrf_origin, csrf_findings
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.graphql import probe_graphql
-from shroodler.extractors.js_api_surface import extract_js_api_surface
+from shroodler.extractors.js_api_surface import crawl_seeds_from_endpoint, extract_js_api_surface
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.idor import probe_idor
@@ -131,6 +131,7 @@ class Crawler:
         plugins: list[str] | None = None,
         exclude_paths: list[str] | None = None,
         gql_field_names: list[str] | None = None,
+        from_capture: str | None = None,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -150,6 +151,7 @@ class Crawler:
         self.check_rate_limit = check_rate_limit
         self.check_idor = check_idor
         self.gql_field_names = [n for n in (gql_field_names or []) if n]
+        self.from_capture = from_capture
         self.exclude_paths: list[str] = [
             p if p.startswith("/") else "/" + p for p in (exclude_paths or [])
         ]
@@ -206,7 +208,9 @@ class Crawler:
         t0 = monotonic()
         rp = None
         robots_body = ""
-        if not self.ignore_robots or not self.no_sitemap:
+        # --from-capture is WAF-fusion: do not live-hit robots/sitemap just
+        # to discover URLs the capture already recorded.
+        if not self.from_capture and (not self.ignore_robots or not self.no_sitemap):
             robots_url = urljoin(seed, "/robots.txt")
             robots_res = self.http.fetch(robots_url)
             if robots_res.status_code == 200 and robots_res.text:
@@ -222,23 +226,62 @@ class Crawler:
         # net for any items that slip through (e.g. initial seeds added to the
         # queue before `queued` exists, or race-windows in future code).
         queued: set[str] = {canonical_key(seed)}
+        capture_pages: list[Page] = []
+        capture_findings: list[Finding] = []
+        if self.from_capture:
+            from shroodler.sessions import followup_urls_from_capture, ingest_sessions
+
+            ingested = ingest_sessions(
+                self.from_capture, target=seed, allow_external=self.allow_external
+            )
+            capture_pages = list(ingested.pages)
+            capture_findings = [_with_capture_source(f) for f in ingested.findings]
+            js_endpoints_from_capture = list(ingested.js_endpoints)
+            for page in capture_pages:
+                queued.add(canonical_key(page.url))
+            for extra in followup_urls_from_capture(
+                self.from_capture, seed, already=queued
+            ):
+                extra_key = canonical_key(extra)
+                if extra_key not in queued and same_origin(extra, origin_url):
+                    queued.add(extra_key)
+                    queue.append((extra, 0))
+            if not capture_pages:
+                capture_findings.append(
+                    Finding(
+                        id="capture-no-same-origin-sessions",
+                        severity="info",
+                        category="scan-note",
+                        url=seed,
+                        description=(
+                            "No same-origin pages were ingested from --from-capture. "
+                            "Host aliases (localhost vs 127.0.0.1) and scheme/port "
+                            "mismatches are skipped silently; this crawl will live-fetch "
+                            "the seed. Confirm the capture origin matches the target."
+                        ),
+                        evidence=f"path={self.from_capture}; source=capture",
+                    )
+                )
+        else:
+            js_endpoints_from_capture = []
         for extra in self.extra_seeds:
             if same_origin(extra, origin_url):
                 extra_key = canonical_key(extra)
                 if extra_key not in queued:
                     queued.add(extra_key)
                     queue.append((extra, 0))
-        for spec in probe_urls(seed):
-            spec_key = canonical_key(spec)
-            if spec_key not in queued:
-                queued.add(spec_key)
-                queue.append((spec, 0))
-        seen: set[str] = set()
-        if not self.no_sitemap:
+        if not self.from_capture:
+            for spec in probe_urls(seed):
+                spec_key = canonical_key(spec)
+                if spec_key not in queued:
+                    queued.add(spec_key)
+                    queue.append((spec, 0))
+        seen: set[str] = {canonical_key(p.url) for p in capture_pages}
+        if not self.no_sitemap and not self.from_capture:
             self._enqueue_sitemap_seeds(seed, origin_url, robots_body, queue, seen, queued)
-        pages: list[Page] = []
-        findings: list[Finding] = []
-        js_endpoints: list = []
+        pages: list[Page] = list(capture_pages)
+        findings: list[Finding] = list(capture_findings)
+        js_endpoints: list = list(js_endpoints_from_capture)
         cors_candidates: list[str] = []
         family_counts: dict[str, int] = defaultdict(int)
         # Tracks how many redirect hops it took to reach a given (not-yet-
@@ -302,6 +345,18 @@ class Crawler:
                 joined = candidate_from_endpoint(result.url, ep.endpoint)
                 if is_api_path(ep.endpoint) or is_api_path(joined):
                     cors_candidates.append(joined)
+                for seed_url in crawl_seeds_from_endpoint(origin_url, ep.endpoint):
+                    if self.depth is not None and depth >= self.depth:
+                        break
+                    seed_key = canonical_key(seed_url)
+                    if seed_key in queued:
+                        continue
+                    if not same_origin(seed_url, origin_url):
+                        continue
+                    if is_pagination_trap(seed_url, family_counts):
+                        continue
+                    queued.add(seed_key)
+                    queue.append((seed_url, depth + 1))
             if self.progress:
                 self.progress(len(pages), result.url)
 
@@ -442,6 +497,13 @@ class Crawler:
 
         findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
         findings.extend(csrf_findings(pages))
+        findings[:] = confirm_csrf_origin(
+            findings,
+            pages,
+            self.http,
+            allow_external=self.allow_external,
+            exclude_paths=self.exclude_paths,
+        )
         from shroodler.chains import chain_findings
 
         findings.extend(chain_findings(findings, pages))
@@ -902,6 +964,25 @@ def _robots_blocked_finding(
     )
 
 
+def _with_capture_source(finding: Finding) -> Finding:
+    ev = finding.evidence or ""
+    if "source=capture" in ev.lower().replace(" ", ""):
+        return finding
+    stamped = f"{ev}; source=capture" if ev else "source=capture"
+    return finding.model_copy(update={"evidence": stamped})
+
+
+def _collapsed_evidence(group: list[Finding], sample: str) -> str:
+    n = len(group)
+    ev = f"Affects {n} pages; sample: {sample}"
+    if any("source=capture" in (f.evidence or "").lower().replace(" ", "") for f in group):
+        ev += "; source=capture"
+    return ev
+
+
+_SEV_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+
+
 def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
     # Header-category findings that are sitewide (same rule fires on many pages)
     # get collapsed to one finding per origin with a count in evidence. This
@@ -928,7 +1009,7 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
 
     collapsed: list[Finding] = []
     for (fid, orig, _ev), group in header_by_key.items():
-        first = group[0]
+        first = min(group, key=lambda f: _SEV_RANK.get(f.severity, 9))
         n = len(group)
         if n == 1:
             collapsed.append(first)
@@ -941,7 +1022,7 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
                     category=first.category,
                     url=orig,
                     description=first.description,
-                    evidence=f"Affects {n} pages; sample: {sample}",
+                    evidence=_collapsed_evidence(group, sample),
                     confidence=first.confidence,
                 )
             )

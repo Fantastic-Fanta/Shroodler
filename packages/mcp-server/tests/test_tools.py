@@ -15,6 +15,7 @@ from shroodler_mcp.tools import (
     peer_write,
     reverify_fix,
     scan_route,
+    session_export,
 )
 
 
@@ -240,6 +241,32 @@ def test_peer_write_allow_without_policy_reaches_engine(monkeypatch):
     )
     assert result["findings"] == []
     assert called["enforcer"] is not None
+
+
+def test_session_export_cdp_requires_origin():
+    with pytest.raises(ValueError, match="origin"):
+        session_export({"cdp": "http://127.0.0.1:9222"})
+
+
+def test_session_export_cdp_requires_policy_by_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+    with pytest.raises(ValueError, match="policy_file|allow_without_policy"):
+        session_export(
+            {"cdp": "http://127.0.0.1:9222", "origin": "http://127.0.0.1:1/"}
+        )
+
+
+def test_session_export_from_requires_origin():
+    with pytest.raises(ValueError, match="origin"):
+        session_export({"from": "capture.jsonl"})
+
+
+def test_session_export_from_cookie_without_cdp_skips_policy():
+    result = session_export(
+        {"cookie": "session=abc", "origin": "http://127.0.0.1/"}
+    )
+    names = {c["name"] for c in result["cookies"]}
+    assert names == {"session"}
 
 
 def test_extract_js_routes_requires_file():

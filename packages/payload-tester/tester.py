@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import secrets
 import string
+import sys
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -77,6 +78,31 @@ def _local(url: str) -> bool:
 def _path_only(url: str) -> str:
     p = urlparse(url)
     return f"{p.scheme}://{p.netloc}{p.path}"
+
+
+def _crawler_py_dir() -> Path | None:
+    here = Path(__file__).resolve()
+    for parent in here.parents:
+        cand = parent / "packages" / "crawler-py"
+        if (cand / "shroodler" / "csrf.py").is_file():
+            return cand
+        alt = parent / "crawler-py"
+        if (alt / "shroodler" / "csrf.py").is_file():
+            return alt
+    return None
+
+
+def _csrf_mod():
+    """Optional: payload-tester is a sibling package; CSRF harvest lives in crawler-py."""
+    cdir = _crawler_py_dir()
+    if cdir and str(cdir) not in sys.path:
+        sys.path.insert(0, str(cdir))
+    try:
+        from shroodler import csrf as mod
+
+        return mod
+    except ImportError:
+        return None
 
 
 def gen_token(length: int = 10) -> str:
@@ -360,6 +386,7 @@ def run(
     oob_host: str | None = None,
     enforcer=None,
     adaptive: bool = False,
+    csrf: bool = True,
 ) -> dict:
     """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
     consulted before every live request (baseline probe and each payload
@@ -373,6 +400,11 @@ def run(
     on top of that mutation, and every mutated send still goes through
     the same `enforcer`/`request_allowed()` gate as every other request
     here. Off by default.
+
+    `csrf`, if set (default), harvests a CSRF token from the form page
+    before POST/PUT/PATCH/DELETE and attaches it. CSRF-named fields are
+    never fuzzed. If the form required a token and harvest fails, that
+    form is skipped (fail closed) rather than sending tokenless writes.
     """
     target = crawl_doc.get("target", "")
 
@@ -463,7 +495,14 @@ def run(
                 if not request_allowed():
                     continue
                 method = (form.get("method") or "GET").upper()
-                fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
+                csrf_mod = _csrf_mod() if csrf else None
+                all_fields = [f.get("name") for f in form.get("fields", []) if f.get("name")]
+                csrf_fields = [
+                    n
+                    for n in all_fields
+                    if csrf_mod is not None and csrf_mod.is_csrf_field_name(n)
+                ]
+                fields = [n for n in all_fields if n not in csrf_fields]
                 if not fields:
                     fields = ["q"]
                 target_key = (method, action, tuple(sorted(fields)))
@@ -482,14 +521,44 @@ def run(
                 enctype = str(form.get("enctype") or "")
                 is_json_body = "json" in enctype.lower() and method != "GET"
 
-                def send(values: dict, _enctype: str = enctype) -> httpx.Response:
-                    if method == "GET":
-                        return http.get(action, params=values)
-                    if is_json_body:
-                        return http.request(
-                            method, action, json=values, headers={"Content-Type": _enctype}
+                csrf_token = None
+                write_method = method in {"POST", "PUT", "PATCH", "DELETE"}
+                if csrf_mod is not None and write_method:
+                    harvest = url if _local(url) or allow_external else ""
+                    if harvest and csrf_mod.csrf_harvest_url_ok(
+                        harvest, allow_external=allow_external
+                    ):
+                        csrf_token = csrf_mod.refresh_csrf(
+                            http,
+                            harvest,
+                            allow_external=allow_external,
+                            same_origin_as=action,
+                            enforcer=enforcer,
                         )
-                    return http.post(action, data=values)
+                    if csrf_token is None and csrf_fields:
+                        # Form declared a CSRF field and we could not refresh it.
+                        continue
+
+                extra_csrf_headers: dict[str, str] = {}
+                if csrf_token is not None:
+                    extra_csrf_headers, _ = csrf_mod.apply_csrf(
+                        headers={}, body="", token=csrf_token
+                    )
+
+                def send(values: dict, _enctype: str = enctype) -> httpx.Response:
+                    payload_values = dict(values)
+                    if csrf_token is not None:
+                        for fname in csrf_fields or ["csrf_token"]:
+                            payload_values[fname] = csrf_token.value
+                    headers = dict(extra_csrf_headers)
+                    if method == "GET":
+                        return http.get(action, params=payload_values, headers=headers)
+                    if is_json_body:
+                        headers.setdefault("Content-Type", _enctype)
+                        return http.request(
+                            method, action, json=payload_values, headers=headers
+                        )
+                    return http.post(action, data=payload_values, headers=headers)
 
                 baseline_data = {name: BASELINE_VALUE for name in fields}
                 try:
@@ -507,7 +576,7 @@ def run(
                 # payload that matched -- a smaller repro is less noise to
                 # paste into a bug report, without needing an actual
                 # binary search over each pack's own variants.
-                best_by_id: dict[str, tuple[str, dict, int, str, bool]] = {}
+                best_by_id: dict[str, tuple[str, dict, int, str, bool, str]] = {}
                 for pack in loaded:
                     was_mutated = False
                     if not request_allowed():
@@ -535,7 +604,7 @@ def run(
                             resp = http.post(
                                 action,
                                 content=payload.encode("utf-8"),
-                                headers={"Content-Type": content_type},
+                                headers={"Content-Type": content_type, **extra_csrf_headers},
                             )
                         except httpx.HTTPError:
                             continue
@@ -617,9 +686,9 @@ def run(
                     # or "minimal repro" would quietly downgrade the
                     # evidence a human actually wants to see.
                     if existing is None or (rank, len(payload)) < (existing[2], len(existing[0])):
-                        best_by_id[fid] = (payload, pack, rank, confidence, was_mutated)
+                        best_by_id[fid] = (payload, pack, rank, confidence, was_mutated, resp.text)
 
-                for fid, (payload, pack, _rank, confidence, mutated_flag) in best_by_id.items():
+                for fid, (payload, pack, _rank, confidence, mutated_flag, post_body) in best_by_id.items():
                     key = (fid, action)
                     if key in seen:
                         continue
@@ -636,8 +705,11 @@ def run(
                             stored = http.get(url)
                         except httpx.HTTPError:
                             stored = None
-                        if stored is not None and (
-                            token in stored.text or payload in stored.text
+                        if (
+                            stored is not None
+                            and 200 <= stored.status_code < 300
+                            and token in stored.text
+                            and stored.text.strip() != (post_body or "").strip()
                         ):
                             stored_key = ("payload-xss-stored", url)
                             if stored_key not in seen:

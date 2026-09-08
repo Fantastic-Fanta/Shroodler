@@ -61,6 +61,7 @@ shroodler peer-write --from-sessions captured.har --peer-cookies-from b-state.js
 shroodler peer-write playbook.json --peer-cookies-from b.json --owner-cookies-from a.json --require-confirm --csrf-from https://app.example/edit
 
 # Dump a replayable Playwright storageState (HttpOnly cookies included)
+shroodler crawl http://127.0.0.1:8081 --from-capture /tmp/sess.jsonl --proxy http://127.0.0.1:8888 --output out.json
 shroodler session-export --cdp http://127.0.0.1:9222 --origin https://app.example -o owner.json
 shroodler session-export --from captured.har --origin https://app.example -o peer.json
 

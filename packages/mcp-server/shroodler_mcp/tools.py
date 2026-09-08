@@ -196,6 +196,20 @@ def _next_step(tool: str, *, leads: int, confirmed: int, probable: int) -> str:
         if leads:
             return f"{leads} heuristic/info findings — review top items or expand crawl depth."
         return "No leads. Expand crawl depth or check coverage_gaps."
+    if tool == "run_agent":
+        if confirmed:
+            return (
+                f"{confirmed} confirmed finding(s) after the agent loop — "
+                "draft a report."
+            )
+        if probable:
+            return (
+                f"{probable} probable leads — re-run with session jars/cookies "
+                "or expand crawl depth."
+            )
+        if leads:
+            return f"{leads} leads — inspect the top items or expand crawl depth."
+        return "Agent loop finished. Check coverage_gaps or expand crawl depth."
     if confirmed:
         return f"{confirmed} confirmed leads — inspect the top items, then call peer_write or file a report."
     if probable:
@@ -722,6 +736,52 @@ def coverage_gaps(args: dict) -> dict:
     return {"slug": state.slug, "count": len(gaps), "gaps": gaps}
 
 
+def run_agent(args: dict) -> dict:
+    """Autonomous engagement loop: crawl coverage gaps, authz-diff, peer-write."""
+    from shroodler.agent import AgentConfig
+    from shroodler.agent import run_agent as run_loop
+
+    slug = args.get("program") or args.get("slug")
+    target = args.get("target")
+    if not slug:
+        raise ValueError("run_agent requires 'program'")
+    if not target:
+        raise ValueError("run_agent requires 'target'")
+    max_iterations = args.get("max_iterations")
+    if max_iterations is None:
+        max_iterations = 5
+    config = AgentConfig(
+        program=str(slug),
+        target=str(target),
+        max_iterations=int(max_iterations),
+        dry_run=bool(args.get("dry_run", False)),
+    )
+    result = run_loop(config)
+    from shroodler.program import load as load_program
+
+    state = load_program(str(slug))
+    findings = [f.model_dump(exclude_none=True) for f in state.findings]
+    out = {
+        "iterations": result.iterations,
+        "confirmed": result.confirmed,
+        "log": result.log,
+        "state_path": result.state_path,
+        "findings": findings,
+    }
+    if result.errors:
+        out["errors"] = result.errors
+    summarized = _maybe_summarize(out, args, "run_agent")
+    if args.get("summary") is False:
+        return out
+    return {
+        **summarized,
+        "iterations": result.iterations,
+        "confirmed": result.confirmed,
+        "log": result.log,
+        "state_path": result.state_path,
+    }
+
+
 TOOLS: dict[str, dict[str, Any]] = {
     "scan_route": {
         "description": "Crawl a single route/URL (no link-following) for passive findings, "
@@ -1128,5 +1188,43 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["slug"],
         },
         "handler": coverage_gaps,
+    },
+    "run_agent": {
+        "description": "Run the autonomous agent loop for a program. Crawls coverage "
+        "gaps, runs authz-diff, runs peer-write. Returns {iterations, confirmed, log} "
+        "summary.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "program": {
+                    "type": "string",
+                    "description": "Program slug",
+                },
+                "target": {
+                    "type": "string",
+                    "description": "Base URL",
+                },
+                "max_iterations": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Loop budget (default 5 for agent calls)",
+                },
+                "dry_run": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Print planned actions without making requests",
+                },
+                "summary": {
+                    "type": "boolean",
+                    "default": True,
+                    "description": "If true (default), include compact "
+                    "{leads, confirmed, probable, top, next_step} alongside "
+                    "iterations/log.",
+                },
+            },
+            "required": ["program", "target"],
+        },
+        "handler": run_agent,
     },
 }

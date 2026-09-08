@@ -632,3 +632,34 @@ def test_program_state_and_coverage_gaps_shape(tmp_path, monkeypatch):
     assert isinstance(gaps["gaps"], list)
     assert "url" in gaps["gaps"][0]
     assert "tested_authz" in gaps["gaps"][0]
+
+
+def test_run_agent_dry_run_returns_log(tmp_path, monkeypatch):
+    from shroodler_mcp.tools import run_agent
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    from shroodler.program import load
+
+    load("lab")
+    result = run_agent(
+        {
+            "program": "lab",
+            "target": "http://127.0.0.1/",
+            "max_iterations": 1,
+            "dry_run": True,
+            "summary": False,
+        }
+    )
+    assert result["iterations"] == 1
+    assert "log" in result
+    assert result["log"][0]["dry_run"] is True
+    assert result["log"][0]["action"] == "CrawlAction"
+
+
+def test_run_agent_requires_program_and_target():
+    from shroodler_mcp.tools import run_agent
+
+    with pytest.raises(ValueError, match="program"):
+        run_agent({"target": "http://127.0.0.1/"})
+    with pytest.raises(ValueError, match="target"):
+        run_agent({"program": "lab"})

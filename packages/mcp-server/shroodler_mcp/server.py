@@ -172,6 +172,7 @@ def main(argv: list[str] | None = None) -> int:
             "  explain_finding       Static remediation guidance for a finding id\n"
             "  program_state         Compact engagement briefing for a program slug\n"
             "  coverage_gaps         Untested endpoints from program memory\n"
+            "  run_agent             Autonomous crawl / authz-diff / peer-write loop\n"
             "\n"
             "Finding tools default to compact summary output (summary=false for full JSON).\n"
             "Active tools require a scan-policy consent manifest by default.\n"

@@ -372,7 +372,11 @@ def test_session_died_includes_last_good_url_and_request_count(fx, tmp_path):
     logins = {"n": 0}
     login_url = _login_handlers(fx, logins)
     fx.html("/", '<a href="/ok">ok</a><a href="/dead">dead</a>')
-    fx.on("GET", "/ok", lambda _req: (200, {"Content-Type": "text/html; charset=utf-8"}, b"<p>ok</p>"))
+    fx.on(
+        "GET",
+        "/ok",
+        lambda _req: (200, {"Content-Type": "text/html; charset=utf-8"}, b"<p>ok</p>"),
+    )
     fx.on("GET", "/dead", lambda _req: (401, {"Content-Type": "text/plain"}, b"no"))
     recipe = tmp_path / "recipe.json"
     recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
@@ -462,7 +466,11 @@ def test_oauth_pkce_step_authorization_code(fx):
 
     def token(req):
         seen["body"] = req.body.decode("utf-8")
-        return 200, {"Content-Type": "application/json"}, json.dumps({"access_token": "pkce-tok"}).encode()
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            json.dumps({"access_token": "pkce-tok"}).encode(),
+        )
 
     fx.on("POST", "/oauth/token", token)
     client = httpx.Client(follow_redirects=True)
@@ -549,8 +557,8 @@ def test_login_recipe_runs_hook_then_oauth(fx, tmp_path):
 
 
 def test_pkce_pair_s256():
-    import hashlib
     import base64
+    import hashlib
 
     verifier, challenge = pkce_pair("abc")
     assert verifier == "abc"

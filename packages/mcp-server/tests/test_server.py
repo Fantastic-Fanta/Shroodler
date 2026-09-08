@@ -130,6 +130,8 @@ def test_list_tools_flag_prints_catalog(capsys):
         "reverify_fix",
         "diff_since_baseline",
         "explain_finding",
+        "program_state",
+        "coverage_gaps",
     }
     for tool in payload["tools"]:
         assert tool["description"]
@@ -157,6 +159,8 @@ def test_help_names_every_tool(capsys):
         "reverify_fix",
         "diff_since_baseline",
         "explain_finding",
+        "program_state",
+        "coverage_gaps",
         "--list-tools",
     ):
         assert name in text

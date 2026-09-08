@@ -120,7 +120,7 @@ def _finding_confidence(finding: dict) -> str:
         from shroodler.confidence import confidence_for
 
         return confidence_for(str(finding.get("id") or ""), str(finding.get("category") or ""))
-    except Exception:
+    except (ImportError, TypeError, ValueError):
         return "heuristic"
 
 

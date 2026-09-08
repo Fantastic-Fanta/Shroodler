@@ -616,6 +616,33 @@ def cmd_program_merge(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_agent(args: argparse.Namespace) -> int:
+    from shroodler.agent import AgentConfig, run_agent
+
+    config = AgentConfig(
+        program=str(args.program),
+        target=str(args.target),
+        max_iterations=int(getattr(args, "max_iterations", 10) or 10),
+        max_pages_per_crawl=int(getattr(args, "max_pages_per_crawl", 30) or 30),
+        login_recipe=getattr(args, "login_recipe", None),
+        higher_priv_jar=getattr(args, "higher_priv_jar", None),
+        lower_priv_jar=getattr(args, "lower_priv_jar", None),
+        owner_cookie=getattr(args, "owner_cookie", None),
+        peer_cookie=getattr(args, "peer_cookie", None),
+        dry_run=bool(getattr(args, "dry_run", False)),
+    )
+    result = run_agent(config)
+    payload: dict = {
+        "iterations": result.iterations,
+        "confirmed": result.confirmed,
+        "state_path": result.state_path,
+    }
+    if result.errors:
+        payload["errors"] = result.errors
+    print(json.dumps(payload))
+    return 0
+
+
 def cmd_program_add_session(args: argparse.Namespace) -> int:
     from shroodler.program import add_session, load, save
 
@@ -2231,6 +2258,67 @@ def build_parser() -> argparse.ArgumentParser:
     )
     padd.set_defaults(func=cmd_program_add_session)
 
+    agent = sub.add_parser(
+        "agent",
+        help="Run the autonomous engagement loop for a program",
+        description=(
+            "Load ~/.shroodler/programs/<slug>/state.json, pick the next "
+            "highest-value action (crawl coverage gaps, authz-diff, peer-write, "
+            "or report confirmed findings), execute it, merge results, and loop "
+            "until --max-iterations or there is nothing left to do. JSON lines "
+            "go to stderr per iteration; a final {iterations, confirmed, "
+            "state_path} summary goes to stdout. --dry-run prints the plan "
+            "without making requests."
+        ),
+    )
+    agent.add_argument("--program", required=True, metavar="SLUG", help="Program slug")
+    agent.add_argument("--target", required=True, metavar="URL", help="Base URL to act on")
+    agent.add_argument(
+        "--max-iterations",
+        type=int,
+        default=10,
+        metavar="N",
+        help="Loop budget (default 10)",
+    )
+    agent.add_argument(
+        "--max-pages-per-crawl",
+        type=int,
+        default=30,
+        metavar="N",
+        help="Cap on URLs queued for one crawl action (default 30)",
+    )
+    agent.add_argument(
+        "--login-recipe",
+        metavar="FILE",
+        help="Login recipe JSON passed through to crawl_url",
+    )
+    agent.add_argument(
+        "--higher-priv-jar",
+        metavar="FILE",
+        help="Higher-privilege cookie jar; enables the authz-diff leg",
+    )
+    agent.add_argument(
+        "--lower-priv-jar",
+        metavar="FILE",
+        help="Lower-privilege cookie jar; enables the authz-diff leg",
+    )
+    agent.add_argument(
+        "--owner-cookie",
+        metavar="STR",
+        help="Owner Cookie header; enables the peer-write leg",
+    )
+    agent.add_argument(
+        "--peer-cookie",
+        metavar="STR",
+        help="Peer Cookie header; enables the peer-write leg",
+    )
+    agent.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print the planned action each iteration; make no requests",
+    )
+    agent.set_defaults(func=cmd_agent)
+
     trend = sub.add_parser(
         "trend",
         help="Diff findings between two recorded (or arbitrary) scans",
@@ -2323,6 +2411,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  explain_finding     static remediation guidance for a finding id\n"
             "  program_state       compact engagement briefing for a program slug\n"
             "  coverage_gaps       untested endpoints from program memory\n"
+            "  run_agent           autonomous crawl/authz-diff/peer-write loop\n"
             "Active tools require a scan-policy consent manifest by default. "
             "Finding tools default to compact summary output (summary=false for full JSON). "
             "Pass --list-tools to print names, descriptions, and input schemas "

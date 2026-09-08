@@ -7,6 +7,29 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **REST-aware agent authz.** `shroodler agent` sends `Authorization: Bearer`
+  from `--owner-cookie` / `--peer-cookie` on authz-diff instead of only jar
+  cookies. `--write-authz-spec` replays POST/PATCH/DELETE probes as both
+  principals (lower-priv 2xx is a confirmed finding). Three consecutive
+  zero-page crawls skip further CrawlActions so API-first targets reach
+  authz-diff.
+
+- **Discovery pipeline + LLM triage.** `shroodler discover --program <slug>
+  --target <url>` finds live subdomains via crt.sh and new JS API endpoints,
+  then merges them into program state. `--dry-run` reports counts with no
+  writes. `shroodler agent --run-discovery` runs this before the loop;
+  `--llm-triage` ranks unconfirmed leads with Claude Haiku (falls back to
+  the existing order when `ANTHROPIC_API_KEY` is missing or the call
+  fails). MCP tools `discover_scope` and `run_agent` (`llm_triage`,
+  `run_discovery`) expose the same surface. `discover_scope` is an active
+  tool and uses the scan-policy rate ceiling.
+
+- **Autonomous agent loop.** `shroodler agent --program <slug> --target <url>`
+  reads program state, crawls stale/un-crawled endpoints, runs authz-diff
+  and peer-write when session jars/cookies are provided, then reports
+  confirmed findings. `--dry-run` prints the plan with no requests. MCP
+  tool `run_agent` returns `{iterations, confirmed, log}`.
+
 - **Auth hardening.** `--login-recipe` re-runs up to `--reauth-max-retries`
   (default 3) times on a mid-crawl 401 or login redirect, with exponential
   backoff (1s, 2s, 4s). If every retry fails, crawl emits a high

@@ -393,6 +393,21 @@ records a jar/storageState path with
 and optional
 .BR \-\-expires .
 .TP
+.B discover
+Find live subdomains (crt.sh Certificate Transparency) and JS API
+endpoints for a program's target domain, then merge them into
+.IR ~/.shroodler/programs/<slug>/state.json .
+.B \-\-dry\-run
+prints counts without writing state.
+.B agent \-\-run\-discovery
+runs the same step before the engagement loop;
+.B agent \-\-llm\-triage
+ranks unconfirmed leads with Claude (requires
+.BR ANTHROPIC_API_KEY ).
+.B agent \-\-write\-authz\-spec
+replays a JSON list of write probes (POST/PATCH/DELETE) as both
+principals after authz-diff.
+.TP
 .B trend \fIOLDER\fR \fINEWER\fR
 Diff findings between two scans (by history id or file path), reporting
 which finding (id, url) pairs were introduced or resolved between them.
@@ -441,7 +456,9 @@ Run an MCP (Model Context Protocol) server on stdio exposing
 .BR reverify_fix ,
 .BR diff_since_baseline ,
 .BR program_state ,
-.BR coverage_gaps ", and"
+.BR coverage_gaps ", "
+.BR run_agent ", "
+.BR discover_scope ", and"
 .B explain_finding
 as tools an MCP-speaking coding agent can call directly, instead of
 shelling out to this CLI and parsing text output. Finding tools default

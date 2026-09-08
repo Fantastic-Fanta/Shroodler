@@ -11,6 +11,8 @@ from shroodler.agent import (
     CrawlAction,
     PeerWriteAction,
     ReportAction,
+    WriteAuthzAction,
+    _auth_header_for_diff,
     decide_next_action,
     execute_action,
     run_agent,
@@ -155,7 +157,7 @@ def test_loop_stops_at_max_iterations(tmp_path, monkeypatch):
     load("lab")
     monkeypatch.setattr(
         "shroodler.agent.decide_next_action",
-        lambda state, config: CrawlAction(urls=["http://127.0.0.1/"]),
+        lambda state, config, *args, **kwargs: CrawlAction(urls=["http://127.0.0.1/"]),
     )
     result = run_agent(
         _config(program="lab", target="http://127.0.0.1/", dry_run=True, max_iterations=3)
@@ -176,7 +178,7 @@ def test_state_saved_after_each_action(tmp_path, monkeypatch):
     monkeypatch.setattr("shroodler.agent.program.save", fake_save)
     monkeypatch.setattr(
         "shroodler.agent.decide_next_action",
-        lambda state, config: CrawlAction(urls=["http://127.0.0.1/"]),
+        lambda state, config, *args, **kwargs: CrawlAction(urls=["http://127.0.0.1/"]),
     )
     monkeypatch.setattr(
         "shroodler.agent.execute_action",
@@ -218,7 +220,7 @@ def test_execute_errors_are_logged_and_loop_continues(tmp_path, monkeypatch):
 
     monkeypatch.setattr(
         "shroodler.agent.decide_next_action",
-        lambda state, config: CrawlAction(urls=["http://127.0.0.1/"]),
+        lambda state, config, *args, **kwargs: CrawlAction(urls=["http://127.0.0.1/"]),
     )
     monkeypatch.setattr("shroodler.agent.execute_action", flaky)
     monkeypatch.setattr("shroodler.agent.program.save", lambda state: Path("/dev/null"))
@@ -397,7 +399,7 @@ def test_loop_stops_after_consecutive_errors(tmp_path, monkeypatch):
 
     monkeypatch.setattr(
         "shroodler.agent.decide_next_action",
-        lambda state, config: CrawlAction(urls=["http://127.0.0.1/"]),
+        lambda state, config, *args, **kwargs: CrawlAction(urls=["http://127.0.0.1/"]),
     )
     monkeypatch.setattr("shroodler.agent.execute_action", always_fail)
     result = run_agent(
@@ -552,3 +554,237 @@ def test_playbook_builds_get_writes_from_object_ids():
     assert playbook["target"] == "http://127.0.0.1/"
     assert playbook["writes"][0]["id_value"] == "1"
     assert playbook["writes"][0]["url"] == "http://127.0.0.1/api/users/1"
+
+
+def test_agent_config_has_triage_and_discovery_flags():
+    cfg = _config(llm_triage=True, run_discovery=True)
+    assert cfg.llm_triage is True
+    assert cfg.run_discovery is True
+    assert _config().llm_triage is False
+    assert _config().run_discovery is False
+
+
+def test_run_discovery_logs_pre_loop(tmp_path, monkeypatch, capsys):
+    from shroodler.discovery import DiscoveryResult
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    load("lab")
+    called = {}
+
+    def fake_discover(state, target, config):
+        called["dry_run"] = config.dry_run
+        called["target"] = target
+        return DiscoveryResult(
+            subdomains_found=["www.example.com"],
+            subdomains_added_to_state=1,
+            endpoints_found=["https://example.com/api"],
+            elapsed_ms=12,
+        )
+
+    monkeypatch.setattr("shroodler.discovery.discover", fake_discover)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            run_discovery=True,
+            max_iterations=1,
+        )
+    )
+    err = capsys.readouterr().err
+    compact = err.replace(" ", "")
+    assert '"pre_loop": "discovery"' in err or '"pre_loop":"discovery"' in compact
+    assert called["dry_run"] is True
+    assert called["target"] == "http://127.0.0.1/"
+    assert result.iterations >= 1
+
+
+def test_run_discovery_dry_run_does_not_write_state(tmp_path, monkeypatch):
+    from shroodler.discovery import DiscoveryResult
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    load("lab")
+    saves: list[str] = []
+
+    def fake_discover(state, target, config):
+        assert config.dry_run is True
+        return DiscoveryResult(
+            subdomains_found=["www.example.com"],
+            subdomains_added_to_state=1,
+            endpoints_found=[],
+            elapsed_ms=1,
+        )
+
+    monkeypatch.setattr("shroodler.discovery.discover", fake_discover)
+    monkeypatch.setattr("shroodler.agent.program.save", lambda state: saves.append(state.slug))
+    run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            run_discovery=True,
+            max_iterations=1,
+        )
+    )
+    assert saves == []
+
+
+def test_decide_skips_crawl_after_three_zero_page_crawls():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(last_seen=""),
+        },
+    )
+    cfg = _config(higher_priv_jar="/tmp/higher.json", lower_priv_jar="/tmp/lower.json")
+    still_crawl = decide_next_action(state, cfg, crawl_stall_count=2)
+    assert isinstance(still_crawl, CrawlAction)
+    action = decide_next_action(state, cfg, crawl_stall_count=3)
+    assert isinstance(action, AuthzDiffAction)
+    assert action.urls == ["http://127.0.0.1/api/a"]
+
+
+def test_auth_header_for_diff_uses_authorization_override(monkeypatch):
+    def boom(*a, **k):
+        raise AssertionError("jar must not be read when Authorization override is set")
+
+    monkeypatch.setattr("shroodler.agent._cookie_header_from_jar", boom)
+    cfg = _config(
+        higher_priv_jar="/tmp/higher.json",
+        lower_priv_jar="/tmp/lower.json",
+        owner_cookie="Authorization: Bearer api-xxx",
+        peer_cookie="Authorization: Bearer api-yyy",
+    )
+    assert _auth_header_for_diff(cfg, "higher") == "Authorization: Bearer api-xxx"
+    assert _auth_header_for_diff(cfg, "lower") == "Authorization: Bearer api-yyy"
+
+
+def test_auth_header_for_diff_falls_back_to_jar(monkeypatch):
+    monkeypatch.setattr(
+        "shroodler.agent._cookie_header_from_jar",
+        lambda path, target: f"cookie-from:{path}",
+    )
+    cfg = _config(
+        higher_priv_jar="/tmp/higher.json",
+        lower_priv_jar="/tmp/lower.json",
+        owner_cookie="session=owner",
+        peer_cookie="session=peer",
+    )
+    assert _auth_header_for_diff(cfg, "higher") == "cookie-from:/tmp/higher.json"
+    assert _auth_header_for_diff(cfg, "lower") == "cookie-from:/tmp/lower.json"
+
+
+def test_decide_write_authz_after_authz_before_peer_write():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/users/1": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=False
+            ),
+        },
+        object_ids={"/api/users/{id}": ["1"]},
+    )
+    action = decide_next_action(
+        state,
+        _config(
+            owner_cookie="Authorization: Bearer owner",
+            peer_cookie="Authorization: Bearer peer",
+            write_authz_endpoints=[
+                {"method": "POST", "url": "http://127.0.0.1/api/v2/tokens", "body": {"name": "x"}}
+            ],
+        ),
+    )
+    assert isinstance(action, WriteAuthzAction)
+    assert action.endpoints[0]["url"] == "http://127.0.0.1/api/v2/tokens"
+
+
+def test_execute_write_authz_merges_findings(monkeypatch):
+    monkeypatch.setattr(
+        "shroodler.agent.run_write_authz",
+        lambda endpoints, **kw: {
+            "findings": [
+                {
+                    "id": "write-authz-unrestricted",
+                    "severity": "high",
+                    "category": "auth",
+                    "url": endpoints[0]["url"],
+                    "description": "lower wrote",
+                    "confidence": "confirmed",
+                }
+            ],
+            "probes": [
+                {
+                    "method": "POST",
+                    "url": endpoints[0]["url"],
+                    "higher_status": 201,
+                    "lower_status": 201,
+                }
+            ],
+            "skipped": [],
+        },
+    )
+    state = ProgramState(slug="lab")
+    result = execute_action(
+        WriteAuthzAction(
+            endpoints=[
+                {"method": "POST", "url": "http://127.0.0.1/api/v2/tokens", "body": {"name": "x"}}
+            ]
+        ),
+        state,
+        _config(
+            dry_run=False,
+            owner_cookie="Authorization: Bearer owner",
+            peer_cookie="Authorization: Bearer peer",
+        ),
+        pacer=Pacer(0),
+    )
+    assert result["findings_added"] == 1
+    assert state.findings[0].id == "write-authz-unrestricted"
+    assert state.findings[0].confidence == "confirmed"
+
+
+def test_run_write_authz_skips_placeholders_and_records_finding():
+    from shroodler.agent import run_write_authz
+
+    class FakeResp:
+        def __init__(self, status):
+            self.status_code = status
+
+    class FakeClient:
+        def __init__(self):
+            self.calls = []
+
+        def request(self, method, url, **kw):
+            self.calls.append((method, url, kw.get("headers") or {}))
+            headers = kw.get("headers") or {}
+            if headers.get("Authorization") == "Bearer peer":
+                return FakeResp(201)
+            return FakeResp(201)
+
+        def close(self):
+            pass
+
+    client = FakeClient()
+    out = run_write_authz(
+        [
+            {
+                "method": "POST",
+                "url": "http://127.0.0.1/api/v2/tokens",
+                "body": {"name": "shroodler-probe"},
+            },
+            {
+                "method": "PATCH",
+                "url": "http://127.0.0.1/api/v2/members/{member_id}",
+                "body": [{"op": "replace", "path": "/role", "value": "reader"}],
+            },
+        ],
+        higher_header="Authorization: Bearer owner",
+        lower_header="Authorization: Bearer peer",
+        target="http://127.0.0.1/",
+        allow_external=False,
+        client=client,
+    )
+    assert any(f["id"] == "write-authz-unrestricted" for f in out["findings"])
+    assert any("{member_id}" in s for s in out["skipped"])
+    assert all("{member_id}" not in url for _, url, _ in client.calls)
+    assert len(client.calls) == 2

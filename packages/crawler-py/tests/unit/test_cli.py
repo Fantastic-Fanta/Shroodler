@@ -280,6 +280,8 @@ def test_plugin_and_mcp_server_flags_parse():
     assert "reverify_fix" in mcp_help
     assert "program_state" in mcp_help
     assert "coverage_gaps" in mcp_help
+    assert "run_agent" in mcp_help
+    assert "discover_scope" in mcp_help
     assert "--list-tools" in mcp_help
 
 
@@ -329,3 +331,79 @@ def test_reauth_and_program_flags_parse():
     assert args.label == "owner"
     assert args.expires == "2026-12-01"
     assert "program" in p.format_help()
+
+
+def test_agent_flags_parse():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--max-iterations",
+            "4",
+            "--max-pages-per-crawl",
+            "12",
+            "--login-recipe",
+            "login.json",
+            "--higher-priv-jar",
+            "high.json",
+            "--lower-priv-jar",
+            "low.json",
+            "--owner-cookie",
+            "session=a",
+            "--peer-cookie",
+            "session=b",
+            "--dry-run",
+            "--llm-triage",
+            "--run-discovery",
+            "--write-authz-spec",
+            "writes.json",
+        ]
+    )
+    assert args.func.__name__ == "cmd_agent"
+    assert args.program == "lab"
+    assert args.target == "http://127.0.0.1/"
+    assert args.max_iterations == 4
+    assert args.max_pages_per_crawl == 12
+    assert args.login_recipe == "login.json"
+    assert args.higher_priv_jar == "high.json"
+    assert args.lower_priv_jar == "low.json"
+    assert args.owner_cookie == "session=a"
+    assert args.peer_cookie == "session=b"
+    assert args.dry_run is True
+    assert args.llm_triage is True
+    assert args.run_discovery is True
+    assert args.write_authz_spec == "writes.json"
+    assert "agent" in p.format_help()
+
+
+def test_discover_flags_parse():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "discover",
+            "--program",
+            "lab",
+            "--target",
+            "https://api.example.com/",
+            "--max-subdomains",
+            "50",
+            "--probe-workers",
+            "4",
+            "--skip-crtsh",
+            "--skip-js-surface",
+            "--dry-run",
+        ]
+    )
+    assert args.func.__name__ == "cmd_discover"
+    assert args.program == "lab"
+    assert args.target == "https://api.example.com/"
+    assert args.max_subdomains == 50
+    assert args.probe_workers == 4
+    assert args.skip_crtsh is True
+    assert args.skip_js_surface is True
+    assert args.dry_run is True
+    assert "discover" in p.format_help()

@@ -351,6 +351,126 @@ def paced_fetch(args: dict) -> dict:
     )
 
 
+def check_ws_idor(args: dict) -> dict:
+    """Test whether a WebSocket server enforces per-user subscription authorization.
+
+    Connects with the provided credentials, sends handshake_messages to establish
+    a session, then tests own_subscriptions (baseline -- expected allowed) and
+    victim_subscriptions (the IDOR probe -- should be denied). Responses are
+    collected for `collect_seconds` after all messages are sent, then each
+    subscription is classified by matching its sub_id in allow_pattern /
+    deny_pattern against the collected raw text.
+
+    Designed for Lightstreamer TLCP (SUBOK/REQERR) but configurable for any
+    text-framed WS protocol via allow_pattern / deny_pattern.
+    """
+    import asyncio
+    import re as _re
+    import ssl
+
+    ws_url = args.get("ws_url")
+    if not ws_url:
+        raise ValueError("check_ws_idor requires 'ws_url'")
+
+    ws_protocol = args.get("ws_protocol")
+    handshake_messages = list(args.get("handshake_messages") or [])
+    own_subs = list(args.get("own_subscriptions") or [])
+    victim_subs = list(args.get("victim_subscriptions") or [])
+    allow_pattern = _re.compile(args.get("allow_pattern", r"SUBOK,{sub_id}"))
+    deny_pattern = _re.compile(args.get("deny_pattern", r"REQERR,{sub_id}"))
+    collect_seconds = float(args.get("collect_seconds", 5.0))
+
+    async def _run() -> dict:
+        try:
+            import websockets
+        except ModuleNotFoundError as exc:
+            raise RuntimeError(
+                "check_ws_idor requires the 'websockets' package: pip install websockets"
+            ) from exc
+
+        ssl_ctx = ssl.create_default_context() if ws_url.startswith("wss://") else None
+        connect_kwargs: dict = {}
+        if ws_protocol:
+            connect_kwargs["subprotocols"] = [ws_protocol]
+        if ssl_ctx:
+            connect_kwargs["ssl"] = ssl_ctx
+
+        collected: list[str] = []
+        sent_log: list[str] = []
+
+        async with websockets.connect(ws_url, **connect_kwargs) as ws:
+            async def _drain(secs: float) -> None:
+                deadline = asyncio.get_event_loop().time() + secs
+                while True:
+                    remaining = deadline - asyncio.get_event_loop().time()
+                    if remaining <= 0:
+                        break
+                    try:
+                        msg = await asyncio.wait_for(ws.recv(), timeout=min(remaining, 0.5))
+                        collected.append(str(msg))
+                    except (asyncio.TimeoutError, websockets.exceptions.ConnectionClosed):
+                        break
+
+            for msg in handshake_messages:
+                await ws.send(str(msg))
+                sent_log.append(str(msg)[:200])
+
+            await _drain(2.0)
+
+            all_subs = list(own_subs) + list(victim_subs)
+            for sub in all_subs:
+                await ws.send(str(sub["message"]))
+                sent_log.append(str(sub["message"])[:200])
+
+            await _drain(collect_seconds)
+
+        raw = "\n".join(collected)
+
+        def _classify(sub: dict) -> dict:
+            sid = str(sub.get("sub_id", ""))
+            allow_rx = _re.compile(allow_pattern.pattern.replace("{sub_id}", _re.escape(sid)))
+            deny_rx = _re.compile(deny_pattern.pattern.replace("{sub_id}", _re.escape(sid)))
+            if allow_rx.search(raw):
+                status = "allowed"
+            elif deny_rx.search(raw):
+                status = "denied"
+            else:
+                status = "no_response"
+            return {"id": sub.get("id"), "sub_id": sid, "status": status}
+
+        own_results = [_classify(s) for s in own_subs]
+        victim_results = [_classify(s) for s in victim_subs]
+
+        own_allowed = all(r["status"] == "allowed" for r in own_results) if own_results else None
+        victim_allowed_any = any(r["status"] == "allowed" for r in victim_results)
+        victim_denied_all = all(r["status"] == "denied" for r in victim_results) if victim_results else False
+
+        if victim_allowed_any:
+            verdict = "IDOR_CONFIRMED"
+            severity = "high"
+        elif victim_denied_all and own_allowed:
+            verdict = "access_control_enforced"
+            severity = "none"
+        elif not victim_results:
+            verdict = "no_victim_subs_tested"
+            severity = "none"
+        else:
+            verdict = "inconclusive"
+            severity = "unknown"
+
+        return {
+            "url": ws_url,
+            "verdict": verdict,
+            "severity": severity,
+            "own_baseline_ok": own_allowed,
+            "own_subscriptions": own_results,
+            "victim_subscriptions": victim_results,
+            "raw_responses": raw[:4000],
+        }
+
+    return asyncio.run(_run())
+
+
 def explain_finding(args: dict) -> dict:
     """Static remediation guidance for a finding id/category -- lets an
     agent ask "what do I do about this" without a human opening the docs."""
@@ -561,6 +681,84 @@ TOOLS: dict[str, dict[str, Any]] = {
             "required": ["crawl", "baseline"],
         },
         "handler": diff_since_baseline,
+    },
+    "check_ws_idor": {
+        "description": "Test whether a WebSocket server enforces per-user subscription "
+        "authorization. Connects with the provided credentials, sends handshake messages "
+        "to establish a session, then probes victim-ID subscription groups and classifies "
+        "each response as allowed/denied/no_response. Returns IDOR_CONFIRMED when any "
+        "victim subscription is accepted, access_control_enforced when all are denied "
+        "and the own-session baseline passes. Designed for Lightstreamer TLCP "
+        "(SUBOK/REQERR) but configurable for any text-framed WS protocol.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "ws_url": {
+                    "type": "string",
+                    "description": "WebSocket URL to connect to (ws:// or wss://)",
+                },
+                "ws_protocol": {
+                    "type": "string",
+                    "description": "WebSocket subprotocol (e.g. 'TLCP-2.5.0.lightstreamer.com')",
+                },
+                "handshake_messages": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Raw messages sent before subscriptions to establish the session "
+                    "(e.g. 'wsok' then a full create_session line for Lightstreamer). "
+                    "A 2-second drain follows before subscriptions are sent.",
+                },
+                "own_subscriptions": {
+                    "type": "array",
+                    "description": "Baseline subscriptions that should succeed (own-user IDs). "
+                    "Each entry: {id: label, sub_id: int-or-string, message: raw-ws-string}.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "sub_id": {},
+                            "message": {"type": "string"},
+                        },
+                        "required": ["sub_id", "message"],
+                    },
+                },
+                "victim_subscriptions": {
+                    "type": "array",
+                    "description": "Subscriptions to test with victim-user IDs. Same shape as "
+                    "own_subscriptions. A match in allow_pattern yields IDOR_CONFIRMED.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "id": {"type": "string"},
+                            "sub_id": {},
+                            "message": {"type": "string"},
+                        },
+                        "required": ["sub_id", "message"],
+                    },
+                },
+                "allow_pattern": {
+                    "type": "string",
+                    "default": "SUBOK,{sub_id}",
+                    "description": "Regex matching an 'accepted' server response. {sub_id} is "
+                    "replaced with the subscription's sub_id value before matching "
+                    "(e.g. 'SUBOK,{sub_id}' matches Lightstreamer SUBOK responses).",
+                },
+                "deny_pattern": {
+                    "type": "string",
+                    "default": "REQERR,{sub_id}",
+                    "description": "Regex matching a 'denied' server response "
+                    "(e.g. 'REQERR,{sub_id}' matches Lightstreamer SubscriptionNotAllowed).",
+                },
+                "collect_seconds": {
+                    "type": "number",
+                    "default": 5.0,
+                    "description": "Seconds to collect server responses after sending all subscriptions.",
+                },
+            },
+            "required": ["ws_url"],
+        },
+        "handler": check_ws_idor,
     },
     "explain_finding": {
         "description": "Get static remediation guidance for a finding id or category.",

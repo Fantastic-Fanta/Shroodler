@@ -314,7 +314,16 @@ def test_reauth_and_program_flags_parse():
     args = p.parse_args(["program", "merge", "lab", "out.json"])
     assert args.crawl_json == "out.json"
     args = p.parse_args(
-        ["program", "add-session", "lab", "owner.json", "--label", "owner", "--expires", "2026-12-01"]
+        [
+            "program",
+            "add-session",
+            "lab",
+            "owner.json",
+            "--label",
+            "owner",
+            "--expires",
+            "2026-12-01",
+        ]
     )
     assert args.path == "owner.json"
     assert args.label == "owner"

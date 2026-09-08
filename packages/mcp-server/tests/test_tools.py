@@ -8,14 +8,17 @@ from shroodler_mcp.tools import (
     _resolve_safe_path,
     check_idor,
     check_ws_idor,
+    coverage_gaps,
     diff_since_baseline,
     explain_finding,
     extract_js_routes,
     paced_fetch,
     peer_write,
+    program_state,
     reverify_fix,
     scan_route,
     session_export,
+    summarize_result,
 )
 
 
@@ -51,7 +54,7 @@ def test_diff_since_baseline_clean():
         "findings": [],
     }
     baseline = {"expected_pages": ["/a"], "expected_findings": []}
-    result = diff_since_baseline({"crawl": crawl, "baseline": baseline, "gate": True})
+    result = diff_since_baseline({"crawl": crawl, "baseline": baseline, "gate": True, "summary": False})
     assert result["clean"] is True
     assert result["errors"] == []
 
@@ -72,7 +75,7 @@ def test_diff_since_baseline_flags_new_finding():
         ],
     }
     baseline = {"expected_pages": [], "expected_findings": []}
-    result = diff_since_baseline({"crawl": crawl, "baseline": baseline, "gate": True})
+    result = diff_since_baseline({"crawl": crawl, "baseline": baseline, "gate": True, "summary": False})
     assert result["clean"] is False
     assert any("missing-hsts" in e for e in result["errors"])
 
@@ -146,7 +149,7 @@ def test_check_idor_allow_without_policy_reaches_authz_diff(monkeypatch):
 
     monkeypatch.setattr("shroodler.authz_diff.run", fake_authz_diff_run)
     higher_doc = {"target": "http://127.0.0.1:1", "pages": []}
-    result = check_idor({"higher_priv_crawl": higher_doc, "allow_without_policy": True})
+    result = check_idor({"higher_priv_crawl": higher_doc, "allow_without_policy": True, "summary": False})
     assert result["findings"] == []
     assert called["enforcer"] is not None
 
@@ -172,7 +175,7 @@ def test_scan_route_headless_allow_without_policy_proceeds(monkeypatch):
     monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *_a, **_k: FakeResult())
     monkeypatch.setattr("shroodler.validate.validate_crawl", lambda *_a, **_k: None)
 
-    doc = scan_route({"url": "http://127.0.0.1:1/", "mode": "headless", "allow_without_policy": True})
+    doc = scan_route({"url": "http://127.0.0.1:1/", "mode": "headless", "allow_without_policy": True, "summary": False})
     assert doc["target"] == "http://127.0.0.1:1"
 
 
@@ -188,7 +191,7 @@ def test_scan_route_static_mode_does_not_require_policy(monkeypatch):
     monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *_a, **_k: FakeResult())
     monkeypatch.setattr("shroodler.validate.validate_crawl", lambda *_a, **_k: None)
 
-    doc = scan_route({"url": "http://127.0.0.1:1/"})
+    doc = scan_route({"url": "http://127.0.0.1:1/", "summary": False})
     assert doc["target"] == "http://127.0.0.1:1"
 
 
@@ -237,7 +240,7 @@ def test_peer_write_allow_without_policy_reaches_engine(monkeypatch):
 
     monkeypatch.setattr("shroodler.peer_write.run", fake_run)
     result = peer_write(
-        {"playbook": {"target": "http://127.0.0.1:1", "writes": []}, "allow_without_policy": True}
+        {"playbook": {"target": "http://127.0.0.1:1", "writes": []}, "allow_without_policy": True, "summary": False}
     )
     assert result["findings"] == []
     assert called["enforcer"] is not None
@@ -434,3 +437,198 @@ def test_check_ws_idor_confirmed():
     assert result["verdict"] == "IDOR_CONFIRMED"
     assert result["severity"] == "high"
     assert result["victim_subscriptions"][0]["status"] == "allowed"
+
+
+def test_summarize_result_shape_and_next_step():
+    raw = {
+        "target": "http://x",
+        "findings": [
+            {
+                "id": "authz-broken-access-control",
+                "severity": "high",
+                "category": "auth",
+                "url": "http://x/api/orders/1",
+                "description": "Lower-priv session can still read this order.",
+                "confidence": "confirmed",
+            },
+            {
+                "id": "idor-adjacent-id-accessible",
+                "severity": "medium",
+                "category": "auth",
+                "url": "http://x/api/orders/2",
+                "description": "Adjacent id returned a same-shaped object.",
+                "confidence": "probable",
+            },
+        ],
+    }
+    summary = summarize_result(raw, tool="check_idor")
+    assert summary["leads"] == 2
+    assert summary["confirmed"] == 1
+    assert summary["probable"] == 1
+    assert len(summary["top"]) <= 3
+    top = summary["top"][0]
+    assert set(top) == {"id", "severity", "url", "description", "curl_repro"}
+    assert top["id"] == "authz-broken-access-control"
+    assert "curl -sS" in top["curl_repro"]
+    assert "confirmed leads" in summary["next_step"]
+    assert "peer_write" in summary["next_step"]
+
+    empty = summarize_result({"findings": []}, tool="check_idor")
+    assert empty["leads"] == 0
+    assert empty["confirmed"] == 0
+    assert empty["probable"] == 0
+    assert empty["top"] == []
+    assert "No leads" in empty["next_step"]
+    assert "coverage_gaps" in empty["next_step"]
+
+
+def test_check_idor_summary_default(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+
+    def fake_authz_diff_run(doc, **kwargs):
+        return {
+            "target": doc.get("target", ""),
+            "findings": [
+                {
+                    "id": "authz-still-accessible",
+                    "severity": "high",
+                    "category": "auth",
+                    "url": "http://127.0.0.1:1/a",
+                    "description": "reachable",
+                    "confidence": "probable",
+                }
+            ],
+        }
+
+    monkeypatch.setattr("shroodler.authz_diff.run", fake_authz_diff_run)
+    result = check_idor(
+        {"higher_priv_crawl": {"target": "http://127.0.0.1:1", "pages": []}, "allow_without_policy": True}
+    )
+    assert result["leads"] == 1
+    assert result["probable"] == 1
+    assert "next_step" in result
+    assert "findings" not in result
+
+
+def test_scan_route_summary_default(monkeypatch):
+    class FakeResult:
+        def to_dict(self):
+            return {
+                "target": "http://127.0.0.1:1",
+                "pages": [],
+                "findings": [
+                    {
+                        "id": "missing-hsts",
+                        "severity": "medium",
+                        "category": "header",
+                        "url": "http://127.0.0.1:1/",
+                        "description": "HSTS missing",
+                    }
+                ],
+                "js_endpoints": [],
+            }
+
+    monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *_a, **_k: FakeResult())
+    monkeypatch.setattr("shroodler.validate.validate_crawl", lambda *_a, **_k: None)
+    result = scan_route({"url": "http://127.0.0.1:1/"})
+    assert result["leads"] == 1
+    assert result["confirmed"] == 1  # header category stamps confirmed
+    assert result["top"][0]["id"] == "missing-hsts"
+    assert "next_step" in result
+
+
+def test_diff_since_baseline_summary_default():
+    crawl = {
+        "target": "http://x",
+        "pages": [],
+        "findings": [
+            {
+                "id": "missing-hsts",
+                "severity": "medium",
+                "category": "header",
+                "url": "http://x/a",
+                "description": "d",
+            }
+        ],
+    }
+    result = diff_since_baseline(
+        {"crawl": crawl, "baseline": {"expected_pages": [], "expected_findings": []}, "gate": True}
+    )
+    assert result["leads"] >= 1
+    assert "next_step" in result
+    assert "top" in result
+
+
+def test_peer_write_summary_next_step(monkeypatch):
+    monkeypatch.setattr("shroodler_guardrails.policy.fetch_policy", lambda *_a, **_k: None)
+
+    def fake_run(doc, **kwargs):
+        return {
+            "target": doc.get("target", ""),
+            "findings": [
+                {
+                    "id": "peer-write-idor",
+                    "severity": "high",
+                    "category": "auth",
+                    "url": "http://127.0.0.1:1/o/1",
+                    "description": "peer write differed",
+                    "confidence": "confirmed",
+                }
+            ],
+            "checked": [],
+        }
+
+    monkeypatch.setattr("shroodler.peer_write.run", fake_run)
+    result = peer_write(
+        {
+            "playbook": {"target": "http://127.0.0.1:1", "writes": []},
+            "allow_without_policy": True,
+        }
+    )
+    assert result["confirmed"] == 1
+    assert "draft a report" in result["next_step"]
+
+
+def test_program_state_and_coverage_gaps_shape(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    from shroodler.program import load, mark_tested, merge_crawl_doc, save
+
+    state = load("etoro-bugcrowd")
+    merge_crawl_doc(
+        state,
+        {
+            "scan_finished_at": "2026-09-01T12:00:00Z",
+            "pages": [
+                {"url": "http://127.0.0.1/api/a", "status_code": 200},
+                {"url": "http://127.0.0.1/api/b", "status_code": 200},
+            ],
+            "findings": [
+                {
+                    "id": "authz-still-accessible",
+                    "severity": "high",
+                    "category": "auth",
+                    "url": "http://127.0.0.1/api/a",
+                    "description": "lead",
+                    "confidence": "probable",
+                }
+            ],
+        },
+    )
+    mark_tested(state, ["http://127.0.0.1/api/b"], "tested_authz")
+    save(state)
+
+    briefing = program_state({"slug": "etoro-bugcrowd"})
+    assert briefing["slug"] == "etoro-bugcrowd"
+    assert briefing["endpoint_count"] == 2
+    assert "scope" in briefing
+    assert briefing["unconfirmed_leads"] == 1
+    assert "coverage_gaps" in briefing
+    assert len(briefing["coverage_gaps"]) <= 10
+    assert "next_step" in briefing
+
+    gaps = coverage_gaps({"slug": "etoro-bugcrowd"})
+    assert gaps["slug"] == "etoro-bugcrowd"
+    assert gaps["count"] >= 1
+    assert isinstance(gaps["gaps"], list)
+    assert "url" in gaps["gaps"][0]
+    assert "tested_authz" in gaps["gaps"][0]

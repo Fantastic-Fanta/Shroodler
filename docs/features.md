@@ -60,8 +60,10 @@
   `payload`, or `$SHROODLER_PLUGIN_PATH`).
 - **Crawl** — static (HTML parse) or headless (real browser, for SPAs)
   crawling with configurable depth/page/time budgets, robots/sitemap
-  handling, scripted login (re-runs the login recipe once if a mid-crawl
-  fetch returns 401 or a login redirect), cookie/header/session-state
+  handling, scripted login (re-runs the login recipe up to
+  `--reauth-max-retries` times on a mid-crawl 401 or login redirect, then
+  emits `session-died` and stops that origin if retries fail; recipes may
+  include `oauth_pkce` and opt-in `hook` steps), cookie/header/session-state
   injection,
   configurable User-Agent (`--user-agent`), named safe/balanced/
   aggressive profiles, and `--spec` to seed extra same-origin paths from
@@ -201,6 +203,17 @@
   finding type per severity (not raw per-page instance count, so one
   systemic header issue repeated across 500 pages doesn't dwarf five
   genuinely distinct critical bugs on one page).
+- **MCP summary output** — `scan_route`, `check_idor`, `peer_write`, and
+  `diff_since_baseline` return a compact `{leads, confirmed, probable,
+  top, next_step}` dict by default so an agent is not dumped a 400-line
+  crawl blob. Pass `summary=false` for the full JSON.
+- **Engagement memory** (`shroodler program`) — per-program state at
+  `~/.shroodler/programs/<slug>/state.json` (endpoints tested for
+  authz/peer-write, object IDs extracted from JSON bodies, findings,
+  sessions). `crawl --program`, `authz-diff --program`, and
+  `peer-write --program` / `--from-program` keep it up to date. MCP
+  `program_state` is the agent's orient step; `coverage_gaps` is the
+  prioritized untested-endpoint queue.
 - **Two crawler implementations** — a Python crawler (full feature set) and
   a Go crawler (`shroodler-go`, faster, same core subcommands including
   `authz-diff` and session-fixation/logout-invalidation checks). A few

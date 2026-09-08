@@ -11,12 +11,12 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program version"
 
 _shroodler_flags_for() {
     case "$1" in
         crawl)
-            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --spec --seed-from --from-capture --cookies-from --gql-schema --gql-wordlist --plugin --exclude-path"
+            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --reauth-max-retries --program --proxy --seed --spec --seed-from --from-capture --cookies-from --gql-schema --gql-wordlist --plugin --exclude-path"
             ;;
         diff)
             echo "--pages-only --gate --suppressions --format --output --source-root"
@@ -52,10 +52,10 @@ _shroodler_flags_for() {
             echo "--target --output"
             ;;
         authz-diff)
-            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation --gql-schema --gql-wordlist"
+            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation --gql-schema --gql-wordlist --program"
             ;;
         peer-write)
-            echo "--output --target --from-sessions --only-id --owner-cookie --peer-cookie --owner-cookies-from --peer-cookies-from --header --rate --nonsense-id --user-agent --user-agent-suffix --allow-external --require-policy --policy-file --audit-log --csrf-from --no-csrf --require-confirm --allow-unconfirmed"
+            echo "--output --target --from-sessions --only-id --owner-cookie --peer-cookie --owner-cookies-from --peer-cookies-from --header --rate --nonsense-id --user-agent --user-agent-suffix --allow-external --require-policy --policy-file --audit-log --csrf-from --no-csrf --require-confirm --allow-unconfirmed --program --from-program"
             ;;
         session-export)
             echo "--from --cdp --origin --cookie --output --allow-external"
@@ -108,6 +108,18 @@ _shroodler_flags_for() {
         self-scan)
             echo "--format --output"
             ;;
+        program-init)
+            echo "--scope-file"
+            ;;
+        program-status)
+            echo ""
+            ;;
+        program-merge)
+            echo ""
+            ;;
+        program-add-session)
+            echo "--label --expires"
+            ;;
         *)
             echo ""
             ;;
@@ -134,7 +146,20 @@ _shroodler_complete() {
         return
     fi
 
-    # `history` has its own nested subcommand (record|list) before any flags.
+    # `program` has nested subcommands (init|status|merge|add-session).
+    if [[ "$subcmd" == "program" ]]; then
+        local psub=""
+        for ((i = 1; i < COMP_CWORD; i++)); do
+            case "${COMP_WORDS[i]}" in
+                init|status|merge|add-session) psub="${COMP_WORDS[i]}"; break ;;
+            esac
+        done
+        if [[ -z "$psub" ]]; then
+            COMPREPLY=($(compgen -W "init status merge add-session" -- "$cur"))
+            return
+        fi
+        subcmd="program-$psub"
+    fi
     if [[ "$subcmd" == "history" ]]; then
         local hsub=""
         for ((i = 1; i < COMP_CWORD; i++)); do
@@ -218,7 +243,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--from-capture|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec|--gql-schema|--gql-wordlist|--merge-sarif)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--from-capture|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec|--gql-schema|--gql-wordlist|--merge-sarif|--scope-file)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

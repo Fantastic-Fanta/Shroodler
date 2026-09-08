@@ -479,7 +479,8 @@ def cmd_peer_write(args: argparse.Namespace) -> int:
     )
     from_program = getattr(args, "from_program", None)
     if from_program:
-        from shroodler.program import apply_program_ids, load as load_program
+        from shroodler.program import apply_program_ids
+        from shroodler.program import load as load_program
 
         state = load_program(from_program)
         merged = apply_program_ids(

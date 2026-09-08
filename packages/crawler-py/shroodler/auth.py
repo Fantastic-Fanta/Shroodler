@@ -170,7 +170,9 @@ def load_login_recipe(path: str) -> LoginRecipe:
     protected_url = data.get("protected_url")
     content_type = str(data.get("content_type") or "form").lower()
     if content_type not in {"form", "json"}:
-        raise ValueError(f"login recipe content_type must be 'form' or 'json', got {content_type!r}")
+        raise ValueError(
+            f"login recipe content_type must be 'form' or 'json', got {content_type!r}"
+        )
     local_storage = data.get("local_storage") or {}
     if not isinstance(local_storage, dict):
         raise ValueError("login recipe local_storage must be an object")

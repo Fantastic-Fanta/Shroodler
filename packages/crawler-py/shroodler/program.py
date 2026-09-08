@@ -199,7 +199,9 @@ def _walk_object_ids(value: Any, out: list[str]) -> None:
                     pass
                 elif isinstance(val, int) and not isinstance(val, bool):
                     out.append(str(val))
-                elif isinstance(val, str) and (_UUID_RE.fullmatch(val) or _INT_ID_RE.fullmatch(val)):
+                elif isinstance(val, str) and (
+                    _UUID_RE.fullmatch(val) or _INT_ID_RE.fullmatch(val)
+                ):
                     out.append(val)
             _walk_object_ids(val, out)
     elif isinstance(value, list):

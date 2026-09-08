@@ -128,3 +128,33 @@ def crawl_seeds_from_endpoint(origin: str, marker: str) -> list[str]:
             return [joined]
         return []
     return []
+
+
+def extract_endpoints(js_text: str) -> list[str]:
+    """Raw endpoint strings (paths and absolute URLs) referenced in JS.
+
+    Combines fetch/axios/XHR paths with React Query keys and tRPC procedures.
+    """
+    from shroodler.extractors.js_endpoints import extract_js_endpoints
+
+    out: list[str] = []
+    seen: set[str] = set()
+
+    def add(raw: str) -> None:
+        value = (raw or "").strip()
+        if not value or value in seen:
+            return
+        seen.add(value)
+        out.append(value)
+
+    endpoints, _findings = extract_js_endpoints("", js_text or "")
+    for ep in endpoints:
+        add(ep.endpoint)
+    markers, _ = extract_js_api_surface("", js_text or "")
+    for marker in markers:
+        kind, _, rest = marker.endpoint.partition(":")
+        if kind == "react-query":
+            add(rest)
+        elif kind == "trpc":
+            add("/trpc/" + rest)
+    return out

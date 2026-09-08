@@ -24,6 +24,32 @@ def _is_success(status: int) -> bool:
     return 200 <= status < 300
 
 
+_AUTH_HEADER_NAMES = frozenset({"cookie", "authorization"})
+
+
+def headers_from_auth_line(raw: str | None) -> dict[str, str]:
+    """Turn a Cookie or Authorization line (or a bare cookie value) into headers."""
+    text = (raw or "").strip()
+    if not text:
+        return {}
+    if ":" in text:
+        name, _, value = text.partition(":")
+        name, value = name.strip(), value.strip()
+        if not name:
+            return {}
+        lowered = name.lower()
+        if lowered == "authorization":
+            return {"Authorization": value}
+        if lowered == "cookie":
+            return {"Cookie": value}
+        return {name: value}
+    return {"Cookie": text}
+
+
+def _strip_auth_headers(headers: dict[str, str]) -> dict[str, str]:
+    return {k: v for k, v in headers.items() if k.lower() not in _AUTH_HEADER_NAMES}
+
+
 _LOGIN_REDIRECT_HINTS = ("login", "signin", "sign-in", "log-in", "auth", "session/new")
 
 
@@ -112,6 +138,7 @@ def run(
     lower_priv_identity_markers: list[str] | None = None,
     require_identity_confirmation: bool = False,
     gql_field_names: list[str] | None = None,
+    higher_cookie_header: str | None = None,
 ) -> dict:
     """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
     consulted before every live request this replay makes (both the
@@ -158,8 +185,9 @@ def run(
     findings: list[dict] = []
     seen: set[str] = set()
     lower_headers = dict(extra_headers or {})
-    if cookie_header:
-        lower_headers["Cookie"] = cookie_header
+    lower_headers.update(headers_from_auth_line(cookie_header))
+    higher_headers = dict(extra_headers or {})
+    higher_headers.update(headers_from_auth_line(higher_cookie_header))
 
     try:
         for page in higher_doc.get("pages", []):
@@ -175,6 +203,12 @@ def run(
                 if not ok:
                     continue
 
+            if higher_cookie_header:
+                try:
+                    http.get(url, headers=higher_headers)
+                except httpx.HTTPError:
+                    pass
+
             try:
                 lower_resp = http.get(url, headers=lower_headers)
             except httpx.HTTPError:
@@ -185,7 +219,7 @@ def run(
             anon_resp = None
             if check_anonymous and (enforcer is None or enforcer.check(url)[0]):
                 try:
-                    anon_headers = {k: v for k, v in lower_headers.items() if k != "Cookie"}
+                    anon_headers = _strip_auth_headers(lower_headers)
                     anon_resp = http.get(url, headers=anon_headers)
                 except httpx.HTTPError:
                     anon_resp = None

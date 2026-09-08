@@ -632,6 +632,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         dry_run=bool(getattr(args, "dry_run", False)),
         llm_triage=bool(getattr(args, "llm_triage", False)),
         run_discovery=bool(getattr(args, "run_discovery", False)),
+        ignore_robots=bool(getattr(args, "ignore_robots", False)),
+        write_authz_spec=getattr(args, "write_authz_spec", None),
     )
     result = run_agent(config)
     payload: dict = {
@@ -2355,6 +2357,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--run-discovery",
         action="store_true",
         help="Run subdomain/JS discovery before the first iteration",
+    )
+    agent.add_argument(
+        "--ignore-robots",
+        action="store_true",
+        help="Bypass robots.txt during crawl legs (use for API-first targets)",
+    )
+    agent.add_argument(
+        "--write-authz-spec",
+        metavar="FILE",
+        help=(
+            "JSON file of write probes (POST/PATCH/DELETE) replayed as both "
+            "principals after authz-diff"
+        ),
     )
     agent.set_defaults(func=cmd_agent)
 

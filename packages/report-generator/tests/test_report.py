@@ -250,7 +250,7 @@ def test_markdown_includes_risk_score():
 def test_markdown_partial_coverage_caveat():
     doc = dict(EMPTY, findings=[
         {
-            "id": "waf-challenge-sitewide",
+            "id": "waf-blocking-active-scan",
             "severity": "info",
             "category": "waf-challenge",
             "url": "http://127.0.0.1:8081/",

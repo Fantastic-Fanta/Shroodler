@@ -115,9 +115,9 @@ def _has_coverage_gap(grouped_findings: list[dict]) -> bool:
     description/urls/count) against every known skip/truncation/
     challenge id in both crawler engines: cors-probe-skipped,
     graphql-probe-skipped, session-checks-skipped-headless,
-    redirect-chain-truncated, waf-challenge, waf-challenge-sitewide."""
+    redirect-chain-truncated, waf-challenge, waf-blocking-active-scan."""
     for g in grouped_findings:
         fid = str(g.get("id", "")).lower()
-        if "skipped" in fid or "truncated" in fid or "challenge" in fid:
+        if "skipped" in fid or "truncated" in fid or "challenge" in fid or "blocking" in fid:
             return True
     return False

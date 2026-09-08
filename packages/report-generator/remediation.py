@@ -54,7 +54,7 @@ _BY_ID: dict[str, str] = {
     "tls-untrusted-chain": "Issue a certificate from a CA in standard trust stores, and ensure the server sends its full intermediate chain.",
     "tls-handshake-failed": "Investigate the TLS handshake failure -- often an obsolete protocol/cipher configuration a modern client refuses to negotiate.",
     "waf-challenge": "Informational: a WAF/bot-mitigation challenge was detected, not a vulnerability by itself.",
-    "waf-challenge-sitewide": "Allowlist the scanner's IP/UA with the WAF operator; most of this scan was blocked, not clean.",
+    "waf-blocking-active-scan": "Most of this scan was WAF-blocked. Recovery: capture a browser session (Burp/Caido/DevTools HAR) then replay with: shroodler ingest-sessions --capture capture.har --target <url> && shroodler crawl --target <url> --from-capture capture.har --program <slug>. Alternatively allowlist the scanner IP/UA with the WAF operator.",
     "verbose-error": "Turn off debug/verbose error pages in production; log stack traces server-side only.",
     "autocomplete": "Add autocomplete=\"off\"/\"new-password\" to sensitive fields, or accept the browser tradeoff deliberately.",
     "missing-rate-limit": "Add rate limiting/lockout on this auth endpoint to slow down credential stuffing.",

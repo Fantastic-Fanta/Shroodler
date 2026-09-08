@@ -33,6 +33,8 @@ def test_tools_list_contains_expected_tools():
         "diff_since_baseline",
         "explain_finding",
         "reverify_fix",
+        "program_state",
+        "coverage_gaps",
     }
     for tool in result["tools"]:
         assert "inputSchema" in tool

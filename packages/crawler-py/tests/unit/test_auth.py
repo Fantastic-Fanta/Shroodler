@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from urllib.parse import urlparse
 
+import pytest
+
 from shroodler.auth import (
     cookies_from_json,
     cookies_from_netscape,
@@ -10,8 +12,17 @@ from shroodler.auth import (
     load_login_recipe,
     parse_cookie_pairs,
     parse_header_lines,
+    pkce_pair,
+    run_hook_step,
+    run_login_httpx,
+    run_oauth_pkce_step,
 )
 from shroodler.crawler import crawl_url
+
+
+@pytest.fixture(autouse=True)
+def _no_reauth_sleep(monkeypatch):
+    monkeypatch.setattr("shroodler.crawler.sleep", lambda *_a, **_k: None)
 
 
 def test_parse_header_lines():
@@ -302,7 +313,7 @@ def test_reauth_on_login_redirect(fx, tmp_path):
     assert any(f.id == "session-reauthenticated" for f in result.findings)
 
 
-def test_reauth_capped_at_one_retry(fx, tmp_path):
+def test_reauth_capped_at_retries(fx, tmp_path):
     logins = {"n": 0}
     login_url = _login_handlers(fx, logins)
     fx.html("/", '<a href="/a">a</a><a href="/b">b</a>')
@@ -314,13 +325,72 @@ def test_reauth_capped_at_one_retry(fx, tmp_path):
     fx.on("GET", "/b", always_401)
     recipe = tmp_path / "recipe.json"
     recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
-    crawl_url(
+    result = crawl_url(
         fx.origin + "/",
         depth=1,
         ignore_robots=True,
         login_recipe=str(recipe),
+        reauth_max_retries=2,
     )
-    assert logins["n"] == 2  # prime + one mid-crawl re-auth, not one per 401
+    # prime + 2 mid-crawl re-auths on /a, then session-died (never reaches /b)
+    assert logins["n"] == 3
+    died = [f for f in result.findings if f.id == "session-died"]
+    assert len(died) == 1
+    assert died[0].severity == "high"
+    assert died[0].category == "scan-note"
+    assert str(logins["n"])  # smoke
+    paths = {urlparse(p.url).path for p in result.pages}
+    assert "/b" not in paths
+
+
+def test_reauth_retry_countdown_backoff(fx, tmp_path, monkeypatch):
+    delays: list[float] = []
+    monkeypatch.setattr("shroodler.crawler.sleep", lambda d: delays.append(d))
+    logins = {"n": 0}
+    login_url = _login_handlers(fx, logins)
+    fx.html("/", '<a href="/secret">s</a>')
+    fx.on("GET", "/secret", lambda _req: (401, {"Content-Type": "text/plain"}, b"no"))
+    recipe = tmp_path / "recipe.json"
+    recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
+    result = crawl_url(
+        fx.origin + "/",
+        depth=1,
+        ignore_robots=True,
+        login_recipe=str(recipe),
+        reauth_max_retries=3,
+    )
+    assert delays == [1, 2, 4]
+    died = next(f for f in result.findings if f.id == "session-died")
+    assert died.severity == "high"
+    assert "requests=" in (died.description or "")
+    assert "last good URL" in (died.description or "")
+    assert died.url  # last good URL (seed /)
+    assert "requests=" in (died.evidence or "")
+
+
+def test_session_died_includes_last_good_url_and_request_count(fx, tmp_path):
+    logins = {"n": 0}
+    login_url = _login_handlers(fx, logins)
+    fx.html("/", '<a href="/ok">ok</a><a href="/dead">dead</a>')
+    fx.on(
+        "GET",
+        "/ok",
+        lambda _req: (200, {"Content-Type": "text/html; charset=utf-8"}, b"<p>ok</p>"),
+    )
+    fx.on("GET", "/dead", lambda _req: (401, {"Content-Type": "text/plain"}, b"no"))
+    recipe = tmp_path / "recipe.json"
+    recipe.write_text(json.dumps({"url": login_url, "fields": {"user": "ok"}}), encoding="utf-8")
+    result = crawl_url(
+        fx.origin + "/",
+        depth=1,
+        ignore_robots=True,
+        login_recipe=str(recipe),
+        reauth_max_retries=1,
+    )
+    died = next(f for f in result.findings if f.id == "session-died")
+    assert "/ok" in died.url or died.url.rstrip("/").endswith("")
+    assert "requests=" in died.description
+    assert result.stats is None or result.stats.requests >= 1
 
 
 def test_no_reauth_without_login_recipe(fx):
@@ -328,3 +398,169 @@ def test_no_reauth_without_login_recipe(fx):
     fx.on("GET", "/secret", lambda _req: (401, {"Content-Type": "text/plain"}, b"no"))
     result = crawl_url(fx.origin + "/", depth=1, ignore_robots=True)
     assert not any(f.id == "session-reauthenticated" for f in result.findings)
+    assert not any(f.id == "session-died" for f in result.findings)
+
+
+def test_load_login_recipe_oauth_pkce_and_hook_steps(tmp_path):
+    p = tmp_path / "login.json"
+    p.write_text(
+        json.dumps(
+            {
+                "url": "https://idp.example/oauth/token",
+                "steps": [
+                    {"type": "hook", "command": "echo tok", "header_name": "X-Castle"},
+                    {
+                        "type": "oauth_pkce",
+                        "token_url": "https://idp.example/oauth/token",
+                        "client_id": "app",
+                        "scope": "openid",
+                        "client_secret": "s",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    recipe = load_login_recipe(str(p))
+    types = [s.type for s in recipe.steps]
+    assert types == ["hook", "oauth_pkce"]
+    assert recipe.steps[1].client_id == "app"
+    assert recipe.steps[1].scope == "openid"
+
+
+def test_oauth_pkce_step_client_credentials(fx):
+    import httpx
+
+    seen: dict[str, str] = {}
+
+    def token(req):
+        seen["body"] = req.body.decode("utf-8")
+        body = json.dumps({"access_token": "tok-abc", "token_type": "Bearer"})
+        return 200, {"Content-Type": "application/json"}, body.encode()
+
+    fx.on("POST", "/oauth/token", token)
+    client = httpx.Client(follow_redirects=True)
+    from shroodler.auth import RecipeStep
+
+    token_str = run_oauth_pkce_step(
+        client,
+        RecipeStep(
+            type="oauth_pkce",
+            token_url=fx.origin + "/oauth/token",
+            client_id="cid",
+            scope="api",
+            client_secret="sekrit",
+        ),
+    )
+    assert token_str == "tok-abc"
+    assert client.headers["Authorization"] == "Bearer tok-abc"
+    assert "grant_type=client_credentials" in seen["body"]
+    assert "client_id=cid" in seen["body"]
+    client.close()
+
+
+def test_oauth_pkce_step_authorization_code(fx):
+    import httpx
+
+    seen: dict[str, str] = {}
+
+    def token(req):
+        seen["body"] = req.body.decode("utf-8")
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            json.dumps({"access_token": "pkce-tok"}).encode(),
+        )
+
+    fx.on("POST", "/oauth/token", token)
+    client = httpx.Client(follow_redirects=True)
+    from shroodler.auth import RecipeStep
+
+    run_oauth_pkce_step(
+        client,
+        RecipeStep(
+            type="oauth_pkce",
+            token_url=fx.origin + "/oauth/token",
+            client_id="cid",
+            code="authcode",
+            code_verifier="verifier-value-here",
+            redirect_uri="http://127.0.0.1/cb",
+        ),
+    )
+    assert "grant_type=authorization_code" in seen["body"]
+    assert "code_verifier=verifier-value-here" in seen["body"]
+    assert client.headers["Authorization"] == "Bearer pkce-tok"
+    client.close()
+
+
+def test_hook_step_execution(tmp_path):
+    import httpx
+
+    marker = tmp_path / "castle.txt"
+    from shroodler.auth import RecipeStep
+
+    client = httpx.Client()
+    run_hook_step(
+        client,
+        RecipeStep(
+            type="hook",
+            command=["python3", "-c", f"open({str(marker)!r}, 'w').write('castle-tok')"],
+            header_from_file=str(marker),
+            header_name="X-Castle-Request-Token",
+        ),
+    )
+    assert marker.read_text() == "castle-tok"
+    assert client.headers["X-Castle-Request-Token"] == "castle-tok"
+    client.close()
+
+
+def test_login_recipe_runs_hook_then_oauth(fx, tmp_path):
+    import httpx
+
+    marker = tmp_path / "hook.ran"
+    fx.on(
+        "POST",
+        "/oauth/token",
+        lambda req: (
+            200,
+            {"Content-Type": "application/json"},
+            json.dumps({"access_token": "from-recipe"}).encode(),
+        ),
+    )
+    recipe = tmp_path / "recipe.json"
+    recipe.write_text(
+        json.dumps(
+            {
+                "url": fx.origin + "/oauth/token",
+                "steps": [
+                    {
+                        "type": "hook",
+                        "command": ["python3", "-c", f"open({str(marker)!r}, 'w').write('ok')"],
+                    },
+                    {
+                        "type": "oauth_pkce",
+                        "token_url": fx.origin + "/oauth/token",
+                        "client_id": "cid",
+                        "client_secret": "s",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    loaded = load_login_recipe(str(recipe))
+    client = httpx.Client(follow_redirects=True)
+    run_login_httpx(client, loaded)
+    assert marker.read_text() == "ok"
+    assert client.headers["Authorization"] == "Bearer from-recipe"
+    client.close()
+
+
+def test_pkce_pair_s256():
+    import base64
+    import hashlib
+
+    verifier, challenge = pkce_pair("abc")
+    assert verifier == "abc"
+    digest = hashlib.sha256(b"abc").digest()
+    assert challenge == base64.urlsafe_b64encode(digest).rstrip(b"=").decode()

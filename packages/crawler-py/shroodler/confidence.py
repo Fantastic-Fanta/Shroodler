@@ -29,6 +29,15 @@ _BY_ID: dict[str, str] = {
     "authz-still-accessible": "probable",
     "authz-broken-access-control": "probable",
     "peer-write-idor": "probable",
+    "csrf-state-change-unprotected": "probable",
+    "chain-xss-cookie-theft": "probable",
+    "chain-cors-credentialed": "probable",
+    "payload-xss-stored": "confirmed",
+    "graphql-field-authz": "probable",
+    "js-jsonrpc-method": "heuristic",
+    "js-trpc-procedure": "heuristic",
+    "js-react-query-key": "heuristic",
+    "js-graphql-operation": "heuristic",
     "html-comment": "heuristic",
     "meta-generator": "heuristic",
     "js-endpoint": "heuristic",
@@ -57,6 +66,8 @@ _BY_CATEGORY: dict[str, str] = {
     "verbose-error": "heuristic",
     "scan-note": "heuristic",
     "payload": "heuristic",
+    "smart-contract": "probable",
+    "sast": "probable",
 }
 
 _DEFAULT = "heuristic"

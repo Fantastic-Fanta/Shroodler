@@ -253,6 +253,64 @@ def test_pack_matcher_all_and_any():
     assert not pack_matches(pack_all, status=200, body="hi", payload="<x>")
 
 
+def test_stored_xss_reget_after_post(tmp_path):
+    store = {"q": ""}
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        method = environ.get("REQUEST_METHOD", "GET")
+        if method == "POST":
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+            body = environ["wsgi.input"].read(length).decode()
+            store["q"] = parse_qs(body).get("q", [""])[0]
+            html = f"<p>saved {store['q']}</p>".encode()
+            start_response("200 OK", [("Content-Type", "text/html")])
+            return [html]
+        html = f"<p>view {store['q']}</p>".encode()
+        start_response("200 OK", [("Content-Type", "text/html")])
+        return [html]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    origin = f"http://127.0.0.1:{port}"
+    try:
+        extra = tmp_path / "xss.yaml"
+        extra.write_text(
+            "- id: xss-store\n"
+            "  finding_id: payload-xss-reflect\n"
+            "  payload: '<script>alert(/{{TOKEN}}/)</script>'\n"
+            "  severity: medium\n"
+            "  match:\n"
+            "    any:\n"
+            "      - reflected: true\n",
+            encoding="utf-8",
+        )
+        doc = {
+            "target": origin + "/",
+            "pages": [
+                {
+                    "url": origin + "/note",
+                    "forms": [
+                        {
+                            "action": origin + "/note",
+                            "method": "POST",
+                            "fields": [{"name": "q"}],
+                        }
+                    ],
+                }
+            ],
+        }
+        out = run(doc, packs=load_packs(extra=[extra]))
+        ids = {f["id"] for f in out["findings"]}
+        assert "payload-xss-reflect" in ids
+        assert "payload-xss-stored" in ids
+    finally:
+        httpd.shutdown()
+
+
 def test_yaml_packs_against_app5(origin):
     out = run(_search_doc(origin))
     ids = {f["id"] for f in out["findings"]}

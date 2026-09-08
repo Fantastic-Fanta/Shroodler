@@ -1,0 +1,146 @@
+- generic [ref=f34e2]:
+  - generic:
+    - banner "Application header" [ref=f34e3]:
+      - generic [ref=f34e4]:
+        - button "Collapse navigation" [expanded] [ref=f34e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f34e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f34e10]: ThousandEyes
+      - generic [ref=f34e29]:
+        - link "Upgrade" [ref=f34e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f34e198] [cursor=pointer]
+        - button "Help Content" [ref=f34e33] [cursor=pointer]
+        - button "Notifications" [ref=f34e39] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f34e46] [cursor=pointer]:
+          - generic [ref=f34e52]:
+            - generic [ref=f34e53]: Lapras Resonance
+            - generic [ref=f34e54]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f34e60] [cursor=pointer]
+    - navigation [ref=f34e63]:
+      - generic [ref=f34e64]:
+        - generic [ref=f34e65]:
+          - list [ref=f34e66]:
+            - listitem [ref=f34e67]:
+              - link "Navigate to Dashboards" [ref=f34e69] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f34e75]: Dashboards
+            - listitem [ref=f34e76]:
+              - link "Navigate to Event Detection" [ref=f34e78] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f34e83]: Event Detection
+            - listitem [ref=f34e84]:
+              - link "Navigate to Alerts" [ref=f34e86] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f34e92]: Alerts
+          - list [ref=f34e93]:
+            - listitem [ref=f34e94]:
+              - button "Expand Network & App Synthetics" [ref=f34e96] [cursor=pointer]:
+                - generic [ref=f34e102]: Network & App Synthetics
+            - listitem [ref=f34e106]:
+              - button "Expand Endpoint Experience" [ref=f34e108] [cursor=pointer]:
+                - generic [ref=f34e114]: Endpoint Experience
+            - listitem [ref=f34e118]:
+              - button "Expand Routing" [ref=f34e120] [cursor=pointer]:
+                - generic [ref=f34e126]: Routing
+            - listitem [ref=f34e130]:
+              - button "Expand Traffic Insights" [ref=f34e132] [cursor=pointer]:
+                - generic [ref=f34e138]: Traffic Insights
+            - listitem [ref=f34e142]:
+              - button "Expand Devices" [ref=f34e144] [cursor=pointer]:
+                - generic [ref=f34e150]: Devices
+            - listitem [ref=f34e154]:
+              - button "Expand Cloud Insights" [ref=f34e156] [cursor=pointer]:
+                - generic [ref=f34e162]: Cloud Insights
+            - listitem [ref=f34e166]:
+              - button "Expand Internet Insights" [ref=f34e168] [cursor=pointer]:
+                - generic [ref=f34e174]: Internet Insights
+                - status [ref=f34e175]: Trial
+          - list [ref=f34e179]:
+            - listitem [ref=f34e180]:
+              - button "Expand Manage" [ref=f34e182] [cursor=pointer]:
+                - generic [ref=f34e188]: Manage
+        - generic [ref=f34e193]:
+          - generic [ref=f34e194]: ThousandEyes © 2026
+          - link "Privacy" [ref=f34e195] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f34e196] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f34e201]:
+    - tablist [ref=f34e203]:
+      - tab "Integrations 1.0" [ref=f34e204] [cursor=pointer]
+      - tab "Integrations 2.0" [selected] [ref=f34e206] [cursor=pointer]:
+        - status [ref=f34e208]: New
+    - tabpanel [ref=f34e210]:
+      - generic [ref=f34e211]:
+        - tablist [ref=f34e213]:
+          - tab "Integration Templates" [selected] [ref=f34e214] [cursor=pointer]
+          - tab "Connectors" [ref=f34e215] [cursor=pointer]
+          - tab "Operations" [ref=f34e216] [cursor=pointer]
+        - tabpanel [ref=f34e218]:
+          - generic [ref=f34e233]:
+            - generic [ref=f34e234]:
+              - complementary [ref=f34e236]:
+                - generic [ref=f34e237]:
+                  - generic [ref=f34e238]: "1"
+                  - generic [ref=f34e240]: Setup your connector
+                - generic [ref=f34e242]:
+                  - generic [ref=f34e243]: "2"
+                  - generic [ref=f34e245]: Setup your operation
+                - generic [ref=f34e246]:
+                  - generic [ref=f34e247]: "3"
+                  - generic [ref=f34e249]: Summary
+              - generic [ref=f34e251]:
+                - 'heading "Step 1: Setup your connector" [level=4] [ref=f34e252]'
+                - paragraph [ref=f34e253]: Create your connector for CyberArk® Secrets Manager, Self-Hosted. A single connector can be used to multiple operations.
+                - generic [ref=f34e255]:
+                  - generic [ref=f34e256]:
+                    - img "CyberArk® Secrets Manager, Self-Hosted" [ref=f34e258]
+                    - generic [ref=f34e259]: CyberArk® Secrets Manager, Self-Hosted
+                  - generic [ref=f34e260]:
+                    - generic [ref=f34e261]:
+                      - generic [ref=f34e262]: Connector Name
+                      - textbox "Connector Name" [ref=f34e264]
+                    - generic [ref=f34e265]:
+                      - generic [ref=f34e266]: Server Hostname
+                      - generic [ref=f34e267]:
+                        - textbox "Server Hostname" [ref=f34e268]
+                        - generic [ref=f34e269]: "For the server hostname, only enter the base URL of your CyberArk® Secrets Manager, Self-Hosted server (https://). Do not include /authn, the account name, or any other path. Example: https://myaccount.example.com."
+                    - generic [ref=f34e270]:
+                      - generic [ref=f34e271]: Account
+                      - generic [ref=f34e272]:
+                        - textbox "Account" [ref=f34e273]
+                        - generic [ref=f34e274]: Enter your account name only e.g. my-cyberark-account and not /my-cyberark-account.
+                    - status [ref=f34e275]:
+                      - generic [ref=f34e279]: Since you’re setting up an internal credential vault, we’re unable to validate the connection details.
+                    - generic [ref=f34e282]:
+                      - generic [ref=f34e283]: Host ID
+                      - generic [ref=f34e284]:
+                        - textbox "Host ID" [ref=f34e285]:
+                          - /placeholder: Enter your Host ID
+                        - generic [ref=f34e286]: Enter the host identity without the host/ prefix (e.g. myapp-host-01). The system adds the host/ prefix and URL-encoding automatically.
+                    - generic [ref=f34e288]:
+                      - generic [ref=f34e289]: API Key
+                      - textbox "API Key" [ref=f34e291]:
+                        - /placeholder: Enter your API Key
+                  - paragraph [ref=f34e293]:
+                    - text: You are about to integrate into CyberArk's® Credential Vault. If you continue with this integration, you consent to the transfer and processing of your credential data in the regions and in the manner outlined in the ThousandEyes
+                    - link "Offer Disclosure" [ref=f34e294] [cursor=pointer]:
+                      - /url: https://trustportal.cisco.com/c/r/ctp/trust-portal.html#/1610384661419206
+                    - text: . Your use of CyberArk is subject to the terms and conditions in place between CyberArk and you. To authorize this integration, click 'Save & Assign Operation'.
+              - generic [ref=f34e295]:
+                - heading "How to build your integration?" [level=3] [ref=f34e296]
+                - generic [ref=f34e297]:
+                  - img "Setup Your Connector" [ref=f34e298]
+                  - heading "Setup Your Connector" [level=4] [ref=f34e299]
+                  - paragraph [ref=f34e300]: Start with a predefined connector, or create a new one.
+                - generic [ref=f34e302]:
+                  - img "Setup Your Operation" [ref=f34e303]
+                  - heading "Setup Your Operation" [level=4] [ref=f34e304]
+                  - paragraph [ref=f34e305]: You can start with a predefined operation, or create a new one.
+                - generic [ref=f34e307]:
+                  - img "Integration Complete" [ref=f34e308]
+                  - heading "Integration Complete" [level=4] [ref=f34e309]
+            - generic [ref=f34e310]:
+              - button "Cancel" [ref=f34e311] [cursor=pointer]
+              - button "Save & Assign Operation" [ref=f34e313] [cursor=pointer]

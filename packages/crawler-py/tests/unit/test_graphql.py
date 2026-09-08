@@ -7,8 +7,10 @@ from shroodler.crawler import crawl_url
 from shroodler.extractors.graphql import (
     format_types,
     looks_like_graphql,
+    parse_query_fields,
     parse_schema_types,
     probe_graphql,
+    replay_graphql_fields,
 )
 
 
@@ -129,6 +131,104 @@ def test_get_graphql_fallback(fx):
     result = crawl_url(fx.origin + "/", depth=0)
     assert "/query" in _paths(result)
     assert any(f.id == "js-endpoint" and f.url.endswith("/query") for f in result.findings)
+
+
+def test_parse_query_fields():
+    body = json.dumps({"data": {"__type": {"fields": [{"name": "me"}, {"name": "__schema"}]}}})
+    assert parse_query_fields(body) == ["me"]
+
+
+def test_replay_graphql_fields_session_vs_anon(fx):
+    import httpx
+
+    def handle(inc):
+        query = ""
+        if inc.body:
+            query = str(json.loads(inc.body.decode()).get("query") or "")
+        if "__type" in query:
+            body = {"data": {"__type": {"fields": [{"name": "me"}]}}}
+            return 200, {"Content-Type": "application/json"}, json.dumps(body).encode()
+        if "me" in query:
+            if "session=user" in inc.cookies:
+                return 200, {"Content-Type": "application/json"}, b'{"data":{"me":{"id":1}}}'
+            return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no"}]}'
+        return 200, {"Content-Type": "application/json"}, b'{"data":{"__typename":"Query"}}'
+
+    fx.on("POST", "/graphql", handle)
+    with httpx.Client() as http:
+        hits = replay_graphql_fields(
+            fx.origin + "/graphql",
+            http,
+            lower_headers={"Cookie": "session=user"},
+        )
+    assert [f.id for f in hits] == ["graphql-field-authz"]
+
+
+def test_supplied_field_names_skip_introspection(fx):
+    import httpx
+
+    seen: list[str] = []
+
+    def handle(inc):
+        query = str(json.loads(inc.body.decode()).get("query") or "")
+        seen.append(query)
+        if "wallet" in query:
+            if "session=user" in inc.cookies:
+                return 200, {"Content-Type": "application/json"}, b'{"data":{"wallet":{"id":1}}}'
+            return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no"}]}'
+        return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no introspection"}]}'
+
+    fx.on("POST", "/graphql", handle)
+    with httpx.Client() as http:
+        hits = replay_graphql_fields(
+            fx.origin + "/graphql",
+            http,
+            lower_headers={"Cookie": "session=user"},
+            field_names=["wallet"],
+        )
+    assert [f.id for f in hits] == ["graphql-field-authz"]
+    assert not any("__type" in q for q in seen)
+
+
+def test_load_clairvoyance_and_wordlist(tmp_path):
+    from shroodler.extractors.graphql import load_graphql_field_names, parse_clairvoyance_fields
+
+    schema = {
+        "data": {
+            "__schema": {
+                "queryType": {"name": "Query"},
+                "types": [
+                    {
+                        "kind": "OBJECT",
+                        "name": "Query",
+                        "fields": [
+                            {"name": "user"},
+                            {"name": "order"},
+                            {"name": "__schema"},
+                        ],
+                    }
+                ],
+            }
+        }
+    }
+    assert parse_clairvoyance_fields(schema) == ["user", "order"]
+    schema_path = tmp_path / "clair.json"
+    schema_path.write_text(json.dumps(schema), encoding="utf-8")
+    words = tmp_path / "fields.txt"
+    words.write_text("wallet\n# comment\nnot-a-name!\ncart\n", encoding="utf-8")
+    names = load_graphql_field_names([schema_path, words])
+    assert names == ["user", "order", "wallet", "cart"]
+
+
+def test_crawl_records_supplied_graphql_fields(fx):
+    from shroodler.extractors.graphql import FIELD_ENDPOINT_PREFIX
+
+    fx.html("/", "<p>home</p>")
+    fx.on("POST", "/graphql", _gql_handler())
+    result = crawl_url(fx.origin + "/", depth=0, gql_field_names=["wallet", "cart"])
+    endpoints = {e.endpoint for e in result.js_endpoints}
+    assert FIELD_ENDPOINT_PREFIX + "wallet" in endpoints
+    assert FIELD_ENDPOINT_PREFIX + "cart" in endpoints
 
 
 def test_missing_and_non_graphql_not_recorded(fx):

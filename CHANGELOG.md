@@ -7,6 +7,56 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **`shroodler ingest-har`**: turn a Burp / mitmproxy / Caido / DevTools
+  HAR 1.2 export into crawl JSON (Page records + passive findings from
+  captured bodies). `ingest-sessions` and `crawl --seed-from` /
+  `--cookies-from` also auto-detect HAR. Does not re-fetch the target.
+
+- **`--gql-schema` / `--gql-wordlist`** on `crawl` and `authz-diff`: feed
+  Clairvoyance JSON or a plain field-name wordlist into GraphQL Query
+  field replay when live introspection is blocked. Crawl records the
+  names on discovered GraphQL endpoints; `authz-diff` consumes them
+  (or takes the flags itself). MCP `check_idor` accepts the same.
+
+- **`shroodler slither-ingest`**: translate a local Slither JSON report
+  into Shroodler findings. A loader, not an EVM analyzer.
+
+- **`report --merge-sarif FILE`**: fold an external SARIF 2.x file
+  (Semgrep, CodeQL, Slither, any SARIF emitter) into the report.
+  Dedupes by id+url against findings already in the crawl JSON.
+
+- **CSRF harvest on writes.** `peer-write` GETs the origin (or `--csrf-from`)
+  and attaches a token from a hidden input, meta tag, JS global, or cookie
+  as `X-CSRF-Token` / form / JSON fields. `--no-csrf` disables it. A
+  CSRF-shaped 403 retries once after a refresh.
+
+- **`shroodler session-export`**: write a Playwright `storageState` JSON
+  from `--cdp` (Chrome `--remote-debugging-port`), a HAR / proxy JSONL /
+  Netscape jar, or `--cookie` pairs. The file is what
+  `--owner-cookies-from` / `--peer-cookies-from` already accept. MCP:
+  `session_export`.
+
+- **Authenticated CSRF finding** (`csrf-state-change-unprotected`): a
+  SameSite=None session cookie plus a state-changing form with no CSRF
+  field. Lax cookies are not flagged.
+
+- **Confirmed peer-write.** Owner re-read defaults to GET the write URL
+  when `--owner-cookie` is set. `--require-confirm` drops leads the
+  owner re-read did not change. Stored XSS: after a reflected XSS hit on
+  a POST, a follow-up GET of the view page that still contains the marker
+  is `payload-xss-stored`.
+
+- **JS API surface.** Crawl extracts JSON-RPC methods, tRPC procedures,
+  React Query keys, and GraphQL operation names from JS (`js-jsonrpc-method`,
+  `js-trpc-procedure`, `js-react-query-key`, `js-graphql-operation`).
+  `authz-diff` replays GraphQL Query fields as the lower-priv session
+  (`graphql-field-authz`).
+
+- **Chain findings + clustered headers.** Reports emit
+  `chain-xss-cookie-theft` and `chain-cors-credentialed` when both halves
+  are present, and collapse a header/SRI issue repeated on 8+ pages to
+  one row.
+
 - **`shroodler peer-write`**: replay captured POST/PUT/PATCH/DELETE
   requests against *known* object ids as a second session. Each write is
   also sent to a nonsense id — the same 200 as the fake id is

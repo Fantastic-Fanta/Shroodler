@@ -1,0 +1,142 @@
+- generic [ref=f39e2]:
+  - generic:
+    - banner "Application header" [ref=f39e3]:
+      - generic [ref=f39e4]:
+        - button "Collapse navigation" [expanded] [ref=f39e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f39e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f39e10]: ThousandEyes
+      - generic [ref=f39e29]:
+        - link "Upgrade" [ref=f39e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f39e31] [cursor=pointer]
+        - button "Help Content" [ref=f39e35] [cursor=pointer]
+        - button "Notifications" [ref=f39e41] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f39e48] [cursor=pointer]:
+          - generic [ref=f39e54]:
+            - generic [ref=f39e55]: Lapras Resonance
+            - generic [ref=f39e56]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f39e62] [cursor=pointer]
+    - navigation [ref=f39e65]:
+      - generic [ref=f39e66]:
+        - generic [ref=f39e67]:
+          - list [ref=f39e68]:
+            - listitem [ref=f39e69]:
+              - link "Navigate to Dashboards" [ref=f39e71] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f39e77]: Dashboards
+            - listitem [ref=f39e78]:
+              - link "Navigate to Event Detection" [ref=f39e80] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f39e85]: Event Detection
+            - listitem [ref=f39e86]:
+              - link "Navigate to Alerts" [ref=f39e88] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f39e94]: Alerts
+          - list [ref=f39e95]:
+            - listitem [ref=f39e96]:
+              - button "Expand Network & App Synthetics" [ref=f39e98] [cursor=pointer]:
+                - generic [ref=f39e104]: Network & App Synthetics
+            - listitem [ref=f39e108]:
+              - button "Expand Endpoint Experience" [ref=f39e110] [cursor=pointer]:
+                - generic [ref=f39e116]: Endpoint Experience
+            - listitem [ref=f39e120]:
+              - button "Expand Routing" [ref=f39e122] [cursor=pointer]:
+                - generic [ref=f39e128]: Routing
+            - listitem [ref=f39e132]:
+              - button "Expand Traffic Insights" [ref=f39e134] [cursor=pointer]:
+                - generic [ref=f39e140]: Traffic Insights
+            - listitem [ref=f39e144]:
+              - button "Expand Devices" [ref=f39e146] [cursor=pointer]:
+                - generic [ref=f39e152]: Devices
+            - listitem [ref=f39e156]:
+              - button "Expand Cloud Insights" [ref=f39e158] [cursor=pointer]:
+                - generic [ref=f39e164]: Cloud Insights
+            - listitem [ref=f39e168]:
+              - button "Expand Internet Insights" [ref=f39e170] [cursor=pointer]:
+                - generic [ref=f39e176]: Internet Insights
+                - status [ref=f39e177]: Trial
+          - list [ref=f39e181]:
+            - listitem [ref=f39e182]:
+              - button "Expand Manage" [ref=f39e184] [cursor=pointer]:
+                - generic [ref=f39e190]: Manage
+        - generic [ref=f39e195]:
+          - generic [ref=f39e196]: ThousandEyes © 2026
+          - link "Privacy" [ref=f39e197] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f39e198] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f39e202]:
+    - progressbar "Waiting..." [ref=f39e205]
+    - generic [ref=f39e206]:
+      - generic [ref=f39e207]:
+        - button "Test Settings" [ref=f39e208] [cursor=pointer]
+        - heading "Start Monitoring" [level=1] [ref=f39e214]
+      - generic [ref=f39e217]:
+        - generic [ref=f39e219]:
+          - generic [ref=f39e220]:
+            - heading "Monitor a specific site or service" [level=2] [ref=f39e221]
+            - button "View all single tests" [ref=f39e222] [cursor=pointer]
+          - generic [ref=f39e223]:
+            - button [ref=f39e224] [cursor=pointer]:
+              - generic [ref=f39e226]:
+                - heading "Network Discovery and Performance" [level=3] [ref=f39e227]
+                - status [ref=f39e228]: Agent to Server
+                - list [ref=f39e230]:
+                  - listitem [ref=f39e231]: Monitor performance of critical applications and services
+                  - listitem [ref=f39e232]: Monitor whether an app or service is meetings SLAs
+                  - listitem [ref=f39e233]: Measure packet loss, latency, and path visualization
+            - button [ref=f39e234] [cursor=pointer]:
+              - generic [ref=f39e236]:
+                - heading "HTTP Server Performance" [level=3] [ref=f39e237]
+                - status [ref=f39e238]: HTTP Server
+                - list [ref=f39e240]:
+                  - listitem [ref=f39e241]: Monitor web server availability
+                  - listitem [ref=f39e242]: Validate HTTP/HTTPS configurations
+                  - listitem [ref=f39e243]: Network Discovery and Performance Metrics
+            - button [ref=f39e244] [cursor=pointer]:
+              - generic [ref=f39e246]:
+                - heading "Website Performance" [level=3] [ref=f39e247]
+                - status [ref=f39e248]: Page Load
+                - list [ref=f39e250]:
+                  - listitem [ref=f39e251]: See exactly how fast your website loads from the user perspective
+                  - listitem [ref=f39e252]: Identify slow-loading resources that hurt conversion rates
+        - generic [ref=f39e253]:
+          - generic [ref=f39e255]:
+            - generic [ref=f39e256]:
+              - textbox "search box" [ref=f39e258]:
+                - /placeholder: Search a template
+              - generic [ref=f39e259]:
+                - button [ref=f39e264] [cursor=pointer]:
+                  - generic [ref=f39e265]:
+                    - text: "Certification:"
+                    - strong [ref=f39e267]: All
+                - button [ref=f39e274] [cursor=pointer]:
+                  - generic [ref=f39e275]:
+                    - text: "Collections:"
+                    - strong [ref=f39e277]: All
+            - button "Build your own template" [ref=f39e282] [cursor=pointer]
+          - generic [ref=f39e287]:
+            - generic [ref=f39e288]:
+              - heading "Start with ThousandEyes based recommendations" [level=2] [ref=f39e289]
+              - button "View all recommendations" [ref=f39e290] [cursor=pointer]
+            - button "Associated Service Recommendations Discover recommendations based on the services your organization uses. Monitored 0% (0 of 5)" [ref=f39e294] [cursor=pointer]:
+              - generic [ref=f39e299]: Associated Service Recommendations
+              - generic [ref=f39e301]: Discover recommendations based on the services your organization uses.
+              - generic [ref=f39e303]:
+                - term [ref=f39e304]: Monitored
+                - definition [ref=f39e305]: 0% (0 of 5)
+          - heading "Start with templates" [level=2] [ref=f39e307]
+          - list [ref=f39e309]:
+            - listitem [ref=f39e310]
+            - listitem [ref=f39e313]
+            - listitem [ref=f39e316]
+            - listitem [ref=f39e319]
+            - listitem [ref=f39e322]
+            - listitem [ref=f39e325]
+            - listitem [ref=f39e328]
+            - listitem [ref=f39e331]
+            - listitem [ref=f39e334]
+            - listitem [ref=f39e337]
+            - listitem [ref=f39e340]
+            - listitem [ref=f39e343]

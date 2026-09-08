@@ -1,0 +1,1758 @@
+{
+  "target": "https://48ertandler.wien.gv.at",
+  "scan_started_at": "2026-09-07T09:07:02Z",
+  "scan_finished_at": "2026-09-07T09:07:28Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://48ertandler.wien.gv.at",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/adv-login.php?redirect_to=https%3A%2F%2F48ertandler.wien.gv.at%2F",
+      "status_code": 403,
+      "forms": [
+        {
+          "action": "/force_login",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "stdportal_PreventTsCreation",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "start_default_authentication",
+              "type": "submit",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "stdportal_TsOriginalRequestUrl",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "tf_uid",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "tf_pwd",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "start_default_authentication",
+              "type": "submit",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "moaIsCitizenRequest",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [
+        "redirect_to"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/resources/scripts/portal.js",
+        "/resources/scripts/base64url-arraybuffer.js",
+        "/htmlgui/javascript/dynamic.js",
+        "/htmlgui/custom/javascript/custom_dynamic.js"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/feed/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/der-48er-tandler/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/kontakt/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/das-konzept/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/abgabe-von-altwaren/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/verkauf-von-altwaren/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/karitatives-engagement/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/prominente-unterstuetzung/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/die-tandler-band/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/produkte/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/fanartikel-4/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/agb/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/news/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/abfallvermeidung-in-wien/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/links/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/haeufig-gestellte-fragen/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/calendar/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-content/plugins/all-in-one-event-calendar/public/js_cache/calendar.js?ver=3.0.0",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/wp-content/uploads/sites/25/2019/10/Panorama2.jpg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/category/topnews/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/pub-quiz-im-48er-tandler/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/mistfest-2026/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/kabarett-ressourcenflohmarkt-unterhaltungsprogramm-mit-nachhaltiger-wirkung/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    },
+    {
+      "url": "https://48ertandler.wien.gv.at/repair-cafe-am-27-august-in-margareten/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://48ertandler.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://48ertandler.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery-wat.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/jquery.jcarousel.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/wat-carousel.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014-48ertandler/js/tandlerscripts.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/respond.min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/themes/webtech_wienat2014/js/jquery.colorbox-min.js?ver=6.9.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Legacy/ajax.min.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/GalleryDisplay/common.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/ngg-tiktok-video.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_video_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/lightbox_context.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.easing-1.3.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/jquery.fancybox-1.3.4.pack.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/nextgen_tiktok_helper.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Lightbox/fancybox/nextgen_fancybox_init.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/v4-shims.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/FontAwesome/js/all.min.js?ver=5.3.1",
+        "https://48ertandler.wien.gv.at/wp-content/plugins/nextgen-gallery/static/Thumbnails/nextgen_basic_thumbnails.js?ver=4.2.2",
+        "https://48ertandler.wien.gv.at/?ai1ec_render_js=common_frontend&is_backend=false&ver=3.0.0"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/adv-login.php?redirect_to=https%3A%2F%2F48ertandler.wien.gv.at%2F",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "connect-src 'self'; style-src 'unsafe-inline' 'self'; child-src 'self'; base-uri 'self'; script-src 'unsafe-inline' 'non"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/adv-login.php?redirect_to=https%3A%2F%2F48ertandler.wien.gv.at%2F",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "stdp************rlHI"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/feed/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/der-48er-tandler/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/der-48er-tandler/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/kontakt/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/kontakt/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/das-konzept/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/das-konzept/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/abgabe-von-altwaren/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/abgabe-von-altwaren/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/verkauf-von-altwaren/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/verkauf-von-altwaren/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/karitatives-engagement/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/karitatives-engagement/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/prominente-unterstuetzung/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/prominente-unterstuetzung/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/die-tandler-band/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/die-tandler-band/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/produkte/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/produkte/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/fanartikel-4/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/fanartikel-4/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/agb/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/agb/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/news/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/news/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/abfallvermeidung-in-wien/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/abfallvermeidung-in-wien/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/links/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/links/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/haeufig-gestellte-fragen/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/haeufig-gestellte-fragen/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/calendar/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/calendar/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/wp-content/uploads/sites/25/2019/10/Panorama2.jpg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/category/topnews/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/category/topnews/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/pub-quiz-im-48er-tandler/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/pub-quiz-im-48er-tandler/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/mistfest-2026/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/mistfest-2026/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/kabarett-ressourcenflohmarkt-unterhaltungsprogramm-mit-nachhaltiger-wirkung/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/kabarett-ressourcenflohmarkt-unterhaltungsprogramm-mit-nachhaltiger-wirkung/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://48ertandler.wien.gv.at/repair-cafe-am-27-august-in-margareten/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://48ertandler.wien.gv.at/repair-cafe-am-27-august-in-margareten/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************bile"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 25,
+    "pages_challenged": 0,
+    "requests": 33,
+    "elapsed_ms": 26146,
+    "stopped_reason": "max-pages"
+  }
+}

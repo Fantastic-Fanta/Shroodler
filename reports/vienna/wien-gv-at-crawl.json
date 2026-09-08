@@ -1,0 +1,1797 @@
+{
+  "target": "https://www.wien.gv.at",
+  "scan_started_at": "2026-09-07T06:53:58Z",
+  "scan_finished_at": "2026-09-07T06:54:18Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://www.wien.gv.at",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/suche",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-services",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-centre",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-emergency-helpline",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-refugee-rights",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/gender-equality-monitor",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-topics",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-task",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/integration-diversity",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-young-people",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/native-speaking-barbecue-masters",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/integration-multilingualism",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/learning-german",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-adults",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-january",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-february",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-august",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-march",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-april",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-may",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    },
+    {
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-june",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/en/search",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": [
+        "/assets/consentmgmt/truendo/pc/truendo_cmp.pid.js",
+        "/assets/shared/purify.min.js",
+        "/assets/common/eventBus/js/eventbus.js",
+        "/assets/consentmgmt/js/wm-cookie-banner.js",
+        "/wienermelange/static/js/head-js.js",
+        "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+        "/assets/breakingnews/breaking-news-wrapper.js",
+        "/assets/sonderloesungen/baederampel/js/baederampel.min.js",
+        "/assets/flipcard/flipcard.min.js",
+        "https://siteimproveanalytics.com/js/siteanalyze_6002359.js",
+        "/assets/searches/js/generic-search.min.js",
+        "/wienermelange/static/js/body-js.js"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "bild************tage"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "bild************tage"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2bDD************uRRk"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-services",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-services",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-services",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2bDD************uRRk"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-services",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-centre",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-centre",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-centre",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "book************pr4C"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-centre",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-emergency-helpline",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-emergency-helpline",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-emergency-helpline",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "pdf/************isch"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-emergency-helpline",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-refugee-rights",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-refugee-rights",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-refugee-rights",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "bild************inge"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-refugee-rights",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/gender-equality-monitor",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/gender-equality-monitor",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/gender-equality-monitor",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/p************2016"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/gender-equality-monitor",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-topics",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-topics",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-topics",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2bDD************uRRk"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-topics",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-task",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-task",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-task",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2bDD************uRRk"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57-task",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "book************YOor"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/women-department-ma57",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/integration-diversity",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/integration-diversity",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/integration-diversity",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/integration-diversity",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-young-people",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-young-people",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-young-people",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "bild************afel"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-young-people",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/native-speaking-barbecue-masters",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/native-speaking-barbecue-masters",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/native-speaking-barbecue-masters",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/native-speaking-barbecue-masters",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/integration-multilingualism",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/integration-multilingualism",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/integration-multilingualism",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/integration-multilingualism",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-adults",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-adults",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-adults",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "bild************afel"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/learning-german-adults",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-january",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-january",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-january",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-january",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-february",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-february",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-february",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-february",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-august",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-august",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-august",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-august",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-march",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-march",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-march",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-march",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-april",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-april",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-april",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-april",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-may",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-may",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-may",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-may",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-june",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self' blob: *.cms-wien.magwien.gv.at *.magwien.gv.at *.wien.gv.at *.maptoolkit.net *.youtube.com *.vimeo.co"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-june",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-june",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "2biG************NrP9"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.wien.gv.at/en/living-together/intercultural-calendar-june",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js",
+      "evidence": "https://assets.wien.gv.at/theme/v2.10.0/js/en/bundle.min.js"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 25,
+    "pages_challenged": 0,
+    "requests": 42,
+    "elapsed_ms": 19564,
+    "stopped_reason": "max-pages"
+  }
+}

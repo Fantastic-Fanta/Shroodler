@@ -1,0 +1,245 @@
+- generic [ref=e2]:
+  - navigation [ref=e3]:
+    - generic [ref=e4]:
+      - link [ref=e6] [cursor=pointer]:
+        - /url: "#!/"
+        - img "Icon" [ref=e7]
+        - text: Webhook.site
+      - generic [ref=e8]:
+        - list [ref=e9]:
+          - listitem [ref=e10]:
+            - link "Docs & API" [ref=e11] [cursor=pointer]:
+              - /url: http://docs.webhook.site
+          - listitem [ref=e12]:
+            - link "Features & Pricing" [ref=e13] [cursor=pointer]:
+              - /url: /register?token_id=72f00f53-96ee-4d64-a124-4ca29027be13&r=navbar-feat
+          - listitem [ref=e14]:
+            - link "Terms, Privacy & Security" [ref=e15] [cursor=pointer]:
+              - /url: /terms
+          - listitem [ref=e16]:
+            - link "Support" [ref=e17] [cursor=pointer]:
+              - /url: https://support.webhook.site
+          - listitem [ref=e18]:
+            - link "Blog" [ref=e19] [cursor=pointer]:
+              - /url: /blog
+        - generic [ref=e20]:
+          - button " Copy" [ref=e22] [cursor=pointer]:
+            - generic [ref=e23]: 
+            - text: Copy
+          - button " Edit" [ref=e25] [cursor=pointer]:
+            - generic [ref=e26]: 
+            - text: Edit
+          - button " New" [ref=e27] [cursor=pointer]:
+            - generic [ref=e28]: 
+            - text: New
+          - link " Login" [ref=e30] [cursor=pointer]:
+            - /url: https://webhook.site/login
+            - generic [ref=e31]: 
+            - text: Login
+          - link " Sign Up Now" [ref=e32] [cursor=pointer]:
+            - /url: /register?token_id=72f00f53-96ee-4d64-a124-4ca29027be13&r=navbar-signupnow
+            - generic [ref=e33]: 
+            - text: Sign Up Now
+  - navigation [ref=e34]:
+    - generic [ref=e35]:
+      - link " 6d 72f00f53" [ref=e37] [cursor=pointer]:
+        - /url: ""
+        - text: 
+        - generic [ref=e38]:
+          - generic [ref=e39]: 
+          - text: 6d
+        - text: 72f00f53
+      - generic "[Signup Required] Create a link to share this URL with others" [ref=e42] [cursor=pointer]:
+        - generic [ref=e43]: 
+        - text: Share
+      - link " Schedule" [ref=e45] [cursor=pointer]:
+        - /url: /control-panel/schedules/create?url=https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13
+        - generic [ref=e46]: 
+        - text: Schedule
+      - link " Form Builder" [ref=e48] [cursor=pointer]:
+        - /url: /form-builder?url=https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13
+        - generic [ref=e49]: 
+        - text: Form Builder
+      - link " CSV Export" [ref=e51] [cursor=pointer]:
+        - /url: ""
+        - generic [ref=e52]: 
+        - text: CSV Export
+      - link " Custom Actions" [ref=e54] [cursor=pointer]:
+        - /url: ""
+        - generic [ref=e55]: 
+        - text: Custom Actions
+      - generic "[Signup Required] Execute all Custom Actions" [ref=e56] [cursor=pointer]:
+        - generic [ref=e57]: 
+        - text: Replay
+      - link " XHR Redirect" [ref=e59] [cursor=pointer]:
+        - /url: ""
+        - generic [ref=e60]: 
+        - text: XHR Redirect
+      - generic [ref=e61] [cursor=pointer]: Redirect Now
+      - link " More" [ref=e64] [cursor=pointer]:
+        - /url: ""
+        - generic [ref=e65]: 
+        - text: More
+      - generic [ref=e67] [cursor=pointer]: Show Intro
+  - generic [ref=e69]:
+    - generic [ref=e70]:
+      - generic [ref=e71]:
+        - text: Inbox (5/50)
+        - button "Newest First" [ref=e72] [cursor=pointer]
+      - generic [ref=e73]:
+        - textbox "Search Query" [ref=e75]
+        - generic [ref=e76]:
+          - text: 
+          - link "" [ref=e77] [cursor=pointer]:
+            - /url: https://docs.webhook.site/api/requests.html#search-query-examples
+      - list [ref=e80]:
+        - listitem [ref=e193]:
+          - generic [ref=e194] [cursor=pointer]: "POST #e6d86 3.141.159.49 08/09/2026 01:06:52 21 bytes"
+          - text: 
+        - listitem [ref=e195]:
+          - generic [ref=e196] [cursor=pointer]: "POST #6379c 3.141.159.49 08/09/2026 01:06:51 21 bytes"
+          - text: 
+        - listitem [ref=e197]:
+          - generic [ref=e198] [cursor=pointer]: "POST #42413 3.138.52.162 08/09/2026 01:06:50 21 bytes"
+          - text: 
+        - listitem [ref=e199]:
+          - generic [ref=e200] [cursor=pointer]: "POST #8239f 3.13.54.169 08/09/2026 01:06:42 21 bytes"
+          - text: 
+        - listitem [ref=e81]:
+          - generic [ref=e82] [cursor=pointer]: "POST #ffd57 54.221.221.197 07/09/2026 04:12:24 1.4 kB"
+          - text: 
+    - generic [ref=e84]:
+      - generic "Go to first page" [ref=e85]: First
+      - generic "Go to previous page" [ref=e86] [cursor=pointer]: ← Prev
+      - generic "Go to next page" [ref=e87]: Next →
+      - generic "Go to last page" [ref=e88]: Last
+    - generic [ref=e89]:
+      - text:     
+      - generic [ref=e91]:
+        - text:                   
+        - generic [ref=e92] [cursor=pointer]:
+          - text: ❯
+          - generic [ref=e93]: Request Details & Headers
+          - generic [ref=e94]:
+            - button "Open in" [ref=e96]
+            - button "Copy as" [ref=e99]
+        - generic [ref=e102]:
+          - table [ref=e104]:
+            - rowgroup [ref=e105]:
+              - row [ref=e106]:
+                - cell "POST" [ref=e107]:
+                  - text: POST
+                  - generic:  
+                - cell [ref=e108]:
+                  - code [ref=e109] [cursor=pointer]: https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13
+                  - text: 
+                  - generic:  
+              - row [ref=e110]:
+                - cell "Host" [ref=e111]
+                - cell [ref=e112]:
+                  - code [ref=e113] [cursor=pointer]: 54.221.221.197
+                  - text: http/1.1
+                  - link "Whois" [ref=e114] [cursor=pointer]:
+                    - /url: https://whois.domaintools.com/54.221.221.197
+                  - link "Shodan" [ref=e115] [cursor=pointer]:
+                    - /url: https://www.shodan.io/host/54.221.221.197
+                  - link "Netify" [ref=e116] [cursor=pointer]:
+                    - /url: https://www.netify.ai/resources/ips/54.221.221.197
+                  - link "Censys" [ref=e117] [cursor=pointer]:
+                    - /url: https://search.censys.io/hosts/54.221.221.197
+                  - link "VirusTotal" [ref=e118] [cursor=pointer]:
+                    - /url: http://virustotal.com/gui/ip-address/54.221.221.197/relations
+                  - generic:  
+              - row [ref=e119]:
+                - cell "Location" [ref=e120]
+                - cell "🇺🇸 Ashburn, Virginia, United States of America" [ref=e121]
+              - row [ref=e122]:
+                - cell "Date" [ref=e123]
+                - cell [ref=e124]:
+                  - generic [ref=e125]:
+                    - link "07/09/2026 04:12:24" [ref=e126] [cursor=pointer]:
+                      - /url: https://webhook.site/#!/view/72f00f53-96ee-4d64-a124-4ca29027be13?query=uuid:ffd578d4-38c0-44a1-9c1a-2d7f0108f786
+                    - text: (20 hours ago)
+                    - generic:  
+              - row [ref=e127]:
+                - cell "Size" [ref=e128]
+                - cell "1.4 kB" [ref=e129]:
+                  - text: 1.4 kB
+                  - generic:  
+              - row [ref=e130]:
+                - cell "Time" [ref=e131]
+                - cell "0.001 sec" [ref=e132]
+              - row [ref=e133]:
+                - cell "ID" [ref=e134]
+                - cell "ffd578d4-38c0-44a1-9c1a-2d7f0108f786" [ref=e135]:
+                  - text: ffd578d4-38c0-44a1-9c1a-2d7f0108f786
+                  - generic:  
+              - row [ref=e136]:
+                - cell "Note" [ref=e137]
+                - cell " Add Note" [ref=e138]:
+                  - generic [ref=e139] [cursor=pointer]:
+                    - generic [ref=e140]: 
+                    - text: Add Note
+          - generic [ref=e141]:
+            - table [ref=e143]:
+              - rowgroup [ref=e144]:
+                - row [ref=e145]:
+                  - cell "accept-encoding" [ref=e146]
+                  - cell [ref=e147]:
+                    - code [ref=e148]: gzip
+                    - generic:  
+                - row [ref=e149]:
+                  - cell "x-honeycomb-trace" [ref=e150]
+                  - cell [ref=e151]:
+                    - code [ref=e152]: 1;trace_id=bc916c5a94a1795d27814adb4d97d2ff,parent_id=b066dd53334dfede,dataset=production,context=e30=
+                    - generic:  
+                - row [ref=e153]:
+                  - cell "tracestate" [ref=e154]
+                  - cell [ref=e155]:
+                    - code [ref=e156]
+                    - generic:  
+                - row [ref=e157]:
+                  - cell "traceparent" [ref=e158]
+                  - cell [ref=e159]:
+                    - code [ref=e160]: 00-bc916c5a94a1795d27814adb4d97d2ff-b066dd53334dfede-01
+                    - generic:  
+                - row [ref=e161]:
+                  - cell "content-type" [ref=e162]
+                  - cell [ref=e163]:
+                    - code [ref=e164]: application/json
+                    - generic:  
+                - row [ref=e165]:
+                  - cell "content-length" [ref=e166]
+                  - cell [ref=e167]:
+                    - code [ref=e168]: "1400"
+                    - generic:  
+                - row [ref=e169]:
+                  - cell "user-agent" [ref=e170]
+                  - cell [ref=e171]:
+                    - code [ref=e172]: LD-Integrations/1.0
+                    - generic:  
+                - text:  
+            - link " Show more" [ref=e174] [cursor=pointer]:
+              - /url: ""
+              - generic [ref=e175]: 
+              - text: Show more
+            - text: 
+        - generic [ref=e176] [cursor=pointer]: ❯ Request Content
+        - generic [ref=e180]:
+          - generic [ref=e181]:
+            - generic "Automatically applies easy to read JSON formatting on valid requests" [ref=e182]:
+              - checkbox "Format JSON" [checked] [ref=e183]
+              - text: Format JSON
+            - generic "Toggles word-wrap" [ref=e184]:
+              - checkbox "Word-Wrap" [checked] [ref=e185]
+              - text: Word-Wrap
+            - text: Copy
+          - paragraph [ref=e186]: Raw Content
+          - generic [ref=e187]: "{ \"_accountId\": \"6a9dbd85615a640a9a7fd4b9\", \"_id\": \"6a9dc927a2059c0ac1d719da\", \"_links\": { \"canonical\": { \"href\": \"/api/v2/webhooks/6a9dc927a2059c0ac1d719d8\", \"type\": \"application/json\" }, \"parent\": { \"href\": \"/api/v2/auditlog\", \"type\": \"application/json\" }, \"self\": { \"href\": \"/api/v2/auditlog/6a9dc927a2059c0ac1d719da\", \"type\": \"application/json\" }, \"site\": { \"href\": \"/integrations\", \"type\": \"text/html\" } }, \"accesses\": [ { \"action\": \"createWebhook\", \"resource\": \"webhook/6a9dc927a2059c0ac1d719d8\" } ], \"date\": 1788725543921, \"description\": \"\", \"kind\": \"webhook\", \"member\": { \"_id\": \"6a9dbd85615a640a9a7fd4bb\", \"_links\": { \"parent\": { \"href\": \"/api/v2/members\", \"type\": \"application/json\" }, \"self\": { \"href\": \"/api/v2/members/6a9dbd85615a640a9a7fd4bb\", \"type\": \"application/json\" } }, \"email\": \"gmaxresonance@bugcrowdninja.com\", \"firstName\": \"Lapras\", \"lastName\": \"Resonance\" }, \"name\": \"https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13\", \"shortDescription\": \"\", \"target\": { \"_links\": { \"canonical\": { \"href\": \"/api/v2/webhooks/6a9dc927a2059c0ac1d719d8\", \"type\": \"application/json\" }, \"site\": { \"href\": \"/integrations\", \"type\": \"text/html\" } }, \"name\": \"https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13\", \"resources\": [ \"webhook/6a9dc927a2059c0ac1d719d8\" ] }, \"title\": \"[Lapras Resonance](mailto:gmaxresonance@bugcrowdninja.com) created the webhook [https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13](https://app.launchdarkly.com/integrations)\", \"titleVerb\": \"created the webhook\" }"
+        - generic [ref=e189] [cursor=pointer]: ❯ Custom Actions Output
+        - generic [ref=e190]:
+          - text: No action output
+          - generic [ref=e191] [cursor=pointer]:
+            - generic [ref=e192]: 
+            - text: Create Custom Action
+  - text:                                −        

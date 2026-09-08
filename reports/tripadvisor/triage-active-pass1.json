@@ -1,0 +1,795 @@
+{
+  "hosts": [
+    {
+      "host": "www.flipkey.com",
+      "url": "https://www.flipkey.com/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "server:AmazonS3"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "data.flipkey.com",
+      "url": "https://data.flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "feeds.flipkey.com",
+      "url": "https://feeds.flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "flipkey.com",
+      "url": "https://flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "help.flipkey.com",
+      "url": "https://help.flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "origin-www.flipkey.com",
+      "url": "https://origin-www.flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "propertymanagers.flipkey.com",
+      "url": "https://propertymanagers.flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "ws.flipkey.com",
+      "url": "https://ws.flipkey.com/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "airflow.rex-wh.tamg.cloud",
+      "url": "https://airflow.rex-wh.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 404"
+      ],
+      "status_code": 404,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "ambassador-admin.ndmad2.pit.tamg.cloud",
+      "url": "https://ambassador-admin.ndmad2.pit.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "api-dev.nq.tamg.cloud",
+      "url": "https://api-dev.nq.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "api.flipkey.com",
+      "url": "https://api.flipkey.com/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "api.nq.tamg.cloud",
+      "url": "https://api.nq.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "api.production.cde.tamg.cloud",
+      "url": "https://api.production.cde.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "app-dev.infosec.tamg.cloud",
+      "url": "https://app-dev.infosec.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "argo-ui.ndmad2.ml.tamg.cloud",
+      "url": "https://argo-ui.ndmad2.ml.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "argocd.ndmad2.pit.tamg.cloud",
+      "url": "https://argocd.ndmad2.pit.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "assets.itsupport.tamg.cloud",
+      "url": "https://assets.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "cert-tool.ndmad2.pd.tamg.cloud",
+      "url": "https://cert-tool.ndmad2.pd.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "dashboard.dspe.tamg.cloud",
+      "url": "https://dashboard.dspe.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "diagnostic.k8s.tamg.cloud",
+      "url": "https://diagnostic.k8s.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "gitlab-uniform-permissions.dop.tamg.cloud",
+      "url": "https://gitlab-uniform-permissions.dop.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "jupyterhub.dspe.tamg.cloud",
+      "url": "https://jupyterhub.dspe.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 404"
+      ],
+      "status_code": 404,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "onboard-api.itsupport.tamg.cloud",
+      "url": "https://onboard-api.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "onboard.itsupport.tamg.cloud",
+      "url": "https://onboard.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "ots.ops.tamg.cloud",
+      "url": "https://ots.ops.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "pelias.pl.tamg.cloud",
+      "url": "https://pelias.pl.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "reports.itsupport.tamg.cloud",
+      "url": "https://reports.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "secrets.ops.tamg.cloud",
+      "url": "https://secrets.ops.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "secure.flipkey.com",
+      "url": "https://secure.flipkey.com/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "[SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] ssl/tls alert handshake failure (_ssl.c:1082)"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "secure2.flipkey.com",
+      "url": "https://secure2.flipkey.com/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "flipkey.com"
+    },
+    {
+      "host": "service-devel.infosec.tamg.cloud",
+      "url": "https://service-devel.infosec.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "sponsor-dash.itsupport.tamg.cloud",
+      "url": "https://sponsor-dash.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "sso.itsupport.tamg.cloud",
+      "url": "https://sso.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "stamps-dev.wh.tamg.cloud",
+      "url": "https://stamps-dev.wh.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "stamps.wh.tamg.cloud",
+      "url": "https://stamps.wh.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "talon.itsupport.tamg.cloud",
+      "url": "https://talon.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "tamg-cloud-dashboard.ndmad2.pit.tamg.cloud",
+      "url": "https://tamg-cloud-dashboard.ndmad2.pit.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "tamg.cloud",
+      "url": "https://tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "tools.itsupport.tamg.cloud",
+      "url": "https://tools.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "vault.dspe.tamg.cloud",
+      "url": "https://vault.dspe.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "viewer.design-system.tamg.cloud",
+      "url": "https://viewer.design-system.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    },
+    {
+      "host": "wd-search.itsupport.tamg.cloud",
+      "url": "https://wd-search.itsupport.tamg.cloud/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "tamg.cloud"
+    }
+  ],
+  "counts": {
+    "live-content": 1,
+    "resolves": 7,
+    "error": 35
+  },
+  "takeover_candidates": [],
+  "crawl_seeds": [
+    "https://www.flipkey.com/"
+  ],
+  "skipped_external": 0,
+  "zones_paused": [
+    "flipkey.com"
+  ],
+  "concurrency": 2,
+  "rate_rps": 1.0,
+  "proxy": null,
+  "active": true
+}

@@ -1,0 +1,58 @@
+===== wienkav.at =====
+HTTP 000ERR bytes 
+===== ma70bp.wienkav.at =====
+HTTP 403 bytes    10135
+HTTP/1.1 403 
+Server: Magistrat der Stadt Wien - Web Gateway
+X-Frame-Options: deny
+Content-Type: text/html;charset=UTF-8
+Set-Cookie: stdpsessionma70bpwienkavat=…; Secure; HttpOnly; SameSite=None
+title: Standardportal - Stammportal
+body-head: <!DOCTYPE html> <html lang="de"> <head> <title>Standardportal - Stammportal</title> <!-- metainfo --> <meta charset="UTF-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"/> <meta name="viewport" content="width=device-width, initial-scale=1"/> <l
+
+===== ribm.wienkav.at =====
+HTTP 000ERR bytes    10135
+title: Standardportal - Stammportal
+body-head: <!DOCTYPE html> <html lang="de"> <head> <title>Standardportal - Stammportal</title> <!-- metainfo --> <meta charset="UTF-8"> <meta http-equiv="X-UA-Compatible" content="IE=edge"/> <meta name="viewport" content="width=device-width, initial-scale=1"/> <l
+
+===== webmail.wienkav.at =====
+HTTP 302 bytes        0
+HTTP/1.1 302 Object Moved
+Location: https://webmail.gesundheitsverbund.at/cgi/tm?code=0e75e748850d788d
+Content-Type: text/html; charset=utf-8
+body-head: 
+
+===== datagate.wienkav.at =====
+HTTP 000ERR bytes        0
+body-head: 
+
+===== testdatagate.wienkav.at =====
+HTTP 000ERR bytes        0
+body-head: 
+
+===== remote.wienkav.at =====
+HTTP 302 bytes      413
+HTTP/1.1 302 Object Moved
+Location: /logon/LogonPoint/tmindex.html
+Set-Cookie: NSC_DLGE=…; Secure
+Set-Cookie: NSC_USER=…; Secure
+Set-Cookie: NSC_CERT=…; Secure
+Set-Cookie: NSC_TEMP=…; Secure
+Set-Cookie: NSC_PERS=…; Secure
+Set-Cookie: NSC_TEMP=…; 
+Set-Cookie: NSC_PERS=…; 
+Content-Type: text/html; charset=utf-8
+body-head: <html><head><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><script type="text/javascript" src="/vpn/resources.js"></script><script type="text/javascript" src="/vpn/init/redirection_body_resources.js"></script></head><body><span id="This object may be found "><
+
+===== grvpn.wienkav.at =====
+HTTP 000ERR bytes      413
+body-head: <html><head><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><script type="text/javascript" src="/vpn/resources.js"></script><script type="text/javascript" src="/vpn/init/redirection_body_resources.js"></script></head><body><span id="This object may be found "><
+
+===== cc-health.40.wienkav.at =====
+HTTP 000ERR bytes      413
+body-head: <html><head><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><script type="text/javascript" src="/vpn/resources.js"></script><script type="text/javascript" src="/vpn/init/redirection_body_resources.js"></script></head><body><span id="This object may be found "><
+
+===== cs-health.40.wienkav.at =====
+HTTP 000ERR bytes      413
+body-head: <html><head><META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8"><script type="text/javascript" src="/vpn/resources.js"></script><script type="text/javascript" src="/vpn/init/redirection_body_resources.js"></script></head><body><span id="This object may be found "><
+

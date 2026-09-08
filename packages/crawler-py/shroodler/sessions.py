@@ -205,7 +205,9 @@ def ingest_sessions(
     from datetime import datetime, timezone
     from time import monotonic
 
-    sessions = load_sessions(path)
+    from shroodler.cookie_source import load_captured_sessions
+
+    sessions = load_captured_sessions(path)
     started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     t0 = monotonic()
     inferred = target

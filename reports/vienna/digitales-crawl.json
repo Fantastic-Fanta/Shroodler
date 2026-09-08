@@ -1,0 +1,1912 @@
+{
+  "target": "https://digitales.wien.gv.at",
+  "scan_started_at": "2026-09-07T08:45:38Z",
+  "scan_finished_at": "2026-09-07T08:46:06Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://digitales.wien.gv.at",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-layerslider/LayerSlider/assets/static/layerslider/js/layerslider.utils.js?ver=7.15.1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-layerslider/LayerSlider/assets/static/layerslider/js/layerslider.kreaturamedia.jquery.js?ver=7.15.1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-layerslider/LayerSlider/assets/static/layerslider/js/layerslider.transitions.js?ver=7.15.1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/adv-login.php?redirect_to=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "status_code": 403,
+      "forms": [
+        {
+          "action": "/force_login",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "stdportal_PreventTsCreation",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "start_default_authentication",
+              "type": "submit",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "stdportal_TsOriginalRequestUrl",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "tf_uid",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "tf_pwd",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "start_default_authentication",
+              "type": "submit",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "moaIsCitizenRequest",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [
+        "redirect_to"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/resources/scripts/portal.js",
+        "/resources/scripts/base64url-arraybuffer.js",
+        "/htmlgui/javascript/dynamic.js",
+        "/htmlgui/custom/javascript/custom_dynamic.js"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/digitale-agenda/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/projekte/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/e-government/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://www.wien.gv.at/stadtplan/ApiGetViennaGisMap.ctrl?containerWidth=1200&containerHeight=400&lang=de&bookmark=756oReqrsUUMN31GvrEQRu5Rphlnqnnkur2pd3IMpr4C&bmadr=",
+        "https://www.wien.gv.at/stadtplan/ApiGetViennaGisMap.ctrl?containerWidth=1200&containerHeight=400\u00a2erContainer=1&lang=de&bookmark=-cBu8RT4f-akUVwJ5GcBXJRe5RphlnHrlub-arCH4Oprw-b-b&bmadr=",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/open-data/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/lib/jquery-2.1.1.min.js?ver=2.1.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/lib/jquery.waitforimages.min.js?ver=6.9.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/lib/bootstrap.min.js?ver=3.3.6",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/lib/idle.js?ver=6.9.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/lang/de-DE/adv-odc-i18n.js?ver=6.9.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/lang/en-US/adv-odc-i18n.js?ver=6.9.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/adv-odc-config.js?ver=1.0.0",
+        "https://digitales.wien.gv.at/wp-content/plugins/adv-open-data-combs/js/adv-odc-app.js?ver=1.0.0",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/changelog/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/jobs/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/en/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/?s=",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "https://digitales.wien.gv.at/",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "s",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [
+        "s"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/besuch-ai-factory-austria/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/open-data-meetup-wien-wein-september-2026/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/didays-nextgen-minds/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/blog/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery.min.js?ver=3.7.1",
+        "https://digitales.wien.gv.at/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.4.1",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/res/js/cookies/language-cookie.js?ver=495000",
+        "https://digitales.wien.gv.at/wp-content/plugins/sitepress-multilingual-cms/templates/language-switchers/legacy-dropdown/script.min.js?ver=1",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-js.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-compat.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-wpml/wpml-mod.js?ver=7.1.4",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/waypoints/waypoints.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/shortcodes.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart-js.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/chart/chart.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/contact/contact.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/countdown/countdown.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery/gallery.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/gallery_horizontal/gallery_horizontal.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/headline_rotator/headline_rotator.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icon_circles/icon_circles.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/icongrid/icongrid.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/iconlist/iconlist.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-includes/js/underscore.min.js?ver=1.13.7",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_diff/image_diff.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/image_hotspots/image_hotspots.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/lottie_animation/lottie_animation.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/magazine/magazine.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/isotope.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/masonry_entries/masonry_entries.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/menu/menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/notification/notification.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/numbers/numbers.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/portfolio/portfolio.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/progressbar/progressbar.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow/slideshow-video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_accordion/slideshow_accordion.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_fullscreen/slideshow_fullscreen.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/slideshow_layerslider/slideshow_layerslider.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tab_section/tab_section.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/tabs/tabs.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/testimonials/testimonials.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/timeline/timeline.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/video/video.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/webtech_enfold-digitaleswien/js/custom.js?ver=1.0",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-hamburger-menu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-parallax.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-fold-unfold.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/aviapopup/jquery.magnific-popup.min.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-lightbox.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-megamenu.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-sticky-header.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-footer-effects.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/js/avia-snippet-widget.js?ver=7.1.4",
+        "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-lottie-animations/assets/lottie-player/dotlottie-player.js?ver=7.1.4"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/home/",
+      "status_code": 301,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/feed/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+        "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+      ]
+    },
+    {
+      "url": "https://digitales.wien.gv.at/comments/feed/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "status_code": 401,
+      "forms": [],
+      "params": [
+        "url"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F&format=xml",
+      "status_code": 401,
+      "forms": [],
+      "params": [
+        "url",
+        "format"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-admin/admin-ajax.php?action=frmpro_css&ver=619636",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "action",
+        "ver"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/css/grid.css?ver=7.1.4",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "ver"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/css/base.css?ver=7.1.4",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "ver"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/css/layout.css?ver=7.1.4",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "ver"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.css?ver=7.1.4",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "ver"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/blog/blog.css?ver=7.1.4",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "ver"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************r_FB"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/adv-login.php?redirect_to=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "connect-src 'self'; style-src 'unsafe-inline' 'self'; child-src 'self'; base-uri 'self'; script-src 'unsafe-inline' 'non"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/adv-login.php?redirect_to=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "ZGYN************/GUp"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/digitale-agenda/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/digitale-agenda/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/digitale-agenda/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/digitale-agenda/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/projekte/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/projekte/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/projekte/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/projekte/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/e-government/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/e-government/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************ward"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/e-government/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/e-government/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://www.wien.gv.at/stadtplan/ApiGetViennaGisMap.ctrl?containerWidth=1200&containerHeight=400&lang=de&bookmark=756oReqrsUUMN31GvrEQRu5Rphlnqnnkur2pd3IMpr4C&bmadr=",
+      "evidence": "https://www.wien.gv.at/stadtplan/ApiGetViennaGisMap.ctrl?containerWidth=1200&containerHeight=400&lang=de&bookmark=756oReqrsUUMN31GvrEQRu5Rphlnqnnkur2pd3IMpr4C&bmadr="
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/open-data/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/open-data/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/open-data/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/open-data/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/changelog/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/changelog/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/changelog/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/changelog/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/jobs/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/jobs/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/jobs/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/jobs/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/en/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/en/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/en/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/en/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/?s=",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/?s=",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/?s=",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/besuch-ai-factory-austria/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/besuch-ai-factory-austria/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************tory"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/besuch-ai-factory-austria/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/besuch-ai-factory-austria/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/open-data-meetup-wien-wein-september-2026/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/open-data-meetup-wien-wein-september-2026/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************wein"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/open-data-meetup-wien-wein-september-2026/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/open-data-meetup-wien-wein-september-2026/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/didays-nextgen-minds/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/didays-nextgen-minds/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************days"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/didays-nextgen-minds/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/didays-nextgen-minds/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/blog/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/blog/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "sour************-css"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/blog/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.9.5 stt:1,3;"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/blog/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/home/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/feed/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/feed/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "styl************e582"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://digitales.wien.gv.at/feed/",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js",
+      "evidence": "https://stp.wien.gv.at/wienbotwidget/static/widget/wienbot/widget.js"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/comments/feed/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F&format=xml",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F&format=xml",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F&format=xml",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "weak-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-admin/admin-ajax.php?action=frmpro_css&ver=619636",
+      "description": "X-Content-Type-Options is not nosniff",
+      "evidence": "nosniff, nosniff"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://digitales.wien.gv.at/wp-admin/admin-ajax.php?action=frmpro_css&ver=619636",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/w************ader"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/css/grid.css?ver=7.1.4",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/css/base.css?ver=7.1.4",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/css/layout.css?ver=7.1.4",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/audio-player/audio-player.css?ver=7.1.4",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-content/themes/wienat_enfold/config-templatebuilder/avia-shortcodes/blog/blog.css?ver=7.1.4",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "cors-reflect-origin",
+      "severity": "high",
+      "category": "header",
+      "url": "https://digitales.wien.gv.at/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fdigitales.wien.gv.at%2F",
+      "description": "Access-Control-Allow-Origin reflects the attacker Origin",
+      "evidence": "ACAO=https://evil.example ACAC=true"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 25,
+    "pages_challenged": 0,
+    "requests": 34,
+    "elapsed_ms": 27687,
+    "stopped_reason": "max-pages"
+  }
+}

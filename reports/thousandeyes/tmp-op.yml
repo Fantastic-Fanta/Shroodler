@@ -1,0 +1,162 @@
+- generic [ref=f33e1]:
+  - generic [ref=f33e2]:
+    - generic:
+      - banner "Application header" [ref=f33e3]:
+        - generic [ref=f33e4]:
+          - button "Collapse navigation" [expanded] [ref=f33e5] [cursor=pointer]
+          - link "Cisco ThousandEyes home" [ref=f33e9] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f33e10]: ThousandEyes
+        - generic [ref=f33e29]:
+          - link "Upgrade" [ref=f33e30] [cursor=pointer]:
+            - /url: https://www.thousandeyes.com/upgrade
+          - button "AI Assistant" [ref=f33e31] [cursor=pointer]
+          - button "Help Content" [ref=f33e35] [cursor=pointer]
+          - button "Notifications" [ref=f33e41] [cursor=pointer]
+          - button "User menu for Lapras Resonance" [ref=f33e48] [cursor=pointer]:
+            - generic [ref=f33e54]:
+              - generic [ref=f33e55]: Lapras Resonance
+              - generic [ref=f33e56]: "Bug Crowd #1788764176934_2522"
+          - button "Open cross platform navigator" [ref=f33e62] [cursor=pointer]
+      - navigation [ref=f33e65]:
+        - generic [ref=f33e66]:
+          - generic [ref=f33e67]:
+            - list [ref=f33e68]:
+              - listitem [ref=f33e69]:
+                - link "Navigate to Dashboards" [ref=f33e71] [cursor=pointer]:
+                  - /url: /dashboard/?
+                  - generic [ref=f33e77]: Dashboards
+              - listitem [ref=f33e78]:
+                - link "Navigate to Event Detection" [ref=f33e80] [cursor=pointer]:
+                  - /url: /events/?
+                  - generic [ref=f33e85]: Event Detection
+              - listitem [ref=f33e86]:
+                - link "Navigate to Alerts" [ref=f33e88] [cursor=pointer]:
+                  - /url: /alerts/list?
+                  - generic [ref=f33e94]: Alerts
+            - list [ref=f33e95]:
+              - listitem [ref=f33e96]:
+                - button "Expand Network & App Synthetics" [ref=f33e98] [cursor=pointer]:
+                  - generic [ref=f33e104]: Network & App Synthetics
+              - listitem [ref=f33e108]:
+                - button "Expand Endpoint Experience" [ref=f33e110] [cursor=pointer]:
+                  - generic [ref=f33e116]: Endpoint Experience
+              - listitem [ref=f33e120]:
+                - button "Expand Routing" [ref=f33e122] [cursor=pointer]:
+                  - generic [ref=f33e128]: Routing
+              - listitem [ref=f33e132]:
+                - button "Expand Traffic Insights" [ref=f33e134] [cursor=pointer]:
+                  - generic [ref=f33e140]: Traffic Insights
+              - listitem [ref=f33e144]:
+                - button "Expand Devices" [ref=f33e146] [cursor=pointer]:
+                  - generic [ref=f33e152]: Devices
+              - listitem [ref=f33e156]:
+                - button "Expand Cloud Insights" [ref=f33e158] [cursor=pointer]:
+                  - generic [ref=f33e164]: Cloud Insights
+              - listitem [ref=f33e168]:
+                - button "Expand Internet Insights" [ref=f33e170] [cursor=pointer]:
+                  - generic [ref=f33e176]: Internet Insights
+                  - status [ref=f33e177]: Trial
+            - list [ref=f33e181]:
+              - listitem [ref=f33e182]:
+                - button "Expand Manage" [ref=f33e184] [cursor=pointer]:
+                  - generic [ref=f33e190]: Manage
+          - generic [ref=f33e195]:
+            - generic [ref=f33e196]: ThousandEyes © 2026
+            - link "Privacy" [ref=f33e197] [cursor=pointer]:
+              - /url: /privacy
+            - link "Cookies" [ref=f33e198] [cursor=pointer]:
+              - /url: "#privacy-manager"
+    - generic [ref=f33e201]:
+      - tablist [ref=f33e203]:
+        - tab "Integrations 1.0" [ref=f33e204] [cursor=pointer]
+        - tab "Integrations 2.0" [selected] [ref=f33e206] [cursor=pointer]:
+          - status [ref=f33e208]: New
+      - tabpanel [ref=f33e210]:
+        - generic [ref=f33e211]:
+          - tablist [ref=f33e213]:
+            - tab "Integration Templates" [ref=f33e214] [cursor=pointer]
+            - tab "Connectors" [ref=f33e215] [cursor=pointer]
+            - tab "Operations" [selected] [ref=f33e216] [cursor=pointer]
+          - tabpanel [ref=f33e371]:
+            - generic [ref=f33e373]:
+              - generic [ref=f33e374]:
+                - generic [ref=f33e376]:
+                  - generic [ref=f33e377]: 0 items
+                  - textbox "Search Table" [ref=f33e380]:
+                    - /placeholder: Search...
+                - button "New Operation" [ref=f33e382] [cursor=pointer]
+              - table [ref=f33e388]:
+                - rowgroup [ref=f33e389]:
+                  - row [ref=f33e390]:
+                    - columnheader "Last Modified Resize column Last Modified" [ref=f33e391] [cursor=pointer]:
+                      - generic [ref=f33e392]: Last Modified
+                      - separator "Resize column Last Modified" [ref=f33e397]
+                    - columnheader "Operation Name Resize column Operation Name" [ref=f33e398] [cursor=pointer]:
+                      - generic [ref=f33e399]: Operation Name
+                      - separator "Resize column Operation Name" [ref=f33e404]
+                    - columnheader "Enabled Resize column Enabled" [ref=f33e405] [cursor=pointer]:
+                      - generic [ref=f33e406]: Enabled
+                      - separator "Resize column Enabled" [ref=f33e411]
+                    - columnheader "Status Resize column Status" [ref=f33e412] [cursor=pointer]:
+                      - generic [ref=f33e413]: Status
+                      - separator "Resize column Status" [ref=f33e418]
+                    - columnheader "Type Resize column Type" [ref=f33e419] [cursor=pointer]:
+                      - generic [ref=f33e420]: Type
+                      - separator "Resize column Type" [ref=f33e425]
+                    - columnheader "Connector Name Resize column Connector Name" [ref=f33e426] [cursor=pointer]:
+                      - generic [ref=f33e427]: Connector Name
+                      - separator "Resize column Connector Name" [ref=f33e432]
+                    - columnheader [ref=f33e433]
+                - rowgroup
+              - status [ref=f33e434]: No operations yet.
+  - alert [ref=f33e436]:
+    - generic [ref=f33e437]:
+      - generic [ref=f33e438]: Connector shroodler-probe has been saved successfully.
+      - button "Dismiss notification" [ref=f33e446] [cursor=pointer]
+  - dialog [ref=f33e453]:
+    - banner [ref=f33e454]:
+      - heading "Add Custom Webhook Operation" [level=3] [ref=f33e457]
+      - button "Close this dialog" [ref=f33e458] [cursor=pointer]
+    - generic [ref=f33e467]:
+      - generic [ref=f33e468]: Custom Webhook
+      - generic [ref=f33e473]:
+        - generic [ref=f33e474]:
+          - generic [ref=f33e475]: Operation Name
+          - textbox "Operation Name" [ref=f33e477]
+        - generic [ref=f33e478]:
+          - generic [ref=f33e479]: Preset Configurations
+          - generic [ref=f33e481]:
+            - button "Override with an example" [ref=f33e484] [cursor=pointer]
+            - generic [ref=f33e489]: Selecting a preset will override any configurations below.
+        - generic [ref=f33e494]:
+          - generic [ref=f33e495]: Path
+          - generic [ref=f33e497]:
+            - textbox "Path" [ref=f33e498]
+            - generic [ref=f33e499]: This will override the connector's target url path.
+        - generic [ref=f33e504]:
+          - generic [ref=f33e505]: Custom Headers
+          - button "New Header" [ref=f33e508] [cursor=pointer]
+        - generic [ref=f33e513]:
+          - generic [ref=f33e515]:
+            - generic [ref=f33e516]: URL Query Parameters
+            - button "Expand URL Query Parameters" [ref=f33e517] [cursor=pointer]
+          - code [ref=f33e524]:
+            - textbox "Editor content;Press Alt+F1 for Accessibility Options." [ref=f33e528]
+        - generic [ref=f33e529]:
+          - generic [ref=f33e531]:
+            - generic [ref=f33e532]: Body
+            - button "Expand Body" [ref=f33e533] [cursor=pointer]
+          - code [ref=f33e540]:
+            - textbox "Editor content;Press Alt+F1 for Accessibility Options." [ref=f33e544]
+      - generic [ref=f33e545]:
+        - button "Cancel" [ref=f33e547] [cursor=pointer]
+        - generic [ref=f33e548]:
+          - button "Back" [ref=f33e549] [cursor=pointer]
+          - button "Test" [disabled] [ref=f33e552]
+          - button "Save & Assign Connector" [ref=f33e553] [cursor=pointer]
+  - generic [ref=f33e554]:
+    - alert
+    - alert
+    - complementary
+    - complementary

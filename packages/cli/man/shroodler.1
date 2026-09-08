@@ -61,6 +61,10 @@ Heuristic/best-effort, not a real router analysis.
 Render a findings JSON document as
 .BR html ", " csv ", " json ", " sarif ", " junit ", or " md / markdown
 (\fB\-\-format\fR).
+.BI \-\-merge\-sarif " FILE"
+folds an external SARIF 2.x file (Semgrep, CodeQL, Slither, any SARIF
+emitter) into the report's findings before rendering; repeatable.
+Duplicates (same id+url already in the crawl JSON) are skipped.
 .TP
 \fBbaseline\fR \fIFINDINGS\fR, \fBexpected\fR \fIFINDINGS\fR
 Write an
@@ -70,9 +74,22 @@ expected_* shape). Both names run the same command;
 .B expected_not_found
 negatives are left empty for you to add by hand.
 .TP
-.B ingest\-sessions \fISESSIONS.JSONL\fR
-Turn a captured proxy session (JSON Lines) into a findings document, as if
-it had been crawled directly.
+.B ingest\-sessions \fISESSIONS\fR
+Turn a captured proxy session (JSON Lines) or a HAR 1.2 document into a
+findings document, as if it had been crawled directly.
+.TP
+.B ingest\-har \fIFILE.HAR\fR
+Turn a Burp Suite / mitmproxy / Caido / browser DevTools HAR 1.2 export
+into crawl JSON (Page records + passive findings from captured bodies).
+Same output shape as
+.B ingest\-sessions
+so
+.B authz\-diff
+and
+.B payload
+can consume it. Does not re-fetch the target.
+.B ingest\-sessions
+also auto-detects HAR; this is the named command for browser/Burp exports.
 .TP
 .B tokens \fISESSIONS.JSONL\fR
 Analyze password-reset/verification-token predictability from a captured
@@ -183,6 +200,14 @@ consumes. A loader, not a CVE library: does not download templates.
 also auto-detects a Nuclei-shaped file. Templates with no injectable
 payload are skipped (warning on stderr); exit 1 if nothing converted.
 .TP
+.B slither\-ingest \fIREPORT.json\fR
+Translate a local Slither JSON report into a crawl-shaped findings
+document.
+.B report
+and
+.B diff
+can consume it. A loader, not an EVM analyzer: does not run Slither.
+.TP
 .B authz\-diff \fIHIGHER_CRAWL.JSON\fR
 Replay every page URL from a crawl done under one session (e.g. an admin
 account) using a second, lower-privileged session's
@@ -212,6 +237,12 @@ match that's coincidentally also the requester's own identity.
 Drop a lead entirely instead of reporting it at lower confidence when no
 .B \-\-higher\-priv\-marker
 was found in the response.
+.TP
+.BI \-\-gql\-schema " FILE"
+.TQ
+.BI \-\-gql\-wordlist " FILE"
+Clairvoyance / introspection JSON, or a plain field-name wordlist, fed
+to GraphQL field replay when live introspection is blocked (repeatable).
 .RE
 .TP
 .B peer\-write \fI[PLAYBOOK.JSON]\fR
@@ -238,6 +269,17 @@ and the same
 .BR \-\-require\-policy / \-\-policy\-file / \-\-audit\-log
 guardrail flags as
 .BR authz\-diff .
+.TP
+.B session\-export
+Write a Playwright
+.B storageState
+JSON from Chrome
+.B \-\-cdp
+(launch with
+.BR \-\-remote\-debugging\-port=9222 ),
+or convert a HAR / proxy JSONL / Netscape jar. The output is the file
+.BR \-\-owner\-cookies\-from / \-\-peer\-cookies\-from
+already accept.
 .TP
 .B js\-routes \fIFILE.js\fR
 Extract parameterized URL templates
@@ -620,10 +662,19 @@ from the target (crawl already probes
 on its own).
 .TP
 .BI \-\-seed\-from " FILE"
-Seed URLs from a captured proxy session JSONL.
+Seed URLs from a captured HAR or proxy session JSONL.
 .TP
 .BI \-\-cookies\-from " FILE"
-Cookies from a captured proxy session JSONL.
+Cookies from a captured HAR or proxy session JSONL.
+.TP
+.BI \-\-gql\-schema " FILE"
+.TQ
+.BI \-\-gql\-wordlist " FILE"
+When GraphQL introspection is blocked, load Query field names from a
+Clairvoyance JSON dump or a plain wordlist and record them on discovered
+GraphQL endpoints so
+.B authz\-diff
+can replay them. Repeatable.
 .TP
 .BI \-\-plugin " PATH"
 Load a plugin directory or file (repeatable). A plugin supplies extra

@@ -1,0 +1,205 @@
+{
+  "hosts": [
+    {
+      "host": "erecht.magwien.gv.at",
+      "url": "https://erecht.magwien.gv.at/",
+      "classification": "dangling-cname",
+      "dns": "dangling-cname",
+      "http": "error",
+      "tech": [],
+      "takeover": true,
+      "takeover_signal": "CNAME erecht.wien.gv.at has no A/AAAA (unclaimed?)",
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "[Errno 8] nodename nor servname provided, or not known"
+      ],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "hyzdok.magwien.gv.at",
+      "url": "https://hyzdok.magwien.gv.at/",
+      "classification": "live-content",
+      "dns": "third-party-saas",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": "Azure Front Door",
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "dx.magwien.gv.at",
+      "url": "https://dx.magwien.gv.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [
+        "server:Apache"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://www.intern.magwien.gv.at/web/mdo/data-excellence",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "charta.magwien.gv.at",
+      "url": "https://charta.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "cms-wien.magwien.gv.at",
+      "url": "https://cms-wien.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "cmsadmin-t.host.magwien.gv.at",
+      "url": "https://cmsadmin-t.host.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "confluence.magwien.gv.at",
+      "url": "https://confluence.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "elak.magwien.gv.at",
+      "url": "https://elak.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "gisapublic.magwien.gv.at",
+      "url": "https://gisapublic.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    },
+    {
+      "host": "hera.magwien.gv.at",
+      "url": "https://hera.magwien.gv.at/",
+      "classification": "dead",
+      "dns": "dead",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    }
+  ],
+  "counts": {
+    "dangling-cname": 1,
+    "live-content": 1,
+    "redirect-alias": 1,
+    "dead": 7
+  },
+  "takeover_candidates": [
+    {
+      "host": "erecht.magwien.gv.at",
+      "url": "https://erecht.magwien.gv.at/",
+      "classification": "dangling-cname",
+      "dns": "dangling-cname",
+      "http": "error",
+      "tech": [],
+      "takeover": true,
+      "takeover_signal": "CNAME erecht.wien.gv.at has no A/AAAA (unclaimed?)",
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "[Errno 8] nodename nor servname provided, or not known"
+      ],
+      "status_code": null,
+      "zone": "magwien.gv.at"
+    }
+  ],
+  "crawl_seeds": [
+    "https://hyzdok.magwien.gv.at/"
+  ],
+  "skipped_external": 0,
+  "zones_paused": [],
+  "concurrency": 2,
+  "rate_rps": 1.0,
+  "proxy": null,
+  "active": true
+}

@@ -627,6 +627,31 @@ def run(
                     finding = _finding(pack, action, payload, confidence, mutated=mutated_flag)
                     finding["minimal_repro"] = True
                     findings.append(finding)
+                    if (
+                        fid == "payload-xss-reflect"
+                        and method != "GET"
+                        and request_allowed(url)
+                    ):
+                        try:
+                            stored = http.get(url)
+                        except httpx.HTTPError:
+                            stored = None
+                        if stored is not None and (
+                            token in stored.text or payload in stored.text
+                        ):
+                            stored_key = ("payload-xss-stored", url)
+                            if stored_key not in seen:
+                                seen.add(stored_key)
+                                stored_finding = dict(finding)
+                                stored_finding["id"] = "payload-xss-stored"
+                                stored_finding["url"] = url
+                                stored_finding["severity"] = "high"
+                                stored_finding["confidence"] = "confirmed"
+                                stored_finding["description"] = (
+                                    "XSS payload persisted: a follow-up GET of the "
+                                    "view page still contains this run's marker."
+                                )
+                                findings.append(stored_finding)
     finally:
         if own:
             http.close()

@@ -1,0 +1,417 @@
+===== restaurant search Vue key =====
+CMD: https://services.chipotle.com/restaurant/v3/restaurant?latitude=40.7589&longitude=-73.9851&radius=1 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:47 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880044-SIN, cache-sin-wsat1880024-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792406.398281,VS0,VE623
+content-length: 54
+
+--- body ---
+len 54
+{ "statusCode": 404, "message": "Resource not found" }
+
+===== CORS restaurant evil origin =====
+CMD: https://services.chipotle.com/restaurant/v3/restaurant?latitude=40.7589&longitude=-73.9851&radius=1 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H Origin: https://evil.example
+HTTP/2 200 
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:48 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440059-SIN, cache-sin-wsap440081-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792408.215740,VS0,VE227
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== CORS restaurant chipotle origin =====
+CMD: https://services.chipotle.com/restaurant/v3/restaurant?latitude=40.7589&longitude=-73.9851&radius=1 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H Origin: https://www.chipotle.com
+HTTP/2 404 
+access-control-expose-headers: Content-Length,Vary
+access-control-allow-origin: https://www.chipotle.com
+access-control-allow-credentials: true
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:50 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880089-SIN, cache-sin-wsat1880060-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792410.623602,VS0,VE614
+vary: Origin
+content-length: 54
+
+--- body ---
+len 54
+{ "statusCode": 404, "message": "Resource not found" }
+
+===== restaurant by id 1 =====
+CMD: https://services.chipotle.com/restaurant/v3/restaurant/1 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 8
+chipotle-correlationid: OrderWeb-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:52 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880099-SIN, cache-sin-wsat1880093-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792411.415581,VS0,VE841
+vary: Accept-Encoding
+
+--- body ---
+len 417
+{"restaurantNumber":1,"restaurantName":"Evans","restaurantLocationType":"RESTAURANT","restaurantStatus":"OPEN","openDate":"1993-07-13T00:00:00","realEstateCategory":"Endcap","operationalRegion":"Mountain Northwest","operationalSubRegion":"Mountain West","operationalPatch":"Avalos Ana Patch","designatedMarketAreaName":"DENVER","plannedSubsComplDate":"1993-08-04T00:00:00","actualSubsComplDate":"1993-08-04T00:00:00"}
+
+===== ingredients CMS key =====
+CMD: https://services.chipotle.com/menu-metadata/v1/menu-metadata/ingredients -H Ocp-Apim-Subscription-Key: 937624593c7048759a9657d6cb705a2b -H Chipotle-CorrelationId: OrderWeb-shroodler-1
+HTTP/2 200 
+x-envoy-upstream-service-time: 4
+content-type: application/json; charset=utf-8
+etag: c7eff7d05d2dcc4452dd5995d3ca4cd7
+cache-control: max-age=600
+chipotle-correlationid: OrderWeb-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:54 GMT
+via: 1.1 varnish
+x-served-by: cache-nrt-rjtf7700075-NRT, cache-hkg17922-HKG
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792413.347305,VS0,VE1013
+vary: Accept-Encoding
+
+--- body ---
+len 74128
+{"channel":"web","region":"us","ingredients":[{"backgroundUrlMobile":"/content/dam/chipotle/menu/ingredients/avocado/panel/avocado-3x-mobile.jpg","backgroundUrlWeb":"/content/dam/chipotle/menu/ingredients/avocado/panel/avocado-desktop-2x1.jpg","backgroundAltText":"","factsDescription":"Avocados are the guac to our chips and, dare we say it, pretty dreamy. But they've long been prized and adored - even by the mighty Aztecs. When farmers brought the fruit (yes, it's a fruit) to the U.S., they promptly rebranded it to the name you know today because they found its original one (\"ahuacate\") too difficult to pronounce. As for what that word actually means in the Aztec language, well, let's just say that's what the internet's for.","factsSubTitle":"Avocadabra","factsTitle":"FACT","key":"avoc",
+
+===== online meals =====
+CMD: https://services.chipotle.com/menuinnovation/v1/onlinemeals -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:56 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880022-SIN, cache-sin-wsat1880022-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792416.591995,VS0,VE612
+content-length: 54
+
+--- body ---
+len 54
+{ "statusCode": 404, "message": "Resource not found" }
+
+===== leaderboard =====
+CMD: https://services.chipotle.com/loyalty-leaderboard/v1/leaderboard/leaderboarddata -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 401 
+www-authenticate: Bearer error="invalid_token"
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:58 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880028-SIN, cache-sin-wsat1880057-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792417.392704,VS0,VE620
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== promo guest =====
+CMD: https://services.chipotle.com/promo/v2/customers/promotions?countryCode=US -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 429 
+x-kpsdk-ct: 033guJDRfSK6CbsPUMy4Qn3flRbQxmxs1nVxIc8OkgpwmX6vjUhMPYJ37W82YaSSiO2SBnrC19PV1py4aDJzy3QWWpCj9NlWinbRGxLfSUH6BcNdHoNuHCACxpgTnrcCxAFwBJkUfZnc5TYzF7iFXlRrU6qPUW2SCGSic4NzWb
+expires: 0
+pragma: no-cache
+p3p: CP="This site does not specify a policy in the P3P header"
+set-cookie: KP_UIDz-ssn=033guJDRfSK6CbsPUMy4Qn3flRbQxmxs1nVxIc8OkgpwmX6vjUhMPYJ37W82YaSSiO2SBnrC19PV1py4aDJzy3QWWpCj9NlWinbRGxLfSUH6BcNdHoNuHCACxpgTnrcCxAFwBJkUfZnc5TYzF7iFXlRrU6qPUW2SCGSic4NzWb; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:46:59 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=033guJDRfSK6CbsPUMy4Qn3flRbQxmxs1nVxIc8OkgpwmX6vjUhMPYJ37W82YaSSiO2SBnrC19PV1py4aDJzy3QWWpCj9NlWinbRGxLfSUH6BcNdHoNuHCACxpgTnrcCxAFwBJkUfZnc5TYzF7iFXlRrU6qPUW2SCGSic4NzWb; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:46:59 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+x-kpsdk-r: 1-AA
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:46:59 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440088-SIN, cache-sin-wsap440078-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792419.197607,VS0,VE733
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== sustainability 2026 =====
+CMD: https://services.chipotle.com/sustainability/v1/sustainability/summary/2026 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 500 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:01 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880041-SIN, cache-sin-wsat1880053-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792421.123910,VS0,VE733
+content-length: 111
+
+--- body ---
+len 111
+{ "statusCode": 500, "message": "Internal server error", "activityId": "891e3b6a-0e5d-463a-a9c1-c8587bcce59f" }
+
+===== feedback fake uuid =====
+CMD: https://services.chipotle.com/customerfeedback/v1/feedback/order/00000000-0000-0000-0000-000000000001 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 401 
+content-type: application/json
+x-envoy-upstream-service-time: 2
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:03 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880082-SIN, cache-sin-wsat1880056-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792423.038560,VS0,VE223
+vary: Accept-Encoding
+
+--- body ---
+len 88
+{   "message": "The authorization header scheme is invalid.",   "category": "Security" }
+
+===== customer me no auth =====
+CMD: https://services.chipotle.com/customer/v2/customer -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 429 
+pragma: no-cache
+x-kpsdk-ct: 02BREWnFeNSUMAeQ0EoXeux7vJT135wMmmTLR2H1zilEpJ1uKlmpzFymdxUVnzWBWk48Qi3mQlavirv6RbYiLp4TrDd5UExCWYWctvrSEGXrCrCJD8ec5pSeYZQS7ZFvOxchPcvP0xjUQAn84UdpPTRct6jzo1UHuFYyOXe0pc
+expires: 0
+set-cookie: KP_UIDz-ssn=02BREWnFeNSUMAeQ0EoXeux7vJT135wMmmTLR2H1zilEpJ1uKlmpzFymdxUVnzWBWk48Qi3mQlavirv6RbYiLp4TrDd5UExCWYWctvrSEGXrCrCJD8ec5pSeYZQS7ZFvOxchPcvP0xjUQAn84UdpPTRct6jzo1UHuFYyOXe0pc; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:47:05 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02BREWnFeNSUMAeQ0EoXeux7vJT135wMmmTLR2H1zilEpJ1uKlmpzFymdxUVnzWBWk48Qi3mQlavirv6RbYiLp4TrDd5UExCWYWctvrSEGXrCrCJD8ec5pSeYZQS7ZFvOxchPcvP0xjUQAn84UdpPTRct6jzo1UHuFYyOXe0pc; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:47:05 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+x-kpsdk-r: 1-AA
+p3p: CP="This site does not specify a policy in the P3P header"
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:05 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440038-SIN, cache-sin-wsap440066-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792424.444965,VS0,VE727
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== customer me WITH bypass =====
+CMD: https://services.chipotle.com/customer/v2/customer -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H x-chipotle-bypass: hJ3Q^lVB#w1o
+HTTP/2 429 
+x-kpsdk-ct: 02BXq7R11BwChvx5aEMWbTVyBNSnLgPPClYPBGyrnaxMzzk366zVqkIH2ieabnHeUjPWeMjFAm13OKJm5uiVGWC3GzDB80ncaD8V3NqfxL4UxBGpr7n9VYoUBYqEwE2hR1hCgTDMHLbjTOdEAC4n0H2WgMOCQABzQtEZ5AdcRd
+expires: 0
+pragma: no-cache
+p3p: CP="This site does not specify a policy in the P3P header"
+set-cookie: KP_UIDz-ssn=02BXq7R11BwChvx5aEMWbTVyBNSnLgPPClYPBGyrnaxMzzk366zVqkIH2ieabnHeUjPWeMjFAm13OKJm5uiVGWC3GzDB80ncaD8V3NqfxL4UxBGpr7n9VYoUBYqEwE2hR1hCgTDMHLbjTOdEAC4n0H2WgMOCQABzQtEZ5AdcRd; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:47:06 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02BXq7R11BwChvx5aEMWbTVyBNSnLgPPClYPBGyrnaxMzzk366zVqkIH2ieabnHeUjPWeMjFAm13OKJm5uiVGWC3GzDB80ncaD8V3NqfxL4UxBGpr7n9VYoUBYqEwE2hR1hCgTDMHLbjTOdEAC4n0H2WgMOCQABzQtEZ5AdcRd; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:47:06 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+x-kpsdk-r: 1-AA
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:07 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880099-SIN, cache-sin-wsat1880020-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792426.358144,VS0,VE717
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== loyalty points no auth =====
+CMD: https://services.chipotle.com/loyalty/v2/points -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 401 
+www-authenticate: Bearer error="invalid_token"
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:08 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880098-SIN, cache-sin-wsat1880091-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792428.341163,VS0,VE220
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== loyalty points WITH bypass =====
+CMD: https://services.chipotle.com/loyalty/v2/points -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H x-chipotle-bypass: hJ3Q^lVB#w1o
+HTTP/2 401 
+www-authenticate: Bearer error="invalid_token"
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:09 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880035-SIN, cache-sin-wsat1880035-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792430.752331,VS0,VE225
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== GET auth customer =====
+CMD: https://services.chipotle.com/auth/v2/customer -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:11 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880079-SIN, cache-sin-wsat1880047-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792431.155915,VS0,VE285
+content-length: 54
+
+--- body ---
+len 54
+{ "statusCode": 404, "message": "Resource not found" }
+
+===== GET cart online =====
+CMD: https://services.chipotle.com/order/v3/cart/online -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:13 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880087-SIN, cache-sin-wsat1880052-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792433.620418,VS0,VE617
+content-length: 54
+
+--- body ---
+len 54
+{ "statusCode": 404, "message": "Resource not found" }
+
+===== GET cart group =====
+CMD: https://services.chipotle.com/order/v3/cart/group -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:15 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440028-SIN, cache-sin-wsap440089-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792434.425268,VS0,VE632
+content-length: 54
+
+--- body ---
+len 54
+{ "statusCode": 404, "message": "Resource not found" }
+
+===== GET recent orders =====
+CMD: https://services.chipotle.com/order/v3/customer/recent -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 401 
+www-authenticate: Bearer error="invalid_token"
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:17 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880025-SIN, cache-sin-wsat1880062-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792436.345211,VS0,VE733
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== GET recent WITH bypass =====
+CMD: https://services.chipotle.com/order/v3/customer/recent -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H x-chipotle-bypass: hJ3Q^lVB#w1o
+HTTP/2 401 
+www-authenticate: Bearer error="invalid_token"
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:18 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440086-SIN, cache-sin-wsap440086-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792438.266524,VS0,VE617
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== wallet =====
+CMD: https://services.chipotle.com/transaction/v3/wallet/wallet -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json
+HTTP/2 429 
+pragma: no-cache
+x-kpsdk-ct: 02xKWUIKiVs557t9OWpDfYNgOBJJ6EkRcDANaAMzcDJdSEKueHYegsTfemL6Z99RpvOjls48SPzz5FdyIlVt7AvdWWCfhBaVNVuAWtXeGIoUjBwaSXfliXpSfX8pBlSRyCXEcBa3TDBVwZ4YmLTnPqkyu5zWRxiYE2v0QlkKx4
+expires: 0
+set-cookie: KP_UIDz-ssn=02xKWUIKiVs557t9OWpDfYNgOBJJ6EkRcDANaAMzcDJdSEKueHYegsTfemL6Z99RpvOjls48SPzz5FdyIlVt7AvdWWCfhBaVNVuAWtXeGIoUjBwaSXfliXpSfX8pBlSRyCXEcBa3TDBVwZ4YmLTnPqkyu5zWRxiYE2v0QlkKx4; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:47:20 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02xKWUIKiVs557t9OWpDfYNgOBJJ6EkRcDANaAMzcDJdSEKueHYegsTfemL6Z99RpvOjls48SPzz5FdyIlVt7AvdWWCfhBaVNVuAWtXeGIoUjBwaSXfliXpSfX8pBlSRyCXEcBa3TDBVwZ4YmLTnPqkyu5zWRxiYE2v0QlkKx4; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:47:20 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+x-kpsdk-r: 1-AA
+p3p: CP="This site does not specify a policy in the P3P header"
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:20 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880095-SIN, cache-sin-wsat1880095-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792440.074215,VS0,VE734
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== OPTIONS customer CORS =====
+CMD: -X OPTIONS https://services.chipotle.com/customer/v2/customer -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H Origin: https://evil.example -H Access-Control-Request-Method: GET -H Access-Control-Request-Headers: authorization,ocp-apim-subscription-key,chipotle-correlationid
+HTTP/2 200 
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:22 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440095-SIN, cache-sin-wsap440054-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792442.995494,VS0,VE620
+content-length: 0
+
+--- body ---
+len 0
+
+
+===== trace restaurant =====
+CMD: https://services.chipotle.com/restaurant/v3/restaurant/1 -H Ocp-Apim-Subscription-Key: b4d9f36380184a3788857063bce25d6a -H Chipotle-CorrelationId: OrderWeb-shroodler-1 -H Content-Type: application/json -H Ocp-Apim-Trace: true
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 2
+chipotle-correlationid: OrderWeb-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:24 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440032-SIN, cache-sin-wsap440060-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792444.820776,VS0,VE616
+vary: Accept-Encoding
+
+--- body ---
+len 417
+{"restaurantNumber":1,"restaurantName":"Evans","restaurantLocationType":"RESTAURANT","restaurantStatus":"OPEN","openDate":"1993-07-13T00:00:00","realEstateCategory":"Endcap","operationalRegion":"Mountain Northwest","operationalSubRegion":"Mountain West","operationalPatch":"Avalos Ana Patch","designatedMarketAreaName":"DENVER","plannedSubsComplDate":"1993-08-04T00:00:00","actualSubsComplDate":"1993-08-04T00:00:00"}
+

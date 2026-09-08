@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Shroodler report — https://robloxultima.com</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #211A17; color: #EDE8C8; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #4A4038; padding: 0.4rem 0.6rem; text-align: left; }
+    .critical { color: #E5484D; }
+    .high { color: #F0883E; }
+    .medium { color: #E8B339; }
+    .low { color: #5B9BD1; }
+    .info { color: #8B8A85; }
+    code { font-family: ui-monospace, monospace; }
+    .risk-summary { display: flex; align-items: center; gap: 1.5rem; margin: 1rem 0; }
+    .risk-grade {
+      font-size: 2.5rem; font-weight: bold; border-radius: 0.5rem; width: 3rem; height: 3rem;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+      background: #332822;
+    }
+    .risk-grade.grade-A, .risk-grade.grade-B { color: #5B9BD1; }
+    .risk-grade.grade-C { color: #E8B339; }
+    .risk-grade.grade-D, .risk-grade.grade-F { color: #E5484D; }
+    .risk-counts span { margin-right: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Shroodler report</h1>
+  <p>Target: <code>https://robloxultima.com</code></p>
+  <p>Crawler: shroodler-py 0.2.0 (static)</p>
+  <p>30 pages · 161 findings · 7 distinct</p>
+  
+  <h2>Executive summary</h2>
+  <div class="risk-summary">
+    <div class="risk-grade grade-C">C</div>
+    <div class="risk-counts">
+      <span class="critical">0 critical</span>
+      <span class="high">0 high</span>
+      <span class="medium">4 medium</span>
+      <span class="low">2 low</span>
+      <span class="info">1 info</span>
+    </div>
+  </div>
+  <p style="font-size: 0.9rem;">
+    Grade weighted by distinct finding type, not raw per-page instance
+    count, and floored by the single worst severity present (one
+    critical can never be outscored by a pile of minor notes) -- a
+    rough at-a-glance signal, not a substitute for reading the findings
+    below.
+    
+  </p>
+  
+  
+  <h2>Summary (by finding)</h2>
+  <table>
+    <thead>
+      <tr><th>Severity</th><th>ID</th><th>Count</th><th>Description</th><th>Cost of attack</th><th>Remediation</th></tr>
+    </thead>
+    <tbody>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>30</td>
+        <td>Content-Security-Policy header not set</td>
+        <td>none</td>
+        <td>Add a Content-Security-Policy header restricting script/style/object sources.</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>30</td>
+        <td>X-Frame-Options header not set</td>
+        <td>none</td>
+        <td>Add X-Frame-Options: DENY/SAMEORIGIN or a CSP frame-ancestors directive.</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>30</td>
+        <td>Strict-Transport-Security header not set</td>
+        <td>none</td>
+        <td>Add Strict-Transport-Security so browsers never downgrade this origin to plain HTTP.</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>generic-api-key</code></td>
+        <td>1</td>
+        <td>High-entropy string that may be an API key</td>
+        <td>none</td>
+        <td>Rotate the exposed credential immediately and remove it from the response/source.</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>30</td>
+        <td>X-Content-Type-Options header not set</td>
+        <td>none</td>
+        <td>Add X-Content-Type-Options: nosniff to stop MIME-sniffing attacks.</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>10</td>
+        <td>Cross-origin &lt;script&gt; loaded without a Subresource Integrity (integrity=) attribute: https://www.googletagmanager.com/gtag/js?id=AW-986534766</td>
+        <td>none</td>
+        <td>Add a Subresource Integrity (integrity=&#34;sha384-...&#34;) attribute to this cross-origin script/stylesheet.</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>30</td>
+        <td>Referrer-Policy header not set</td>
+        <td>none</td>
+        <td>Add a Referrer-Policy header (e.g. strict-origin-when-cross-origin) to limit leakage.</td>
+      </tr>
+    
+    </tbody>
+  </table>
+  
+  <h2>Findings (detail)</h2>
+  <table id="detail-findings">
+    <thead>
+      <tr><th>Severity</th><th>ID</th><th>Category</th><th>URL</th><th>Description</th><th>Confidence</th><th>Cost of attack</th></tr>
+    </thead>
+    <tbody>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/index.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/index.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/index.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-info.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-info.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-info.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-pokedex.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-pokedex.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-pokedex.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rarities.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rarities.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rarities.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-items.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-items.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-items.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-contests.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-contests.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-contests.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rates.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rates.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rates.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-shop.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-shop.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-shop.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-designers.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-designers.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-designers.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fontawesome-all.min.css</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fontawesome-all.min.css</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fontawesome-all.min.css</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/img/ultimapaper.png</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/img/ultimapaper.png</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/img/ultimapaper.png</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>generic-api-key</code></td>
+        <td>secret</td>
+        <td><code>https://robloxultima.com/assets/img/ultimapaper.png</code></td>
+        <td>High-entropy string that may be an API key</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/Index.html</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/Index.html</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/Index.html</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.eot</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.eot</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.eot</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff2</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff2</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff2</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.ttf</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.ttf</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.ttf</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.svg</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.svg</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.svg</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.eot</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.eot</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.eot</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff2</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff2</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff2</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.ttf</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.ttf</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.ttf</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.svg</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.svg</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.svg</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.eot</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.eot</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.eot</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff2</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff2</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff2</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.ttf</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.ttf</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.ttf</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-csp</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.svg</code></td>
+        <td>Content-Security-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-x-frame-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.svg</code></td>
+        <td>X-Frame-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="medium">medium</td>
+        <td><code>missing-hsts</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.svg</code></td>
+        <td>Strict-Transport-Security header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com</code></td>
+        <td>Cross-origin &lt;script&gt; loaded without a Subresource Integrity (integrity=) attribute: https://www.googletagmanager.com/gtag/js?id=AW-986534766</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/index.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-info.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-info.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-pokedex.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-pokedex.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rarities.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-rarities.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-items.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-items.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-contests.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-contests.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rates.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-rates.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-shop.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-shop.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-designers.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/ultima-designers.html</code></td>
+        <td>Cross-origin &lt;link&gt; loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fontawesome-all.min.css</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/img/ultimapaper.png</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/Index.html</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>sri-missing</code></td>
+        <td>subresource</td>
+        <td><code>https://robloxultima.com/Index.html</code></td>
+        <td>Cross-origin &lt;script&gt; loaded without a Subresource Integrity (integrity=) attribute: https://www.googletagmanager.com/gtag/js?id=AW-986534766</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.eot</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff2</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.ttf</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.svg</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.eot</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff2</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.ttf</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.svg</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.eot</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff2</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.ttf</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="low">low</td>
+        <td><code>missing-x-content-type-options</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.svg</code></td>
+        <td>X-Content-Type-Options header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/index.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-info.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-pokedex.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rarities.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-items.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-contests.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-rates.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-shop.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/ultima-designers.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fontawesome-all.min.css</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/img/ultimapaper.png</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/Index.html</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.eot</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff2</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.woff</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.ttf</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-brands-400.svg</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.eot</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff2</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.woff</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.ttf</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-regular-400.svg</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.eot</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff2</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.woff</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.ttf</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+      <tr>
+        <td class="info">info</td>
+        <td><code>missing-referrer-policy</code></td>
+        <td>header</td>
+        <td><code>https://robloxultima.com/assets/fonts/fa-solid-900.svg</code></td>
+        <td>Referrer-Policy header not set</td>
+        <td></td>
+        <td>none</td>
+      </tr>
+    
+    </tbody>
+  </table>
+</body>
+</html>

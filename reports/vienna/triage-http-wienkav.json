@@ -1,0 +1,361 @@
+{
+  "hosts": [
+    {
+      "host": "bp.wienkav.at",
+      "url": "https://bp.wienkav.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bp.gesundheitsverbund.at/",
+      "notes": [
+        "out-of-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "cc-health.40.wienkav.at",
+      "url": "https://cc-health.40.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "cc-health.60.wienkav.at",
+      "url": "https://cc-health.60.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "cc-health.80.wienkav.at",
+      "url": "https://cc-health.80.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "cs-health.40.wienkav.at",
+      "url": "https://cs-health.40.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "cs-health.60.wienkav.at",
+      "url": "https://cs-health.60.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "cs-health.80.wienkav.at",
+      "url": "https://cs-health.80.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "datagate.wienkav.at",
+      "url": "https://datagate.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "grvpn.wienkav.at",
+      "url": "https://grvpn.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "grvpn1ext.wienkav.at",
+      "url": "https://grvpn1ext.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "grvpn2ext.wienkav.at",
+      "url": "https://grvpn2ext.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "ma70bp.wienkav.at",
+      "url": "https://ma70bp.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "remote.wienkav.at",
+      "url": "https://remote.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "ribm.wienkav.at",
+      "url": "https://ribm.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "testdatagate.wienkav.at",
+      "url": "https://testdatagate.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "webmail.wienkav.at",
+      "url": "https://webmail.wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "wienkav.at",
+      "url": "https://wienkav.at/",
+      "classification": "resolves",
+      "dns": "resolves",
+      "http": null,
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http skipped: zone paused after WAF/rate-limit/egress failures"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "autodiscover.extern.wienkav.at",
+      "url": "https://autodiscover.extern.wienkav.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    },
+    {
+      "host": "autodiscover.wienkav.at",
+      "url": "https://autodiscover.wienkav.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "wienkav.at"
+    }
+  ],
+  "counts": {
+    "redirect-alias": 1,
+    "resolves": 16,
+    "error": 2
+  },
+  "takeover_candidates": [],
+  "crawl_seeds": [],
+  "skipped_external": 0,
+  "zones_paused": [
+    "wienkav.at"
+  ],
+  "concurrency": 2,
+  "rate_rps": 1.0,
+  "proxy": null,
+  "active": true
+}

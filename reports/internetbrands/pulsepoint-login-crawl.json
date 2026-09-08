@@ -1,0 +1,752 @@
+{
+  "target": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+  "scan_started_at": "2026-09-07T05:39:34Z",
+  "scan_finished_at": "2026-09-07T05:39:42Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "./Login.aspx",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "__EVENTTARGET",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__EVENTARGUMENT",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATE",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEGENERATOR",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEENCRYPTED",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__EVENTVALIDATION",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "VIEWSTATEGENERATORCUSTID",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "VIEWSTATEGENERATORCUSTVAL1",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "VIEWSTATEGENERATORCUSTVAL2",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "UserName",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "Password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "usrAuthId",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "zacnkoertw",
+          "secure": false,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "ASP.NET_SessionId_CROSS_DOM_custom",
+          "secure": false,
+          "http_only": false,
+          "same_site": null
+        },
+        {
+          "name": "CWAuthTkt_CROSS_DOM",
+          "secure": false,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "ASP.NET_SessionId_CROSS_DOM",
+          "secure": false,
+          "http_only": true,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": [
+        "HttpCombiner.ashx?s=LoginNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b"
+      ]
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/ForgotPassword.aspx",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "./ForgotPassword.aspx",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "__EVENTTARGET",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__EVENTARGUMENT",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATE",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEGENERATOR",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEENCRYPTED",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__EVENTVALIDATION",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "UserName",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": [
+        "HttpCombiner.ashx?s=ForgotPasswordNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b"
+      ]
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Signup.aspx",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "./Signup.aspx",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "__VIEWSTATE",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEGENERATOR",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEENCRYPTED",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": [
+        "HttpCombiner.ashx?s=SignUpNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b"
+      ]
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/AdvertiserSignup.aspx",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "./AdvertiserSignup.aspx",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "__VIEWSTATE",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEGENERATOR",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "__VIEWSTATEENCRYPTED",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": [
+        "HttpCombiner.ashx?s=AdvertiserSignup_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b"
+      ]
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=LoginNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?d69138ac-d050-4532-b7b7-3695593a5c80",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "s",
+        "t",
+        "v"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/JavaScripts/Angular/CoreLibs/fonts/font-awesome-4.2.0/css/font-awesome.min.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=LoginNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "s",
+        "t",
+        "v"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?d69138ac-d050-4532-b7b7-3695593a5c80",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "s",
+        "t",
+        "v"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "s",
+        "t",
+        "v"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=SignUpNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?eae64cb8-0327-4bc0-a5ee-2cab8b3c494e",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "s",
+        "t",
+        "v"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "Cookie zacnkoertw is missing the Secure flag",
+      "evidence": "zacnkoertw"
+    },
+    {
+      "id": "cookie-domain-broad",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "Cookie zacnkoertw Domain=.pulsepoint.com is broader than host exchange.pulsepoint.com",
+      "evidence": "zacnkoertw"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "Cookie ASP.NET_SessionId_CROSS_DOM_custom is missing HttpOnly",
+      "evidence": "ASP.NET_SessionId_CROSS_DOM_custom"
+    },
+    {
+      "id": "cookie-path-broad",
+      "severity": "info",
+      "category": "cookie",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "Session cookie ASP.NET_SessionId_CROSS_DOM_custom is scoped to Path=/",
+      "evidence": "ASP.NET_SessionId_CROSS_DOM_custom"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Java************me-4"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Login.aspx",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800",
+      "evidence": "https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/ForgotPassword.aspx",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/ForgotPassword.aspx",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/ForgotPassword.aspx",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Java************me-4"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/ForgotPassword.aspx",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800",
+      "evidence": "https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Signup.aspx",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Signup.aspx",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Signup.aspx",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Java************me-4"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/Signup.aspx",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800",
+      "evidence": "https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/AdvertiserSignup.aspx",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/AdvertiserSignup.aspx",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/AdvertiserSignup.aspx",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Java************me-4"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/AdvertiserSignup.aspx",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800",
+      "evidence": "https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700,800"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=LoginNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?d69138ac-d050-4532-b7b7-3695593a5c80",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=LoginNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?d69138ac-d050-4532-b7b7-3695593a5c80",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/JavaScripts/Angular/CoreLibs/fonts/font-awesome-4.2.0/css/font-awesome.min.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/JavaScripts/Angular/CoreLibs/fonts/font-awesome-4.2.0/css/font-awesome.min.css",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=LoginNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=LoginNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=LoginNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "com/************595/"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?d69138ac-d050-4532-b7b7-3695593a5c80",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?d69138ac-d050-4532-b7b7-3695593a5c80",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/HttpCombiner.ashx?s=ForgotPasswordNew_JS&t=text/javascript&v=338525700ed6a9204b19dd7b251a9bb155a1085b",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "com/************595/"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=SignUpNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?eae64cb8-0327-4bc0-a5ee-2cab8b3c494e",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=SignUpNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?eae64cb8-0327-4bc0-a5ee-2cab8b3c494e",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://exchange.pulsepoint.com/AccountMgmt/CSS/AccountMgmt/HttpCombiner.ashx?s=SignUpNew_CSS&t=text/css&v=338525700ed6a9204b19dd7b251a9bb155a1085b?eae64cb8-0327-4bc0-a5ee-2cab8b3c494e",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "+EVr************tcy+"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 10,
+    "pages_challenged": 0,
+    "requests": 19,
+    "elapsed_ms": 7478,
+    "stopped_reason": "max-pages"
+  }
+}

@@ -1,0 +1,707 @@
+{
+  "target": "https://portalv2.lh360.com",
+  "scan_started_at": "2026-09-07T05:19:45Z",
+  "scan_finished_at": "2026-09-07T05:20:04Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://portalv2.lh360.com",
+      "status_code": 307,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/auth/login",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "selectedBusinessGuid",
+          "secure": false,
+          "http_only": true,
+          "same_site": null
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "/_next/static/chunks/webpack-300f3a35b68f0b09.js",
+        "/_next/static/chunks/framework-e952fed463eb8e34.js",
+        "/_next/static/chunks/main-7f13ed2237c5dca8.js",
+        "/_next/static/chunks/pages/_app-f26aa53fb30f423a.js",
+        "/_next/static/chunks/pages/auth/login-937f290b47b5c7ac.js",
+        "/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+        "/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_ssgManifest.js"
+      ]
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/css/1ef8c60613e93d84.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/chunks/webpack-300f3a35b68f0b09.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/chunks/framework-e952fed463eb8e34.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/chunks/main-7f13ed2237c5dca8.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/_app-f26aa53fb30f423a.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/auth/login-937f290b47b5c7ac.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_ssgManifest.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/.well-known/security.txt",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": []
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://portalv2.lh360.com/auth/login",
+      "description": "Cookie selectedBusinessGuid is missing the Secure flag",
+      "evidence": "selectedBusinessGuid"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/auth/login",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/auth/login",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/auth/login",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/auth/login",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://portalv2.lh360.com/auth/login",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "_nex************1b0a"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/css/1ef8c60613e93d84.css",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/css/1ef8c60613e93d84.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/css/1ef8c60613e93d84.css",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/css/1ef8c60613e93d84.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/polyfills-42372ed130431b0a.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/webpack-300f3a35b68f0b09.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/webpack-300f3a35b68f0b09.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/webpack-300f3a35b68f0b09.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/webpack-300f3a35b68f0b09.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/framework-e952fed463eb8e34.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/framework-e952fed463eb8e34.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/framework-e952fed463eb8e34.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/framework-e952fed463eb8e34.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/framework-e952fed463eb8e34.js",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "__re************===n"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/main-7f13ed2237c5dca8.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/main-7f13ed2237c5dca8.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/main-7f13ed2237c5dca8.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/main-7f13ed2237c5dca8.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/_app-f26aa53fb30f423a.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/_app-f26aa53fb30f423a.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/_app-f26aa53fb30f423a.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/_app-f26aa53fb30f423a.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/auth/login-937f290b47b5c7ac.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/auth/login-937f290b47b5c7ac.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/auth/login-937f290b47b5c7ac.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/chunks/pages/auth/login-937f290b47b5c7ac.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_buildManifest.js",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "stat************76ea"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_ssgManifest.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_ssgManifest.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_ssgManifest.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/_next/static/J7DxMhu0aeJiZ-GUFlaeT/_ssgManifest.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.env",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/wp-config.php.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/phpinfo.php",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.git/config",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.git/HEAD",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.svn/entries",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "exposed-file",
+      "severity": "high",
+      "category": "exposed-file",
+      "url": "https://portalv2.lh360.com/.well-known/security.txt",
+      "description": "Common path /.well-known/security.txt is reachable",
+      "evidence": "/.well-known/security.txt"
+    },
+    {
+      "id": "waf-challenge-sitewide",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com",
+      "description": "6 of 12 crawled pages were WAF/bot-mitigation-challenged (Cloudflare) -- this target appears to be challenged site-wide, not just on one page. This scan's other findings substantially understate the target's real attack surface. Try --user-agent, or ask the target's operator to allowlist the scanner before re-running.",
+      "evidence": "6/12 pages challenged"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 12,
+    "pages_challenged": 6,
+    "requests": 51,
+    "elapsed_ms": 19003,
+    "stopped_reason": "complete"
+  }
+}

@@ -1,0 +1,184 @@
+{
+  "target": "https://accounts.webmd.com",
+  "scan_started_at": "2026-09-07T05:17:35Z",
+  "scan_finished_at": "2026-09-07T05:17:36Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://accounts.webmd.com",
+      "status_code": 301,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://accounts.webmd.com",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://accounts.webmd.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://accounts.webmd.com",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://accounts.webmd.com",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://accounts.webmd.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/.env",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/backup.sql.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/.DS_Store",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/wp-config.php.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/config.php.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/phpinfo.php",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/web.config",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/id_rsa",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/.git/config",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/.git/HEAD",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/.svn/entries",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com/.hg/hgrc",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-sitewide",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://accounts.webmd.com",
+      "description": "12 of 1 crawled pages were WAF/bot-mitigation-challenged (Cloudflare) -- this target appears to be challenged site-wide, not just on one page. This scan's other findings substantially understate the target's real attack surface. Try --user-agent, or ask the target's operator to allowlist the scanner before re-running.",
+      "evidence": "12/1 pages challenged"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 1,
+    "pages_challenged": 12,
+    "requests": 29,
+    "elapsed_ms": 860,
+    "stopped_reason": "complete"
+  }
+}

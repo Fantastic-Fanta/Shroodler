@@ -1,0 +1,262 @@
+===== POST restaurant search pageSize 2 =====
+HTTP/2 200 
+x-envoy-upstream-service-time: 43
+chipotle-correlationid: OrderWeb-shroodler-2
+content-type: application/json; charset=utf-8
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:53 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880080-SIN, cache-sin-wsat1880043-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792473.956532,VS0,VE728
+vary: Accept-Encoding
+
+
+body_len 5536
+{"data":[{"restaurantNumber":681,"restaurantName":"Clinton","restaurantLocationType":"RESTAURANT","restaurantStatus":"OPEN","openDate":"2005-12-02T00:00:00","realEstateCategory":"Inline","operationalRegion":"Northeast","operationalSubRegion":"NYC Manhattan","operationalPatch":"Burgos Jennifer Patch","designatedMarketAreaName":"NEW YORK","distance":148.53,"addresses":[{"addressType":"MAIN","addressLine1":"620 9th Ave","addressLine2":" ","locality":"New York","administrativeArea":"NY","postalCode":"10036-3731","subAdministrativeArea":"New York","countryCode":"US","latitude":40.759580,"longitude":-73.991670,"accuracyDetermination":"High Confidence - Geocoded to Rooftop Level"}],"timezone":{"currentTimezoneOffset":-14400,"timezoneOffset":-18000,"timezone":"Eastern Daylight Time","timezoneId":"America/New_York","observeDaylightSavings":"Y","daylightSavingsOffset":3600},"marketing":{"operationsMarket":"NYC Market","specialMenuPanelInstructions":"(M2.0) CAP - (SC) CAP + HP + CLS - (S/D/K) Allergen","featureMenuPanel":"CLS","kidsMenuPanel":"N","caloriesOnMenuPanel":"Y","foodWithIntegrityMenuBoardWidthId":"31\"","menuBoardPanelHeightId":"17\"","menuPanelTypeId":"6P","alcoholCategory":"BEER","alcoholCategoryDescription":"Beer Only","marketingAlcoholDescription":"Beer Only\u00A0"},"realHours":[{"dayOfWeek":"Monday","openDateTime":"2026-09-07T10:45:00","closeDateTime":"2026-09-07T23:00:00"},{"dayOfWeek":"Tuesday","openDateTime":"2026-09-08T10:45:00","closeDateTime":"2026-09-08T23:00:00"}
+--- keys of interest ---
+contains patch
+contains Patch
+top keys ['data', 'pagingInfo']
+rest keys ['addresses', 'catering', 'chipotlane', 'designatedMarketAreaName', 'distance', 'experience', 'marketing', 'onlineOrdering', 'openDate', 'operationalPatch', 'operationalRegion', 'operationalSubRegion', 'realEstateCategory', 'realHours', 'restaurantLocationType', 'restaurantName', 'restaurantNumber', 'restaurantStatus', 'sustainability', 'timezone']
+{
+  "restaurantNumber": 681,
+  "restaurantName": "Clinton",
+  "restaurantLocationType": "RESTAURANT",
+  "restaurantStatus": "OPEN",
+  "openDate": "2005-12-02T00:00:00",
+  "realEstateCategory": "Inline",
+  "operationalRegion": "Northeast",
+  "operationalSubRegion": "NYC Manhattan",
+  "operationalPatch": "Burgos Jennifer Patch",
+  "designatedMarketAreaName": "NEW YORK",
+  "distance": 148.53,
+  "addresses": [
+    {
+      "addressType": "MAIN",
+      "addressLine1": "620 9th Ave",
+      "addressLine2": " ",
+      "locality": "New York",
+      "administrativeArea": "NY",
+      "postalCode": "10036-3731",
+      "subAdministrativeArea": "New York",
+      "countryCode": "US",
+      "latitude": 40.75958,
+      "longitude": -73.99167,
+      "accuracyDetermination": "High Confidence - Geocoded to Rooftop Level"
+    }
+  ],
+  "timezone": {
+    "currentTimezoneOffset": -14400,
+    "timezoneOffset": -18000,
+    "timezone": "Eastern Daylight Time",
+    "timezoneId": "America/New_York",
+    "observeDaylightSavings": "Y",
+    "daylightSavingsOffset": 3600
+  },
+  "marketing": {
+    "operationsMarket": "NYC Market",
+    "specialMenuPanelInstructions": "(M2.0) CAP - (SC) CAP + HP + CLS - (S/D/K) Allergen",
+    "featureMenuPanel": "CLS",
+    "kidsMenuPanel": "N",
+    "caloriesOnMenuPanel": "Y",
+    "foodWithIntegrityMenuBoardWidthId": "31\"",
+    "menuBoardPanelHeightId": "17\"",
+    "menuPanelTypeId": "6P",
+    "alcoholCategory": "BEER",
+    "alcoholCategoryDescription": "Beer Only",
+    "marketingAlcoholDescription": "Beer Only\u00a0"
+  },
+  "realHours": [
+    {
+      "dayOfWeek": "Monday",
+      "openDateTime": "2026-09-07T10:45:00",
+      "closeDateTime": "2026-09-07T23:00:00"
+    },
+    {
+      "dayOfWeek": "Tuesday",
+      "openDateTime": "2026-09-08T10:45:00",
+      "closeDateTime": "2026-09-08T23:00:00"
+    },
+    {
+      "dayOfWeek": "Wednesday",
+      "openDateTime": "2026-09-09T10:45:00",
+      "closeDateTime": "2026-09-09T23:00:00"
+    },
+    {
+      "dayOfWeek": "Thursday",
+      "openDateTime": "2026-09-10T10:45:00",
+      "closeDateTime": "2026-09-10T23:00:00"
+    },
+    {
+      "dayOfWeek": "Friday",
+      "openDateTime": "2026-09-11T10:45:00",
+      "closeDateTime": "2026-09-11T23:00:00"
+    },
+    {
+      "dayOfWeek": "Saturday",
+      "openDateTime": "2026-09-12T10:45:00",
+      "closeDateTime": "2026-09-12T23:00:00"
+    },
+    {
+      "dayOfWeek": "Sunday",
+      "openDateTime": "2026-09-13T10:45:00",
+      "closeDateTime": "2026-09-13T23:00:00"
+    }
+  ],
+ 
+===== GET restaurant/1 embeds =====
+HTTP/2 200 
+x-envoy-upstream-service-time: 3
+chipotle-correlationid: OrderWeb-shroodler-2
+content-type: application/json; charset=utf-8
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:47:55 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880074-SIN, cache-hkg17926-HKG
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792475.810815,VS0,VE660
+vary: Accept-Encoding
+
+len 2780
+keys ['actualSubsComplDate', 'addresses', 'catering', 'chipotlane', 'designatedMarketAreaName', 'directions', 'experience', 'marketing', 'onlineOrdering', 'openDate', 'operationalPatch', 'operationalRegion', 'operationalSubRegion', 'plannedSubsComplDate', 'realEstateCategory', 'realHours', 'restaurantLocationType', 'restaurantName', 'restaurantNumber', 'restaurantStatus', 'sustainability', 'timezone']
+{
+  "restaurantNumber": 1,
+  "restaurantName": "Evans",
+  "restaurantLocationType": "RESTAURANT",
+  "restaurantStatus": "OPEN",
+  "openDate": "1993-07-13T00:00:00",
+  "realEstateCategory": "Endcap",
+  "operationalRegion": "Mountain Northwest",
+  "operationalSubRegion": "Mountain West",
+  "operationalPatch": "Avalos Ana Patch",
+  "designatedMarketAreaName": "DENVER",
+  "plannedSubsComplDate": "1993-08-04T00:00:00",
+  "actualSubsComplDate": "1993-08-04T00:00:00",
+  "addresses": [
+    {
+      "addressType": "MAIN",
+      "addressLine1": "1644 E Evans Ave",
+      "addressLine2": " ",
+      "locality": "Denver",
+      "administrativeArea": "CO",
+      "postalCode": "80210-4609",
+      "subAdministrativeArea": "Denver",
+      "countryCode": "US",
+      "latitude": 39.678281,
+      "longitude": -104.967812,
+      "accuracyDetermination": "High Confidence - Geocoded to Rooftop Level"
+    }
+  ],
+  "directions": {
+    "landmark": "Across from Jelly",
+    "crossStreet1": "Evans ",
+    "crossStreet2": "Gilpin",
+    "pickupInstructions": "Go straight to the cashier to pick up your food."
+  },
+  "timezone": {
+    "currentTimezoneOffset": -21600,
+    "timezoneOffset": -25200,
+    "timezone": "Mountain Daylight Time",
+    "timezoneId": "America/Denver",
+    "observeDaylightSavings": "Y",
+    "daylightSavingsOffset": 3600
+  },
+  "marketing": {
+    "operationsMarket": "Mountain West Market",
+    "specialMenuPanelInstructions": "No Panels - (Sneeze Cling) CAP + HP CLS",
+    "kidsMenuPanel": "N",
+    "caloriesOnMenuPanel": "Y",
+    "alcoholCategory": "BEER",
+    "alcoholCategoryDescription": "Beer Only",
+    "marketingAlcoholDescription": "Beer Only\u00a0"
+  },
+  "realHours": [
+    {
+      "dayOfWeek": "Monday",
+      "openDateTime": "2026-09-07T10:45:00",
+      "closeDateTime": "2026-09-07T23:00:00"
+    },
+    {
+      "dayOfWeek": "Tuesday",
+      "openDateTime": "2026-09-08T10:45:00",
+      "closeDateTime": "2026-09-08T23:00:00"
+    },
+    {
+      "dayOfWeek": "Wednesday",
+      "openDateTime": "2026-09-09T10:45:00",
+      "closeDateTime": "2026-09-09T23:00:00"
+    },
+    {
+      "dayOfWeek": "Thursday",
+      "openDateTime": "2026-09-10T10:45:00",
+      "closeDateTime": "2026-09-10T23:00:00"
+    },
+    {
+      "dayOfWeek": "Friday",
+      "openDateTime": "2026-09-11T10:45:00",
+      "closeDateTime": "2026-09-11T23:00:00"
+    },
+    {
+      "dayOfWeek": "Saturday",
+      "openDateTime": "2026-09-12T10:45:00",
+      "closeDateTime": "2026-09-12T23:00:00"
+    },
+    {
+      "dayOfWeek": "Sunday",
+      "openDateTime": "2026-09-13T10:45:00",
+      "closeDateTime": "2026-09-13T23:00:00"
+    }
+  ],
+  "onlineOrdering": {
+    "onlineOrderingEnabled": true,
+    "onlineOrderingDotComSearchEnabled": "Live",
+    "onlineOrderingCreditCardsAccepted": true,
+    "onlineOrderingGiftCardsAccepted": true,
+    "onlineOrderingBulkOrdersAccepted": false,
+    "onlineOrderingTaxAssessed": true,
+    "restaurantTerminalSiteId": 107528
+  },
+  "catering": {
+    "cateringEnabled": true
+  },
+  "chipotlane": {
+    "chipotlanePickupEnabled": false
+  },
+  "experience": {
+    "curbsidePickupEnabled": false,
+    "diningRoomOpen": true,
+    "digitalKitchen": false,
+    "walkupWindowEnabled": false,
+    "pickupInsideEnabled": true,
+    "crewTipPickupEnabled": true,
+    "crewTipDeliveryEnabled": false,
+    "contextRestExpEnabled": true,
+    "orderCancellationEnabled": false
+  },
+  "sustainability": {
+    "utensilsDefaultState": "OPT-IN"
+  }
+}
+===== CORS POST search evil origin =====
+HTTP/2 200 
+===== catering homepage headers =====
+HTTP/2 200 
+content-type: text/html
+date: Mon, 07 Sep 2026 14:47:58 GMT
+server: Microsoft-IIS/10.0
+accept-ranges: bytes
+cache-control: no-cache,no-cache, no-store, must-revalidate
+etag: "1768f153c739dd1:0"
+expires: -1
+last-modified: Tue, 01 Sep 2026 04:06:56 GMT
+pragma: no-cache
+content-length: 1704
+strict-transport-security: max-age=31536000
+x-powered-by: ASP.NET
+
+len 1704
+title <re.Match object; span=(220, 244), match='<title>Chipotle Catering'>
+scripts ['//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle', 'https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js', 'https://a40.usablenet.com/pt/c/chipotle/cookiestorestart', 'https://lib.paymentjs.firstdata.com/prod/client-2.0.0.js', 'https://ucom-cmg.fiservapis.com/ucom/v2/static/v2/js/ucom-sdk.js', '/js/chunk-vendors.3eac4c22.js', '/js/app.3d13f0a0.js']

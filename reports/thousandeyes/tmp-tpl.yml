@@ -1,0 +1,90 @@
+- generic [ref=f34e2]:
+  - generic:
+    - banner "Application header" [ref=f34e3]:
+      - generic [ref=f34e4]:
+        - button "Collapse navigation" [expanded] [ref=f34e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f34e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f34e10]: ThousandEyes
+      - generic [ref=f34e29]:
+        - link "Upgrade" [ref=f34e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f34e198] [cursor=pointer]
+        - button "Help Content" [ref=f34e33] [cursor=pointer]
+        - button "Notifications" [ref=f34e39] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f34e46] [cursor=pointer]:
+          - generic [ref=f34e52]:
+            - generic [ref=f34e53]: Lapras Resonance
+            - generic [ref=f34e54]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f34e60] [cursor=pointer]
+    - navigation [ref=f34e63]:
+      - generic [ref=f34e64]:
+        - generic [ref=f34e65]:
+          - list [ref=f34e66]:
+            - listitem [ref=f34e67]:
+              - link "Navigate to Dashboards" [ref=f34e69] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f34e75]: Dashboards
+            - listitem [ref=f34e76]:
+              - link "Navigate to Event Detection" [ref=f34e78] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f34e83]: Event Detection
+            - listitem [ref=f34e84]:
+              - link "Navigate to Alerts" [ref=f34e86] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f34e92]: Alerts
+          - list [ref=f34e93]:
+            - listitem [ref=f34e94]:
+              - button "Expand Network & App Synthetics" [ref=f34e96] [cursor=pointer]:
+                - generic [ref=f34e102]: Network & App Synthetics
+            - listitem [ref=f34e106]:
+              - button "Expand Endpoint Experience" [ref=f34e108] [cursor=pointer]:
+                - generic [ref=f34e114]: Endpoint Experience
+            - listitem [ref=f34e118]:
+              - button "Expand Routing" [ref=f34e120] [cursor=pointer]:
+                - generic [ref=f34e126]: Routing
+            - listitem [ref=f34e130]:
+              - button "Expand Traffic Insights" [ref=f34e132] [cursor=pointer]:
+                - generic [ref=f34e138]: Traffic Insights
+            - listitem [ref=f34e142]:
+              - button "Expand Devices" [ref=f34e144] [cursor=pointer]:
+                - generic [ref=f34e150]: Devices
+            - listitem [ref=f34e154]:
+              - button "Expand Cloud Insights" [ref=f34e156] [cursor=pointer]:
+                - generic [ref=f34e162]: Cloud Insights
+            - listitem [ref=f34e166]:
+              - button "Expand Internet Insights" [ref=f34e168] [cursor=pointer]:
+                - generic [ref=f34e174]: Internet Insights
+                - status [ref=f34e175]: Trial
+          - list [ref=f34e179]:
+            - listitem [ref=f34e180]:
+              - button "Expand Manage" [ref=f34e182] [cursor=pointer]:
+                - generic [ref=f34e188]: Manage
+        - generic [ref=f34e193]:
+          - generic [ref=f34e194]: ThousandEyes © 2026
+          - link "Privacy" [ref=f34e195] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f34e196] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f34e201]:
+    - tablist [ref=f34e203]:
+      - tab "Integrations 1.0" [ref=f34e204] [cursor=pointer]
+      - tab "Integrations 2.0" [selected] [ref=f34e206] [cursor=pointer]:
+        - status [ref=f34e208]: New
+    - tabpanel [ref=f34e210]:
+      - generic [ref=f34e211]:
+        - tablist [ref=f34e213]:
+          - tab "Integration Templates" [selected] [ref=f34e214] [cursor=pointer]
+          - tab "Connectors" [ref=f34e215] [cursor=pointer]
+          - tab "Operations" [ref=f34e216] [cursor=pointer]
+        - tabpanel [ref=f34e218]:
+          - list [ref=f34e221]:
+            - listitem [ref=f34e222] [cursor=pointer]:
+              - generic [ref=f34e223]:
+                - img "Credential Vault" [ref=f34e224]
+                - generic [ref=f34e225]: Credential Vault
+                - generic [ref=f34e226]: Securely retrieve and manage credentials for tests using external vault services.
+            - listitem [ref=f34e227] [cursor=pointer]:
+              - generic [ref=f34e228]:
+                - generic [ref=f34e231]: Custom Webhook
+                - generic [ref=f34e232]: Send alerts and events to any system using your own webhook configuration

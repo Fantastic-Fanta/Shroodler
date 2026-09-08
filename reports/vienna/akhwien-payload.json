@@ -1,0 +1,25 @@
+{
+  "target": "https://www.akhwien.at",
+  "findings": [
+    {
+      "id": "payload-crlf-reflected",
+      "severity": "low",
+      "category": "payload",
+      "url": "https://www.akhwien.at/default.aspx?pid=2815",
+      "description": "CRLF-encoded payload was reflected in the response body without encoding -- weak signal, not proof of header injection by itself",
+      "evidence": "shrdlr-crlf-probe\r\nX-Shrdlr-Crlf-Test: 1",
+      "confidence": "heuristic",
+      "minimal_repro": true
+    }
+  ],
+  "oob_probes": [],
+  "guardrail": {
+    "policy_hash": null,
+    "policy_present": false,
+    "requests_attempted": 149,
+    "requests_blocked": 89,
+    "block_reasons": [
+      "rate limit (max_requests_per_minute) reached"
+    ]
+  }
+}

@@ -273,3 +273,29 @@ def test_ordinary_redirect_is_not_treated_as_denied(fx):
     ids = {f["id"] for f in out["findings"]}
     assert "authz-broken-access-control" not in ids
     assert "authz-still-accessible" in ids
+
+
+def test_replays_supplied_graphql_fields_when_introspection_blocked(fx):
+    import json
+
+    def handle(inc):
+        query = ""
+        if inc.body:
+            query = str(json.loads(inc.body.decode()).get("query") or "")
+        if "__type" in query:
+            return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no"}]}'
+        if "wallet" in query:
+            if "session=user" in inc.cookies:
+                return 200, {"Content-Type": "application/json"}, b'{"data":{"wallet":{"id":1}}}'
+            return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no"}]}'
+        return 200, {"Content-Type": "application/json"}, b'{"data":{"__typename":"Query"}}'
+
+    fx.on("POST", "/graphql", handle)
+    fx.on("GET", "/graphql", lambda inc: (200, {}, b'{"data":{"__typename":"Query"}}'))
+    doc = {
+        "target": fx.origin + "/",
+        "pages": [{"url": fx.origin + "/graphql"}],
+        "js_endpoints": [{"source": fx.origin + "/graphql", "endpoint": "graphql-field:wallet"}],
+    }
+    out = run(doc, cookie_header="session=user")
+    assert any(f["id"] == "graphql-field-authz" for f in out["findings"])

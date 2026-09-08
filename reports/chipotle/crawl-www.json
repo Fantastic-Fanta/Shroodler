@@ -1,0 +1,3301 @@
+{
+  "target": "https://www.chipotle.com",
+  "scan_started_at": "2026-09-07T14:42:59Z",
+  "scan_finished_at": "2026-09-07T14:43:20Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://www.chipotle.com",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/home",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/catering",
+      "status_code": 302,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/order/rewards",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/values",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-6f7b4fbd93de85c1e69944be3d08c35a-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/gift-cards",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/order/group/create",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/contact-us",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-contact-us.lc-d14268206235d7e2a50c792b9fab8a28-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "ilink"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/rewards",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-pages/rewards.lc-7b9148f0a636158aea1ae96eb7825815-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/food-safety",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-cultivate.lc-dd6ab481ad9f683d02f31c32995436b7-lc.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/sustainability",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://bugcrowd.com/f291164f-4b29-4e2b-a69f-51a9d8ea35dc/external/script",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/order/create-account",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/accessibility",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://a40.usablenet.com/pt/c/statement/chipotle/accessibilitystatement.js?l=1",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/transparency",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/terms-of-use",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/cookie-policy",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/privacy-center",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/privacy-policy",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-76407f12de0f7a008a57fa04f9dacb57-lc.min.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/manifest.webmanifest",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-8f1be82cb1e96cb0a34e7217630800e0-lc.min.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/icon-192x192.png",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-180x180.png",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "status_code": 404,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "status_code": 404,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "status_code": 404,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "//vice-prod.sdiapi.com/vice_loader/chipotle/chipotle",
+        "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+        "https://a40.usablenet.com/pt/c/chipotle/cookiestorestart",
+        "//assets.adobedtm.com/cfe1a3428264/a70a8339ebf1/launch-e2c5b1e61468.min.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+        "/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+        "https://orderweb-cdn.chipotle.com/js/app.js",
+        "https://orderweb-cdn.chipotle.com/js/chunk-vendors.js",
+        "/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js"
+      ]
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-d4f1a9779a86b25e59b954f61cbd674c-lc.min.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-6f7b4fbd93de85c1e69944be3d08c35a-lc.min.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "-Yw8************nF0Q",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/home",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/home",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/home",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/home",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/home",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/home",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "-Yw8************nF0Q",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/home",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/catering",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/catering",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/catering",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/catering",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://www.chipotle.com/catering",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://catering.chipotle.com",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************dyr-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/order/rewards",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/values",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/values",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/values",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/values",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/values",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/values",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "-_r4************OSG-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/values",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************6Dk-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/nutrition-calculator",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************B9u-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/zero-dollar-delivery",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************Ccl-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/gift-cards",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "-Yw8************nF0Q",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/order/group/create",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************rf1-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/contact-us",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************Ccl-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/gift-cards?ilink=footer",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/rewards",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/food-safety",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************zhT-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/cultivate-foundation",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "com/************ate-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/sustainability",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************vAu-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/responsible-disclosure",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************dyr-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/order/rewards/exchange",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************dyr-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/order/create-account",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************sXu-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/accessibility",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************GNj-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/recruiting-notice",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************g1J-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/transparency",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Kj86************VB9-",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/consumer-health-data-notice",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/terms-of-use",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "-p9T************llkQ",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/cookie-policy",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/privacy-center",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/privacy-policy",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-76407f12de0f7a008a57fa04f9dacb57-lc.min.css",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-76407f12de0f7a008a57fa04f9dacb57-lc.min.css",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-76407f12de0f7a008a57fa04f9dacb57-lc.min.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-76407f12de0f7a008a57fa04f9dacb57-lc.min.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-76407f12de0f7a008a57fa04f9dacb57-lc.min.css",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "clie************Bold",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/manifest.webmanifest",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/manifest.webmanifest",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/manifest.webmanifest",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-8f1be82cb1e96cb0a34e7217630800e0-lc.min.css",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-8f1be82cb1e96cb0a34e7217630800e0-lc.min.css",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-8f1be82cb1e96cb0a34e7217630800e0-lc.min.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-8f1be82cb1e96cb0a34e7217630800e0-lc.min.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/icon-192x192.png",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/icon-192x192.png",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/icon-192x192.png",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/icon-192x192.png",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-180x180.png",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-180x180.png",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-180x180.png",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-180x180.png",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-167x167.png",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-152x152.png",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "google-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "Google API key. Many of these are intentionally public, referrer- or app-restricted browser keys (Maps/Firebase client config) and are not exploitable on their own -- check the Google Cloud Console API restrictions for this key before escalating.",
+      "evidence": "AIza************PJO0",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "key_************0vgc",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base/resources/apple-touch-icon-120x120.png",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "evidence": "https://services.chipotle.com/149e9513-01fa-4fb0-aad4-566afd725d1b/2d206a39-8ed7-437e-a3be-862e0f06eea3/p.js",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-base.lc-5194e32363f090c6d658786ebfc6d7d3-lc.min.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/v2/clientlibs/core.wcm.components.commons.datalayer.v2.lc-1e0136bad0acfb78be509234578e44f9-lc.min.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/core/wcm/components/commons/datalayer/acdl/core.wcm.components.commons.datalayer.acdl.lc-bf921af342fd2c40139671dbf0920a1f-lc.min.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-site-en.lc-4716ed37eda47821e4bfaae8c11813e6-lc.min.js",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "onYo************tion",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-d4f1a9779a86b25e59b954f61cbd674c-lc.min.css",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-d4f1a9779a86b25e59b954f61cbd674c-lc.min.css",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-d4f1a9779a86b25e59b954f61cbd674c-lc.min.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-d4f1a9779a86b25e59b954f61cbd674c-lc.min.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-6f7b4fbd93de85c1e69944be3d08c35a-lc.min.js",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "csp-wildcard-script",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-6f7b4fbd93de85c1e69944be3d08c35a-lc.min.js",
+      "description": "Content-Security-Policy script-src or default-src allows a host wildcard",
+      "evidence": "frame-ancestors 'self' sdiapi.com app.datadoghq.com; report-uri https://browser-intake-datadoghq.com/api/v2/logs?dd-api-",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-6f7b4fbd93de85c1e69944be3d08c35a-lc.min.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.chipotle.com/etc.clientlibs/cmgaemacs/clientlibs/clientlib-cmp-values.lc-6f7b4fbd93de85c1e69944be3d08c35a-lc.min.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 40,
+    "pages_challenged": 0,
+    "requests": 49,
+    "elapsed_ms": 20421,
+    "stopped_reason": "max-pages"
+  }
+}

@@ -5,6 +5,20 @@
   auto-detects a Nuclei-shaped file. Does not vendor or download a
   template library.
 
+- **HAR ingest** (`shroodler ingest-har`) — turns a Burp / mitmproxy /
+  Caido / DevTools HAR 1.2 export into crawl JSON (Page records +
+  passive findings from captured bodies) so `authz-diff` / `payload`
+  can consume traffic Shroodler's own proxy never saw. `ingest-sessions`
+  and `crawl --seed-from` also auto-detect HAR.
+
+- **Slither ingest** (`shroodler slither-ingest`) — translates a local
+  Slither JSON report into Shroodler findings. Does not run Slither or
+  analyze EVM bytecode.
+
+- **SARIF merge** (`shroodler report --merge-sarif FILE`) — folds an
+  external SARIF 2.x file (Semgrep, CodeQL, Slither, any SARIF emitter)
+  into the report alongside Shroodler's own findings. Dedupes by id+url.
+
 - **Cadence** (`shroodler cadence --tier pr|nightly|weekly`) — prints
   recommended crawl/payload flags for a PR-time passive scan, a nightly
   active scan, or a weekly aggressive+adaptive scan. Does not itself
@@ -52,6 +66,10 @@
   configurable User-Agent (`--user-agent`), named safe/balanced/
   aggressive profiles, and `--spec` to seed extra same-origin paths from
   a local OpenAPI/Swagger document or Postman collection.
+- **GraphQL field names without introspection** — `crawl --gql-schema` /
+  `--gql-wordlist` (and the same flags on `authz-diff`) feed Clairvoyance
+  JSON or a plain field-name list into GraphQL Query-field replay when
+  live introspection is blocked.
 - **Cookie prefix contracts** — `__Secure-`/`__Host-` Set-Cookie
   violations (browsers reject these outright), distinct from the
   existing "could adopt a prefix" suggestions.
@@ -105,10 +123,26 @@
 - **Peer-write replay** (`shroodler peer-write`, Python-only) — replay
   captured writes against *known* object ids as a second session, with a
   nonsense-id control and an optional owner re-read. A dummy 200 that
-  matches the fake id, or `{"success": false}`, is not a finding. This
-  is not an enumerator and does not invent adjacent ids. Cookie jars
-  come from Playwright `storageState`, Netscape, HAR, or proxy JSONL —
-  no crawl required. MCP: `peer_write`.
+  matches the fake id, or `{"success": false}`, is not a finding. CSRF
+  tokens are harvested (hidden input / meta / JS / cookie) and attached
+  unless `--no-csrf`. `--require-confirm` keeps only owner-reread
+  confirmations. Cookie jars come from Playwright `storageState`,
+  Netscape, HAR, or proxy JSONL — no crawl required. MCP: `peer_write`.
+- **Session export** (`shroodler session-export`) — dump HttpOnly cookies
+  from a live Chrome `--cdp` URL, or convert HAR / proxy JSONL / Netscape
+  into Playwright `storageState` JSON. MCP: `session_export`.
+- **Authenticated CSRF** — crawl emits `csrf-state-change-unprotected`
+  when a SameSite=None session cookie is paired with a state-changing
+  form that has no CSRF field.
+- **Stored XSS** — after a reflected XSS hit on a POST, a follow-up GET
+  of the view page that still contains this run's marker is
+  `payload-xss-stored`.
+- **JS API surface** — JSON-RPC methods, tRPC procedures, React Query
+  keys, and GraphQL operation names mined from JS. `authz-diff` replays
+  GraphQL Query fields as the lower-priv session (`graphql-field-authz`).
+- **Chain findings** — reports add `chain-xss-cookie-theft` and
+  `chain-cors-credentialed` when both halves exist, and cluster a
+  header/SRI issue repeated across many pages into one row.
 - **JS route templates** (`shroodler js-routes`) — mine `{userId}`,
   `{collectionId}`, `{pk}`, `${var}`, `:id`, and `<int:pk>` URL
   templates from a webpack/SPA bundle so a peer-write playbook has a

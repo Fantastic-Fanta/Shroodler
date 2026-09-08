@@ -1,0 +1,80 @@
+{
+  "target": "https://scds.dev.handbuch.wien.gv.at",
+  "scan_started_at": "2026-09-07T09:00:36Z",
+  "scan_finished_at": "2026-09-07T09:00:37Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://scds.dev.handbuch.wien.gv.at",
+      "status_code": 0,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://scds.dev.handbuch.wien.gv.at",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://scds.dev.handbuch.wien.gv.at",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://scds.dev.handbuch.wien.gv.at",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://scds.dev.handbuch.wien.gv.at",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://scds.dev.handbuch.wien.gv.at",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 1,
+    "pages_challenged": 0,
+    "requests": 29,
+    "elapsed_ms": 940,
+    "stopped_reason": "complete"
+  }
+}

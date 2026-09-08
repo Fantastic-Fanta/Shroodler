@@ -1,0 +1,30 @@
+{
+  "user_id": 71938862,
+  "email": "gmaxresonance+peer@wearehackerone.com",
+  "cookies": [
+    {
+      "name": "__Secure-access-token",
+      "value": "eyJhbGciOiJFZERTQSIsImtpZCI6IndoYXRub3QtYWNjZXNzLXByb2QtMyIsInR5cCI6IkpXVCJ9.eyJzdWIiOjcxOTM4ODYyLCJpc3MiOiJ3aGF0bm90L2F1dGgiLCJhdWQiOiJ3aGF0bm90L2FjY2VzcyIsImV4cCI6MTc4ODg1NDI4MiwiaWF0IjoxNzg4ODUzOTgyLCJuYmYiOjE3ODg4NTM5ODIsImp0aSI6IkZvblE1Wk03LWVSaGU5bVpZM1IyRkEiLCJhcHBzaWQiOiJlZjAxOTRjOC01ODVmLTRmMTUtYTIwMy0xNDU2MTRjYTA2OTUiLCJ1cHIiOjAuMiwiaWRlbnRpdHkiOiJnbWF4cmVzb25hbmNlK3BlZXJAd2VhcmVoYWNrZXJvbmUuY29tIn0.ONXrpY40JYS-KHYohHQedRX6a5iio7SqxSImX14EDTTmPOj5hR8P86AkuS-cwybfHTV-NrBUbR3pJRDy8FPBAw",
+      "domain": "www.whatnot.com",
+      "path": "/",
+      "secure": true,
+      "http_only": true
+    },
+    {
+      "name": "__Secure-whatnot-live",
+      "value": "SFMyNTY.g3QAAAACbQAAAAtfY3NyZl90b2tlbm0AAAAYQlRwM1BVRXBhRmpnMXNXVHQ5emNpZGZCbQAAAAZjbGFpbXN0AAAACm0AAAAGYXBwc2lkbQAAACRlZjAxOTRjOC01ODVmLTRmMTUtYTIwMy0xNDU2MTRjYTA2OTVtAAAAA2F1ZG0AAAAOd2hhdG5vdC9hY2Nlc3NtAAAAA2V4cGJqn8AKbQAAAANpYXRiap--3m0AAAAIaWRlbnRpdHltAAAAJWdtYXhyZXNvbmFuY2UrcGVlckB3ZWFyZWhhY2tlcm9uZS5jb21tAAAAA2lzc20AAAAMd2hhdG5vdC9hdXRobQAAAANqdGltAAAAFkZvblE1Wk03LWVSaGU5bVpZM1IyRkFtAAAAA25iZmJqn77ebQAAAANzdWJtAAAACDcxOTM4ODYybQAAAAN1cHJGP8mZmZmZmZo.8GujWCr33vXRLYDQ-M5RjpSKsfcS824IAxQJBJUyWps",
+      "domain": "www.whatnot.com",
+      "path": "/",
+      "secure": true,
+      "http_only": true
+    },
+    {
+      "name": "__Secure-refresh-token",
+      "value": "wn_rt_7cYchfutlZf09dJYpJ4i%3A-nrdSC745QaNOVYTTKLi",
+      "domain": "www.whatnot.com",
+      "path": "/",
+      "secure": true,
+      "http_only": true
+    }
+  ]
+}

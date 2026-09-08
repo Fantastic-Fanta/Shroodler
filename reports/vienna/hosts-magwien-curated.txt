@@ -1,0 +1,10 @@
+confluence.magwien.gv.at
+cms-wien.magwien.gv.at
+cmsadmin-t.host.magwien.gv.at
+charta.magwien.gv.at
+gisapublic.magwien.gv.at
+erecht.magwien.gv.at
+elak.magwien.gv.at
+dx.magwien.gv.at
+hera.magwien.gv.at
+hyzdok.magwien.gv.at

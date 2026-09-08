@@ -1,0 +1,275 @@
+{
+  "target": "https://www.etoro.com/",
+  "scan_started_at": "2026-09-07T18:42:26Z",
+  "scan_finished_at": "2026-09-07T18:43:49Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "headless"
+  },
+  "pages": [
+    {
+      "url": "https://www.etoro.com/trading/market-hours-and-events/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "g_state",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.etoro.com/discover",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "g_state",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.etoro.com/trading/market-hours-and-events/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.etoro.com/trading/market-hours-and-events/",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": "Affects 2 pages; sample: https://www.etoro.com/trading/market-hours-and-events/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.etoro.com/trading/market-hours-and-events/",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "WPML ver:4.6.15 stt:5,65,67,69,71,38,1,78,79,72,18,4,3,13,27,68,41,42,45,46,2,51,76;",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.etoro.com",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://use.fontawesome.com/releases/v5.15.4/css/all.css?ver=2.1.0",
+      "evidence": "Affects 12 pages; sample: https://www.etoro.com/trading/market-hours-and-events/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com/trading/market-hours-and-events/",
+      "description": "Cookie datadome is missing HttpOnly",
+      "evidence": "datadome",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://www.etoro.com/trading/market-hours-and-events/",
+      "description": "Cookie OptanonConsent is missing the Secure flag",
+      "evidence": "OptanonConsent",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://www.etoro.com/discover",
+      "description": "Cookie g_state is missing the Secure flag",
+      "evidence": "g_state",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com/discover",
+      "description": "Cookie g_state is missing HttpOnly",
+      "evidence": "g_state",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "session-checks-skipped-headless",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://www.etoro.com/",
+      "description": "Session-fixation and logout-invalidation checks were skipped: they only run in --mode static. A clean result here does not mean those checks passed -- they did not run.",
+      "evidence": null,
+      "confidence": "heuristic"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 2,
+    "pages_challenged": 0,
+    "requests": 19,
+    "elapsed_ms": 74891,
+    "stopped_reason": "max-time"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "target": "https://www.wien.gv.at",
+  "findings": [
+    {
+      "id": "payload-sql-status-change",
+      "severity": "low",
+      "category": "payload",
+      "url": "https://www.wien.gv.at/suche",
+      "description": "Boolean-true payload changed the response status with no confirmed DB error signature. Weak signal -- see sqli-single-quote-status-change.",
+      "evidence": "' OR '1'='1",
+      "confidence": "confirmed",
+      "minimal_repro": true
+    }
+  ],
+  "oob_probes": [],
+  "guardrail": {
+    "policy_hash": null,
+    "policy_present": false,
+    "requests_attempted": 103,
+    "requests_blocked": 0,
+    "block_reasons": []
+  }
+}

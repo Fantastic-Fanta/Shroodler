@@ -1,0 +1,209 @@
+{
+  "target": "https://www.demandforced3.com",
+  "scan_started_at": "2026-09-07T05:37:57Z",
+  "scan_finished_at": "2026-09-07T05:37:59Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://www.demandforced3.com",
+      "status_code": 403,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Strict-Transport-Security"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.demandforced3.com",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'none'; script-src 'nonce-J69fDbBZNtDkxtz8xGT8a4' 'unsafe-eval' https://challenges.cloudflare.com; script-sr"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.demandforced3.com",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.env",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/backup.sql.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.DS_Store",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/wp-config.php.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/server-status",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/config.php.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/phpinfo.php",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/web.config",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/id_rsa",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.git/config",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.git/HEAD",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.svn/entries",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.hg/hgrc",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/.well-known/security.txt",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/security.txt",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/humans.txt",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com/crossdomain.xml",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-sitewide",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://www.demandforced3.com",
+      "description": "18 of 1 crawled pages were WAF/bot-mitigation-challenged (Cloudflare) -- this target appears to be challenged site-wide, not just on one page. This scan's other findings substantially understate the target's real attack surface. Try --user-agent, or ask the target's operator to allowlist the scanner before re-running.",
+      "evidence": "18/1 pages challenged"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 1,
+    "pages_challenged": 18,
+    "requests": 29,
+    "elapsed_ms": 1940,
+    "stopped_reason": "complete"
+  }
+}

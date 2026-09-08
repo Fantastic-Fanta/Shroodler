@@ -1,0 +1,150 @@
+- generic [ref=f35e2]:
+  - generic:
+    - banner "Application header" [ref=f35e4]:
+      - generic [ref=f35e5]:
+        - button "Collapse navigation" [expanded] [ref=f35e6] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f35e10] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f35e11]: ThousandEyes
+      - generic [ref=f35e30]:
+        - link "Upgrade" [ref=f35e31] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f35e32] [cursor=pointer]
+        - button "Help Content" [ref=f35e36] [cursor=pointer]
+        - button "Notifications" [ref=f35e42] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f35e49] [cursor=pointer]:
+          - generic [ref=f35e55]:
+            - generic [ref=f35e56]: Lapras Resonance
+            - generic [ref=f35e57]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f35e63] [cursor=pointer]
+    - navigation [ref=f35e66]:
+      - generic [ref=f35e67]:
+        - generic [ref=f35e68]:
+          - list [ref=f35e69]:
+            - listitem [ref=f35e70]:
+              - link "Navigate to Dashboards" [ref=f35e72] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f35e78]: Dashboards
+            - listitem [ref=f35e79]:
+              - link "Navigate to Event Detection" [ref=f35e81] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f35e86]: Event Detection
+            - listitem [ref=f35e87]:
+              - link "Navigate to Alerts" [ref=f35e89] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f35e95]: Alerts
+          - list [ref=f35e96]:
+            - listitem [ref=f35e97]:
+              - button "Expand Network & App Synthetics" [ref=f35e99] [cursor=pointer]:
+                - generic [ref=f35e105]: Network & App Synthetics
+            - listitem [ref=f35e109]:
+              - button "Expand Endpoint Experience" [ref=f35e111] [cursor=pointer]:
+                - generic [ref=f35e117]: Endpoint Experience
+            - listitem [ref=f35e121]:
+              - button "Expand Routing" [ref=f35e123] [cursor=pointer]:
+                - generic [ref=f35e129]: Routing
+            - listitem [ref=f35e133]:
+              - button "Expand Traffic Insights" [ref=f35e135] [cursor=pointer]:
+                - generic [ref=f35e141]: Traffic Insights
+            - listitem [ref=f35e145]:
+              - button "Expand Devices" [ref=f35e147] [cursor=pointer]:
+                - generic [ref=f35e153]: Devices
+            - listitem [ref=f35e157]:
+              - button "Expand Cloud Insights" [ref=f35e159] [cursor=pointer]:
+                - generic [ref=f35e165]: Cloud Insights
+            - listitem [ref=f35e169]:
+              - button "Expand Internet Insights" [ref=f35e171] [cursor=pointer]:
+                - generic [ref=f35e177]: Internet Insights
+                - status [ref=f35e178]: Trial
+          - list [ref=f35e182]:
+            - listitem [ref=f35e183]:
+              - button "Expand Manage" [ref=f35e185] [cursor=pointer]:
+                - generic [ref=f35e191]: Manage
+        - generic [ref=f35e196]:
+          - generic [ref=f35e197]: ThousandEyes © 2026
+          - link "Privacy" [ref=f35e198] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f35e199] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f35e202]:
+    - generic [ref=f35e203]:
+      - heading "Test Settings" [level=1] [ref=f35e204]
+      - generic [ref=f35e205]:
+        - link "Guided Setup" [ref=f35e206] [cursor=pointer]:
+          - /url: /network-app-synthetics/test-settings/templates/?
+        - button "Select an item" [ref=f35e208] [cursor=pointer]:
+          - generic [ref=f35e209]: Add New Test
+    - generic [ref=f35e213]:
+      - tablist [ref=f35e215]:
+        - tab "Tests" [selected] [ref=f35e216] [cursor=pointer]
+        - tab "Credentials Repository" [ref=f35e217] [cursor=pointer]
+      - tabpanel [ref=f35e219]:
+        - generic [ref=f35e222]:
+          - generic [ref=f35e223]:
+            - generic [ref=f35e224]:
+              - generic [ref=f35e225]:
+                - generic [ref=f35e226]: 0 tests
+                - textbox "Search Table" [ref=f35e229]:
+                  - /placeholder: Search...
+              - generic [ref=f35e231]:
+                - button "Add Filter" [ref=f35e233] [cursor=pointer]
+                - generic [ref=f35e239]:
+                  - 'button "Type: All" [ref=f35e240] [cursor=pointer]':
+                    - generic [ref=f35e241]:
+                      - generic [ref=f35e242]: "Type:"
+                      - strong [ref=f35e244]: All
+                  - button "Remove item" [ref=f35e248] [cursor=pointer]
+                - generic [ref=f35e254]:
+                  - 'button "Test Tags: All" [ref=f35e255] [cursor=pointer]':
+                    - generic [ref=f35e256]:
+                      - generic [ref=f35e257]: "Test Tags:"
+                      - strong [ref=f35e259]: All
+                  - button "Remove item" [ref=f35e263] [cursor=pointer]
+                - generic [ref=f35e269]:
+                  - 'button "Status: Enabled +3" [ref=f35e270] [cursor=pointer]':
+                    - generic [ref=f35e271]:
+                      - generic [ref=f35e272]: "Status:"
+                      - strong [ref=f35e274]: Enabled
+                      - generic [ref=f35e275]: "+3"
+                  - button "Remove item" [ref=f35e276] [cursor=pointer]
+                - generic [ref=f35e282]:
+                  - 'button "Agents: All" [ref=f35e283] [cursor=pointer]':
+                    - generic [ref=f35e284]:
+                      - generic [ref=f35e285]: "Agents:"
+                      - strong [ref=f35e287]: All
+                  - button "Remove item" [ref=f35e291] [cursor=pointer]
+            - button "Open Column Settings" [ref=f35e297] [cursor=pointer]
+          - region "Scrollable table" [ref=f35e302]:
+            - table [ref=f35e303]:
+              - rowgroup [ref=f35e304]:
+                - row "Test Name Resize column Test Name Tags Resize column Tags Type Resize column Type Target Resize column Target Alerts Status" [ref=f35e305]:
+                  - columnheader [ref=f35e306]
+                  - columnheader "Test Name Resize column Test Name" [ref=f35e309] [cursor=pointer]:
+                    - generic [ref=f35e310]: Test Name
+                    - separator "Resize column Test Name" [ref=f35e315]
+                  - columnheader "Tags Resize column Tags" [ref=f35e316]:
+                    - generic [ref=f35e317]: Tags
+                    - separator "Resize column Tags" [ref=f35e319]
+                  - columnheader "Type Resize column Type" [ref=f35e320] [cursor=pointer]:
+                    - generic [ref=f35e321]: Type
+                    - separator "Resize column Type" [ref=f35e326]
+                  - columnheader "Target Resize column Target" [ref=f35e327] [cursor=pointer]:
+                    - generic [ref=f35e328]: Target
+                    - separator "Resize column Target" [ref=f35e333]
+                  - columnheader "Alerts" [ref=f35e334] [cursor=pointer]
+                  - columnheader "Status" [ref=f35e340] [cursor=pointer]
+                  - columnheader [ref=f35e346]
+              - rowgroup
+          - status [ref=f35e347]: No tests found.
+          - contentinfo [ref=f35e348]:
+            - generic [ref=f35e349]:
+              - generic [ref=f35e350]:
+                - text: Show
+                - button "Select page size. Current page size is 50 items per page." [ref=f35e353] [cursor=pointer]:
+                  - generic [ref=f35e354]: "50"
+              - text: Page
+              - button "Select page number. Current page is 1 of 1." [ref=f35e360] [cursor=pointer]:
+                - generic [ref=f35e361]: "1"
+              - text: of 1
+              - button "Show table previous page" [disabled] [ref=f35e367]
+              - button "Show table next page" [disabled] [ref=f35e374]

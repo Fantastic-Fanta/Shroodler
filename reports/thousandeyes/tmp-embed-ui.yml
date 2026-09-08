@@ -1,0 +1,74 @@
+- generic [ref=f1e2]:
+  - generic:
+    - banner "Application header" [ref=f1e3]:
+      - generic [ref=f1e4]:
+        - button "Collapse navigation" [expanded] [ref=f1e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f1e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f1e10]: ThousandEyes
+      - generic [ref=f1e29]:
+        - link "Upgrade" [ref=f1e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f1e31] [cursor=pointer]
+        - button "Help Content" [ref=f1e35] [cursor=pointer]
+        - button "Notifications" [ref=f1e41] [cursor=pointer]
+        - button "User menu for resonance" [ref=f1e48] [cursor=pointer]:
+          - generic [ref=f1e54]:
+            - generic [ref=f1e55]: resonance
+            - generic [ref=f1e56]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f1e62] [cursor=pointer]
+    - navigation [ref=f1e65]:
+      - generic [ref=f1e66]:
+        - generic [ref=f1e67]:
+          - list [ref=f1e68]:
+            - listitem [ref=f1e69]:
+              - link "Navigate to Dashboards" [ref=f1e71] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f1e77]: Dashboards
+            - listitem [ref=f1e78]:
+              - link "Navigate to Event Detection" [ref=f1e80] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f1e85]: Event Detection
+            - listitem [ref=f1e86]:
+              - link "Navigate to Alerts" [ref=f1e88] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f1e94]: Alerts
+          - list [ref=f1e95]:
+            - listitem [ref=f1e96]:
+              - button "Expand Network & App Synthetics" [ref=f1e98] [cursor=pointer]:
+                - generic [ref=f1e104]: Network & App Synthetics
+            - listitem [ref=f1e108]:
+              - button "Expand Endpoint Experience" [ref=f1e110] [cursor=pointer]:
+                - generic [ref=f1e116]: Endpoint Experience
+            - listitem [ref=f1e120]:
+              - button "Expand Routing" [ref=f1e122] [cursor=pointer]:
+                - generic [ref=f1e128]: Routing
+            - listitem [ref=f1e132]:
+              - button "Expand Traffic Insights" [ref=f1e134] [cursor=pointer]:
+                - generic [ref=f1e140]: Traffic Insights
+            - listitem [ref=f1e144]:
+              - button "Expand Devices" [ref=f1e146] [cursor=pointer]:
+                - generic [ref=f1e152]: Devices
+            - listitem [ref=f1e156]:
+              - button "Expand Cloud Insights" [ref=f1e158] [cursor=pointer]:
+                - generic [ref=f1e164]: Cloud Insights
+            - listitem [ref=f1e168]:
+              - button "Expand Internet Insights" [ref=f1e170] [cursor=pointer]:
+                - generic [ref=f1e176]: Internet Insights
+                - status [ref=f1e177]: Trial
+          - list [ref=f1e181]:
+            - listitem [ref=f1e182]:
+              - button "Expand Manage" [ref=f1e184] [cursor=pointer]:
+                - generic [ref=f1e190]: Manage
+        - generic [ref=f1e195]:
+          - generic [ref=f1e196]: ThousandEyes © 2026
+          - link "Privacy" [ref=f1e197] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f1e198] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f1e201]:
+    - textbox "Search by Widget or Dashboard Name" [ref=f1e203]
+    - generic [ref=f1e204]:
+      - generic [ref=f1e205]: Widget Name
+      - generic [ref=f1e206]: Dashboard Name
+    - heading "No Embedded widgets found" [level=3] [ref=f1e208]

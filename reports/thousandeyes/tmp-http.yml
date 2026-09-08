@@ -1,0 +1,343 @@
+- generic [ref=f40e2]:
+  - generic:
+    - banner "Application header" [ref=f40e3]:
+      - generic [ref=f40e4]:
+        - button "Collapse navigation" [expanded] [ref=f40e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f40e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f40e10]: ThousandEyes
+      - generic [ref=f40e29]:
+        - link "Upgrade" [ref=f40e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f40e31] [cursor=pointer]
+        - button "Help Content" [ref=f40e35] [cursor=pointer]
+        - button "Notifications" [ref=f40e41] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f40e48] [cursor=pointer]:
+          - generic [ref=f40e54]:
+            - generic [ref=f40e55]: Lapras Resonance
+            - generic [ref=f40e56]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f40e62] [cursor=pointer]
+    - navigation [ref=f40e65]:
+      - generic [ref=f40e66]:
+        - generic [ref=f40e67]:
+          - list [ref=f40e68]:
+            - listitem [ref=f40e69]:
+              - link "Navigate to Dashboards" [ref=f40e71] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f40e77]: Dashboards
+            - listitem [ref=f40e78]:
+              - link "Navigate to Event Detection" [ref=f40e80] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f40e85]: Event Detection
+            - listitem [ref=f40e86]:
+              - link "Navigate to Alerts" [ref=f40e88] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f40e94]: Alerts
+          - list [ref=f40e95]:
+            - listitem [ref=f40e96]:
+              - button "Expand Network & App Synthetics" [ref=f40e98] [cursor=pointer]:
+                - generic [ref=f40e104]: Network & App Synthetics
+            - listitem [ref=f40e108]:
+              - button "Expand Endpoint Experience" [ref=f40e110] [cursor=pointer]:
+                - generic [ref=f40e116]: Endpoint Experience
+            - listitem [ref=f40e120]:
+              - button "Expand Routing" [ref=f40e122] [cursor=pointer]:
+                - generic [ref=f40e128]: Routing
+            - listitem [ref=f40e132]:
+              - button "Expand Traffic Insights" [ref=f40e134] [cursor=pointer]:
+                - generic [ref=f40e140]: Traffic Insights
+            - listitem [ref=f40e144]:
+              - button "Expand Devices" [ref=f40e146] [cursor=pointer]:
+                - generic [ref=f40e152]: Devices
+            - listitem [ref=f40e156]:
+              - button "Expand Cloud Insights" [ref=f40e158] [cursor=pointer]:
+                - generic [ref=f40e164]: Cloud Insights
+            - listitem [ref=f40e168]:
+              - button "Expand Internet Insights" [ref=f40e170] [cursor=pointer]:
+                - generic [ref=f40e176]: Internet Insights
+                - status [ref=f40e177]: Trial
+          - list [ref=f40e181]:
+            - listitem [ref=f40e182]:
+              - button "Expand Manage" [ref=f40e184] [cursor=pointer]:
+                - generic [ref=f40e190]: Manage
+        - generic [ref=f40e195]:
+          - generic [ref=f40e196]: ThousandEyes © 2026
+          - link "Privacy" [ref=f40e197] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f40e198] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f40e371]:
+    - progressbar "Waiting..." [ref=f40e374]
+    - generic [ref=f40e377]:
+      - generic [ref=f40e379]:
+        - generic [ref=f40e380]: Add HTTP Server test
+        - button "Select an item" [ref=f40e383] [cursor=pointer]
+      - generic [ref=f40e388]:
+        - generic [ref=f40e390]:
+          - generic [ref=f40e391]:
+            - generic [ref=f40e392]:
+              - generic [ref=f40e396]:
+                - heading "Basic Settings" [level=4] [ref=f40e397]
+                - generic [ref=f40e398]:
+                  - progressbar "Waiting..." [ref=f40e401]
+                  - generic [ref=f40e402]:
+                    - generic [ref=f40e403]:
+                      - generic [ref=f40e404]: URL
+                      - generic [ref=f40e405]:
+                        - textbox "URL" [ref=f40e406]
+                        - text: e.g. http[s]://domain:port/path
+                    - generic [ref=f40e407]:
+                      - generic [ref=f40e408]: Test name (optional)
+                      - textbox "Test name (optional)" [ref=f40e416]
+                    - generic [ref=f40e419]:
+                      - generic [ref=f40e420]: How often test runs
+                      - button "2 minutes" [ref=f40e430] [cursor=pointer]
+                    - generic [ref=f40e435]:
+                      - generic [ref=f40e436]: Where test runs from
+                      - button "Select Agents" [ref=f40e445] [cursor=pointer]
+                    - generic [ref=f40e446]:
+                      - generic [ref=f40e448]:
+                        - text: Alerts
+                        - checkbox [checked] [ref=f40e450]
+                      - generic [ref=f40e454]:
+                        - button "Select an item" [ref=f40e457] [cursor=pointer]:
+                          - generic [ref=f40e458]: 3 of 4 alert rules selected
+                        - link [ref=f40e462] [cursor=pointer]:
+                          - /url: /manage/alerts/rules?
+                          - generic "Manage alert rules" [ref=f40e465]
+                    - generic [ref=f40e468]:
+                      - generic [ref=f40e469]: Tags
+                      - generic [ref=f40e473]:
+                        - list
+                        - generic "Add a Tag" [ref=f40e475]:
+                          - button "Tags" [ref=f40e476] [cursor=pointer]: Add
+              - generic [ref=f40e483]:
+                - heading "Network and Security Settings (Optional)" [level=4] [ref=f40e484]
+                - generic [ref=f40e485]:
+                  - progressbar "Waiting..." [ref=f40e488]
+                  - generic [ref=f40e489]:
+                    - generic [ref=f40e490]:
+                      - generic [ref=f40e491]: Test execution schedule
+                      - generic [ref=f40e499]:
+                        - generic [ref=f40e500] [cursor=pointer]:
+                          - text: Default
+                          - radio "Default" [checked]
+                        - generic [ref=f40e501] [cursor=pointer]:
+                          - text: Randomized Start Time
+                          - radio "Randomized Start Time"
+                    - generic [ref=f40e502]:
+                      - heading "Network" [level=5] [ref=f40e503]
+                      - generic [ref=f40e504]:
+                        - generic [ref=f40e505]:
+                          - generic [ref=f40e506]:
+                            - text: Perform Network Measurements
+                            - checkbox [checked] [ref=f40e508]
+                          - generic [ref=f40e511]:
+                            - generic [ref=f40e512]: Define which data to collect
+                            - generic [ref=f40e517]:
+                              - checkbox "Bandwidth" [ref=f40e519] [cursor=pointer]
+                              - generic [ref=f40e520]: Bandwidth
+                            - generic [ref=f40e528]:
+                              - checkbox "Maximum Transmission Unit (MTU)" [checked] [ref=f40e530] [cursor=pointer]
+                              - generic [ref=f40e531]: Maximum Transmission Unit (MTU)
+                            - generic [ref=f40e539]:
+                              - generic [ref=f40e541]:
+                                - checkbox "Collect BGP data" [checked] [ref=f40e543] [cursor=pointer]
+                                - generic [ref=f40e544]: Collect BGP data
+                              - generic [ref=f40e552]: All public BGP monitors will be included
+                        - generic [ref=f40e554]:
+                          - generic [ref=f40e556]:
+                            - generic [ref=f40e557]: Transmission rate
+                            - generic [ref=f40e567]:
+                              - generic [ref=f40e568] [cursor=pointer]:
+                                - text: Not fixed
+                                - radio "Not fixed" [checked]
+                              - generic [ref=f40e569] [cursor=pointer]:
+                                - text: Fixed
+                                - radio "Fixed"
+                          - generic [ref=f40e571]:
+                            - generic [ref=f40e572]: Number of path traces
+                            - generic [ref=f40e580]:
+                              - generic [ref=f40e581] [cursor=pointer]:
+                                - text: "3"
+                                - radio "3" [checked]
+                              - generic [ref=f40e582] [cursor=pointer]:
+                                - text: Custom
+                                - radio "Custom"
+                        - generic [ref=f40e583]:
+                          - generic [ref=f40e584]:
+                            - generic [ref=f40e585]: Protocol
+                            - generic [ref=f40e593]:
+                              - generic [ref=f40e594] [cursor=pointer]:
+                                - text: TCP
+                                - radio "TCP" [checked]
+                              - generic [ref=f40e595] [cursor=pointer]:
+                                - text: ICMP
+                                - radio "ICMP"
+                          - generic [ref=f40e596]:
+                            - generic [ref=f40e597]:
+                              - generic [ref=f40e598]: Path trace mode
+                              - generic [ref=f40e607]:
+                                - checkbox "Path trace mode In session" [checked] [ref=f40e609] [cursor=pointer]
+                                - generic [ref=f40e610]: In session
+                            - generic [ref=f40e611]:
+                              - generic [ref=f40e612]: Probing mode
+                              - generic [ref=f40e622]:
+                                - generic [ref=f40e623] [cursor=pointer]:
+                                  - text: Prefer SACK
+                                  - radio "Prefer SACK" [checked]
+                                - generic [ref=f40e624] [cursor=pointer]:
+                                  - text: Force SACK
+                                  - radio "Force SACK"
+                                - generic [ref=f40e625] [cursor=pointer]:
+                                  - text: Force SYN
+                                  - radio "Force SYN"
+                    - generic [ref=f40e626]:
+                      - generic [ref=f40e627]: IPv6 policy
+                      - generic [ref=f40e634]:
+                        - button "Agent's policy" [ref=f40e637] [cursor=pointer]
+                        - generic [ref=f40e642]: This setting will override the IPV6 policy configured at the agent level
+                    - generic [ref=f40e644]:
+                      - generic [ref=f40e645]:
+                        - generic [ref=f40e646]: Proxy settings
+                        - button "Enterprise Agent's proxy configuration" [ref=f40e656] [cursor=pointer]
+                      - generic [ref=f40e662]:
+                        - checkbox "Perform network measurements to the proxy" [ref=f40e664] [cursor=pointer]
+                        - generic [ref=f40e665]: Perform network measurements to the proxy
+                    - generic [ref=f40e673]:
+                      - heading "TLS" [level=5] [ref=f40e674]
+                      - generic [ref=f40e675]:
+                        - generic [ref=f40e676]:
+                          - generic [ref=f40e677]: SSL version
+                          - button "Auto" [ref=f40e687] [cursor=pointer]
+                        - generic [ref=f40e693]:
+                          - checkbox "Verify SSL Certificate" [checked] [ref=f40e695] [cursor=pointer]
+                          - generic [ref=f40e696]: Verify SSL Certificate
+                        - generic [ref=f40e706]:
+                          - text: Add client certificate
+                          - checkbox [ref=f40e708]
+                        - generic [ref=f40e717]:
+                          - checkbox "Allow unsafe legacy renegotiation" [checked] [ref=f40e719] [cursor=pointer]
+                          - generic [ref=f40e720]: Allow unsafe legacy renegotiation
+                        - generic [ref=f40e728]:
+                          - text: Allows TLS renegotiation with servers not supporting
+                          - link "RFC 5746" [ref=f40e729] [cursor=pointer]:
+                            - /url: https://datatracker.ietf.org/doc/html/rfc5746
+              - generic [ref=f40e737]:
+                - heading "HTTP Communication and Performance (Optional)" [level=4] [ref=f40e738]
+                - generic [ref=f40e739]:
+                  - progressbar "Waiting..." [ref=f40e742]
+                  - generic [ref=f40e743]:
+                    - generic [ref=f40e744]:
+                      - heading "HTTP Server Timing" [level=5] [ref=f40e745]
+                      - generic [ref=f40e746]:
+                        - generic [ref=f40e747]:
+                          - generic [ref=f40e748]: Timeout
+                          - generic [ref=f40e756]:
+                            - generic [ref=f40e758]:
+                              - button [aria-hidden] [ref=f40e759] [cursor=pointer]: "5"
+                              - generic [ref=f40e760]: s
+                            - slider [ref=f40e762]:
+                              - generic [ref=f40e763] [cursor=pointer]
+                        - generic [ref=f40e764]:
+                          - generic [ref=f40e765]: Target response time
+                          - generic [ref=f40e773]:
+                            - generic [ref=f40e775]:
+                              - button [aria-hidden] [ref=f40e776] [cursor=pointer]: "1000"
+                              - generic [ref=f40e777]: ms
+                            - slider [ref=f40e780]:
+                              - generic [ref=f40e781] [cursor=pointer]
+                        - generic [ref=f40e785]:
+                          - checkbox "Enable distributed tracing" [ref=f40e787] [cursor=pointer]
+                          - generic [ref=f40e788]: Enable distributed tracing
+                    - generic [ref=f40e794]:
+                      - heading "HTTP Response" [level=5] [ref=f40e795]
+                      - generic [ref=f40e797]:
+                        - generic [ref=f40e798]: Desired status code
+                        - generic [ref=f40e806]:
+                          - generic [ref=f40e807] [cursor=pointer]:
+                            - text: Default (2xx or 3xx)
+                            - radio "Default (2xx or 3xx)" [checked]
+                          - generic [ref=f40e808] [cursor=pointer]:
+                            - text: Other
+                            - radio "Other"
+                    - generic [ref=f40e813]:
+                      - text: Verify content
+                      - checkbox [ref=f40e815]
+                    - generic [ref=f40e826]:
+                      - text: Limit download size
+                      - checkbox [ref=f40e828]
+                    - generic [ref=f40e836]:
+                      - heading "HTTP Request" [level=5] [ref=f40e837]
+                      - generic [ref=f40e838]:
+                        - generic [ref=f40e839]:
+                          - generic [ref=f40e840]: HTTP version
+                          - generic [ref=f40e848]:
+                            - generic [ref=f40e849] [cursor=pointer]:
+                              - text: Prefer HTTP/2
+                              - radio "Prefer HTTP/2" [checked]
+                            - generic [ref=f40e850] [cursor=pointer]:
+                              - text: HTTP/1.1 only
+                              - radio "HTTP/1.1 only"
+                        - generic [ref=f40e851]:
+                          - generic [ref=f40e852]: Request method
+                          - generic [ref=f40e860]:
+                            - generic [ref=f40e861] [cursor=pointer]:
+                              - text: GET
+                              - radio "GET" [checked]
+                            - generic [ref=f40e862] [cursor=pointer]:
+                              - text: POST
+                              - radio "POST"
+                        - generic [ref=f40e865]:
+                          - checkbox "Follow redirects" [checked] [ref=f40e867] [cursor=pointer]
+                          - generic [ref=f40e868]: Follow redirects
+                        - generic [ref=f40e874]:
+                          - generic [ref=f40e875]: User agent
+                          - button "Default" [ref=f40e885] [cursor=pointer]
+                        - generic [ref=f40e893]:
+                          - text: Override DNS
+                          - checkbox [ref=f40e895]
+                        - generic [ref=f40e904]:
+                          - generic [ref=f40e905]: Custom HTTP headers
+                          - button "Select an item" [ref=f40e914] [cursor=pointer]:
+                            - generic [ref=f40e915]: Add Custom Header
+                    - generic [ref=f40e924]:
+                      - heading "HTTP Authentication" [level=5] [ref=f40e925]
+                      - generic [ref=f40e927]:
+                        - generic [ref=f40e928]: Scheme
+                        - button "None" [ref=f40e938] [cursor=pointer]
+              - generic [ref=f40e946]:
+                - heading "Additional Settings (Optional)" [level=4] [ref=f40e947]
+                - generic [ref=f40e948]:
+                  - progressbar "Waiting..." [ref=f40e951]
+                  - generic [ref=f40e952]:
+                    - generic [ref=f40e953]:
+                      - generic [ref=f40e954]: Description (optional)
+                      - textbox "Description (optional)" [ref=f40e956]
+                    - generic [ref=f40e957]:
+                      - generic [ref=f40e958]: Alert suppression window
+                      - generic [ref=f40e960]:
+                        - button "Select an item" [ref=f40e963] [cursor=pointer]:
+                          - generic [ref=f40e964]: 0 of 0 windows selected
+                        - button "Manage suppression windows" [ref=f40e970] [cursor=pointer]
+            - generic [ref=f40e978]:
+              - button "Cancel" [ref=f40e979] [cursor=pointer]
+              - generic [ref=f40e980]:
+                - button "Instant Test" [ref=f40e983] [cursor=pointer]
+                - button "Deploy" [ref=f40e986] [cursor=pointer]
+          - generic [ref=f40e995]:
+            - generic [ref=f40e996]: On this page
+            - generic [ref=f40e997]:
+              - button "Basic Settings" [ref=f40e999] [cursor=pointer]
+              - button "Network and Security Settings (Optional)" [ref=f40e1001] [cursor=pointer]
+              - button "Network" [ref=f40e1003] [cursor=pointer]
+              - button "TLS" [ref=f40e1005] [cursor=pointer]
+              - button "HTTP Communication and Performance (Optional)" [ref=f40e1007] [cursor=pointer]
+              - button "HTTP Server Timing" [ref=f40e1009] [cursor=pointer]
+              - button "HTTP Response" [ref=f40e1011] [cursor=pointer]
+              - button "HTTP Request" [ref=f40e1013] [cursor=pointer]
+              - button "HTTP Authentication" [ref=f40e1015] [cursor=pointer]
+              - button "Additional Settings (Optional)" [ref=f40e1017] [cursor=pointer]
+        - generic [ref=f40e1020]:
+          - generic [ref=f40e1021]: Projected Usage
+          - paragraph [ref=f40e1022]: To view projected usage configure where tests will run from

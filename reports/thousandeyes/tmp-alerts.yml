@@ -1,0 +1,234 @@
+- generic [ref=f9e2]:
+  - generic:
+    - banner "Application header" [ref=f9e3]:
+      - generic [ref=f9e4]:
+        - button "Collapse navigation" [expanded] [ref=f9e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f9e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f9e10]: ThousandEyes
+      - generic [ref=f9e29]:
+        - link "Upgrade" [ref=f9e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f9e31] [cursor=pointer]
+        - button "Help Content" [ref=f9e35] [cursor=pointer]
+        - button "Notifications" [ref=f9e41] [cursor=pointer]
+        - button "User menu for resonance" [ref=f9e48] [cursor=pointer]:
+          - generic [ref=f9e54]:
+            - generic [ref=f9e55]: resonance
+            - generic [ref=f9e56]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f9e62] [cursor=pointer]
+    - navigation [ref=f9e65]:
+      - generic [ref=f9e66]:
+        - generic [ref=f9e67]:
+          - list [ref=f9e68]:
+            - listitem [ref=f9e69]:
+              - link "Navigate to Dashboards" [ref=f9e71] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f9e77]: Dashboards
+            - listitem [ref=f9e78]:
+              - link "Navigate to Event Detection" [ref=f9e80] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f9e85]: Event Detection
+            - listitem [ref=f9e86]:
+              - link "Navigate to Alerts" [ref=f9e88] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f9e94]: Alerts
+          - list [ref=f9e95]:
+            - listitem [ref=f9e96]:
+              - button "Expand Network & App Synthetics" [ref=f9e98] [cursor=pointer]:
+                - generic [ref=f9e104]: Network & App Synthetics
+            - listitem [ref=f9e108]:
+              - button "Expand Endpoint Experience" [ref=f9e110] [cursor=pointer]:
+                - generic [ref=f9e116]: Endpoint Experience
+            - listitem [ref=f9e120]:
+              - button "Expand Routing" [ref=f9e122] [cursor=pointer]:
+                - generic [ref=f9e128]: Routing
+            - listitem [ref=f9e132]:
+              - button "Expand Traffic Insights" [ref=f9e134] [cursor=pointer]:
+                - generic [ref=f9e140]: Traffic Insights
+            - listitem [ref=f9e144]:
+              - button "Expand Devices" [ref=f9e146] [cursor=pointer]:
+                - generic [ref=f9e152]: Devices
+            - listitem [ref=f9e156]:
+              - button "Expand Cloud Insights" [ref=f9e158] [cursor=pointer]:
+                - generic [ref=f9e164]: Cloud Insights
+            - listitem [ref=f9e168]:
+              - button "Expand Internet Insights" [ref=f9e170] [cursor=pointer]:
+                - generic [ref=f9e176]: Internet Insights
+                - status [ref=f9e177]: Trial
+          - list [ref=f9e181]:
+            - listitem [ref=f9e182]:
+              - button "Expand Manage" [ref=f9e184] [cursor=pointer]:
+                - generic [ref=f9e190]: Manage
+        - generic [ref=f9e195]:
+          - generic [ref=f9e196]: ThousandEyes © 2026
+          - link "Privacy" [ref=f9e197] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f9e198] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - region "Alert rules" [ref=f9e201]:
+    - heading "Alert Rules" [level=1] [ref=f9e202]
+    - generic [ref=f9e203]:
+      - tablist [ref=f9e205]:
+        - tab "Network & App Synthetics tab" [selected] [ref=f9e206] [cursor=pointer]: Network & App Synthetics
+        - tab "Endpoint Experience tab" [ref=f9e207] [cursor=pointer]: Endpoint Experience
+        - tab "Routing tab" [ref=f9e208] [cursor=pointer]: Routing
+        - tab "Devices tab" [ref=f9e209] [cursor=pointer]: Devices
+        - tab "Internet Insights tab" [ref=f9e210] [cursor=pointer]: Internet Insights
+        - tab "WAN Insights tab" [ref=f9e211] [cursor=pointer]: WAN Insights
+        - tab "Cloud Insights tab" [ref=f9e212] [cursor=pointer]: Cloud Insights
+        - tab "Traffic Insights tab" [ref=f9e213] [cursor=pointer]: Traffic Insights
+        - tab "Event Detection tab" [ref=f9e214] [cursor=pointer]: Event Detection
+      - generic:
+        - tabpanel "Network & App Synthetics tab"
+    - generic [ref=f9e218]:
+      - generic [ref=f9e220]:
+        - generic [ref=f9e221]:
+          - button "Any" [ref=f9e224] [cursor=pointer]
+          - combobox "Search" [ref=f9e234]
+        - generic [ref=f9e235]:
+          - generic [ref=f9e236] [cursor=pointer]:
+            - text: All Rules
+            - radio "All Rules" [checked]
+          - generic [ref=f9e237] [cursor=pointer]:
+            - text: With Optimizations
+            - radio "With Optimizations"
+        - generic [ref=f9e238]: 13 rules
+      - generic "alert-rules-table-filtered-records" [ref=f9e240]:
+        - table [ref=f9e242]:
+          - rowgroup [ref=f9e243]:
+            - row [ref=f9e244]:
+              - columnheader "Name Resize column Name" [ref=f9e245] [cursor=pointer]:
+                - generic [ref=f9e246]: Name
+                - separator "Resize column Name" [ref=f9e251]
+              - columnheader "Type Resize column Type" [ref=f9e252] [cursor=pointer]:
+                - generic [ref=f9e253]: Type
+                - separator "Resize column Type" [ref=f9e258]
+              - columnheader "Condition Resize column Condition" [ref=f9e259]:
+                - generic [ref=f9e260]: Condition
+                - separator "Resize column Condition" [ref=f9e262]
+              - columnheader "Apply To" [ref=f9e263]
+              - columnheader "Default" [ref=f9e266]
+              - columnheader [ref=f9e275]
+          - rowgroup [ref=f9e276]:
+            - row [ref=f9e277] [cursor=pointer]:
+              - cell "Default Agent to Agent Network Alert Rule 2.0" [ref=f9e278]
+              - cell "Agent to Agent" [ref=f9e281]
+              - cell "Packet Loss ≥ 10%" [ref=f9e282]
+              - cell "0 tests" [ref=f9e285]
+              - cell [ref=f9e288]:
+                - checkbox [checked] [ref=f9e291]
+              - cell [ref=f9e294]:
+                - generic [ref=f9e295]:
+                  - button "Duplicate Default Agent to Agent Network Alert Rule 2.0 alert rule" [ref=f9e298]
+                  - button "Delete Default Agent to Agent Network Alert Rule 2.0 alert rule" [ref=f9e305]
+            - row [ref=f9e310] [cursor=pointer]:
+              - cell "Default API Alert Rule 2.0" [ref=f9e311]
+              - cell "API" [ref=f9e314]
+              - cell "API Completion ≤ 99%" [ref=f9e315]
+              - cell "0 tests" [ref=f9e318]
+              - cell [ref=f9e321]:
+                - checkbox [checked] [ref=f9e324]
+              - cell [ref=f9e327]:
+                - generic [ref=f9e328]:
+                  - button "Duplicate Default API Alert Rule 2.0 alert rule" [ref=f9e331]
+                  - button "Delete Default API Alert Rule 2.0 alert rule" [ref=f9e338]
+            - row [ref=f9e343] [cursor=pointer]:
+              - cell "Default Call Setup Alert Rule 2.0" [ref=f9e344]
+              - cell "SIP Server" [ref=f9e347]
+              - cell "Error Type is any" [ref=f9e348]
+              - cell "0 tests" [ref=f9e351]
+              - cell [ref=f9e354]:
+                - checkbox [checked] [ref=f9e357]
+              - cell [ref=f9e360]:
+                - generic [ref=f9e361]:
+                  - button "Duplicate Default Call Setup Alert Rule 2.0 alert rule" [ref=f9e364]
+                  - button "Delete Default Call Setup Alert Rule 2.0 alert rule" [ref=f9e371]
+            - row [ref=f9e376] [cursor=pointer]:
+              - cell "Default DNS Server Alert Rule 2.0" [ref=f9e377]
+              - cell "DNS Server" [ref=f9e380]
+              - cell "Error is present" [ref=f9e381]
+              - cell "0 tests" [ref=f9e384]
+              - cell [ref=f9e387]:
+                - checkbox [checked] [ref=f9e390]
+              - cell [ref=f9e393]:
+                - generic [ref=f9e394]:
+                  - button "Duplicate Default DNS Server Alert Rule 2.0 alert rule" [ref=f9e397]
+                  - button "Delete Default DNS Server Alert Rule 2.0 alert rule" [ref=f9e404]
+            - row [ref=f9e409] [cursor=pointer]:
+              - cell "Default DNS Trace Alert Rule 2.0" [ref=f9e410]
+              - cell "DNS Trace" [ref=f9e413]
+              - cell "Error is present" [ref=f9e414]
+              - cell "0 tests" [ref=f9e417]
+              - cell [ref=f9e420]:
+                - checkbox [checked] [ref=f9e423]
+              - cell [ref=f9e426]:
+                - generic [ref=f9e427]:
+                  - button "Duplicate Default DNS Trace Alert Rule 2.0 alert rule" [ref=f9e430]
+                  - button "Delete Default DNS Trace Alert Rule 2.0 alert rule" [ref=f9e437]
+            - row [ref=f9e442] [cursor=pointer]:
+              - cell "Default DNSSEC Alert Rule 2.0" [ref=f9e443]
+              - cell "DNSSEC" [ref=f9e446]
+              - cell "Error is present" [ref=f9e447]
+              - cell "0 tests" [ref=f9e450]
+              - cell [ref=f9e453]:
+                - checkbox [checked] [ref=f9e456]
+              - cell [ref=f9e459]:
+                - generic [ref=f9e460]:
+                  - button "Duplicate Default DNSSEC Alert Rule 2.0 alert rule" [ref=f9e463]
+                  - button "Delete Default DNSSEC Alert Rule 2.0 alert rule" [ref=f9e470]
+            - row [ref=f9e475] [cursor=pointer]:
+              - cell "Default FTP Alert Rule 2.0" [ref=f9e476]
+              - cell "FTP Server" [ref=f9e479]
+              - cell "Error Type is any" [ref=f9e480]
+              - cell "0 tests" [ref=f9e483]
+              - cell [ref=f9e486]:
+                - checkbox [checked] [ref=f9e489]
+              - cell [ref=f9e492]:
+                - generic [ref=f9e493]:
+                  - button "Duplicate Default FTP Alert Rule 2.0 alert rule" [ref=f9e496]
+                  - button "Delete Default FTP Alert Rule 2.0 alert rule" [ref=f9e503]
+            - row [ref=f9e508] [cursor=pointer]:
+              - cell "Default HTTP Alert Rule 2.0" [ref=f9e509]
+              - cell "HTTP Server" [ref=f9e512]
+              - cell "Error is present" [ref=f9e513]
+              - cell "0 tests" [ref=f9e516]
+              - cell [ref=f9e519]:
+                - checkbox [checked] [ref=f9e522]
+              - cell [ref=f9e525]:
+                - generic [ref=f9e526]:
+                  - button "Duplicate Default HTTP Alert Rule 2.0 alert rule" [ref=f9e529]
+                  - button "Delete Default HTTP Alert Rule 2.0 alert rule" [ref=f9e536]
+            - row [ref=f9e541] [cursor=pointer]:
+              - cell "Default Network Alert Rule 2.0" [ref=f9e542]
+              - cell "Agent to Server" [ref=f9e545]
+              - cell "Packet Loss ≥ 10%" [ref=f9e546]
+              - cell "0 tests" [ref=f9e549]
+              - cell [ref=f9e552]:
+                - checkbox [checked] [ref=f9e555]
+              - cell [ref=f9e558]:
+                - generic [ref=f9e559]:
+                  - button "Duplicate Default Network Alert Rule 2.0 alert rule" [ref=f9e562]
+                  - button "Delete Default Network Alert Rule 2.0 alert rule" [ref=f9e569]
+            - row [ref=f9e574] [cursor=pointer]:
+              - cell "Default Page Load Alert Rule 2.0" [ref=f9e575]
+              - cell "Page Load" [ref=f9e578]
+              - cell "Page Load has error or Page Load timed out or Page Load is incomplete" [ref=f9e579]
+              - cell "0 tests" [ref=f9e582]
+              - cell [ref=f9e585]:
+                - checkbox [checked] [ref=f9e588]
+              - cell [ref=f9e591]:
+                - generic [ref=f9e592]:
+                  - button "Duplicate Default Page Load Alert Rule 2.0 alert rule" [ref=f9e595]
+                  - button "Delete Default Page Load Alert Rule 2.0 alert rule" [ref=f9e602]
+      - generic [ref=f9e607]:
+        - generic [ref=f9e608]:
+          - text: Show
+          - button "Select page size. Current page size is 10 items per page." [ref=f9e611] [cursor=pointer]:
+            - generic [ref=f9e612]: "10"
+        - text: Page
+        - button "Select page number. Current page is 1 of 2." [ref=f9e618] [cursor=pointer]:
+          - generic [ref=f9e619]: "1"
+        - text: of 2
+        - button "Show table previous page" [disabled] [ref=f9e625]
+        - button "Show table next page" [ref=f9e632] [cursor=pointer]

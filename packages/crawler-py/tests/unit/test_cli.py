@@ -100,6 +100,44 @@ def test_nuclei_ingest_parses():
     assert args.output == "pack.yaml"
 
 
+def test_ingest_har_and_slither_ingest_parse():
+    p = build_parser()
+    args = p.parse_args(["ingest-har", "cap.har", "--target", "http://127.0.0.1/", "-o", "out.json"])
+    assert args.sessions == "cap.har"
+    assert args.target == "http://127.0.0.1/"
+    assert args.output == "out.json"
+    args = p.parse_args(["slither-ingest", "slither.json", "--target", "Vault.sol", "-o", "sc.json"])
+    assert args.report == "slither.json"
+    assert args.target == "Vault.sol"
+    help_text = p.format_help()
+    assert "ingest-har" in help_text
+    assert "slither-ingest" in help_text
+
+
+def test_gql_and_merge_sarif_flags_parse():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "crawl",
+            "http://127.0.0.1:8081",
+            "--gql-schema",
+            "schema.json",
+            "--gql-wordlist",
+            "fields.txt",
+        ]
+    )
+    assert args.gql_schema == ["schema.json"]
+    assert args.gql_wordlist == ["fields.txt"]
+    args = p.parse_args(
+        ["authz-diff", "admin.json", "--gql-wordlist", "fields.txt", "--cookie", "s=1"]
+    )
+    assert args.gql_wordlist == ["fields.txt"]
+    args = p.parse_args(
+        ["report", "out.json", "--merge-sarif", "a.sarif", "--merge-sarif", "b.sarif"]
+    )
+    assert args.merge_sarif == ["a.sarif", "b.sarif"]
+
+
 def test_authz_diff_parses():
     p = build_parser()
     args = p.parse_args(
@@ -152,7 +190,34 @@ def test_peer_write_parses():
     assert args.only_id == "10464573"
     assert args.rate == 1.0
     assert args.allow_external is True
+    assert args.no_csrf is False
+    assert args.require_confirm is False
+    args = p.parse_args(
+        ["peer-write", "play.json", "--no-csrf", "--require-confirm", "--csrf-from", "http://127.0.0.1/edit"]
+    )
+    assert args.no_csrf is True
+    assert args.require_confirm is True
+    assert args.csrf_from == "http://127.0.0.1/edit"
     assert "peer-write" in p.format_help()
+
+
+def test_session_export_parses():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "session-export",
+            "--from",
+            "sess.jsonl",
+            "--origin",
+            "https://app.example",
+            "-o",
+            "state.json",
+        ]
+    )
+    assert args.source == "sess.jsonl"
+    assert args.origin == "https://app.example"
+    assert args.output == "state.json"
+    assert "session-export" in p.format_help()
 
 
 def test_js_routes_parses():
@@ -198,6 +263,7 @@ def test_plugin_and_mcp_server_flags_parse():
     assert "scan_route" in mcp_help
     assert "check_idor" in mcp_help
     assert "peer_write" in mcp_help
+    assert "session_export" in mcp_help
     assert "extract_js_routes" in mcp_help
     assert "paced_fetch" in mcp_help
     assert "reverify_fix" in mcp_help

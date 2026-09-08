@@ -16,13 +16,16 @@ _shroodler_commands=(
   'baseline:Write expected_findings.json from a scan'
   'expected:Write expected_findings.json from a scan (alias of baseline)'
   'ingest-sessions:Turn captured proxy JSONL into findings'
+  'ingest-har:Turn a Burp/mitmproxy/Caido/DevTools HAR into crawl JSON'
   'tokens:Analyze reset/verification token predictability from proxy JSONL'
   'cadence:Print recommended flags for a PR/nightly/weekly scan'
   'triage:Classify a host list before spending crawl budget'
   'payload:Run YAML payload packs against crawl JSON'
   'nuclei-ingest:Convert local Nuclei HTTP YAML into a payload pack'
+  'slither-ingest:Convert a local Slither JSON report into findings'
   'authz-diff:Replay a privileged crawl under a second session'
   'peer-write:Replay known-object writes as a second session'
+  'session-export:Write a Playwright storageState JSON from a browser or captured jar'
   'js-routes:Extract parameterized URL templates from a JS bundle'
   'paced-fetch:GET a URL list at a capped request rate'
   'proxy:Forward to shroodler-proxy'
@@ -82,8 +85,10 @@ _shroodler() {
             '--proxy[HTTP proxy URL]:url' \
             '*--seed[Extra same-origin URL to enqueue]:url' \
             '*--spec[Local OpenAPI or Postman collection to seed from]:file:_files' \
-            '--seed-from[Proxy session JSONL]:file:_files' \
-            '--cookies-from[Proxy session JSONL]:file:_files' \
+            '--seed-from[HAR or proxy session JSONL]:file:_files' \
+            '--cookies-from[HAR or proxy session JSONL]:file:_files' \
+            '*--gql-schema[Clairvoyance / introspection JSON for GraphQL field names]:file:_files' \
+            '*--gql-wordlist[GraphQL field-name wordlist]:file:_files' \
             '*--plugin[Plugin dir or file]:file:_files' \
             '*--exclude-path[Exclude URLs matching this path prefix]:path' \
             '1:target url'
@@ -104,6 +109,7 @@ _shroodler() {
             '--format[Output format]:(html csv json sarif junit md markdown)' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--suppressions[Suppression rules file]:file:_files' \
+            '*--merge-sarif[Fold an external SARIF file into the report]:file:_files' \
             '1:findings json:_files'
           ;;
         baseline|expected)
@@ -119,6 +125,13 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--allow-external[Allow ingesting a non-local session]' \
             '1:sessions jsonl:_files'
+          ;;
+        ingest-har)
+          _arguments \
+            '--target[Target URL override]:url' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '--allow-external[Allow ingesting a non-local HAR]' \
+            '1:har file:_files'
           ;;
         tokens)
           _arguments \
@@ -166,6 +179,12 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '*:nuclei yaml:_files'
           ;;
+        slither-ingest)
+          _arguments \
+            '--target[Override document target]:target' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '1:slither json:_files'
+          ;;
         authz-diff)
           _arguments \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
@@ -179,6 +198,8 @@ _shroodler() {
             '*--higher-priv-marker[Higher-priv identity string; a match confirms the lead]:string' \
             '*--lower-priv-marker[Lower-priv identity string, rules out coincidental matches]:string' \
             '--require-identity-confirmation[Drop unconfirmed leads instead of reporting them]' \
+            '*--gql-schema[Clairvoyance / introspection JSON for GraphQL field names]:file:_files' \
+            '*--gql-wordlist[GraphQL field-name wordlist]:file:_files' \
             '1:higher-priv crawl json:_files'
           ;;
         peer-write)
@@ -200,7 +221,18 @@ _shroodler() {
             '--require-policy[Refuse to run unless the target publishes a scan-policy manifest]' \
             '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
             '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
+            '--csrf-from[URL to harvest a CSRF token from]:url' \
+            '--no-csrf[Do not harvest or attach a CSRF token]' \
+            '--require-confirm[Only emit a finding when the owner re-read changed]' \
             '1:playbook json:_files'
+          ;;
+        session-export)
+          _arguments \
+            '--from[HAR, proxy JSONL, Netscape jar, or storageState]:file:_files' \
+            '--cdp[Chrome DevTools URL]:url' \
+            '--origin[Only keep cookies matching this origin]:url' \
+            '*--cookie[Include this cookie name=value]:cookie' \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files'
           ;;
         js-routes)
           _arguments \

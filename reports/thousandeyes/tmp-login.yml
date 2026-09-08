@@ -1,0 +1,25 @@
+- generic [ref=f2e2]:
+  - generic [ref=f2e3]:
+    - generic [ref=f2e4]:
+      - generic [ref=f2e7]:
+        - text: Don't have an account?
+        - link "Start a trial" [ref=f2e8] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/signup
+      - generic [ref=f2e9]:
+        - generic [ref=f2e10]:
+          - textbox "Email" [ref=f2e11]
+          - list:
+            - listitem
+        - generic [ref=f2e12]:
+          - generic [ref=f2e13]: Region (Optional)
+          - button "Default (Recommended)" [ref=f2e16] [cursor=pointer]
+        - button "Log In" [ref=f2e22] [cursor=pointer]
+    - paragraph [ref=f2e31]:
+      - text: As we simplify the login experience over the coming months, you may be directed to a Cisco login page to access the ThousandEyes platform. Learn more in
+      - link "our technical documentation" [ref=f2e32] [cursor=pointer]:
+        - /url: https://docs.thousandeyes.com/whats-new/changelog#updates-to-the-thousandeyes-login-experience
+      - text: .
+  - generic [ref=f2e34]:
+    - text: ThousandEyes © 2026
+    - link "Privacy" [ref=f2e35] [cursor=pointer]:
+      - /url: https://app.thousandeyes.com/privacy

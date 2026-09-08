@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from shroodler.urls import canonical_key, is_loopback_or_local, normalize_url, same_origin
+from shroodler.urls import canonical_key, is_loopback_or_local, normalize_url, origin, same_origin
 
 
 def test_canonical_trailing_slash_and_query_order():
@@ -21,6 +21,10 @@ def test_same_origin_and_local():
     assert is_loopback_or_local("http://localhost:8081/")
     assert is_loopback_or_local("http://app1.local:8081/")
     assert not is_loopback_or_local("http://example.com/")
+    assert origin("http://[::1]/x") == "http://[::1]"
+    assert origin("http://[::1]:8081/x") == "http://[::1]:8081"
+    assert same_origin("http://[::1]/a", "http://[::1]/b")
+    assert not same_origin("http://::1/a", "http://127.0.0.1/a")
 
 
 def test_normalize_rejects_javascript():

@@ -15,6 +15,8 @@ from shroodler.urls import canonical_key, is_loopback_or_local, origin, same_ori
 _SKIP_METHODS = {"CONNECT", "OPTIONS"}
 _BODY_METHODS = {"POST", "PUT", "PATCH"}
 _SET_COOKIE_SPLIT = re.compile(r", (?=[^ ;,]+=)")
+MAX_INGEST_PAGES = 400
+MAX_FOLLOWUPS = 200
 
 
 def header_get(headers: dict[str, Any] | None, name: str) -> str:
@@ -250,6 +252,8 @@ def ingest_sessions(
         if key not in last_by_key:
             order.append(key)
         last_by_key[key] = sess
+        if len(order) >= MAX_INGEST_PAGES:
+            break
 
     pages = []
     findings = list(extra_findings)
@@ -263,16 +267,17 @@ def ingest_sessions(
         findings.extend(page_findings)
         endpoints.extend(page_eps)
 
-    from shroodler.crawler import _dedupe_endpoints, _dedupe_findings
+    from shroodler.crawler import _dedupe_endpoints, _dedupe_findings, _with_capture_source
 
     finished = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    stamped = [_with_capture_source(f) for f in findings]
     return CrawlResult(
         target=inferred,
         scan_started_at=started,
         scan_finished_at=finished,
         crawler=CrawlerInfo(name="shroodler-py", version=__version__, mode="ingest"),
         pages=pages,
-        findings=_dedupe_findings(findings),
+        findings=[_with_capture_source(f) for f in _dedupe_findings(stamped)],
         js_endpoints=_dedupe_endpoints(endpoints),
         stats=CrawlStats(
             pages_crawled=len(pages),
@@ -280,3 +285,52 @@ def ingest_sessions(
             elapsed_ms=int((monotonic() - t0) * 1000),
         ),
     )
+
+
+def followup_urls_from_capture(
+    path: str | Path,
+    origin_url: str,
+    *,
+    already: set[str] | None = None,
+) -> list[str]:
+    """Same-origin links and API seeds from captured bodies, excluding already-queued URLs.
+
+    Used by crawl --from-capture so a WAF-blocked crawler can keep going from
+    a browser/proxy recording without re-fetching pages the WAF already saw.
+    """
+    from shroodler.cookie_source import load_captured_sessions
+    from shroodler.extractors.js_api_surface import crawl_seeds_from_endpoint, extract_js_api_surface
+    from shroodler.extractors.links import extract_links
+
+    sessions = load_captured_sessions(path)
+    seen = set(already or ())
+    out: list[str] = []
+
+    def add(url: str) -> None:
+        if len(out) >= MAX_FOLLOWUPS:
+            return
+        if not url or not same_origin(url, origin_url):
+            return
+        key = canonical_key(url)
+        if key in seen:
+            return
+        seen.add(key)
+        out.append(url)
+
+    for sess in sessions:
+        if not _usable(sess):
+            continue
+        url = _request_url(sess)
+        if origin_url and not same_origin(url, origin_url):
+            continue
+        resp = sess.get("response") if isinstance(sess.get("response"), dict) else {}
+        text = _body_text(resp.get("body") if isinstance(resp, dict) else None)
+        if not text:
+            continue
+        for link in extract_links(url, text):
+            add(link)
+        endpoints, _unused = extract_js_api_surface(url, text)
+        for ep in endpoints:
+            for seed in crawl_seeds_from_endpoint(origin_url, ep.endpoint):
+                add(seed)
+    return out

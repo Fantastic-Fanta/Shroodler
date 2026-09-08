@@ -311,6 +311,157 @@ def test_stored_xss_reget_after_post(tmp_path):
         httpd.shutdown()
 
 
+def test_stored_xss_not_emitted_when_get_does_not_keep_token(tmp_path):
+    store = {"q": ""}
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        method = environ.get("REQUEST_METHOD", "GET")
+        if method == "POST":
+            length = int(environ.get("CONTENT_LENGTH") or 0)
+            body = environ["wsgi.input"].read(length).decode()
+            store["q"] = parse_qs(body).get("q", [""])[0]
+            html = f"<p>saved {store['q']}</p>".encode()
+            start_response("200 OK", [("Content-Type", "text/html")])
+            return [html]
+        start_response("200 OK", [("Content-Type", "text/html")])
+        return [b"<p>empty view</p>"]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    origin = f"http://127.0.0.1:{port}"
+    try:
+        extra = tmp_path / "xss.yaml"
+        extra.write_text(
+            "- id: xss-reflect-only\n"
+            "  finding_id: payload-xss-reflect\n"
+            "  payload: '<script>alert(/{{TOKEN}}/)</script>'\n"
+            "  severity: medium\n"
+            "  match:\n"
+            "    any:\n"
+            "      - reflected: true\n",
+            encoding="utf-8",
+        )
+        doc = {
+            "target": origin + "/",
+            "pages": [
+                {
+                    "url": origin + "/note",
+                    "forms": [
+                        {
+                            "action": origin + "/note",
+                            "method": "POST",
+                            "fields": [{"name": "q"}],
+                        }
+                    ],
+                }
+            ],
+        }
+        out = run(doc, packs=load_packs(extra=[extra]))
+        ids = {f["id"] for f in out["findings"]}
+        assert "payload-xss-reflect" in ids
+        assert "payload-xss-stored" not in ids
+    finally:
+        httpd.shutdown()
+
+
+def test_payload_attaches_csrf_and_does_not_fuzz_token_field():
+    seen = {"csrf": None, "q": None}
+
+    def app(environ, start_response):
+        from urllib.parse import parse_qs
+
+        path = environ.get("PATH_INFO", "")
+        method = environ.get("REQUEST_METHOD", "GET")
+        if method == "GET":
+            body = b'<form method="post"><input name="csrf_token" value="tok-live-abcdefgh"><input name="q"></form>'
+            start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
+            return [body]
+        size = int(environ.get("CONTENT_LENGTH") or 0)
+        raw = environ["wsgi.input"].read(size).decode()
+        data = parse_qs(raw, keep_blank_values=True)
+        token = data.get("csrf_token", [""])[0]
+        q = data.get("q", [""])[0]
+        seen["csrf"] = token
+        seen["q"] = q
+        hdr = environ.get("HTTP_X_CSRF_TOKEN") or environ.get("HTTP_X_CSRFTOKEN") or ""
+        if token != "tok-live-abcdefgh" and hdr != "tok-live-abcdefgh":
+            start_response("403 Forbidden", [("Content-Type", "text/plain")])
+            return [b"Missing CSRF token"]
+        body = f"<p>{q}</p>".encode()
+        start_response("200 OK", [("Content-Type", "text/html; charset=utf-8")])
+        return [body]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    port = httpd.server_port
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    origin = f"http://127.0.0.1:{port}"
+    try:
+        extra = Path(__file__).resolve().parents[1] / "packs" / "xss.yaml"
+        doc = {
+            "target": origin + "/",
+            "pages": [
+                {
+                    "url": origin + "/",
+                    "forms": [
+                        {
+                            "action": origin + "/",
+                            "method": "POST",
+                            "fields": [{"name": "q"}, {"name": "csrf_token"}],
+                        }
+                    ],
+                }
+            ],
+        }
+        out = run(doc, packs=load_packs(extra=[extra]))
+        assert seen["csrf"] == "tok-live-abcdefgh"
+        assert seen["q"] != "tok-live-abcdefgh"
+        assert any(f["id"] == "payload-xss-reflect" for f in out["findings"])
+    finally:
+        httpd.shutdown()
+
+
+def test_payload_fail_closed_skips_form_without_token():
+    posts = {"n": 0}
+
+    def app(environ, start_response):
+        if environ.get("REQUEST_METHOD") == "POST":
+            posts["n"] += 1
+        start_response("200 OK", [("Content-Type", "text/html")])
+        return [b"<html>no csrf</html>"]
+
+    httpd = make_server("127.0.0.1", 0, app)
+    t = threading.Thread(target=httpd.serve_forever, daemon=True)
+    t.start()
+    origin = f"http://127.0.0.1:{httpd.server_port}"
+    try:
+        extra = Path(__file__).resolve().parents[1] / "packs" / "xss.yaml"
+        doc = {
+            "target": origin + "/",
+            "pages": [
+                {
+                    "url": origin + "/",
+                    "forms": [
+                        {
+                            "action": origin + "/",
+                            "method": "POST",
+                            "fields": [{"name": "q"}, {"name": "csrf_token"}],
+                        }
+                    ],
+                }
+            ],
+        }
+        out = run(doc, packs=load_packs(extra=[extra]))
+        assert posts["n"] == 0
+        assert out["findings"] == []
+    finally:
+        httpd.shutdown()
+
+
 def test_yaml_packs_against_app5(origin):
     out = run(_search_doc(origin))
     ids = {f["id"] for f in out["findings"]}

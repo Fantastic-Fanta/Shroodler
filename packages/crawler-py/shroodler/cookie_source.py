@@ -178,13 +178,29 @@ def sessions_from_har(doc: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+_MAX_CAPTURE_BYTES = 20 * 1024 * 1024
+
+
 def load_captured_sessions(path: str | Path) -> list[dict[str, Any]]:
     """HAR or proxy JSONL → the session-dict shape `sessions.py` already uses."""
-    raw = Path(path).read_text(encoding="utf-8")
-    stripped = raw.lstrip()
+    src = Path(path)
+    try:
+        with src.open("rb") as fh:
+            raw = fh.read(_MAX_CAPTURE_BYTES + 1)
+    except OSError as exc:
+        raise ValueError(f"could not read capture {path}: {exc}") from exc
+    if len(raw) > _MAX_CAPTURE_BYTES:
+        raise ValueError(
+            f"{path}: capture larger than {_MAX_CAPTURE_BYTES} bytes"
+        )
+    try:
+        text = raw.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise ValueError(f"{path}: capture is not valid UTF-8: {exc}") from exc
+    stripped = text.lstrip()
     if stripped.startswith("{"):
         try:
-            data = json.loads(raw)
+            data = json.loads(text)
         except json.JSONDecodeError:
             return load_sessions(path)
         if _looks_like_har(data):

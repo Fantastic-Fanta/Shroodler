@@ -35,6 +35,7 @@ PYTHON_ONLY_FINDING_IDS = {
     "js-react-query-key",
     "js-graphql-operation",
     "graphql-field-authz",
+    "oauth-redirect-uri-unvalidated",
 }
 
 

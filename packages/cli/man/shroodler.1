@@ -190,6 +190,9 @@ if set, else a built-in keyword-case/inline-comment mutator) instead of
 giving up after the pack's own static payload. Still gated by the same
 rate/blast-radius limits as every other request; never reports a
 mutated match at confidence=confirmed.
+.TP
+.B \-\-no\-csrf
+Do not harvest or attach CSRF tokens on POST/PUT/PATCH/DELETE forms.
 .RE
 .TP
 .B nuclei\-ingest \fITEMPLATE.yaml\fR
@@ -269,6 +272,11 @@ and the same
 .BR \-\-require\-policy / \-\-policy\-file / \-\-audit\-log
 guardrail flags as
 .BR authz\-diff .
+When both owner and peer jars are set, only owner-reread confirmations
+are emitted unless
+.B \-\-allow\-unconfirmed
+is passed. CSRF tokens are harvested before each write unless
+.BR \-\-no\-csrf .
 .TP
 .B session\-export
 Write a Playwright
@@ -280,6 +288,11 @@ JSON from Chrome
 or convert a HAR / proxy JSONL / Netscape jar. The output is the file
 .BR \-\-owner\-cookies\-from / \-\-peer\-cookies\-from
 already accept.
+.TP
+.B \-\-allow\-external
+Allow
+.B \-\-cdp
+against a non-local DevTools URL.
 .TP
 .B js\-routes \fIFILE.js\fR
 Extract parameterized URL templates
@@ -663,6 +676,13 @@ on its own).
 .TP
 .BI \-\-seed\-from " FILE"
 Seed URLs from a captured HAR or proxy session JSONL.
+.TP
+.BI \-\-from\-capture " FILE"
+Ingest the HAR or proxy JSONL as already-crawled pages (no re-fetch) and
+live-crawl only the same-origin links and API seeds mentioned in those
+bodies. Combine with
+.B \-\-proxy
+when Cloudflare/Castle blocks the HTML crawler.
 .TP
 .BI \-\-cookies\-from " FILE"
 Cookies from a captured HAR or proxy session JSONL.

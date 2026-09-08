@@ -7,6 +7,75 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **CSRF harvest fail-closed.** If a captured write already carried a
+  CSRF field/header and a fresh token cannot be harvested, `peer-write`
+  skips the write (`csrf-missing`) instead of sending a tokenless POST.
+  Stale JSON/header tokens are replaced, not kept. `payload` harvests
+  CSRF on write methods, never fuzzes CSRF-named fields, and skips a
+  form that required a token when harvest fails (`--no-csrf` disables).
+
+- **`session-export --cdp` loopback-only.** DevTools URLs must be true
+  loopback (`127.0.0.1` / `::1` / `localhost`) unless `--allow-external`.
+  `http(s)` only; userinfo, empty host, `*.local`, and `0.0.0.0` are
+  refused. `/json/version` is fetched with redirects disabled and the
+  `webSocketDebuggerUrl` is pinned to the same loopback port before
+  Playwright connects. `--origin` must be an absolute http(s) URL when
+  set. MCP `session_export` always requires `origin`; `cdp`/`from`
+  require `policy_file` or `allow_without_policy` (this tool does not
+  GET `.well-known/scan-policy.json`). Cookie names/values with
+  CR/LF/`;` are dropped.
+
+- **Authenticated CSRF Origin probe.** After `csrf-state-change-unprotected`,
+  crawl sends an anonymous OPTIONS to the write action with
+  `Origin: https://evil.example` (CORS-gated, no GET, cookies stripped).
+  A reflected Origin is attached as supporting evidence. Findings only
+  emit for same-origin http(s) actions (no `javascript:`, userinfo, or
+  off-origin forms).
+
+- **Two-jar confirm by default.** `peer-write` with both owner and peer
+  jars keeps only owner-reread confirmations (`run()` itself, not only
+  the CLI wrapper). `--allow-unconfirmed` emits probable leads.
+  `--require-confirm` without an owner jar now errors. Verify URLs are
+  same-origin GET/HEAD only (no off-origin cookie leak; POST write URLs
+  are not GETed unless the playbook names a view). Owner `confirmed`
+  requires both before and after 2xx. Captured `Authorization` headers
+  are not replayed as the peer. Nonsense-id no-ops are skipped. Stored
+  XSS needs this run's token on a follow-up GET whose body differs from
+  the POST.
+
+- **JS API seeds.** React Query keys and tRPC procedure names found in JS
+  are queued as same-origin crawl URLs (`/api/...`, `/trpc/...`). Protocol-
+  relative keys, `..`, and control characters are rejected; `--depth`
+  applies to API enqueue.
+
+- **Compound chains.** `chain-xss-cookie-theft` requires a session cookie
+  without HttpOnly on the same origin. `chain-cors-credentialed` requires
+  CORS origin reflection with `ACAC=true` plus SameSite=None session
+  cookie. Header clustering is per origin.
+
+- **`--from-capture`.** Captures are capped at 20 MiB / 400 ingested
+  pages / 200 follow-up URLs. Captured request URLs are not re-fetched
+  (canonical-key match). Live robots.txt, sitemap, and OpenAPI probe
+  URLs are skipped. Findings from ingest are marked `source=capture`.
+  Zero same-origin ingested pages emit `capture-no-same-origin-sessions`
+  instead of failing silently.
+
+- **OAuth `redirect_uri` probes.** Keycloak/Auth0 on-origin authorize
+  GETs are anonymous. A finding requires a 3xx Location whose host/path
+  is `https://shroodler.invalid/oauth-callback`, or a 200 HTML form
+  whose action is that URL (`response_mode=form_post`). An error-page
+  echo of the marker is not a finding. Realm names come from the URL
+  path only; Auth0 fingerprinting uses the hostname, not the query
+  string. Authorize URLs are joined from the origin, not the seed path.
+
+- **`crawl --from-capture FILE`.** Ingest HAR/JSONL pages without
+  re-fetching them; live-crawl only follow-up links and API seeds. Pair
+  with `--proxy` when a WAF blocks the HTML crawler.
+
+- **OAuth `redirect_uri` allowlist probe.** On-origin Keycloak/Auth0
+  authorize endpoints are probed (CORS-gated) with
+  `redirect_uri=https://shroodler.invalid/oauth-callback`.
+
 - **`shroodler ingest-har`**: turn a Burp / mitmproxy / Caido / DevTools
   HAR 1.2 export into crawl JSON (Page records + passive findings from
   captured bodies). `ingest-sessions` and `crawl --seed-from` /

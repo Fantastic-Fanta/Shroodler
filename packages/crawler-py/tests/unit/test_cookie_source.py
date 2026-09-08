@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from shroodler.cookie_source import (
+    _MAX_CAPTURE_BYTES,
     load_captured_sessions,
     load_cookie_header,
     merge_cookie_headers,
@@ -164,3 +167,17 @@ def test_malformed_har_entries_are_skipped():
 def test_infer_id_skips_short_versions():
     assert infer_id_value("http://x/v1/photo/99") is None
     assert infer_id_value("http://x/v1/photo/10464573") == "10464573"
+
+
+def test_load_captured_sessions_rejects_oversize(tmp_path):
+    path = tmp_path / "big.jsonl"
+    path.write_bytes(b"x" * (_MAX_CAPTURE_BYTES + 1))
+    with pytest.raises(ValueError, match="larger than"):
+        load_captured_sessions(path)
+
+
+def test_load_captured_sessions_rejects_non_utf8(tmp_path):
+    path = tmp_path / "bin.jsonl"
+    path.write_bytes(b"\xff\xfe not utf-8")
+    with pytest.raises(ValueError, match="UTF-8"):
+        load_captured_sessions(path)

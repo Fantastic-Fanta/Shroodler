@@ -6,6 +6,7 @@ import pytest
 
 from shroodler.pacer import Pacer
 from shroodler.peer_write import (
+    _session_headers,
     infer_id_value,
     json_write_rejected,
     load_playbook,
@@ -54,6 +55,7 @@ def test_swap_object_id_is_segment_exact():
 def test_swap_id_in_body_replaces_json_values_only():
     assert swap_id_in_body("", "1", "2") == ""
     assert swap_id_in_body("not-json", "1", "2") == "not-json"
+    assert swap_id_in_body("id=10464573&x=1", "10464573", "9") == "id=9&x=1"
     assert '"id":2' in swap_id_in_body('{"id": 1, "name": "x1"}', "1", "2")
     assert "x1" in swap_id_in_body('{"id": 1, "name": "x1"}', "1", "2")
 
@@ -66,6 +68,20 @@ def test_infer_id_from_json_body():
 
 def test_json_write_rejected_error_field():
     assert json_write_rejected('{"error": "denied"}')
+
+
+def test_session_headers_drop_auth_from_extra_and_capture():
+    headers = _session_headers(
+        "session=peer",
+        extra={"Authorization": "Bearer OWNER", "X-Request-Id": "1"},
+        write_headers={"Authorization": "Bearer CAPTURED", "Content-Type": "application/json"},
+        user_agent="shroodler-test",
+    )
+    lower = {k.lower(): v for k, v in headers.items()}
+    assert "authorization" not in lower
+    assert headers["Cookie"] == "session=peer"
+    assert headers["X-Request-Id"] == "1"
+    assert headers["Content-Type"] == "application/json"
 
 
 def test_writes_from_sessions_filters_and_caps():
@@ -285,21 +301,104 @@ def test_csrf_token_is_attached_to_json_write(fx):
     assert out["findings"][0]["id"] == "peer-write-idor"
 
 
+def test_csrf_fail_closed_when_token_required_and_missing(fx):
+    fx.html("/", "<html>no token here</html>")
+    seen = {"posts": 0}
+
+    def peer_write(inc):
+        seen["posts"] += 1
+        return 200, {}, b'{"ok":true}'
+
+    fx.on("POST", "/photo/1", peer_write)
+    fx.on("POST", "/photo/10464573", peer_write)
+    out = run(
+        _playbook(
+            fx.origin,
+            [_write(fx.origin, body='{"csrf_token":"stale","id":10464573}')],
+        ),
+        peer_cookie="session=b",
+        pacer=_pacer(),
+    )
+    assert seen["posts"] == 0
+    assert out["findings"] == []
+    assert out["checked"][0]["verdict"] == "csrf-missing"
+
+
+def test_require_confirm_without_owner_raises(fx):
+    with pytest.raises(ValueError, match="owner"):
+        run(
+            _playbook(fx.origin, [_write(fx.origin)]),
+            peer_cookie="session=b",
+            pacer=_pacer(),
+            require_confirm=True,
+            csrf=False,
+        )
+
+
 def test_require_confirm_drops_probable_lead(fx):
     fx.on("POST", "/photo/1", lambda inc: (404, {}, b"no"))
     fx.on("POST", "/photo/10464573", lambda inc: (200, {}, b'{"ok":true}'))
     out = run(
         _playbook(fx.origin, [_write(fx.origin)]),
+        owner_cookie="session=a",
         peer_cookie="session=b",
         pacer=_pacer(),
-        require_confirm=True,
         csrf=False,
     )
     assert out["findings"] == []
     assert out["checked"][0]["verdict"] == "unconfirmed"
 
 
-def test_challenge_is_recorded_not_solved(fx):
+def test_verify_url_off_origin_is_ignored(fx):
+    seen = {"owner": 0}
+
+    def steal(inc):
+        seen["owner"] += 1
+        return 200, {}, b"stolen"
+
+    fx.on("POST", "/photo/1", lambda inc: (404, {}, b"no"))
+    fx.on("POST", "/photo/10464573", lambda inc: (200, {}, b'{"ok":true}'))
+    out = run(
+        _playbook(
+            fx.origin,
+            [
+                _write(
+                    fx.origin,
+                    verify={
+                        "method": "GET",
+                        "url": "https://evil.example/steal",
+                    },
+                )
+            ],
+        ),
+        owner_cookie="session=owner",
+        peer_cookie="session=peer",
+        pacer=_pacer(),
+        csrf=False,
+    )
+    assert seen["owner"] == 0
+    assert out["findings"] == []
+    assert out["checked"][0]["verdict"] == "unconfirmed"
+
+
+def test_csrf_retry_does_not_harvest_metadata(fx):
+    seen = {"gets": []}
+
+    def track_get(inc):
+        seen["gets"].append(inc.path)
+        return 200, {"Content-Type": "text/html"}, b"<html>no token</html>"
+
+    fx.on("GET", "/", track_get)
+    fx.on("POST", "/photo/1", lambda inc: (404, {}, b"no"))
+    fx.on("POST", "/photo/10464573", lambda inc: (403, {}, b"Missing CSRF token"))
+    out = run(
+        _playbook(fx.origin, [_write(fx.origin)]),
+        peer_cookie="session=b",
+        pacer=_pacer(),
+        csrf_from="http://169.254.169.254/latest/meta-data/",
+    )
+    assert all("169.254" not in (p or "") for p in seen["gets"])
+    assert out["findings"] == []
     body = b"Just a moment... checking your browser before accessing"
     fx.on("POST", "/photo/1", lambda inc: (403, {}, body))
     out = run(_playbook(fx.origin, [_write(fx.origin)]), pacer=_pacer())

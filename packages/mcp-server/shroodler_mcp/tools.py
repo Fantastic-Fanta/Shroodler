@@ -323,22 +323,46 @@ def peer_write(args: dict) -> dict:
         only_id=args.get("only_id"),
         csrf=not bool(args.get("no_csrf", False)),
         csrf_from=str(args.get("csrf_from") or ""),
-        require_confirm=bool(args.get("require_confirm", False)),
+        require_confirm=(
+            bool(args.get("require_confirm", False))
+            or (
+                bool(args.get("owner_cookie"))
+                and bool(args.get("peer_cookie"))
+                and not bool(args.get("allow_unconfirmed", False))
+            )
+        ),
+        allow_unconfirmed=bool(args.get("allow_unconfirmed", False)),
     )
 
 
 def session_export(args: dict) -> dict:
     """Convert a captured jar or CDP browser into Playwright storageState JSON."""
-    from shroodler.session_export import export_session
+    from shroodler.session_export import export_session, origin_host
 
+    origin = str(args.get("origin") or "")
+    if not origin:
+        raise ValueError("session_export requires origin (absolute http(s) URL)")
+    origin_host(origin)
     source = args.get("from")
     path = str(_resolve_safe_path(str(source))) if source else None
     pairs = [str(args["cookie"])] if args.get("cookie") else None
+    cdp = args.get("cdp")
+    if cdp or source:
+        # Do not GET origin/.well-known/scan-policy.json from this tool (SSRF).
+        # A local policy_file is parsed; otherwise the operator must opt out.
+        if args.get("policy_file"):
+            _build_enforcer(args, origin)
+        elif not args.get("allow_without_policy"):
+            raise ValueError(
+                "session_export with cdp or from requires policy_file or "
+                "allow_without_policy (refusing to fetch scan-policy from origin)"
+            )
     return export_session(
         source=path,
-        cdp=args.get("cdp"),
-        origin=str(args.get("origin") or ""),
+        cdp=cdp,
+        origin=origin,
         pairs=pairs,
+        allow_external=bool(args.get("allow_external", False)),
     )
 
 
@@ -657,7 +681,12 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "require_confirm": {
                     "type": "boolean",
                     "default": False,
-                    "description": "Only emit a finding when the owner re-read changed",
+                    "description": "Only emit a finding when the owner re-read changed. Default true when both owner_cookie and peer_cookie are set.",
+                },
+                "allow_unconfirmed": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Emit probable leads even when both owner and peer cookies are set",
                 },
             },
         },
@@ -665,8 +694,9 @@ TOOLS: dict[str, dict[str, Any]] = {
     },
     "session_export": {
         "description": "Write a Playwright storageState JSON from a HAR, proxy "
-        "JSONL, Netscape jar, cookie pairs, or a Chrome --cdp URL. Does not "
-        "fetch the target.",
+        "JSONL, Netscape jar, cookie pairs, or a Chrome --cdp URL. Requires "
+        "origin. cdp/from require policy_file or allow_without_policy (this "
+        "tool does not fetch scan-policy from the origin). ",
         "input_schema": {
             "type": "object",
             "additionalProperties": False,
@@ -676,8 +706,26 @@ TOOLS: dict[str, dict[str, Any]] = {
                     "description": "HAR, JSONL, Netscape, or storageState path",
                 },
                 "cdp": {"type": "string", "description": "Chrome DevTools URL"},
-                "origin": {"type": "string"},
+                "origin": {
+                    "type": "string",
+                    "description": "Absolute http(s) origin; required",
+                },
                 "cookie": {"type": "string", "description": "name=value (single pair)"},
+                "allow_external": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Allow --cdp against a non-loopback DevTools URL",
+                },
+                "allow_without_policy": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Skip scan-policy when using cdp or from",
+                },
+                "policy_file": {
+                    "type": "string",
+                    "description": "Local scan-policy JSON (cdp only)",
+                },
+                "audit_log": {"type": "string"},
             },
         },
         "handler": session_export,

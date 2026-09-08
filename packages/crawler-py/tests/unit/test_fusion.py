@@ -227,3 +227,148 @@ def test_ingest_har_builds_pages_from_captured_bodies(fx, tmp_path):
     assert doc["crawler"]["mode"] == "ingest"
     assert any(p["url"].rstrip("/") == fx.origin.rstrip("/") for p in doc["pages"])
     assert any(p.get("forms") for p in doc["pages"])
+
+
+def test_from_capture_skips_captured_url_and_crawls_followup(tmp_path, fx):
+    fx.html("/", "<html>already captured</html>")
+    fx.html("/hidden", "<html>from capture link</html>")
+    sess = _session(
+        fx.origin + "/",
+        body='<a href="/hidden">x</a>',
+        headers={"Content-Type": "text/html"},
+    )
+    path = tmp_path / "cap.jsonl"
+    path.write_text(json.dumps(sess) + "\n", encoding="utf-8")
+    result = crawl_url(
+        fx.origin + "/",
+        depth=0,
+        ignore_robots=True,
+        no_sitemap=True,
+        from_capture=str(path),
+    )
+    urls = {p.url.rstrip("/") for p in result.pages}
+    assert fx.origin.rstrip("/") in urls or (fx.origin + "/") in {p.url for p in result.pages}
+    assert any(p.url.endswith("/hidden") for p in result.pages)
+    # captured home page was not re-fetched
+    assert ("GET", "/") not in fx.calls
+
+
+def test_from_capture_skips_robots_sitemap_openapi(tmp_path, fx):
+    fx.html("/", "<html>captured</html>")
+    fx.html("/robots.txt", "User-agent: *\nAllow: /\nSitemap: /sitemap.xml")
+    fx.html("/sitemap.xml", '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>')
+    fx.route(
+        "/openapi.json",
+        lambda _p: (200, {"Content-Type": "application/json"}, b'{"openapi":"3.0.0","paths":{}}'),
+    )
+    sess = _session(
+        fx.origin + "/",
+        body="<html>captured</html>",
+        headers={"Content-Type": "text/html"},
+    )
+    path = tmp_path / "cap.jsonl"
+    path.write_text(json.dumps(sess) + "\n", encoding="utf-8")
+    crawl_url(fx.origin + "/", depth=0, from_capture=str(path))
+    paths = {p for (_m, p) in fx.calls}
+    assert "/robots.txt" not in paths
+    assert "/openapi.json" not in paths
+    assert "/sitemap.xml" not in paths
+
+
+def test_from_capture_origin_mismatch_is_visible(tmp_path, fx):
+    from urllib.parse import urlparse
+
+    parsed = urlparse(fx.origin)
+    other_host = "localhost" if (parsed.hostname or "") == "127.0.0.1" else "127.0.0.1"
+    other = f"{parsed.scheme}://{other_host}:{parsed.port}/"
+    sess = _session(other, body="<html>x</html>", headers={"Content-Type": "text/html"})
+    path = tmp_path / "cap.jsonl"
+    path.write_text(json.dumps(sess) + "\n", encoding="utf-8")
+    result = crawl_url(
+        fx.origin + "/",
+        depth=0,
+        ignore_robots=True,
+        no_sitemap=True,
+        from_capture=str(path),
+    )
+    assert any(f.id == "capture-no-same-origin-sessions" for f in result.findings)
+
+
+def test_ingest_marks_findings_as_capture(tmp_path, fx):
+    sess = _session(
+        fx.origin + "/",
+        body="AKIAIOSFODNN7EXAMPLE",
+        headers={"Content-Type": "text/plain"},
+        req_body="AKIAIOSFODNN7EXAMPLE",
+    )
+    path = tmp_path / "cap.jsonl"
+    _write_jsonl(path, [sess])
+    ingested = ingest_sessions(path, target=fx.origin)
+    assert ingested.findings
+    for f in ingested.findings:
+        assert "source=capture" in (f.evidence or "")
+
+
+def test_ingest_caps_pages(tmp_path, fx, monkeypatch):
+    from shroodler import sessions as sessmod
+
+    monkeypatch.setattr(sessmod, "MAX_INGEST_PAGES", 2)
+    sessions = [
+        _session(fx.origin + f"/p{i}", body="ok", headers={"Content-Type": "text/html"})
+        for i in range(5)
+    ]
+    path = tmp_path / "cap.jsonl"
+    _write_jsonl(path, sessions)
+    ingested = ingest_sessions(path, target=fx.origin)
+    assert len(ingested.pages) == 2
+
+
+def test_followup_caps(tmp_path, fx, monkeypatch):
+    from shroodler import sessions as sessmod
+    from shroodler.sessions import followup_urls_from_capture
+
+    monkeypatch.setattr(sessmod, "MAX_FOLLOWUPS", 3)
+    links = "".join(f'<a href="/f{i}">x</a>' for i in range(20))
+    sess = _session(
+        fx.origin + "/",
+        body=f"<html>{links}</html>",
+        headers={"Content-Type": "text/html"},
+    )
+    path = tmp_path / "cap.jsonl"
+    _write_jsonl(path, [sess])
+    got = followup_urls_from_capture(path, fx.origin + "/", already=set())
+    assert len(got) == 3
+
+
+def test_collapsed_ingest_headers_keep_capture_source():
+    from shroodler.crawler import _dedupe_findings
+    from shroodler.models import Finding
+
+    findings = [
+        Finding(
+            id="missing-csp",
+            severity="low",
+            category="header",
+            url=f"http://127.0.0.1/p{i}",
+            description="csp",
+            evidence="source=capture",
+        )
+        for i in range(3)
+    ]
+    out = _dedupe_findings(findings)
+    assert len(out) == 1
+    assert "source=capture" in (out[0].evidence or "")
+
+
+def test_react_query_key_is_queued_as_seed(fx):
+    fx.html(
+        "/",
+        '<html><script>useQuery(["/api/folders/list"])</script></html>',
+    )
+    fx.route(
+        "/api/folders/list",
+        lambda _p: (200, {"Content-Type": "application/json"}, b'{"folders":[]}'),
+    )
+    result = crawl_url(fx.origin + "/", depth=1, ignore_robots=True, no_sitemap=True)
+    assert any(p.url.endswith("/api/folders/list") for p in result.pages)
+    assert any(f.id == "js-react-query-key" for f in result.findings)

@@ -60,6 +60,7 @@ _BY_ID: dict[str, str] = {
     # neither an account nor a guessed secret/token.
     "session-fixation": "none",
     "oauth-missing-state": "none",
+    "oauth-redirect-uri-unvalidated": "none",
     # Replaying a session that should have died on logout requires having
     # captured a valid token first (e.g. via prior XSS/theft), not an
     # account of the attacker's own -- closer to "needs a token" than

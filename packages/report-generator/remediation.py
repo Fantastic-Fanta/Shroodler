@@ -73,7 +73,7 @@ _BY_ID: dict[str, str] = {
     "js-trpc-procedure": "Informational: a tRPC procedure name was found in client JS; confirm the procedure enforces its own authz.",
     "js-react-query-key": "Informational: a React Query key names an API path; confirm that path enforces its own authz.",
     "js-graphql-operation": "Informational: a GraphQL operation name was found in client JS; confirm the resolver enforces object-level authz.",
-    "oauth-missing-state": "Add a random, unguessable state parameter to the authorization request and verify it matches on the callback, to prevent CSRF against the OAuth flow.",
+    "oauth-redirect-uri-unvalidated": "Restrict redirect_uri to an explicit allowlist of your application's callback URLs. Do not accept arbitrary https origins.",
     "reset-token-sequential": "Generate reset/verification tokens with a CSPRNG (e.g. 32+ random bytes), never a sequential, incrementing, or timestamp-derived value.",
     "reset-token-small-keyspace": "Lengthen the reset/verification token and/or widen its alphabet, and add real rate limiting/lockout on repeated attempts against this endpoint.",
     "reset-token-short": "Lengthen the reset/verification token (aim for 128+ bits of real entropy) and confirm it's generated with a CSPRNG.",

@@ -125,24 +125,45 @@
   nonsense-id control and an optional owner re-read. A dummy 200 that
   matches the fake id, or `{"success": false}`, is not a finding. CSRF
   tokens are harvested (hidden input / meta / JS / cookie) and attached
-  unless `--no-csrf`. `--require-confirm` keeps only owner-reread
-  confirmations. Cookie jars come from Playwright `storageState`,
+  unless `--no-csrf`. If the captured write already had a CSRF field and
+  harvest fails, the write is skipped (fail closed). `--require-confirm`
+  keeps only owner-reread confirmations; with both owner and peer jars
+  that is the default (`--allow-unconfirmed` to emit probable leads).
+  Cookie jars come from Playwright `storageState`,
   Netscape, HAR, or proxy JSONL — no crawl required. MCP: `peer_write`.
 - **Session export** (`shroodler session-export`) — dump HttpOnly cookies
-  from a live Chrome `--cdp` URL, or convert HAR / proxy JSONL / Netscape
-  into Playwright `storageState` JSON. MCP: `session_export`.
+  from a live Chrome `--cdp` URL (true loopback only unless
+  `--allow-external`; `*.local` / `0.0.0.0` are not loopback), or convert
+  HAR / proxy JSONL / Netscape into Playwright `storageState` JSON.
+  `--origin` must be an absolute http(s) URL when set. MCP `session_export`
+  with `cdp` also requires a scan-policy (or `allow_without_policy`).
 - **Authenticated CSRF** — crawl emits `csrf-state-change-unprotected`
   when a SameSite=None session cookie is paired with a state-changing
-  form that has no CSRF field.
+  form that has no CSRF field. An Origin-reflection probe (gated like
+  CORS) sends anonymous OPTIONS only and records a reflected Origin as
+  supporting evidence, not as proof a cross-site POST would succeed.
 - **Stored XSS** — after a reflected XSS hit on a POST, a follow-up GET
   of the view page that still contains this run's marker is
   `payload-xss-stored`.
 - **JS API surface** — JSON-RPC methods, tRPC procedures, React Query
-  keys, and GraphQL operation names mined from JS. `authz-diff` replays
+  keys, and GraphQL operation names mined from JS (`js-jsonrpc-method`,
+  `js-trpc-procedure`, `js-react-query-key`, `js-graphql-operation`).
+  React Query paths and tRPC `/trpc/{proc}` URLs are queued as crawl
+  seeds. `authz-diff` replays
   GraphQL Query fields as the lower-priv session (`graphql-field-authz`).
 - **Chain findings** — reports add `chain-xss-cookie-theft` and
   `chain-cors-credentialed` when both halves exist, and cluster a
   header/SRI issue repeated across many pages into one row.
+- **Proxy-first hunt** (`crawl --from-capture FILE`) — ingest a browser
+  HAR / `shroodler proxy` JSONL as pages (no re-fetch of captured URLs)
+  and live-crawl only the links and API seeds it mentioned. Skips live
+  robots/sitemap/OpenAPI probes. Use with `--proxy` when a WAF challenges
+  the HTML crawler. Findings from the capture are marked `source=capture`.
+- **OAuth redirect_uri probe** — when Keycloak or Auth0 is fingerprinted,
+  on-origin authorize endpoints are probed (CORS-gated) for an open
+  `redirect_uri` allowlist (`oauth-redirect-uri-unvalidated`). Confirmation
+  is a 3xx to `https://shroodler.invalid/oauth-callback` or a form_post
+  whose action is that URL, not an error-page echo.
 - **JS route templates** (`shroodler js-routes`) — mine `{userId}`,
   `{collectionId}`, `{pk}`, `${var}`, `:id`, and `<int:pk>` URL
   templates from a webpack/SPA bundle so a peer-write playbook has a

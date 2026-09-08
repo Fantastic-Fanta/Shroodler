@@ -1,0 +1,30 @@
+{
+  "target": "https://hyzdok.magwien.gv.at",
+  "scan_started_at": "2026-09-07T14:19:44Z",
+  "scan_finished_at": "2026-09-07T14:19:53Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [],
+  "findings": [
+    {
+      "id": "robots-blocked-crawl",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://hyzdok.magwien.gv.at",
+      "description": "robots.txt disallowed the seed URL and this crawl respected it, so no pages were fetched at all -- this scan's other findings (or lack of them) do not reflect the target's real attack surface. robots.txt is a crawler courtesy convention, not a security boundary -- if you are authorized to test this target, pass --ignore-robots to actually crawl it.",
+      "evidence": "6 URL(s) skipped due to robots.txt",
+      "confidence": "heuristic"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 0,
+    "pages_challenged": 0,
+    "requests": 23,
+    "elapsed_ms": 9270,
+    "stopped_reason": "complete"
+  }
+}

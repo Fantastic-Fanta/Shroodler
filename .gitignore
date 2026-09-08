@@ -31,6 +31,8 @@ packages/desktop-app/src-tauri/target/
 .DS_Store
 .idea/
 .vscode/
+.cursor/
+.playwright-mcp/
 *.swp
 
 # Local AI tooling config — machine-specific, not part of the project
@@ -45,6 +47,7 @@ docs/*
 !docs/cli-reference.md
 # Review artifact for the 2026-09-07 roadmap implementation pass
 !docs/roadmap-audit.md
+!docs/roadmap-visual.html
 
 # Proxy CA / captured sessions — never commit
 packages/proxy-go/data/

@@ -1,0 +1,1908 @@
+{
+  "target": "https://robloxultima.com",
+  "scan_started_at": "2026-09-06T20:56:01Z",
+  "scan_finished_at": "2026-09-06T20:56:21Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://robloxultima.com",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtag/js?id=AW-986534766",
+        "assets/bootstrap/js/bootstrap.min.js"
+      ]
+    },
+    {
+      "url": "https://robloxultima.com/index.html",
+      "status_code": 301,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-info.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "assets/bootstrap/js/bootstrap.min.js"
+      ]
+    },
+    {
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-items.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "robloxUsername",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "robloxUserId",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "discordUsername",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "paymentMethod",
+              "type": "select",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "notes",
+              "type": "textarea",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "website",
+              "type": "text",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fontawesome-all.min.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/Index.html",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtag/js?id=AW-986534766",
+        "assets/bootstrap/js/bootstrap.min.js"
+      ]
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.eot",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff2",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.ttf",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.eot",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff2",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.ttf",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.eot",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff2",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.ttf",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://www.googletagmanager.com/gtag/js?id=AW-986534766",
+      "evidence": "https://www.googletagmanager.com/gtag/js?id=AW-986534766"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/index.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/index.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/index.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/index.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/index.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-info.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-info.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-info.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-info.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-info.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-info.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-pokedex.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-rarities.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-items.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-items.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-items.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-items.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-items.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-items.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-contests.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-rates.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-shop.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/ultima-designers.html",
+      "description": "Cross-origin <link> loaded without a Subresource Integrity (integrity=) attribute: https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900",
+      "evidence": "https://fonts.googleapis.com/css?family=Roboto+Slab:300,400,700,900|Roboto:300,400,700,900"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/css/bootstrap.min.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fontawesome-all.min.css",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fontawesome-all.min.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fontawesome-all.min.css",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fontawesome-all.min.css",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fontawesome-all.min.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/bootstrap/js/bootstrap.min.js",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://robloxultima.com/assets/img/ultimapaper.png",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "a5cd************info"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/Index.html",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/Index.html",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/Index.html",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/Index.html",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/Index.html",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://robloxultima.com/Index.html",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://www.googletagmanager.com/gtag/js?id=AW-986534766",
+      "evidence": "https://www.googletagmanager.com/gtag/js?id=AW-986534766"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.eot",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.eot",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.eot",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.eot",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.eot",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff2",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff2",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff2",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff2",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff2",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.woff",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.ttf",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.ttf",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.ttf",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.ttf",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.ttf",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-brands-400.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.eot",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.eot",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.eot",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.eot",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.eot",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff2",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff2",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff2",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff2",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff2",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.woff",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.ttf",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.ttf",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.ttf",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.ttf",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.ttf",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-regular-400.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.eot",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.eot",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.eot",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.eot",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.eot",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff2",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff2",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff2",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff2",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff2",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.woff",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.ttf",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.ttf",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.ttf",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.ttf",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.ttf",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://robloxultima.com/assets/fonts/fa-solid-900.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 30,
+    "pages_challenged": 0,
+    "requests": 58,
+    "elapsed_ms": 20137,
+    "stopped_reason": "complete"
+  }
+}

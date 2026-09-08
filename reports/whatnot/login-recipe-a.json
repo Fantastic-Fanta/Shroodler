@@ -1,0 +1,21 @@
+{
+  "_comment": "Account A — owner account. Auth is cookie-based. After logging in manually, copy the cookies below. Key cookies: __Secure-access-token (JWT for API), __Secure-whatnot-live (Phoenix token for WS).",
+  "url": "https://www.whatnot.com/sign-in",
+  "method": "POST",
+  "content_type": "json",
+  "fields": {
+    "email": "gmaxresonance@wearehackerone.com",
+    "password": "FILL_ME_IN"
+  },
+  "protected_url": "https://www.whatnot.com/profile",
+  "auth_marker": "gmaxresonance",
+  "_cookies_to_capture": [
+    "__Secure-access-token",
+    "__Secure-whatnot-live",
+    "__Secure-refresh-token",
+    "__Secure-claims",
+    "usid"
+  ],
+  "_ws_auth_cookie": "__Secure-whatnot-live",
+  "_ws_note": "Phoenix token — pass as connect param when opening wss://live-service.whatnot.com/socket/websocket?token=<value>"
+}

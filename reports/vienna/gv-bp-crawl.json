@@ -1,0 +1,1152 @@
+{
+  "target": "https://bp.gesundheitsverbund.at/bildungsprogramm/Kurse",
+  "scan_started_at": "2026-09-07T13:18:23Z",
+  "scan_finished_at": "2026-09-07T13:18:39Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Kurse",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/bildungsprogramm/Scripts/modernizr-2.6.2.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/modernizr-2.8.3.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/jquery-3.6.0.min.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/jquery.scrollTo.min.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/js.cookie.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/jquery.tokeninput.modified.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/jquery.validate.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/jquery.validate.unobtrusive.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/bootstrap.min.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/respond.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/jquery.easyui.min.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/locale/easyui-lang-de.js?nc=2.45.1.0",
+        "/bildungsprogramm/Scripts/datagrid-export.js?nc=2.45.1.0",
+        "/bildungsprogramm/Templates/Enrollment.js?nc=mc4sg",
+        "/bildungsprogramm/Templates/KursSuche.js?nc=mc4sg"
+      ]
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/",
+      "status_code": 302,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Allgemeine%20Informationen%20zum%20Bildungsprogramm.pdf",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Datenschutzrechtlichen%20Informationen%20gem%C3%A4%C3%9F%20Art.%2013%20DSGVO%20f%C3%BCr%20externe%20TeilnehmerInnen.pdf",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Content/bootstrap.min.css?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Content/easyui/easyui-gv.css?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Content/easyui/icon.css?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/token-input-gv.css?nc=wf4ze",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/bildungsprogramm-gv.css?nc=wf4ze",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Mandanten.css?nc=wf4ze",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/KursSuche-gv.css?nc=fip5m",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/modernizr-2.6.2.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/modernizr-2.8.3.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery-3.6.0.min.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.scrollTo.min.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/js.cookie.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.tokeninput.modified.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.validate.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.validate.unobtrusive.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/bootstrap.min.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/respond.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.easyui.min.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/locale/easyui-lang-de.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/datagrid-export.js?nc=2.45.1.0",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Enrollment.js?nc=mc4sg",
+      "status_code": 200,
+      "forms": [],
+      "params": [
+        "nc"
+      ],
+      "cookies": [
+        {
+          "name": "ma01-bp.wgv",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01093197",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Kurse",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Kurse",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "bild************t-gv",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Allgemeine%20Informationen%20zum%20Bildungsprogramm.pdf",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Datenschutzrechtlichen%20Informationen%20gem%C3%A4%C3%9F%20Art.%2013%20DSGVO%20f%C3%BCr%20externe%20TeilnehmerInnen.pdf",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Datenschutzrechtlichen%20Informationen%20gem%C3%A4%C3%9F%20Art.%2013%20DSGVO%20f%C3%BCr%20externe%20TeilnehmerInnen.pdf",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "Type************bri/",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Content/bootstrap.min.css?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Content/easyui/easyui-gv.css?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Content/easyui/icon.css?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/token-input-gv.css?nc=wf4ze",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/bildungsprogramm-gv.css?nc=wf4ze",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Mandanten.css?nc=wf4ze",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/KursSuche-gv.css?nc=fip5m",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/modernizr-2.6.2.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/modernizr-2.6.2.js?nc=2.45.1.0",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "com/************ENSE",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/modernizr-2.8.3.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/modernizr-2.8.3.js?nc=2.45.1.0",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "com/************ndex",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery-3.6.0.min.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.scrollTo.min.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/js.cookie.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.tokeninput.modified.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.tokeninput.modified.js?nc=2.45.1.0",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "com/************n-ie",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.validate.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.validate.js?nc=2.45.1.0",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "org/************ing/",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.validate.unobtrusive.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.validate.unobtrusive.js?nc=2.45.1.0",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "MIIj************Bglg",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/bootstrap.min.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/bootstrap.min.js?nc=2.45.1.0",
+      "description": "High-entropy string that may be an API key (original ../../js/src/dropdown.js)",
+      "evidence": "org/************_bub @ ../../js/src/dropdown.js",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/respond.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/jquery.easyui.min.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/locale/easyui-lang-de.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Scripts/datagrid-export.js?nc=2.45.1.0",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://bp.gesundheitsverbund.at/bildungsprogramm/Templates/Enrollment.js?nc=mc4sg",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; frame-ancestors '",
+      "confidence": "confirmed"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 25,
+    "pages_challenged": 0,
+    "requests": 34,
+    "elapsed_ms": 15378,
+    "stopped_reason": "max-pages"
+  }
+}

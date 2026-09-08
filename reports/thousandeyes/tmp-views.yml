@@ -1,0 +1,209 @@
+- generic [ref=f49e2]:
+  - generic:
+    - banner "Application header" [ref=f49e3]:
+      - generic [ref=f49e4]:
+        - button "Collapse navigation" [expanded] [ref=f49e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f49e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f49e10]: ThousandEyes
+      - generic [ref=f49e29]:
+        - link "Upgrade" [ref=f49e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f49e31] [cursor=pointer]
+        - button "Help Content" [ref=f49e35] [cursor=pointer]
+        - button "Notifications" [ref=f49e41] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f49e48] [cursor=pointer]:
+          - generic [ref=f49e54]:
+            - generic [ref=f49e55]: Lapras Resonance
+            - generic [ref=f49e56]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f49e62] [cursor=pointer]
+    - navigation [ref=f49e65]:
+      - generic [ref=f49e66]:
+        - generic [ref=f49e67]:
+          - list [ref=f49e68]:
+            - listitem [ref=f49e69]:
+              - link "Navigate to Dashboards" [ref=f49e71] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f49e77]: Dashboards
+            - listitem [ref=f49e78]:
+              - link "Navigate to Event Detection" [ref=f49e80] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f49e85]: Event Detection
+            - listitem [ref=f49e86]:
+              - link "Navigate to Alerts" [ref=f49e88] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f49e94]: Alerts
+          - list [ref=f49e95]:
+            - listitem [ref=f49e96]:
+              - button "Expand Network & App Synthetics" [ref=f49e98] [cursor=pointer]:
+                - generic [ref=f49e104]: Network & App Synthetics
+            - listitem [ref=f49e108]:
+              - button "Expand Endpoint Experience" [ref=f49e110] [cursor=pointer]:
+                - generic [ref=f49e116]: Endpoint Experience
+            - listitem [ref=f49e120]:
+              - button "Expand Routing" [ref=f49e122] [cursor=pointer]:
+                - generic [ref=f49e128]: Routing
+            - listitem [ref=f49e132]:
+              - button "Expand Traffic Insights" [ref=f49e134] [cursor=pointer]:
+                - generic [ref=f49e140]: Traffic Insights
+            - listitem [ref=f49e144]:
+              - button "Expand Devices" [ref=f49e146] [cursor=pointer]:
+                - generic [ref=f49e152]: Devices
+            - listitem [ref=f49e156]:
+              - button "Expand Cloud Insights" [ref=f49e158] [cursor=pointer]:
+                - generic [ref=f49e164]: Cloud Insights
+            - listitem [ref=f49e168]:
+              - button "Expand Internet Insights" [ref=f49e170] [cursor=pointer]:
+                - generic [ref=f49e176]: Internet Insights
+                - status [ref=f49e177]: Trial
+          - list [ref=f49e181]:
+            - listitem [ref=f49e182]:
+              - button "Expand Manage" [ref=f49e184] [cursor=pointer]:
+                - generic [ref=f49e190]: Manage
+        - generic [ref=f49e195]:
+          - generic [ref=f49e196]: ThousandEyes © 2026
+          - link "Privacy" [ref=f49e197] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f49e198] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f49e203]:
+    - generic [ref=f49e204]:
+      - generic [ref=f49e211]:
+        - generic [ref=f49e212]: Instant Test
+        - generic [ref=f49e213]: September 8, 2026 01:23
+      - generic [ref=f49e216]:
+        - button "Run Again" [ref=f49e217] [cursor=pointer]
+        - link "Open in New Tab" [ref=f49e223] [cursor=pointer]:
+          - /url: https://app.thousandeyes.com/network-app-synthetics/views/?testId=562949953682767&startTime=1788801780&detailId=map&metrics=httpAvailability&timelineWindow=1788801780,1788802080
+        - button "Back to Views" [ref=f49e229] [cursor=pointer]
+    - tabpanel [ref=f49e232]:
+      - generic [ref=f49e233]:
+        - generic [ref=f49e234]:
+          - generic [ref=f49e236]:
+            - generic [ref=f49e237]:
+              - generic [ref=f49e238]: shroodler-instant
+              - generic [ref=f49e239]: https://webhook.site/72f00f53-96ee-4d64-a124-4ca29027be13
+            - generic [ref=f49e242]:
+              - 'button "Agents: All" [ref=f49e245] [cursor=pointer]':
+                - generic [ref=f49e246]:
+                  - generic [ref=f49e247]: "Agents:"
+                  - strong [ref=f49e249]: All
+              - 'button "Servers: All" [ref=f49e255] [cursor=pointer]':
+                - generic [ref=f49e256]:
+                  - generic [ref=f49e257]: "Servers:"
+                  - strong [ref=f49e259]: All
+          - button "Snapshot" [ref=f49e267] [cursor=pointer]
+        - generic [ref=f49e275]:
+          - generic [ref=f49e277]:
+            - generic [ref=f49e281]:
+              - tablist [ref=f49e283]:
+                - tab "HTTP Server Web" [selected] [ref=f49e284] [cursor=pointer]:
+                  - generic [ref=f49e285]:
+                    - generic [ref=f49e286]: HTTP Server
+                    - generic [ref=f49e287]: Web
+                - tab "Agent to Server Network" [ref=f49e288] [cursor=pointer]:
+                  - generic [ref=f49e289]:
+                    - generic [ref=f49e290]: Agent to Server
+                    - generic [ref=f49e291]: Network
+              - generic:
+                - tabpanel
+            - generic [ref=f49e292]:
+              - button "Collapse" [expanded] [ref=f49e295] [cursor=pointer]
+              - generic [ref=f49e299]:
+                - generic [ref=f49e302]:
+                  - generic [ref=f49e303]:
+                    - button "Select an item" [ref=f49e306] [cursor=pointer]:
+                      - generic [ref=f49e311]:
+                        - text: "Metrics:"
+                        - generic [ref=f49e312]: Availability
+                    - button [disabled] [ref=f49e315]:
+                      - img "AI Assistant" [ref=f49e316]
+                      - text: Explain selection
+                  - generic [ref=f49e317]:
+                    - generic [ref=f49e319]:
+                      - text: Mon, Sep 7 17:23 – 17:27 UTC
+                      - generic [ref=f49e320]:
+                        - text: (
+                        - time [ref=f49e321]: 2 minutes ago
+                        - text: )
+                    - generic [ref=f49e322]:
+                      - button "Previous interval" [disabled] [ref=f49e323]
+                      - button "Next interval" [disabled] [ref=f49e328]
+                      - button "Jump to latest interval" [disabled] [ref=f49e333]
+                    - generic [ref=f49e338]:
+                      - generic [ref=f49e339] [cursor=pointer]:
+                        - text: 24h
+                        - radio "24h"
+                      - generic [ref=f49e340] [cursor=pointer]:
+                        - text: 7d
+                        - radio "7d"
+                      - generic [ref=f49e341] [cursor=pointer]:
+                        - text: 14d
+                        - radio "14d"
+                - img [ref=f49e344]:
+                  - generic [ref=f49e346]:
+                    - generic [ref=f49e347]:
+                      - generic [ref=f49e348]: 17:23
+                      - generic [ref=f49e350]: 17:24
+                      - generic [ref=f49e352]: 17:25
+                      - generic [ref=f49e354]: 17:26
+                      - generic [ref=f49e356]: 17:27
+                      - generic [ref=f49e358]: 17:28
+                    - generic [ref=f49e380] [cursor=pointer]
+                - generic [ref=f49e386]:
+                  - img [ref=f49e388]:
+                    - generic [ref=f49e390]:
+                      - generic [ref=f49e391]: 17:23
+                      - generic [ref=f49e399]:
+                        - generic [ref=f49e400]: 0%
+                        - generic [ref=f49e402]: 100%
+                      - generic [ref=f49e413] [cursor=pointer]
+                  - generic [ref=f49e414]:
+                    - generic [ref=f49e416]:
+                      - heading "Availability" [level=4] [ref=f49e419] [cursor=pointer]
+                      - generic [ref=f49e420]: Overlay
+                      - generic [ref=f49e421]:
+                        - generic [ref=f49e422] [cursor=pointer]:
+                          - text: "Off"
+                          - radio "Off" [checked]
+                        - generic [ref=f49e423] [cursor=pointer]:
+                          - text: Agents
+                          - radio "Agents"
+                    - generic [ref=f49e424]: Web
+          - generic [ref=f49e426]:
+            - tablist [ref=f49e428]:
+              - tab "Map" [selected] [ref=f49e429] [cursor=pointer]
+              - tab "Table" [ref=f49e430] [cursor=pointer]
+            - tabpanel [ref=f49e432]:
+              - generic [ref=f49e435]:
+                - generic [ref=f49e436]:
+                  - generic [ref=f49e437]:
+                    - generic [ref=f49e438]: Metrics
+                    - generic [ref=f49e443]:
+                      - generic [ref=f49e444]: Redirect Time (No. of Redirects)
+                      - generic [ref=f49e445]: "0"
+                  - generic [ref=f49e446]:
+                    - generic [ref=f49e447]: Status
+                    - generic [ref=f49e448]:
+                      - generic [ref=f49e449]:
+                        - generic [ref=f49e450]: "Target IP: 178.63.67.153"
+                        - generic [ref=f49e451]: 2026‑09‑07 17:23:37
+                      - generic [ref=f49e452]:
+                        - generic [ref=f49e454]: 200 OK
+                        - generic [ref=f49e455]:
+                          - text: (
+                          - button "Details" [ref=f49e456] [cursor=pointer]
+                          - text: )
+                  - generic [ref=f49e458]:
+                    - generic [ref=f49e459]: Agent
+                    - generic [ref=f49e460]: Dallas, TX (Trial)
+                - generic [ref=f49e463]:
+                  - button "Dallas, TX (Trial)" [ref=f49e465] [cursor=pointer]
+                  - generic [ref=f49e472]:
+                    - button "Reset zoom" [ref=f49e473] [cursor=pointer]
+                    - generic [ref=f49e477]:
+                      - button "Zoom in" [ref=f49e478] [cursor=pointer]
+                      - button "Zoom out" [ref=f49e482] [cursor=pointer]
+                  - generic [ref=f49e488]:
+                    - generic [ref=f49e489]: "1"
+                    - generic [ref=f49e491]: Available

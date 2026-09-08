@@ -1,0 +1,172 @@
+- generic [ref=f40e2]:
+  - generic:
+    - banner "Application header" [ref=f40e3]:
+      - generic [ref=f40e4]:
+        - button "Collapse navigation" [expanded] [ref=f40e5] [cursor=pointer]
+        - link "Cisco ThousandEyes home" [ref=f40e9] [cursor=pointer]:
+          - /url: /
+          - generic [ref=f40e10]: ThousandEyes
+      - generic [ref=f40e29]:
+        - link "Upgrade" [ref=f40e30] [cursor=pointer]:
+          - /url: https://www.thousandeyes.com/upgrade
+        - button "AI Assistant" [ref=f40e31] [cursor=pointer]
+        - button "Help Content" [ref=f40e35] [cursor=pointer]
+        - button "Notifications" [ref=f40e41] [cursor=pointer]
+        - button "User menu for Lapras Resonance" [ref=f40e48] [cursor=pointer]:
+          - generic [ref=f40e54]:
+            - generic [ref=f40e55]: Lapras Resonance
+            - generic [ref=f40e56]: "Bug Crowd #1788764176934_2522"
+        - button "Open cross platform navigator" [ref=f40e62] [cursor=pointer]
+    - navigation [ref=f40e65]:
+      - generic [ref=f40e66]:
+        - generic [ref=f40e67]:
+          - list [ref=f40e68]:
+            - listitem [ref=f40e69]:
+              - link "Navigate to Dashboards" [ref=f40e71] [cursor=pointer]:
+                - /url: /dashboard/?
+                - generic [ref=f40e77]: Dashboards
+            - listitem [ref=f40e78]:
+              - link "Navigate to Event Detection" [ref=f40e80] [cursor=pointer]:
+                - /url: /events/?
+                - generic [ref=f40e85]: Event Detection
+            - listitem [ref=f40e86]:
+              - link "Navigate to Alerts" [ref=f40e88] [cursor=pointer]:
+                - /url: /alerts/list?
+                - generic [ref=f40e94]: Alerts
+          - list [ref=f40e95]:
+            - listitem [ref=f40e96]:
+              - button "Expand Network & App Synthetics" [ref=f40e98] [cursor=pointer]:
+                - generic [ref=f40e104]: Network & App Synthetics
+            - listitem [ref=f40e108]:
+              - button "Expand Endpoint Experience" [ref=f40e110] [cursor=pointer]:
+                - generic [ref=f40e116]: Endpoint Experience
+            - listitem [ref=f40e120]:
+              - button "Expand Routing" [ref=f40e122] [cursor=pointer]:
+                - generic [ref=f40e128]: Routing
+            - listitem [ref=f40e132]:
+              - button "Expand Traffic Insights" [ref=f40e134] [cursor=pointer]:
+                - generic [ref=f40e140]: Traffic Insights
+            - listitem [ref=f40e144]:
+              - button "Expand Devices" [ref=f40e146] [cursor=pointer]:
+                - generic [ref=f40e152]: Devices
+            - listitem [ref=f40e156]:
+              - button "Expand Cloud Insights" [ref=f40e158] [cursor=pointer]:
+                - generic [ref=f40e164]: Cloud Insights
+            - listitem [ref=f40e168]:
+              - button "Expand Internet Insights" [ref=f40e170] [cursor=pointer]:
+                - generic [ref=f40e176]: Internet Insights
+                - status [ref=f40e177]: Trial
+          - list [ref=f40e181]:
+            - listitem [ref=f40e182]:
+              - button "Expand Manage" [ref=f40e184] [cursor=pointer]:
+                - generic [ref=f40e190]: Manage
+        - generic [ref=f40e195]:
+          - generic [ref=f40e196]: ThousandEyes © 2026
+          - link "Privacy" [ref=f40e197] [cursor=pointer]:
+            - /url: /privacy
+          - link "Cookies" [ref=f40e198] [cursor=pointer]:
+            - /url: "#privacy-manager"
+  - generic [ref=f40e202]:
+    - progressbar "Waiting..." [ref=f40e205]
+    - generic [ref=f40e207]:
+      - generic [ref=f40e208]:
+        - link "Start Monitoring" [ref=f40e209] [cursor=pointer]:
+          - /url: /network-app-synthetics/test-settings/templates/?
+        - heading "Monitor a Specific Site or Service" [level=2] [ref=f40e213]
+        - combobox "Search..." [ref=f40e216]
+      - generic [ref=f40e218]:
+        - heading "Network Tests" [level=4] [ref=f40e229]
+        - generic [ref=f40e230]:
+          - button [ref=f40e231] [cursor=pointer]:
+            - generic [ref=f40e233]:
+              - heading "Network Discovery and Performance" [level=3] [ref=f40e234]
+              - status [ref=f40e235]: Agent to Server
+              - list [ref=f40e237]:
+                - listitem [ref=f40e238]: Proactively detect outages and performance issues affecting critical applications
+                - listitem [ref=f40e239]: Get network path visualization to pinpoint exactly where problems occur
+          - button [ref=f40e240] [cursor=pointer]:
+            - generic [ref=f40e242]:
+              - heading "Bidirectional Network Performance" [level=3] [ref=f40e243]
+              - status [ref=f40e244]: Agent to Agent
+              - list [ref=f40e246]:
+                - listitem [ref=f40e247]: Measure true one-way latency and loss between internal network segments
+                - listitem [ref=f40e248]: Monitor WAN links and data center interconnects with precision timing
+      - generic [ref=f40e250]:
+        - heading "Web & API Tests" [level=4] [ref=f40e258]
+        - generic [ref=f40e259]:
+          - button [ref=f40e260] [cursor=pointer]:
+            - generic [ref=f40e262]:
+              - heading "HTTP Server Performance" [level=3] [ref=f40e263]
+              - status [ref=f40e264]: HTTP Server
+              - list [ref=f40e266]:
+                - listitem [ref=f40e267]: Catch web server outages before users do with global monitoring
+                - listitem [ref=f40e268]: Validate SSL certificates and measure response times across regions
+          - button [ref=f40e269] [cursor=pointer]:
+            - generic [ref=f40e271]:
+              - heading "Website Performance" [level=3] [ref=f40e272]
+              - status [ref=f40e273]: Page Load
+              - list [ref=f40e275]:
+                - listitem [ref=f40e276]: See exactly how fast your website loads from the user perspective
+                - listitem [ref=f40e277]: Identify slow-loading resources that hurt conversion rates
+          - button [ref=f40e278] [cursor=pointer]:
+            - generic [ref=f40e280]:
+              - heading "Web Transaction" [level=3] [ref=f40e281]
+              - status [ref=f40e282]: Transaction
+              - list [ref=f40e284]:
+                - listitem [ref=f40e285]: Monitor critical business flows like checkout, login, and signup processes
+                - listitem [ref=f40e286]: Get alerted when key user journeys break before revenue is impacted
+          - button [ref=f40e287] [cursor=pointer]:
+            - generic [ref=f40e289]:
+              - heading "API Performance" [level=3] [ref=f40e290]
+              - status [ref=f40e291]: API
+              - list [ref=f40e293]:
+                - listitem [ref=f40e294]: Ensure your APIs are fast and available for web + mobile apps and integrations
+                - listitem [ref=f40e295]: Validate response payloads and catch breaking changes early
+      - generic [ref=f40e297]:
+        - heading "DNS Tests" [level=4] [ref=f40e305]
+        - generic [ref=f40e306]:
+          - button [ref=f40e307] [cursor=pointer]:
+            - generic [ref=f40e309]:
+              - heading "DNS Server Performance and Availability" [level=3] [ref=f40e310]
+              - status [ref=f40e311]: DNS Server
+              - list [ref=f40e313]:
+                - listitem [ref=f40e314]: Catch DNS outages that make your entire website unreachable
+                - listitem [ref=f40e315]: Monitor resolution times globally and detect hijacking attempts
+          - button [ref=f40e316] [cursor=pointer]:
+            - generic [ref=f40e318]:
+              - heading "DNS Trace" [level=3] [ref=f40e319]
+              - status [ref=f40e320]: DNS Trace
+              - list [ref=f40e322]:
+                - listitem [ref=f40e323]: Troubleshoot DNS propagation delays and identify failing nameservers
+                - listitem [ref=f40e324]: Trace the complete resolution path from root to authoritative servers
+          - button [ref=f40e325] [cursor=pointer]:
+            - generic [ref=f40e327]:
+              - heading "DNSSEC Verification" [level=3] [ref=f40e328]
+              - status [ref=f40e329]: DNSSEC
+              - list [ref=f40e331]:
+                - listitem [ref=f40e332]: Verify your domain security extensions are working correctly
+                - listitem [ref=f40e333]: Ensure DNS responses are cryptographically authentic and tamper-proof
+      - generic [ref=f40e335]:
+        - heading "Voice and Other Tests" [level=4] [ref=f40e342]
+        - generic [ref=f40e343]:
+          - button [ref=f40e344] [cursor=pointer]:
+            - generic [ref=f40e346]:
+              - heading "VoIP Calls" [level=3] [ref=f40e347]
+              - status [ref=f40e348]: RTP Stream
+              - list [ref=f40e350]:
+                - listitem [ref=f40e351]: Monitor call quality with MOS scores before users complain about poor audio
+                - listitem [ref=f40e352]: Measure packet loss and jitter affecting voice and video streams
+          - button [ref=f40e353] [cursor=pointer]:
+            - generic [ref=f40e355]:
+              - heading "VoIP Infrastructure Health" [level=3] [ref=f40e356]
+              - status [ref=f40e357]: SIP Server
+              - list [ref=f40e359]:
+                - listitem [ref=f40e360]: Ensure your phone system can establish calls when users need them
+                - listitem [ref=f40e361]: Test SIP server availability and call setup performance
+          - button [ref=f40e362] [cursor=pointer]:
+            - generic [ref=f40e364]:
+              - heading "FTP Server Performance" [level=3] [ref=f40e365]
+              - status [ref=f40e366]: FTP Server
+              - list [ref=f40e368]:
+                - listitem [ref=f40e369]: Monitor file transfer services for backup systems and legacy applications
+                - listitem [ref=f40e370]: Test upload/download speeds and server availability

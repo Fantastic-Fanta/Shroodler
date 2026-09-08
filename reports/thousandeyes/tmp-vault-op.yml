@@ -1,0 +1,132 @@
+- generic [ref=f34e1]:
+  - generic [ref=f34e2]:
+    - generic:
+      - banner "Application header" [ref=f34e3]:
+        - generic [ref=f34e4]:
+          - button "Collapse navigation" [expanded] [ref=f34e5] [cursor=pointer]
+          - link "Cisco ThousandEyes home" [ref=f34e9] [cursor=pointer]:
+            - /url: /
+            - generic [ref=f34e10]: ThousandEyes
+        - generic [ref=f34e29]:
+          - link "Upgrade" [ref=f34e30] [cursor=pointer]:
+            - /url: https://www.thousandeyes.com/upgrade
+          - button "AI Assistant" [ref=f34e198] [cursor=pointer]
+          - button "Help Content" [ref=f34e33] [cursor=pointer]
+          - button "Notifications" [ref=f34e39] [cursor=pointer]
+          - button "User menu for Lapras Resonance" [ref=f34e46] [cursor=pointer]:
+            - generic [ref=f34e52]:
+              - generic [ref=f34e53]: Lapras Resonance
+              - generic [ref=f34e54]: "Bug Crowd #1788764176934_2522"
+          - button "Open cross platform navigator" [ref=f34e60] [cursor=pointer]
+      - navigation [ref=f34e63]:
+        - generic [ref=f34e64]:
+          - generic [ref=f34e65]:
+            - list [ref=f34e66]:
+              - listitem [ref=f34e67]:
+                - link "Navigate to Dashboards" [ref=f34e69] [cursor=pointer]:
+                  - /url: /dashboard/?
+                  - generic [ref=f34e75]: Dashboards
+              - listitem [ref=f34e76]:
+                - link "Navigate to Event Detection" [ref=f34e78] [cursor=pointer]:
+                  - /url: /events/?
+                  - generic [ref=f34e83]: Event Detection
+              - listitem [ref=f34e84]:
+                - link "Navigate to Alerts" [ref=f34e86] [cursor=pointer]:
+                  - /url: /alerts/list?
+                  - generic [ref=f34e92]: Alerts
+            - list [ref=f34e93]:
+              - listitem [ref=f34e94]:
+                - button "Expand Network & App Synthetics" [ref=f34e96] [cursor=pointer]:
+                  - generic [ref=f34e102]: Network & App Synthetics
+              - listitem [ref=f34e106]:
+                - button "Expand Endpoint Experience" [ref=f34e108] [cursor=pointer]:
+                  - generic [ref=f34e114]: Endpoint Experience
+              - listitem [ref=f34e118]:
+                - button "Expand Routing" [ref=f34e120] [cursor=pointer]:
+                  - generic [ref=f34e126]: Routing
+              - listitem [ref=f34e130]:
+                - button "Expand Traffic Insights" [ref=f34e132] [cursor=pointer]:
+                  - generic [ref=f34e138]: Traffic Insights
+              - listitem [ref=f34e142]:
+                - button "Expand Devices" [ref=f34e144] [cursor=pointer]:
+                  - generic [ref=f34e150]: Devices
+              - listitem [ref=f34e154]:
+                - button "Expand Cloud Insights" [ref=f34e156] [cursor=pointer]:
+                  - generic [ref=f34e162]: Cloud Insights
+              - listitem [ref=f34e166]:
+                - button "Expand Internet Insights" [ref=f34e168] [cursor=pointer]:
+                  - generic [ref=f34e174]: Internet Insights
+                  - status [ref=f34e175]: Trial
+            - list [ref=f34e179]:
+              - listitem [ref=f34e180]:
+                - button "Expand Manage" [ref=f34e182] [cursor=pointer]:
+                  - generic [ref=f34e188]: Manage
+          - generic [ref=f34e193]:
+            - generic [ref=f34e194]: ThousandEyes © 2026
+            - link "Privacy" [ref=f34e195] [cursor=pointer]:
+              - /url: /privacy
+            - link "Cookies" [ref=f34e196] [cursor=pointer]:
+              - /url: "#privacy-manager"
+    - generic [ref=f34e201]:
+      - tablist [ref=f34e203]:
+        - tab "Integrations 1.0" [ref=f34e204] [cursor=pointer]
+        - tab "Integrations 2.0" [selected] [ref=f34e206] [cursor=pointer]:
+          - status [ref=f34e208]: New
+      - tabpanel [ref=f34e210]:
+        - generic [ref=f34e211]:
+          - tablist [ref=f34e213]:
+            - tab "Integration Templates" [selected] [ref=f34e214] [cursor=pointer]
+            - tab "Connectors" [ref=f34e215] [cursor=pointer]
+            - tab "Operations" [ref=f34e216] [cursor=pointer]
+          - tabpanel [ref=f34e218]:
+            - generic [ref=f34e233]:
+              - generic [ref=f34e234]:
+                - complementary [ref=f34e236]:
+                  - generic [ref=f34e237]: Setup your connector
+                  - generic [ref=f34e242]:
+                    - generic [ref=f34e243]: "2"
+                    - generic [ref=f34e245]: Setup your operation
+                  - generic [ref=f34e246]:
+                    - generic [ref=f34e247]: "3"
+                    - generic [ref=f34e249]: Summary
+                - generic [ref=f34e251]:
+                  - 'heading "Step 2: Setup your Operations" [level=4] [ref=f34e331]'
+                  - paragraph [ref=f34e253]: Associate your CyberArk connector with its Identifier at Source. The credential name will be used to access your credential within the product
+                  - generic [ref=f34e333]:
+                    - generic [ref=f34e334]:
+                      - paragraph [ref=f34e335]: To add a new credential vault, associate the credential name with the 'Identifier at Source'. The Identifier at Source is the secret path to your credential vault (for example, db/mysql/username). To add a credential, enter the path only. Do not include the server URL, account name, or prefixes such as /secrets/ or /variable/.
+                      - generic [ref=f34e336]:
+                        - generic [ref=f34e337]: Operation Name
+                        - textbox "Operation Name" [ref=f34e339]:
+                          - /placeholder: Enter a Name
+                    - generic [ref=f34e340]:
+                      - generic [ref=f34e341]:
+                        - generic [ref=f34e342]: Credential Name
+                        - generic [ref=f34e349]: Identifier at Source
+                      - generic [ref=f34e356]:
+                        - textbox "Enter a Name" [ref=f34e359]
+                        - textbox "Enter Identifier" [ref=f34e362]
+                        - button "Remove Credential" [ref=f34e363] [cursor=pointer]
+                      - button "Add New Credential" [ref=f34e369] [cursor=pointer]
+                - generic [ref=f34e295]:
+                  - heading "How to build your integration?" [level=3] [ref=f34e296]
+                  - generic [ref=f34e297]:
+                    - img "Setup Your Connector" [ref=f34e298]
+                    - heading "Setup Your Connector" [level=4] [ref=f34e299]
+                    - paragraph [ref=f34e300]: Start with a predefined connector, or create a new one.
+                  - generic [ref=f34e302]:
+                    - img "Setup Your Operation" [ref=f34e303]
+                    - heading "Setup Your Operation" [level=4] [ref=f34e304]
+                    - paragraph [ref=f34e305]: You can start with a predefined operation, or create a new one.
+                  - generic [ref=f34e307]:
+                    - img "Integration Complete" [ref=f34e308]
+                    - heading "Integration Complete" [level=4] [ref=f34e309]
+              - generic [ref=f34e310]:
+                - button "Cancel" [ref=f34e311] [cursor=pointer]
+                - generic [ref=f34e312]:
+                  - button "Back" [ref=f34e374] [cursor=pointer]
+                  - button "Save Integration" [active] [ref=f34e375] [cursor=pointer]
+  - alert [ref=f34e377]:
+    - generic [ref=f34e378]:
+      - generic [ref=f34e379]: Connector shroodler-vault has been saved successfully.
+      - button "Dismiss notification" [ref=f34e387] [cursor=pointer]

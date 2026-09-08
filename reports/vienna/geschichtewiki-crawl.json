@@ -1,0 +1,1556 @@
+{
+  "target": "https://www.geschichtewiki.wien.gv.at",
+  "scan_started_at": "2026-09-07T09:01:14Z",
+  "scan_finished_at": "2026-09-07T09:01:53Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at",
+      "status_code": 301,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Wien_Geschichte_Wiki",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/index.php?title=Spezial:Anmelden&returnto=Wien+Geschichte+Wiki",
+      "status_code": 302,
+      "forms": [],
+      "params": [
+        "title",
+        "returnto"
+      ],
+      "cookies": [
+        {
+          "name": "semwiki_session",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS0131b6f9",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Bezirke_(Portal)",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Zeitr%C3%A4ume",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Themen",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Quellenkunde",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Recherchetools",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/%C3%9Cber_das_Wien_Geschichte_Wiki",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Vienna_History_Wiki",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Personen",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Topografische_Objekte",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Bauwerke",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Organisationen",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Ereignisse",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Erinnern",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Karten",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Begriffe",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Sonstiges",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Erste_Schritte",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Leitfaden:Allgemeines",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Beitr%C3%A4ge_verbessern",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Beitrag_erstellen",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "autocomplete__on_category",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "/Spezial:Mit_Formular_hinzuf%C3%BCgen",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "form",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "namespace",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/Zitierregeln",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "/index.php",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "title",
+              "type": "hidden",
+              "hidden": true,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "search",
+              "type": "search",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": [
+        "/load.php?lang=de&modules=startup&only=scripts&raw=1&skin=chameleon"
+      ]
+    },
+    {
+      "url": "https://www.geschichtewiki.wien.gv.at/index.php?title=Diskussion:Wien_Geschichte_Wiki&action=edit&redlink=1",
+      "status_code": 302,
+      "forms": [],
+      "params": [
+        "title",
+        "action",
+        "redlink"
+      ],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": []
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Wien_Geschichte_Wiki",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Wien_Geschichte_Wiki",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "cookie-path-broad",
+      "severity": "info",
+      "category": "cookie",
+      "url": "https://www.geschichtewiki.wien.gv.at/index.php?title=Spezial:Anmelden&returnto=Wien+Geschichte+Wiki",
+      "description": "Session cookie semwiki_session is scoped to Path=/",
+      "evidence": "semwiki_session"
+    },
+    {
+      "id": "cookie-missing-host-prefix",
+      "severity": "info",
+      "category": "cookie",
+      "url": "https://www.geschichtewiki.wien.gv.at/index.php?title=Spezial:Anmelden&returnto=Wien+Geschichte+Wiki",
+      "description": "Session cookie semwiki_session on HTTPS could use the __Host- prefix",
+      "evidence": "semwiki_session"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Bezirke_(Portal)",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/i************e_Bl"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Bezirke_(Portal)",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Zeitr%C3%A4ume",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Zeitr%C3%A4ume",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Themen",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Themen",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Quellenkunde",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "at/i************B6_1"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Quellenkunde",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Recherchetools",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************page"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Recherchetools",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/%C3%9Cber_das_Wien_Geschichte_Wiki",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************Wiki"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/%C3%9Cber_das_Wien_Geschichte_Wiki",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Vienna_History_Wiki",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************page"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Vienna_History_Wiki",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Personen",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Personen",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Topografische_Objekte",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Topografische_Objekte",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Bauwerke",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Bauwerke",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Organisationen",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Organisationen",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Ereignisse",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Ereignisse",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Erinnern",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Erinnern",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Karten",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************rtal"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Karten",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Begriffe",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Begriffe",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Sonstiges",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************uery"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Sonstiges",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Erste_Schritte",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************aden"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Erste_Schritte",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Leitfaden:Allgemeines",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************aden"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Leitfaden:Allgemeines",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Beitr%C3%A4ge_verbessern",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************aden"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Beitr%C3%A4ge_verbessern",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Beitrag_erstellen",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************aden"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Beitrag_erstellen",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.geschichtewiki.wien.gv.at/Zitierregeln",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "URIR************aden"
+    },
+    {
+      "id": "meta-generator",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.geschichtewiki.wien.gv.at/Zitierregeln",
+      "description": "meta generator tag discloses the application stack",
+      "evidence": "MediaWiki 1.43.9"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 25,
+    "pages_challenged": 0,
+    "requests": 42,
+    "elapsed_ms": 39690,
+    "stopped_reason": "max-pages"
+  }
+}

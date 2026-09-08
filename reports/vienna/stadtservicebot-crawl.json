@@ -1,0 +1,118 @@
+{
+  "target": "https://stadtservicebot.wien.gv.at",
+  "scan_started_at": "2026-09-07T09:07:02Z",
+  "scan_finished_at": "2026-09-07T09:07:14Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://stadtservicebot.wien.gv.at",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "ma01-stadtservicebot.mag",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01f8dd7a",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://stadtservicebot.wien.gv.at/static/widget-static/favicon.ico",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "ma01-stadtservicebot.mag",
+          "secure": true,
+          "http_only": true,
+          "same_site": null
+        },
+        {
+          "name": "TS01f8dd7a",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Strict"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "X-Frame-Options"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://stadtservicebot.wien.gv.at",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; img-src * data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 's"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://stadtservicebot.wien.gv.at",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "weak-csp",
+      "severity": "low",
+      "category": "header",
+      "url": "https://stadtservicebot.wien.gv.at/static/widget-static/favicon.ico",
+      "description": "Content-Security-Policy allows unsafe-inline or unsafe-eval",
+      "evidence": "default-src 'self'; img-src * data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 's"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://stadtservicebot.wien.gv.at/static/widget-static/favicon.ico",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 2,
+    "pages_challenged": 0,
+    "requests": 30,
+    "elapsed_ms": 12615,
+    "stopped_reason": "complete"
+  }
+}

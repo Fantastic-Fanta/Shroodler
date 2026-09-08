@@ -1,0 +1,814 @@
+{
+  "target": "https://www.flipkey.com/",
+  "scan_started_at": "2026-09-07T12:58:57Z",
+  "scan_finished_at": "2026-09-07T12:59:04Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://www.flipkey.com/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/style.css",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/favicon_flipkey.ico",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/style.css",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/style.css",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/style.css",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/style.css",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/style.css",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/style.css",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff2",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Regular.woff",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff2",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/TripSans-Medium.woff",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/tripadvisor-logo.svg",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/right_arrow.svg",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/fk_logo.svg",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "server-version-leak",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.flipkey.com/arrow_down.svg",
+      "description": "Server header discloses a version",
+      "evidence": "AmazonS3",
+      "confidence": "confirmed"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 11,
+    "pages_challenged": 0,
+    "requests": 39,
+    "elapsed_ms": 6875,
+    "stopped_reason": "complete"
+  }
+}

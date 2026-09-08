@@ -1,0 +1,57 @@
+# Tripadvisor — gentle active triage pass 1
+# In-scope: tamg.cloud (Tier 3 + announced focus; CDE is Tier 1)
+# In-scope: *.flipkey.com (Vacation Rentals leftovers, points-only)
+# One HTTP probe per host via shroodler triage. No payload engine.
+
+# Flipkey leftovers
+www.flipkey.com
+api.flipkey.com
+secure.flipkey.com
+secure2.flipkey.com
+propertymanagers.flipkey.com
+origin-www.flipkey.com
+data.flipkey.com
+feeds.flipkey.com
+help.flipkey.com
+ws.flipkey.com
+flipkey.com
+
+# tamg.cloud — public/app-looking
+tamg.cloud
+viewer.design-system.tamg.cloud
+api.nq.tamg.cloud
+api-dev.nq.tamg.cloud
+pelias.pl.tamg.cloud
+stamps.wh.tamg.cloud
+stamps-dev.wh.tamg.cloud
+dashboard.dspe.tamg.cloud
+ots.ops.tamg.cloud
+
+# tamg.cloud — high-signal names (one region each where duplicated)
+secrets.ops.tamg.cloud
+vault.dspe.tamg.cloud
+airflow.rex-wh.tamg.cloud
+jupyterhub.dspe.tamg.cloud
+gitlab-uniform-permissions.dop.tamg.cloud
+argocd.ndmad2.pit.tamg.cloud
+argo-ui.ndmad2.ml.tamg.cloud
+ambassador-admin.ndmad2.pit.tamg.cloud
+cert-tool.ndmad2.pd.tamg.cloud
+diagnostic.k8s.tamg.cloud
+tamg-cloud-dashboard.ndmad2.pit.tamg.cloud
+
+# tamg.cloud — itsupport / infosec (one of each)
+onboard.itsupport.tamg.cloud
+onboard-api.itsupport.tamg.cloud
+tools.itsupport.tamg.cloud
+sso.itsupport.tamg.cloud
+reports.itsupport.tamg.cloud
+sponsor-dash.itsupport.tamg.cloud
+assets.itsupport.tamg.cloud
+app-dev.infosec.tamg.cloud
+service-devel.infosec.tamg.cloud
+wd-search.itsupport.tamg.cloud
+talon.itsupport.tamg.cloud
+
+# Explicit Tier 1 CDE (from brief)
+api.production.cde.tamg.cloud

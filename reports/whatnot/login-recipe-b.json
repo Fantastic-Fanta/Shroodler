@@ -1,0 +1,19 @@
+{
+  "_comment": "Account B — peer/attacker account. Same cookie structure as Account A. Register with H1 email alias.",
+  "url": "https://www.whatnot.com/sign-in",
+  "method": "POST",
+  "content_type": "json",
+  "fields": {
+    "email": "gmaxresonance+peer@wearehackerone.com",
+    "password": "FILL_ME_IN"
+  },
+  "protected_url": "https://www.whatnot.com/profile",
+  "auth_marker": "gmaxresonance",
+  "_cookies_to_capture": [
+    "__Secure-access-token",
+    "__Secure-whatnot-live",
+    "__Secure-refresh-token",
+    "__Secure-claims",
+    "usid"
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "hosts": [
+    {
+      "host": "catering.chipotle.com",
+      "url": "https://catering.chipotle.com/",
+      "classification": "live-content",
+      "dns": "third-party-saas",
+      "http": "live-content",
+      "tech": [
+        "server:Microsoft-IIS/10.0",
+        "powered-by:ASP.NET"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": "Azure",
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "chipotle.com"
+    },
+    {
+      "host": "www.chipotle.co.uk",
+      "url": "https://www.chipotle.co.uk/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "chipotle.co.uk"
+    },
+    {
+      "host": "www.chipotle.com",
+      "url": "https://www.chipotle.com/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "chipotle.com"
+    },
+    {
+      "host": "services.chipotle.com",
+      "url": "https://services.chipotle.com/",
+      "classification": "error",
+      "dns": "third-party-saas",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": "Fastly",
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 404"
+      ],
+      "status_code": 404,
+      "zone": "chipotle.com"
+    }
+  ],
+  "counts": {
+    "live-content": 3,
+    "error": 1
+  },
+  "takeover_candidates": [],
+  "crawl_seeds": [
+    "https://catering.chipotle.com/",
+    "https://www.chipotle.co.uk/",
+    "https://www.chipotle.com/"
+  ],
+  "skipped_external": 0,
+  "zones_paused": [],
+  "concurrency": 2,
+  "rate_rps": 1.0,
+  "proxy": null,
+  "active": true
+}

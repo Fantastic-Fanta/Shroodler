@@ -1,0 +1,12 @@
+{
+  "target": "https://robloxultima.com",
+  "findings": [],
+  "oob_probes": [],
+  "guardrail": {
+    "policy_hash": null,
+    "policy_present": false,
+    "requests_attempted": 40,
+    "requests_blocked": 0,
+    "block_reasons": []
+  }
+}

@@ -35,8 +35,10 @@ from shroodler.extractors.cors import (
     is_api_path,
     probe_cors,
 )
+from shroodler.extractors.csrf import csrf_findings
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.graphql import probe_graphql
+from shroodler.extractors.js_api_surface import extract_js_api_surface
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.idor import probe_idor
@@ -128,6 +130,7 @@ class Crawler:
         check_idor: bool = False,
         plugins: list[str] | None = None,
         exclude_paths: list[str] | None = None,
+        gql_field_names: list[str] | None = None,
     ) -> None:
         if mode not in {"static", "headless"}:
             raise ValueError(f"mode {mode!r} is not supported")
@@ -146,6 +149,7 @@ class Crawler:
         self.no_sitemap = no_sitemap
         self.check_rate_limit = check_rate_limit
         self.check_idor = check_idor
+        self.gql_field_names = [n for n in (gql_field_names or []) if n]
         self.exclude_paths: list[str] = [
             p if p.startswith("/") else "/" + p for p in (exclude_paths or [])
         ]
@@ -427,8 +431,20 @@ class Crawler:
             pages.extend(gql_pages)
             findings.extend(gql_findings)
             js_endpoints.extend(gql_eps)
+            if self.gql_field_names:
+                from shroodler.extractors.graphql import field_endpoint
+
+                for page in gql_pages:
+                    for name in self.gql_field_names:
+                        js_endpoints.append(
+                            JsEndpoint(source=page.url, endpoint=field_endpoint(name))
+                        )
 
         findings.extend(ghost_route_findings(origin_url, pages, js_endpoints))
+        findings.extend(csrf_findings(pages))
+        from shroodler.chains import chain_findings
+
+        findings.extend(chain_findings(findings, pages))
         findings.extend(self._session_findings)
         findings.extend(check_tls(origin_url))
 
@@ -771,6 +787,9 @@ def page_from_fetch(
             forms, form_findings = extract_forms(result.text, result.url)
         if is_js or is_html:
             endpoints, ep_findings = extract_js_endpoints(result.url, result.text)
+            api_eps, api_findings = extract_js_api_surface(result.url, result.text)
+            endpoints.extend(api_eps)
+            ep_findings.extend(api_findings)
     verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
     secret_findings = scan_text(result.text, result.url, extra_rules=extra_secret_rules)
     jwt_findings = audit_jwts(result.text, result.url)

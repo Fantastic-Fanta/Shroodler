@@ -1,0 +1,20 @@
+{
+  "allow": [
+    "/api/*",
+    "/graphql*",
+    "/v1/*",
+    "/v2/*",
+    "/*"
+  ],
+  "deny": [
+    "/account/delete*",
+    "/payment*",
+    "/checkout/confirm*",
+    "/admin/*"
+  ],
+  "max_requests_per_minute": 60,
+  "max_total_requests": 9000,
+  "contact": "gmaxresonance@wearehackerone.com",
+  "expires": "2027-01-01",
+  "_note": "HackerOne program: https://hackerone.com/whatnot — rate limit per program rules: 100 req/s per endpoint, 10k req/day total. We self-limit to 60 rpm and 9000 total as a conservative budget."
+}

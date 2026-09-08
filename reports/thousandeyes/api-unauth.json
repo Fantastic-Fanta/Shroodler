@@ -1,0 +1,85 @@
+{
+  "target": "https://api.thousandeyes.com/",
+  "scan_started_at": "2026-09-07T15:07:23Z",
+  "scan_finished_at": "2026-09-07T15:07:25Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://api.thousandeyes.com/",
+      "status_code": 404,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://api.thousandeyes.com/",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://api.thousandeyes.com/",
+      "description": "X-Frame-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-hsts",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://api.thousandeyes.com/",
+      "description": "Strict-Transport-Security header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://api.thousandeyes.com/",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://api.thousandeyes.com/",
+      "description": "Referrer-Policy header not set",
+      "evidence": null,
+      "confidence": "confirmed"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 1,
+    "pages_challenged": 0,
+    "requests": 2,
+    "elapsed_ms": 1470,
+    "stopped_reason": "max-pages"
+  }
+}

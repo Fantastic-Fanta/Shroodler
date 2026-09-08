@@ -1,0 +1,1759 @@
+{
+  "hosts": [
+    {
+      "host": "3dhisto.gesundheitsverbund.at",
+      "url": "https://3dhisto.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": "https://3dhisto.gesundheitsverbund.at/SlideCenter/",
+      "notes": [],
+      "status_code": 302,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "arex.gesundheitsverbund.at",
+      "url": "https://arex.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "ausbildung.gesundheitsverbund.at",
+      "url": "https://ausbildung.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "bauprojekte.gesundheitsverbund.at",
+      "url": "https://bauprojekte.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "bp.gesundheitsverbund.at",
+      "url": "https://bp.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": "https://bp.gesundheitsverbund.at/Bildungsprogramm",
+      "notes": [],
+      "status_code": 302,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "campus-alsergrund.gesundheitsverbund.at",
+      "url": "https://campus-alsergrund.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "campus-donaustadt.gesundheitsverbund.at",
+      "url": "https://campus-donaustadt.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "campus-favoriten.gesundheitsverbund.at",
+      "url": "https://campus-favoriten.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "campus-leopoldstadt.gesundheitsverbund.at",
+      "url": "https://campus-leopoldstadt.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "compliance.gesundheitsverbund.at",
+      "url": "https://compliance.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "diabeteszentrum.gesundheitsverbund.at",
+      "url": "https://diabeteszentrum.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "einkauf.gesundheitsverbund.at",
+      "url": "https://einkauf.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "gesundheitsfoerderung.gesundheitsverbund.at",
+      "url": "https://gesundheitsfoerderung.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "gesundheitsverbund.at",
+      "url": "https://gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "karriere.gesundheitsverbund.at",
+      "url": "https://karriere.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-donaustadt.gesundheitsverbund.at",
+      "url": "https://klinik-donaustadt.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-favoriten.gesundheitsverbund.at",
+      "url": "https://klinik-favoriten.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-floridsdorf.gesundheitsverbund.at",
+      "url": "https://klinik-floridsdorf.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-hietzing.gesundheitsverbund.at",
+      "url": "https://klinik-hietzing.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-landstrasse.gesundheitsverbund.at",
+      "url": "https://klinik-landstrasse.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-ottakring.gesundheitsverbund.at",
+      "url": "https://klinik-ottakring.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "ma70bp.gesundheitsverbund.at",
+      "url": "https://ma70bp.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "pflege.gesundheitsverbund.at",
+      "url": "https://pflege.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "physik.gesundheitsverbund.at",
+      "url": "https://physik.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "secumails.gesundheitsverbund.at",
+      "url": "https://secumails.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": "https://secumails.gesundheitsverbund.at/secumails/inbox",
+      "notes": [],
+      "status_code": 302,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "simulation.gesundheitsverbund.at",
+      "url": "https://simulation.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress",
+        "wordpress-json"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "standort-penzing.gesundheitsverbund.at",
+      "url": "https://standort-penzing.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "static.gesundheitsverbund.at",
+      "url": "https://static.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "webmail.gesundheitsverbund.at",
+      "url": "https://webmail.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": "https://webmail.gesundheitsverbund.at/cgi/tm?code=53fd848c9b8021bd",
+      "notes": [],
+      "status_code": 302,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "ybbs.gesundheitsverbund.at",
+      "url": "https://ybbs.gesundheitsverbund.at/",
+      "classification": "live-content",
+      "dns": "resolves",
+      "http": "live-content",
+      "tech": [
+        "wordpress"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": true,
+      "redirect_to": null,
+      "notes": [],
+      "status_code": 200,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "bau.gesundheitsverbund.at",
+      "url": "https://bau.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bauprojekte.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "bauprojekt.gesundheitsverbund.at",
+      "url": "https://bauprojekt.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bauprojekte.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "beruf.gesundheitsverbund.at",
+      "url": "https://beruf.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://karriere.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "beschaffung.gesundheitsverbund.at",
+      "url": "https://beschaffung.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://einkauf.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "campus-floridotower.gesundheitsverbund.at",
+      "url": "https://campus-floridotower.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [
+        "server:Apache"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://gesundheitsverbund.at/schulen-und-ausbildungsstaetten/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 302,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "info.gesundheitsverbund.at",
+      "url": "https://info.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "jobs.gesundheitsverbund.at",
+      "url": "https://jobs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://karriere.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kdo.gesundheitsverbund.at",
+      "url": "https://kdo.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-donaustadt.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kfl.gesundheitsverbund.at",
+      "url": "https://kfl.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-floridsdorf.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kfn.gesundheitsverbund.at",
+      "url": "https://kfn.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-favoriten.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "khi.gesundheitsverbund.at",
+      "url": "https://khi.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-hietzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kla.gesundheitsverbund.at",
+      "url": "https://kla.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-landstrasse.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-penzing.gesundheitsverbund.at",
+      "url": "https://klinik-penzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://standort-penzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinik-ybbs.gesundheitsverbund.at",
+      "url": "https://klinik-ybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikdonaustadt.gesundheitsverbund.at",
+      "url": "https://klinikdonaustadt.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-donaustadt.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikfavoriten.gesundheitsverbund.at",
+      "url": "https://klinikfavoriten.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-favoriten.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikfloridsdorf.gesundheitsverbund.at",
+      "url": "https://klinikfloridsdorf.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-floridsdorf.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikhietzing.gesundheitsverbund.at",
+      "url": "https://klinikhietzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-hietzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kliniklandstrasse.gesundheitsverbund.at",
+      "url": "https://kliniklandstrasse.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-landstrasse.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikottakring.gesundheitsverbund.at",
+      "url": "https://klinikottakring.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-ottakring.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikpenzing.gesundheitsverbund.at",
+      "url": "https://klinikpenzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://standort-penzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "klinikybbs.gesundheitsverbund.at",
+      "url": "https://klinikybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kor.gesundheitsverbund.at",
+      "url": "https://kor.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-ottakring.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kpe.gesundheitsverbund.at",
+      "url": "https://kpe.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://standort-penzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "kyd.gesundheitsverbund.at",
+      "url": "https://kyd.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "pflegewien.gesundheitsverbund.at",
+      "url": "https://pflegewien.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://pflege.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "ppe.gesundheitsverbund.at",
+      "url": "https://ppe.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://einkauf.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "projektbau.gesundheitsverbund.at",
+      "url": "https://projektbau.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bauprojekte.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "schule.gesundheitsverbund.at",
+      "url": "https://schule.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ausbildung.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "standortpenzing.gesundheitsverbund.at",
+      "url": "https://standortpenzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://standort-penzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "therapie-zentrum-ybbs.gesundheitsverbund.at",
+      "url": "https://therapie-zentrum-ybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "therapie-zentrumybbs.gesundheitsverbund.at",
+      "url": "https://therapie-zentrumybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "therapiezentrum-ybbs.gesundheitsverbund.at",
+      "url": "https://therapiezentrum-ybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "therapiezentrumybbs.gesundheitsverbund.at",
+      "url": "https://therapiezentrumybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "wienpflege.gesundheitsverbund.at",
+      "url": "https://wienpflege.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://pflege.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.ausbildung.gesundheitsverbund.at",
+      "url": "https://www.ausbildung.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ausbildung.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.bau.gesundheitsverbund.at",
+      "url": "https://www.bau.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bauprojekte.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.bauprojekt.gesundheitsverbund.at",
+      "url": "https://www.bauprojekt.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bauprojekte.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.beschaffung.gesundheitsverbund.at",
+      "url": "https://www.beschaffung.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://einkauf.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.einkauf.gesundheitsverbund.at",
+      "url": "https://www.einkauf.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://einkauf.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.gesundheitsverbund.at",
+      "url": "https://www.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.karriere.gesundheitsverbund.at",
+      "url": "https://www.karriere.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://karriere.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-donaustadt.gesundheitsverbund.at",
+      "url": "https://www.klinik-donaustadt.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-donaustadt.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-favoriten.gesundheitsverbund.at",
+      "url": "https://www.klinik-favoriten.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-favoriten.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-floridsdorf.gesundheitsverbund.at",
+      "url": "https://www.klinik-floridsdorf.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-floridsdorf.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-hietzing.gesundheitsverbund.at",
+      "url": "https://www.klinik-hietzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-hietzing.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-landstrasse.gesundheitsverbund.at",
+      "url": "https://www.klinik-landstrasse.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-landstrasse.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-ottakring.gesundheitsverbund.at",
+      "url": "https://www.klinik-ottakring.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://klinik-ottakring.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-penzing.gesundheitsverbund.at",
+      "url": "https://www.klinik-penzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://standort-penzing.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.klinik-ybbs.gesundheitsverbund.at",
+      "url": "https://www.klinik-ybbs.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ybbs.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.pflege.gesundheitsverbund.at",
+      "url": "https://www.pflege.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://pflege.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.ppe.gesundheitsverbund.at",
+      "url": "https://www.ppe.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://einkauf.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.projektbau.gesundheitsverbund.at",
+      "url": "https://www.projektbau.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://bauprojekte.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.schule.gesundheitsverbund.at",
+      "url": "https://www.schule.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://ausbildung.gesundheitsverbund.at",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 303,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.standort-penzing.gesundheitsverbund.at",
+      "url": "https://www.standort-penzing.gesundheitsverbund.at/",
+      "classification": "redirect-alias",
+      "dns": "resolves",
+      "http": "redirect-alias",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": "https://standort-penzing.gesundheitsverbund.at/",
+      "notes": [
+        "in-scope-redirect"
+      ],
+      "status_code": 301,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "attachments.webmail.gesundheitsverbund.at",
+      "url": "https://attachments.webmail.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [
+        "server:Magistrat"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 404"
+      ],
+      "status_code": 404,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "autodiscover.extern.gesundheitsverbund.at",
+      "url": "https://autodiscover.extern.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "autodiscover.gesundheitsverbund.at",
+      "url": "https://autodiscover.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "cloudmail.gesundheitsverbund.at",
+      "url": "https://cloudmail.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "dg-datentransfer.gesundheitsverbund.at",
+      "url": "https://dg-datentransfer.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "hybrid.gesundheitsverbund.at",
+      "url": "https://hybrid.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "oncare.gesundheitsverbund.at",
+      "url": "https://oncare.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [
+        "server:Magistrat"
+      ],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "http 403"
+      ],
+      "status_code": 403,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "telemetrie.gesundheitsverbund.at",
+      "url": "https://telemetrie.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "timed out"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.bauprojekte.gesundheitsverbund.at",
+      "url": "https://www.bauprojekte.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "[SSL: TLSV1_UNRECOGNIZED_NAME] tlsv1 unrecognized name (_ssl.c:1082)"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    },
+    {
+      "host": "www.ybbs.gesundheitsverbund.at",
+      "url": "https://www.ybbs.gesundheitsverbund.at/",
+      "classification": "error",
+      "dns": "resolves",
+      "http": "error",
+      "tech": [],
+      "takeover": false,
+      "takeover_signal": null,
+      "saas_vendor": null,
+      "worth_crawling": false,
+      "redirect_to": null,
+      "notes": [
+        "[SSL: TLSV1_UNRECOGNIZED_NAME] tlsv1 unrecognized name (_ssl.c:1082)"
+      ],
+      "status_code": null,
+      "zone": "gesundheitsverbund.at"
+    }
+  ],
+  "counts": {
+    "live-content": 30,
+    "redirect-alias": 55,
+    "error": 10
+  },
+  "takeover_candidates": [],
+  "crawl_seeds": [
+    "https://3dhisto.gesundheitsverbund.at/",
+    "https://arex.gesundheitsverbund.at/",
+    "https://ausbildung.gesundheitsverbund.at/",
+    "https://bauprojekte.gesundheitsverbund.at/",
+    "https://bp.gesundheitsverbund.at/",
+    "https://campus-alsergrund.gesundheitsverbund.at/",
+    "https://campus-donaustadt.gesundheitsverbund.at/",
+    "https://campus-favoriten.gesundheitsverbund.at/",
+    "https://campus-leopoldstadt.gesundheitsverbund.at/",
+    "https://compliance.gesundheitsverbund.at/",
+    "https://diabeteszentrum.gesundheitsverbund.at/",
+    "https://einkauf.gesundheitsverbund.at/",
+    "https://gesundheitsfoerderung.gesundheitsverbund.at/",
+    "https://gesundheitsverbund.at/",
+    "https://karriere.gesundheitsverbund.at/",
+    "https://klinik-donaustadt.gesundheitsverbund.at/",
+    "https://klinik-favoriten.gesundheitsverbund.at/",
+    "https://klinik-floridsdorf.gesundheitsverbund.at/",
+    "https://klinik-hietzing.gesundheitsverbund.at/",
+    "https://klinik-landstrasse.gesundheitsverbund.at/",
+    "https://klinik-ottakring.gesundheitsverbund.at/",
+    "https://ma70bp.gesundheitsverbund.at/",
+    "https://pflege.gesundheitsverbund.at/",
+    "https://physik.gesundheitsverbund.at/",
+    "https://secumails.gesundheitsverbund.at/",
+    "https://simulation.gesundheitsverbund.at/",
+    "https://standort-penzing.gesundheitsverbund.at/",
+    "https://static.gesundheitsverbund.at/",
+    "https://webmail.gesundheitsverbund.at/",
+    "https://ybbs.gesundheitsverbund.at/"
+  ],
+  "skipped_external": 0,
+  "zones_paused": [],
+  "concurrency": 2,
+  "rate_rps": 1.0,
+  "proxy": null,
+  "active": true
+}

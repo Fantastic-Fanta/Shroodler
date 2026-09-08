@@ -1,0 +1,3155 @@
+{
+  "target": "https://www.etoro.com",
+  "scan_started_at": "2026-09-07T19:00:18Z",
+  "scan_finished_at": "2026-09-07T19:04:38Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "headless"
+  },
+  "pages": [
+    {
+      "url": "https://www.etoro.com/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/d5efe53b-a82b3c8b5fd3ee18.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/1009-20f18f6e96ccfb40.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/main-app-63dfd0d61a72e2da.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/4407-ba91a2ebd4433ac7.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/9324-7807bdd82c4b0aa8.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/6276-e7908c534853291d.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/8632-430ac63ea586c039.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/1060-7782e42678c9a86c.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/9544-cc1fe567994b8ac4.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/%5B%5B...slug%5D%5D/page-0d7b2e7ff0108a59.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/layout-0e765ae891396b22.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/7025-6026aa3f661ada62.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/%40floatingDisclaimer/%5B%5B...slug%5D%5D/page-90f5d19819264d2c.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/%40footerDisclaimer/%5B%5B...slug%5D%5D/page-d7a0594f2db45013.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/layout-0f798f70d7519b63.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/webpack-cd0633ffdafff130.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/portfolio",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/login",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://ct.captcha-delivery.com/c.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/login",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://ct.captcha-delivery.com/c.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/login",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://ct.captcha-delivery.com/c.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://connect.facebook.net/en_US/bundle/sdk.js/",
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?p[]=apps/components/metaTags/templates/discover/discover-new/index.view.html",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/people",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://connect.facebook.net/en_US/bundle/sdk.js/",
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/stocks",
+      "status_code": 429,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://performance.radar.cloudflare.com/beacon.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "status_code": 429,
+      "forms": [],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        }
+      ],
+      "headers": {
+        "present": [
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ],
+        "missing": [
+          "Content-Security-Policy"
+        ]
+      },
+      "js_files": [
+        "https://performance.radar.cloudflare.com/beacon.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/etf?lang=en-us&theme=light",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [
+        "lang",
+        "theme"
+      ],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/indices",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?p[]=apps/components/metaTags/templates/discover/markets/instrumentTypeResults.view.html",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/commodities",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?p[]=apps/components/metaTags/templates/discover/markets/instrumentTypeResults.view.html",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/currencies",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        },
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?p[]=apps/components/metaTags/templates/discover/markets/instrumentTypeResults.view.html",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/market-movers",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "POST",
+          "fields": [
+            {
+              "name": "username",
+              "type": "email",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "hidden": false,
+              "disabled": null,
+              "readonly": null
+            }
+          ],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://connect.facebook.net/en_US/bundle/sdk.js/",
+        "https://accounts.google.com/gsi/client",
+        "https://connect.facebook.net/en_US/sdk.js",
+        "https://cdn.cookielaw.org/scripttemplates/otSDKStub.js",
+        "https://cdn.cookielaw.org/scripttemplates/202410.1.0/otBannerSdk.js",
+        "https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?p[]=apps/components/metaTags/templates/discover/markets/market-movers.view.html",
+        "https://lenax.etoro.com/libs/mixpanel-2-latest.min.js",
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-us.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js",
+        "https://dd-js.etoro.com/tags.js",
+        "https://acsbapp.com/apps/app/dist/js/app.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/markets/eurusd",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/1627bf2f54f2038d.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/6853212cb3bd4a21.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/e9db456e6febb5bf.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/turbopack-82eba7289d1cb842.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/ff1a16fafef87110.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/d2be314c3ece3fbe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/865a2e3e81a356fe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/566ade03a5fca303.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/72ebe0a03dcd8d6a.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/7ca847391c9a48e6.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/dbcf432d00431c3c.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/8c2689a84092cd45.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/664adc71bc2617c2.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/be797eb5aca93ce3.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/markets/gbpusd",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/1627bf2f54f2038d.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/6853212cb3bd4a21.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/e9db456e6febb5bf.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/turbopack-82eba7289d1cb842.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/ff1a16fafef87110.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/d2be314c3ece3fbe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/865a2e3e81a356fe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/566ade03a5fca303.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/72ebe0a03dcd8d6a.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/7ca847391c9a48e6.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/dbcf432d00431c3c.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/8c2689a84092cd45.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/664adc71bc2617c2.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/be797eb5aca93ce3.js",
+        "https://accounts.google.com/gsi/client"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/markets/nzdusd",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/1627bf2f54f2038d.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/6853212cb3bd4a21.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/e9db456e6febb5bf.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/turbopack-82eba7289d1cb842.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/ff1a16fafef87110.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/d2be314c3ece3fbe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/865a2e3e81a356fe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/566ade03a5fca303.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/72ebe0a03dcd8d6a.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/7ca847391c9a48e6.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/dbcf432d00431c3c.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/8c2689a84092cd45.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/664adc71bc2617c2.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/be797eb5aca93ce3.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/markets/usdcad",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/1627bf2f54f2038d.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/6853212cb3bd4a21.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/e9db456e6febb5bf.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/turbopack-82eba7289d1cb842.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/ff1a16fafef87110.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/d2be314c3ece3fbe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/865a2e3e81a356fe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/566ade03a5fca303.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/72ebe0a03dcd8d6a.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/7ca847391c9a48e6.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/dbcf432d00431c3c.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/8c2689a84092cd45.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/664adc71bc2617c2.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/be797eb5aca93ce3.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/markets/gbpusd",
+      "status_code": 200,
+      "forms": [
+        {
+          "action": "",
+          "method": "GET",
+          "fields": [],
+          "enctype": null
+        }
+      ],
+      "params": [],
+      "cookies": [
+        {
+          "name": "cf_clearance",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "eToroLocale",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cfuvid",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "_cf_c",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "cf_zaraz_client",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfzs_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "cfz_amplitude",
+          "secure": true,
+          "http_only": true,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cf_bm",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "OptanonConsent",
+          "secure": false,
+          "http_only": false,
+          "same_site": "Lax"
+        },
+        {
+          "name": "__cflb",
+          "secure": true,
+          "http_only": true,
+          "same_site": "None"
+        },
+        {
+          "name": "datadome",
+          "secure": true,
+          "http_only": false,
+          "same_site": "Lax"
+        }
+      ],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://www.googletagmanager.com/gtm.js?id=GTM-N7SQ5DP",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/1627bf2f54f2038d.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/6853212cb3bd4a21.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/e9db456e6febb5bf.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/turbopack-82eba7289d1cb842.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/ff1a16fafef87110.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/d2be314c3ece3fbe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/865a2e3e81a356fe.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/566ade03a5fca303.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/72ebe0a03dcd8d6a.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/7ca847391c9a48e6.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/dbcf432d00431c3c.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/8c2689a84092cd45.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/664adc71bc2617c2.js",
+        "https://etoro-cdn.etorostatic.com/seo-pages/production/0.1.0-666-b7f0f2d/en/1/_next/static/chunks/be797eb5aca93ce3.js",
+        "https://accounts.google.com/gsi/client"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://www.etoro.com",
+      "description": "Cookie eToroLocale is missing the Secure flag",
+      "evidence": "Affects 20 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com",
+      "description": "Cookie eToroLocale is missing HttpOnly",
+      "evidence": "Affects 20 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com",
+      "description": "Cookie datadome is missing HttpOnly",
+      "evidence": "Affects 20 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://www.etoro.com",
+      "description": "Cookie OptanonConsent is missing the Secure flag",
+      "evidence": "Affects 32 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com",
+      "description": "Cookie OptanonConsent is missing HttpOnly",
+      "evidence": "Affects 32 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "Content-Security-Policy header not set",
+      "evidence": "Affects 8 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": "Affects 6 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": "Affects 18 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.etoro.com",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/d5efe53b-a82b3c8b5fd3ee18.js",
+      "evidence": "Affects 278 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "description": "Cookie cfzs_amplitude is missing the Secure flag",
+      "evidence": "cfzs_amplitude",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "description": "Cookie cfzs_amplitude is missing HttpOnly",
+      "evidence": "cfzs_amplitude",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "insecure-cookie",
+      "severity": "medium",
+      "category": "cookie",
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "description": "Cookie cfz_amplitude is missing the Secure flag",
+      "evidence": "cfz_amplitude",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "cookie-not-httponly",
+      "severity": "low",
+      "category": "cookie",
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "description": "Cookie cfz_amplitude is missing HttpOnly",
+      "evidence": "cfz_amplitude",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "js-endpoint",
+      "severity": "info",
+      "category": "js-endpoint",
+      "url": "https://www.etoro.com/discover/markets/stocks",
+      "description": "JS references endpoint https://sparrow.cloudflare.com/api/v1/event",
+      "evidence": "https://sparrow.cloudflare.com/api/v1/event",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "js-endpoint",
+      "severity": "info",
+      "category": "js-endpoint",
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "description": "JS references endpoint https://sparrow.cloudflare.com/api/v1/event",
+      "evidence": "https://sparrow.cloudflare.com/api/v1/event",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "session-checks-skipped-headless",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://www.etoro.com",
+      "description": "Session-fixation and logout-invalidation checks were skipped: they only run in --mode static. A clean result here does not mean those checks passed -- they did not run.",
+      "evidence": null,
+      "confidence": "heuristic"
+    }
+  ],
+  "js_endpoints": [
+    {
+      "source": "https://www.etoro.com/discover/markets/stocks",
+      "endpoint": "https://sparrow.cloudflare.com/api/v1/event"
+    },
+    {
+      "source": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "endpoint": "https://sparrow.cloudflare.com/api/v1/event"
+    }
+  ],
+  "stats": {
+    "pages_crawled": 20,
+    "pages_challenged": 0,
+    "requests": 43,
+    "elapsed_ms": 248890,
+    "stopped_reason": "max-pages"
+  }
+}

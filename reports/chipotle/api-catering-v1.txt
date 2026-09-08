@@ -1,0 +1,228 @@
+===== health =====
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+coo-ui-version: CateringOnlineWeb-Master_20200128.2
+x-envoy-upstream-service-time: 7
+chipotle-correlationid: COO-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:46 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880074-SIN, cache-sin-wsat1880027-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792586.786225,VS0,VE220
+vary: Accept-Encoding
+
+len 1736
+{"status":"ok","message":"The Catering Order service is running.","version":"v1","buildVersion":"41356-1-20260814.2","instanceId":"7826b412-be56-41ca-8f20-f6f75f4e54aa","startTime":"2026-09-01T04:45:09.1232624Z","lastSuccessTimestamp":"2026-09-07T14:49:09.8972213Z","lastErrorTimestamp":"2026-09-01T15:25:28.8036886Z","attributes":{"logProviders":"eventhub","logLevel_eventhub":"Info"},"sources":[{"source":"COO-DB-001","status":"ok","lastSuccessTimestamp":"2026-09-07T14:49:09.8877948Z"},{"source":"
+
+===== eventtypes =====
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 8
+chipotle-correlationid: COO-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:47 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440076-SIN, cache-sin-wsap440048-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792587.199172,VS0,VE224
+vary: Accept-Encoding
+
+len 341
+[{"displayName":"Business/Office Event","code":"office"},{"displayName":"Birthday Party","code":"birthday"},{"displayName":"Sports Event","code":"sports"},{"displayName":"Holiday Party","code":"holiday"},{"displayName":"Graduation Party","code":"graduation"},{"displayName":"Wedding","code":"wedding"},{"displayName":"Other","code":"other"}]
+
+===== menu/tiered =====
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 7
+chipotle-correlationid: COO-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:49 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880099-SIN, cache-sin-wsat1880026-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792589.616434,VS0,VE551
+vary: Accept-Encoding
+
+len 15082
+{"restaurantNumber":0,"menu":[{"id":"CMG-4012","name":"BBTB","shortName":"BBTB","posId":"99999","unit":"EACH","description":"Mix and match your favorites with Burritos by the Box, or we’ll send you an assortment perfect for small get-togethers. Plus, every two burritos come with Chips, Tomatillo Green-Chili Salsa, and Sour Cream.","sortOrder":0,"bases":[{"id":"CMG-5001","name":"Cilantro-Lime White Rice","posId":"10001"},{"id":"CMG-5002","name":"Cilantro-Lime Brown Rice","posId":"10021"}],"prot
+
+===== popularbuild =====
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 9
+chipotle-correlationid: COO-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:51 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880054-SIN, cache-sin-wsat1880054-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792590.416362,VS0,VE718
+vary: Accept-Encoding
+
+len 4080
+[{"name":"PLANT POWERED","tagline":"DOUBLE PROTEIN","description":"2x Guacamole | Sofritas Plant-Based Protein | Salad Lettuce | Cilantro-Lime Brown Rice | Fajita Veggies | Shredded Cheese | Taco Lettuce | Fresh Tomato Salsa | Roasted-Chili Corn Salsa | Soft Flour Tortillas","active":true,"config":{"headcountMin":10,"headcountMax":200,"headcountIncrement":5},"menuItems":[{"menuItemId":"CMG-4206","subItems":[{"subItemId":"CMG-4217","quantity":1.0,"isRatio":false},{"subItemId":"CMG-4216","quantity
+
+===== promotions =====
+HTTP/2 401 
+www-authenticate: Bearer error="invalid_token"
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:52 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440032-SIN, cache-sin-wsap440032-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792592.476811,VS0,VE229
+content-length: 0
+
+len 0
+
+
+===== GET order/cart =====
+HTTP/2 429 
+pragma: no-cache
+x-kpsdk-ct: 02x2vy7GUHxEeihiddEyVVe3ORzw5pHJHXv5UEECGrt4JDCaAhesgO9KCWfT1vN8UylQQ6s5gkhw8rNgABbIEgxenB4xuY4M4yG4x7Ef1Klu1nRyMtJ5cTXDJlyKoCXd1IehsZrXSu1pyfuGBwI9ZC2W7wQdNoFvQNb2gbN20o
+expires: 0
+set-cookie: KP_UIDz-ssn=02x2vy7GUHxEeihiddEyVVe3ORzw5pHJHXv5UEECGrt4JDCaAhesgO9KCWfT1vN8UylQQ6s5gkhw8rNgABbIEgxenB4xuY4M4yG4x7Ef1Klu1nRyMtJ5cTXDJlyKoCXd1IehsZrXSu1pyfuGBwI9ZC2W7wQdNoFvQNb2gbN20o; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:49:54 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02x2vy7GUHxEeihiddEyVVe3ORzw5pHJHXv5UEECGrt4JDCaAhesgO9KCWfT1vN8UylQQ6s5gkhw8rNgABbIEgxenB4xuY4M4yG4x7Ef1Klu1nRyMtJ5cTXDJlyKoCXd1IehsZrXSu1pyfuGBwI9ZC2W7wQdNoFvQNb2gbN20o; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:49:54 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+x-kpsdk-r: 1-AA
+p3p: CP="This site does not specify a policy in the P3P header"
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:54 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880068-SIN, cache-sin-wsat1880029-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792594.896360,VS0,VE718
+content-length: 0
+
+len 0
+
+
+===== GET customer =====
+HTTP/2 429 
+pragma: no-cache
+x-kpsdk-ct: 02NIT1qGVIOLU4pZmycCRIUlcnAF4bw47KL0QHRMZ5cEhOzjw7LDEmsVroAz46Rqhr0fgQP7Jfvt7MVlL9KacerXYE43bcI77sZp4xrxol6AzyJ2u21wkg1mnYvnQJTnXTkHgpUXM3iNklL8zpYWmjLSOTnr8shDm7UVZgeRcQ
+expires: 0
+set-cookie: KP_UIDz-ssn=02NIT1qGVIOLU4pZmycCRIUlcnAF4bw47KL0QHRMZ5cEhOzjw7LDEmsVroAz46Rqhr0fgQP7Jfvt7MVlL9KacerXYE43bcI77sZp4xrxol6AzyJ2u21wkg1mnYvnQJTnXTkHgpUXM3iNklL8zpYWmjLSOTnr8shDm7UVZgeRcQ; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:49:56 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02NIT1qGVIOLU4pZmycCRIUlcnAF4bw47KL0QHRMZ5cEhOzjw7LDEmsVroAz46Rqhr0fgQP7Jfvt7MVlL9KacerXYE43bcI77sZp4xrxol6AzyJ2u21wkg1mnYvnQJTnXTkHgpUXM3iNklL8zpYWmjLSOTnr8shDm7UVZgeRcQ; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:49:56 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+x-kpsdk-r: 1-AA
+p3p: CP="This site does not specify a policy in the P3P header"
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:56 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880075-SIN, cache-sin-wsat1880075-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792596.795015,VS0,VE716
+content-length: 0
+
+len 0
+
+
+===== GET order/1 (single IDOR probe) =====
+HTTP/2 429 
+pragma: no-cache
+x-kpsdk-ct: 02XXlUNlEwOXHJoh0Z9jwQyODYm3Y4GAanyITKmsWWKYwgNW9z1qt41lRjH4SpWy3mSohDfx6UhgHatrrKlepWtj6PjAHnjNi9vwxNqIqhkFjHMVkPSO0WH8NJckHq1DSwUpwSmrQNJXz29OYbSdnHHy906CqSEd9uXpmCkeVY
+expires: 0
+set-cookie: KP_UIDz-ssn=02XXlUNlEwOXHJoh0Z9jwQyODYm3Y4GAanyITKmsWWKYwgNW9z1qt41lRjH4SpWy3mSohDfx6UhgHatrrKlepWtj6PjAHnjNi9vwxNqIqhkFjHMVkPSO0WH8NJckHq1DSwUpwSmrQNJXz29OYbSdnHHy906CqSEd9uXpmCkeVY; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:49:58 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02XXlUNlEwOXHJoh0Z9jwQyODYm3Y4GAanyITKmsWWKYwgNW9z1qt41lRjH4SpWy3mSohDfx6UhgHatrrKlepWtj6PjAHnjNi9vwxNqIqhkFjHMVkPSO0WH8NJckHq1DSwUpwSmrQNJXz29OYbSdnHHy906CqSEd9uXpmCkeVY; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:49:58 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+x-kpsdk-r: 1-AA
+p3p: CP="This site does not specify a policy in the P3P header"
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:59 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880044-SIN, cache-sin-wsat1880055-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792598.223365,VS0,VE820
+content-length: 0
+
+len 0
+
+
+===== GET order/fake-uuid =====
+HTTP/2 429 
+pragma: no-cache
+x-kpsdk-ct: 02NUw2q0Ven86NokHuI2e5P8qZ20eg60KlBY2UWQWXob63EuhnURn7uyYgevCRAWBuOV9GytdzW89EORSFTGkAQQvcnFUhNoS8HyLxUnI9VWam2VfbIsRCOrB0Bn7CucJjA8oaba3eJj0zHkRJ6V32jPxQSNurK9nHVJwsMCsA
+expires: 0
+set-cookie: KP_UIDz-ssn=02NUw2q0Ven86NokHuI2e5P8qZ20eg60KlBY2UWQWXob63EuhnURn7uyYgevCRAWBuOV9GytdzW89EORSFTGkAQQvcnFUhNoS8HyLxUnI9VWam2VfbIsRCOrB0Bn7CucJjA8oaba3eJj0zHkRJ6V32jPxQSNurK9nHVJwsMCsA; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:50:01 GMT; HttpOnly; Secure; SameSite=None
+set-cookie: KP_UIDz=02NUw2q0Ven86NokHuI2e5P8qZ20eg60KlBY2UWQWXob63EuhnURn7uyYgevCRAWBuOV9GytdzW89EORSFTGkAQQvcnFUhNoS8HyLxUnI9VWam2VfbIsRCOrB0Bn7CucJjA8oaba3eJj0zHkRJ6V32jPxQSNurK9nHVJwsMCsA; Max-Age=86400; Path=/; Expires=Tue, 08 Sep 2026 14:50:01 GMT; HttpOnly
+cache-control: no-cache, no-store, must-revalidate
+x-kpsdk-r: 1-AA
+p3p: CP="This site does not specify a policy in the P3P header"
+access-control-expose-headers: x-kpsdk-ct,x-kpsdk-r,x-kpsdk-c,x-kpsdk-h,x-kpsdk-fc
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:50:01 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880084-SIN, cache-sin-wsat1880084-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792600.240492,VS0,VE1021
+content-length: 0
+
+len 0
+
+
+===== epops restaurant 681 =====
+HTTP/2 200 
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 5
+chipotle-correlationid: COO-shroodler-1
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:50:02 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440069-SIN, cache-sin-wsap440069-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792603.665371,VS0,VE226
+vary: Accept-Encoding
+
+len 2
+[]
+
+===== CORS health evil =====
+HTTP/2 200 
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:50:04 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsap440085-SIN, cache-sin-wsap440085-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792604.089322,VS0,VE624
+content-length: 0
+
+len 0
+
+
+===== CORS health catering origin =====
+HTTP/2 200 
+chipotle-correlationid: COO-shroodler-1
+access-control-allow-credentials: true
+coo-ui-version: CateringOnlineWeb-Master_20200128.2
+access-control-allow-origin: https://catering.chipotle.com
+content-type: application/json; charset=utf-8
+x-envoy-upstream-service-time: 2
+access-control-expose-headers: chipotle-correlationid,x-envoy-upstream-service-time,vary,transfer-encoding,Date,Server,COO-UI-Version
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:50:06 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880035-SIN, cache-sin-wsat1880069-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792606.987539,VS0,VE232
+vary: Accept-Encoding
+
+len 1728
+{"status":"ok","message":"The Catering Order service is running.","version":"v1","buildVersion":"41356-1-20260814.2","instanceId":"b01ae214-a6d4-4b01-bc88-5c2355f5ffc9","startTime":"2026-09-01T04:20:04.00624Z","lastSuccessTimestamp":"2026-09-07T14:49:58.8123826Z","lastErrorTimestamp":"2026-09-01T15:23:08.052868Z","attributes":{"logProviders":"eventhub","logLevel_eventhub":"Info"},"sources":[{"source":"COO-DB-001","status":"ok","lastSuccessTimestamp":"2026-09-07T14:49:58.7706567Z"},{"source":"COO
+

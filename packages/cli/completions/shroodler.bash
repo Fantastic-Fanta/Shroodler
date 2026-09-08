@@ -11,23 +11,26 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions tokens cadence triage payload nuclei-ingest authz-diff peer-write js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan version"
 
 _shroodler_flags_for() {
     case "$1" in
         crawl)
-            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --spec --seed-from --cookies-from --plugin --exclude-path"
+            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --proxy --seed --spec --seed-from --cookies-from --gql-schema --gql-wordlist --plugin --exclude-path"
             ;;
         diff)
             echo "--pages-only --gate --suppressions --format --output --source-root"
             ;;
         report)
-            echo "--format --output --suppressions"
+            echo "--format --output --suppressions --merge-sarif"
             ;;
         baseline|expected)
             echo "--output --name --suppressions"
             ;;
         ingest-sessions)
+            echo "--target --output --allow-external"
+            ;;
+        ingest-har)
             echo "--target --output --allow-external"
             ;;
         tokens)
@@ -45,11 +48,17 @@ _shroodler_flags_for() {
         nuclei-ingest)
             echo "--output"
             ;;
+        slither-ingest)
+            echo "--target --output"
+            ;;
         authz-diff)
-            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation"
+            echo "--output --cookie --header --no-anon-check --allow-external --require-policy --policy-file --audit-log --higher-priv-marker --lower-priv-marker --require-identity-confirmation --gql-schema --gql-wordlist"
             ;;
         peer-write)
-            echo "--output --target --from-sessions --only-id --owner-cookie --peer-cookie --owner-cookies-from --peer-cookies-from --header --rate --nonsense-id --user-agent --user-agent-suffix --allow-external --require-policy --policy-file --audit-log"
+            echo "--output --target --from-sessions --only-id --owner-cookie --peer-cookie --owner-cookies-from --peer-cookies-from --header --rate --nonsense-id --user-agent --user-agent-suffix --allow-external --require-policy --policy-file --audit-log --csrf-from --no-csrf --require-confirm"
+            ;;
+        session-export)
+            echo "--from --cdp --origin --cookie --output"
             ;;
         js-routes)
             echo "--output"
@@ -209,7 +218,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec|--gql-schema|--gql-wordlist|--merge-sarif)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

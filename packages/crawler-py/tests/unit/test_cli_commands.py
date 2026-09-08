@@ -484,6 +484,70 @@ def test_cmd_report_sarif_and_markdown(tmp_path):
     assert cmd_report(ns) == 0
 
 
+def test_cmd_report_merge_sarif(tmp_path):
+    docp = tmp_path / "d.json"
+    docp.write_text(
+        json.dumps(
+            {
+                "target": "http://127.0.0.1/",
+                "crawler": {"name": "shroodler-py", "version": "0.1.0", "mode": "static"},
+                "pages": [],
+                "findings": [
+                    {
+                        "id": "missing-csp",
+                        "severity": "medium",
+                        "category": "header",
+                        "url": "http://127.0.0.1/",
+                        "description": "no csp",
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    sarif_path = tmp_path / "ext.sarif"
+    sarif_path.write_text(
+        json.dumps(
+            {
+                "version": "2.1.0",
+                "runs": [
+                    {
+                        "results": [
+                            {
+                                "ruleId": "semgrep.xss",
+                                "level": "error",
+                                "message": {"text": "XSS"},
+                                "locations": [
+                                    {
+                                        "physicalLocation": {
+                                            "artifactLocation": {"uri": "views.py"},
+                                            "region": {"startLine": 9},
+                                        }
+                                    }
+                                ],
+                            }
+                        ]
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    out = tmp_path / "merged.json"
+    ns = argparse.Namespace(
+        findings=str(docp),
+        format="json",
+        output=str(out),
+        suppressions=None,
+        merge_sarif=[str(sarif_path)],
+    )
+    assert cmd_report(ns) == 0
+    merged = json.loads(out.read_text(encoding="utf-8"))
+    ids = {f["id"] for f in merged["findings"]}
+    assert "missing-csp" in ids
+    assert "semgrep.xss" in ids
+
+
 def test_cmd_audit_verify_intact(tmp_path):
     from shroodler_guardrails.policy import PolicyEnforcer
 

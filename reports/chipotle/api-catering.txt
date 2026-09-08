@@ -1,0 +1,113 @@
+===== services cateringorder =====
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:18 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880099-SIN, cache-sin-wsat1880096-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792558.339057,VS0,VE224
+content-length: 54
+
+body: { "statusCode": 404, "message": "Resource not found" }
+
+===== services epops/v2 =====
+HTTP/2 404 
+content-type: application/json
+accept-ranges: bytes
+date: Mon, 07 Sep 2026 14:49:19 GMT
+via: 1.1 varnish
+x-served-by: cache-sin-wsat1880025-SIN, cache-sin-wsat1880025-SIN
+x-cache: MISS, MISS
+x-cache-hits: 0, 0
+x-timer: S1788792560.701225,VS0,VE222
+content-length: 54
+
+body: { "statusCode": 404, "message": "Resource not found" }
+
+===== catering /customerauth/login GET =====
+HTTP/2 200 
+content-type: text/html
+date: Mon, 07 Sep 2026 14:49:20 GMT
+server: Microsoft-IIS/10.0
+accept-ranges: bytes
+cache-control: no-cache,no-cache, no-store, must-revalidate
+etag: "1768f153c739dd1:0"
+expires: -1
+last-modified: Tue, 01 Sep 2026 04:06:56 GMT
+pragma: no-cache
+content-length: 1704
+strict-transport-security: max-age=31536000
+x-powered-by: ASP.NET
+
+body: <!doctype html><html lang="en"><head><meta charset="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="icon" href="/favicon.ico"/><title>Chipotle Catering</titl
+
+===== catering /customerauth/getstarted GET =====
+HTTP/2 200 
+content-type: text/html
+date: Mon, 07 Sep 2026 14:49:23 GMT
+server: Microsoft-IIS/10.0
+accept-ranges: bytes
+cache-control: no-cache,no-cache, no-store, must-revalidate
+etag: "1768f153c739dd1:0"
+expires: -1
+last-modified: Tue, 01 Sep 2026 04:06:56 GMT
+pragma: no-cache
+content-length: 1704
+strict-transport-security: max-age=31536000
+x-powered-by: ASP.NET
+
+body: <!doctype html><html lang="en"><head><meta charset="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="icon" href="/favicon.ico"/><title>Chipotle Catering</titl
+
+===== catering /order/cart GET =====
+HTTP/2 200 
+content-type: text/html
+date: Mon, 07 Sep 2026 14:49:25 GMT
+server: Microsoft-IIS/10.0
+accept-ranges: bytes
+cache-control: no-cache,no-cache, no-store, must-revalidate
+etag: "1768f153c739dd1:0"
+expires: -1
+last-modified: Tue, 01 Sep 2026 04:06:56 GMT
+pragma: no-cache
+content-length: 1704
+strict-transport-security: max-age=31536000
+x-powered-by: ASP.NET
+
+body: <!doctype html><html lang="en"><head><meta charset="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="icon" href="/favicon.ico"/><title>Chipotle Catering</titl
+
+===== catering /promotions GET =====
+HTTP/2 200 
+content-type: text/html
+date: Mon, 07 Sep 2026 14:49:27 GMT
+server: Microsoft-IIS/10.0
+accept-ranges: bytes
+cache-control: no-cache,no-cache, no-store, must-revalidate
+etag: "1768f153c739dd1:0"
+expires: -1
+last-modified: Tue, 01 Sep 2026 04:06:56 GMT
+pragma: no-cache
+content-length: 1704
+strict-transport-security: max-age=31536000
+x-powered-by: ASP.NET
+
+body: <!doctype html><html lang="en"><head><meta charset="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="icon" href="/favicon.ico"/><title>Chipotle Catering</titl
+
+===== catering /account/orderhistory GET =====
+HTTP/2 200 
+content-type: text/html
+date: Mon, 07 Sep 2026 14:49:28 GMT
+server: Microsoft-IIS/10.0
+accept-ranges: bytes
+cache-control: no-cache,no-cache, no-store, must-revalidate
+etag: "1768f153c739dd1:0"
+expires: -1
+last-modified: Tue, 01 Sep 2026 04:06:56 GMT
+pragma: no-cache
+content-length: 1704
+strict-transport-security: max-age=31536000
+x-powered-by: ASP.NET
+
+body: <!doctype html><html lang="en"><head><meta charset="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><meta name="viewport" content="width=device-width,initial-scale=1"/><link rel="icon" href="/favicon.ico"/><title>Chipotle Catering</titl
+

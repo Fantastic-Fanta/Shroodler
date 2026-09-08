@@ -1,0 +1,329 @@
+{
+  "target": "https://www.etoro.com/",
+  "scan_started_at": "2026-09-07T17:46:18Z",
+  "scan_finished_at": "2026-09-07T17:47:22Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "static"
+  },
+  "pages": [
+    {
+      "url": "https://www.etoro.com/",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/d5efe53b-a82b3c8b5fd3ee18.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/1009-20f18f6e96ccfb40.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/main-app-63dfd0d61a72e2da.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/global-error-685189e4ffb8829d.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/4407-ba91a2ebd4433ac7.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/9324-7807bdd82c4b0aa8.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/6276-e7908c534853291d.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/8632-430ac63ea586c039.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/1060-7782e42678c9a86c.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/9544-cc1fe567994b8ac4.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/%5B%5B...slug%5D%5D/page-0d7b2e7ff0108a59.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/layout-0e765ae891396b22.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/7025-6026aa3f661ada62.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/%40floatingDisclaimer/%5B%5B...slug%5D%5D/page-90f5d19819264d2c.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/%40footerDisclaimer/%5B%5B...slug%5D%5D/page-d7a0594f2db45013.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/app/(frontend)/%5Blocale%5D/layout-0f798f70d7519b63.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/polyfills-42372ed130431b0a.js",
+        "https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/webpack-cd0633ffdafff130.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/copytrader",
+      "status_code": 301,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://www.etoro.com/discover/smartportfolios",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/people",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/stocks",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/cryptocurrencies",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/etf",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    },
+    {
+      "url": "https://www.etoro.com/discover/markets/indices",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "Strict-Transport-Security",
+          "X-Content-Type-Options"
+        ],
+        "missing": [
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": [
+        "https://cdn.etorostatic.com/statics/web-loader.1e2d194de39cbc5ecc74.js",
+        "https://cdn.etorostatic.com/statics/legacy-bundle.202f6b2bfbd8ea3f0ac3.js",
+        "https://cdn.etorostatic.com/v651.1323.6/js_require/?r[]=infrastruct/libs/requirejs/etoro-require&r[]=amd-config&r[]=apps/etoroApp",
+        "https://api.etorostatic.com/sapi/app-data/web-client-locales/en-gb.js?cv=2af70545caa4b0e682374ff55608e7d3_178a47622551046e2c5f00f544410c6e",
+        "https://cdn.etorostatic.com/v651.1323.6/js_files/?m[]=tools/browser-support",
+        "https://cdn.etorostatic.com/statics/runtime.5ad2d4c6ad24a634.js",
+        "https://cdn.etorostatic.com/statics/polyfills.649c95a5ad51a8f0.js",
+        "https://cdn.etorostatic.com/statics/main.a78bfd70beef2780.js"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "Content-Security-Policy header not set",
+      "evidence": "Affects 2 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": "Affects 2 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://www.etoro.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": "Affects 9 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "sri-missing",
+      "severity": "low",
+      "category": "subresource",
+      "url": "https://www.etoro.com",
+      "description": "Cross-origin <script> loaded without a Subresource Integrity (integrity=) attribute: https://marketing.etorostatic.com/etoro-website/static/56be672d-3891-4beb-9806-762bee6ec26f/_next/static/chunks/d5efe53b-a82b3c8b5fd3ee18.js",
+      "evidence": "Affects 91 pages; sample: https://www.etoro.com/",
+      "confidence": "confirmed"
+    },
+    {
+      "id": "generic-api-key",
+      "severity": "medium",
+      "category": "secret",
+      "url": "https://www.etoro.com/",
+      "description": "High-entropy string that may be an API key",
+      "evidence": "radi************nt-0",
+      "confidence": "heuristic"
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://www.etoro.com/copytrader",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to http://www.etoro.com/copytrader/",
+      "confidence": "heuristic"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 9,
+    "pages_challenged": 0,
+    "requests": 26,
+    "elapsed_ms": 63908,
+    "stopped_reason": "max-time"
+  }
+}

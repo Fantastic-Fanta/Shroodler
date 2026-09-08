@@ -1,0 +1,452 @@
+{
+  "target": "https://portalv2.lh360.com",
+  "scan_started_at": "2026-09-07T05:29:05Z",
+  "scan_finished_at": "2026-09-07T05:29:45Z",
+  "crawler": {
+    "name": "shroodler-py",
+    "version": "0.2.0",
+    "mode": "headless"
+  },
+  "pages": [
+    {
+      "url": "https://portalv2.lh360.com",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/openapi.json",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/swagger.json",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/api-docs",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/openapi.yaml",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/swagger.yaml",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [
+          "Strict-Transport-Security"
+        ],
+        "missing": [
+          "Content-Security-Policy",
+          "X-Frame-Options",
+          "X-Content-Type-Options",
+          "Referrer-Policy"
+        ]
+      },
+      "js_files": []
+    },
+    {
+      "url": "https://portalv2.lh360.com/.well-known/security.txt",
+      "status_code": 200,
+      "forms": [],
+      "params": [],
+      "cookies": [],
+      "headers": {
+        "present": [],
+        "missing": []
+      },
+      "js_files": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://portalv2.lh360.com",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://loginv2.lh360.com/auth/realms/lh360/protocol/openid-connect/auth?client_id=bp-lh360&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fportalv2.lh360.com%2Fapi%2Fauth%2Fcallback%2Fibc&state=prNGDJrr3zL21TM9_B-2m6kcEnK9lVuvfOia-zvRa7s&code_challenge=9FeSTUFtz0tOb91q9bqUWkL840JlxLR__PlSR_rZAfg&code_challenge_method=S256"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.json",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.json",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.json",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.json",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://portalv2.lh360.com/openapi.json",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://loginv2.lh360.com/auth/realms/lh360/protocol/openid-connect/auth?client_id=bp-lh360&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fportalv2.lh360.com%2Fapi%2Fauth%2Fcallback%2Fibc&state=buITYjPTfET0tFxXMRCRL0mSwQV0y6s6NtyeJnm0uzw&code_challenge=ZOANHASyp2HxXHAoIXkGO9IDeyGV4XrWvYl8qDj032Y&code_challenge_method=S256"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.json",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.json",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.json",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.json",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://portalv2.lh360.com/swagger.json",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://loginv2.lh360.com/auth/realms/lh360/protocol/openid-connect/auth?client_id=bp-lh360&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fportalv2.lh360.com%2Fapi%2Fauth%2Fcallback%2Fibc&state=-E5bKeXyEIpmn0mVzHXFdtMZ-vl1kX7youOrU9fBAVU&code_challenge=7bwPPDfcAiLY5RBjqmR1HP1kRFmWmB92s-N7-a0cHMw&code_challenge_method=S256"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/api-docs",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/api-docs",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/api-docs",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/api-docs",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://portalv2.lh360.com/api-docs",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://loginv2.lh360.com/auth/realms/lh360/protocol/openid-connect/auth?client_id=bp-lh360&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fportalv2.lh360.com%2Fapi%2Fauth%2Fcallback%2Fibc&state=Ile73vuYrMHbkbYMuogisBz4auJEqSm2fJCXeYfCLD4&code_challenge=QZbMuCuCS0GKuuerLL03M5DcnC3jUgE3kcJ3vnIc95s&code_challenge_method=S256"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.yaml",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.yaml",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.yaml",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/openapi.yaml",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://portalv2.lh360.com/openapi.yaml",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://loginv2.lh360.com/auth/realms/lh360/protocol/openid-connect/auth?client_id=bp-lh360&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fportalv2.lh360.com%2Fapi%2Fauth%2Fcallback%2Fibc&state=egyW7c9KhYHpQR1tlLJQC0fOdURGztTyBpqFbBCkZiM&code_challenge=2PHgZTFXo7QRPztvso2zzLrdQdn78mjztE3WhGzjslY&code_challenge_method=S256"
+    },
+    {
+      "id": "missing-csp",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.yaml",
+      "description": "Content-Security-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-frame-options",
+      "severity": "medium",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.yaml",
+      "description": "X-Frame-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-x-content-type-options",
+      "severity": "low",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.yaml",
+      "description": "X-Content-Type-Options header not set",
+      "evidence": null
+    },
+    {
+      "id": "missing-referrer-policy",
+      "severity": "info",
+      "category": "header",
+      "url": "https://portalv2.lh360.com/swagger.yaml",
+      "description": "Referrer-Policy header not set",
+      "evidence": null
+    },
+    {
+      "id": "off-origin-redirect-not-followed",
+      "severity": "info",
+      "category": "scan-note",
+      "url": "https://portalv2.lh360.com/swagger.yaml",
+      "description": "This URL redirects to a different origin, which is out of scope and was not followed or fetched.",
+      "evidence": "redirects to https://loginv2.lh360.com/auth/realms/lh360/protocol/openid-connect/auth?client_id=bp-lh360&scope=openid%20email%20profile&response_type=code&redirect_uri=https%3A%2F%2Fportalv2.lh360.com%2Fapi%2Fauth%2Fcallback%2Fibc&state=Wm0_oYHBexFI_6B_W3qK1sgUMgehBLN9WJC28GgONhQ&code_challenge=sVJq-TQOfCk9btlkoege6OEpOvKjOcpWpouPutLPpsE&code_challenge_method=S256"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.env",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/wp-config.php.bak",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/phpinfo.php",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.git/config",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.git/HEAD",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "waf-challenge-detected",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com/.svn/entries",
+      "description": "Response looks like a Cloudflare challenge/interstitial page, not real target content -- the crawler stopped extracting forms/secrets/links from this page. Passive/active checks against this URL were not meaningfully performed. This is a detection-only signal: Shroodler does not attempt to solve or bypass challenges. If this is unexpected on an authorized scan, try --user-agent to rule out UA-based blocking, or ask the target's operator to allowlist the scanner's source IP/User-Agent (HTTP status was 403).",
+      "evidence": "Cloudflare"
+    },
+    {
+      "id": "exposed-file",
+      "severity": "high",
+      "category": "exposed-file",
+      "url": "https://portalv2.lh360.com/.well-known/security.txt",
+      "description": "Common path /.well-known/security.txt is reachable",
+      "evidence": "/.well-known/security.txt"
+    },
+    {
+      "id": "waf-challenge-sitewide",
+      "severity": "medium",
+      "category": "waf-challenge",
+      "url": "https://portalv2.lh360.com",
+      "description": "6 of 7 crawled pages were WAF/bot-mitigation-challenged (Cloudflare) -- this target appears to be challenged site-wide, not just on one page. This scan's other findings substantially understate the target's real attack surface. Try --user-agent, or ask the target's operator to allowlist the scanner before re-running.",
+      "evidence": "6/7 pages challenged"
+    }
+  ],
+  "js_endpoints": [],
+  "stats": {
+    "pages_crawled": 7,
+    "pages_challenged": 6,
+    "requests": 35,
+    "elapsed_ms": 40344,
+    "stopped_reason": "complete"
+  }
+}

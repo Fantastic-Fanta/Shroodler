@@ -1005,20 +1005,26 @@ def _sitewide_challenge_finding(
         return None
     vendors = sorted({f.evidence for f in challenge_hits if f.evidence})
     vendor_text = ", ".join(vendors) if vendors else "a WAF/bot-mitigation vendor"
+    from urllib.parse import urlparse as _up
+
+    slug = _up(seed).hostname or "target"
     return Finding(
-        id="waf-challenge-sitewide",
+        id="waf-blocking-active-scan",
         severity="medium",
         category="waf-challenge",
         url=seed,
         description=(
             f"{pages_challenged} of {total_pages} crawled pages were "
             f"WAF/bot-mitigation-challenged ({vendor_text}) -- this target "
-            "appears to be challenged site-wide, not just on one page. This "
-            "scan's other findings substantially understate the target's "
-            "real attack surface. Try --user-agent, or ask the target's "
-            "operator to allowlist the scanner before re-running."
+            "appears to be WAF-fronted site-wide. This scan's other findings "
+            "substantially understate the real attack surface. "
+            "Recovery: capture a browser session (Burp Suite, Caido, or "
+            "browser DevTools HAR export) then replay it with: "
+            f"shroodler ingest-sessions --capture capture.har --target {seed} && "
+            f"shroodler crawl --target {seed} --from-capture capture.har "
+            f"--program {slug}"
         ),
-        evidence=f"{pages_challenged}/{total_pages} pages challenged",
+        evidence=f"{pages_challenged}/{total_pages} pages challenged; vendor={vendor_text}",
     )
 
 

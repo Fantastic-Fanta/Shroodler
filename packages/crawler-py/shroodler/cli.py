@@ -124,6 +124,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         cookie_jar=getattr(args, "cookie_jar", None),
         storage_state=getattr(args, "storage_state", None),
         login_recipe=getattr(args, "login_recipe", None),
+        reauth_max_retries=int(getattr(args, "reauth_max_retries", 3) or 3),
         proxy=getattr(args, "proxy", None),
         extra_seeds=extra_seeds,
         no_sitemap=bool(getattr(args, "no_sitemap", False)),
@@ -150,6 +151,19 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         Path(args.output).write_text(text, encoding="utf-8")
     else:
         print(text, end="")
+    program_slug = getattr(args, "program", None)
+    if program_slug:
+        from shroodler.program import load, merge_crawl_doc, save
+
+        state = load(program_slug)
+        delta = merge_crawl_doc(state, doc)
+        save(state)
+        print(
+            f"program {program_slug}: +{delta['new_endpoints']} endpoints, "
+            f"+{delta['new_findings']} findings, "
+            f"{delta['object_id_values']} object ids",
+            file=sys.stderr,
+        )
     return 0
 
 
@@ -403,6 +417,14 @@ def cmd_authz_diff(args: argparse.Namespace) -> int:
         require_identity_confirmation=bool(getattr(args, "require_identity_confirmation", False)),
         gql_field_names=_gql_field_names(args),
     )
+    program_slug = getattr(args, "program", None)
+    if program_slug:
+        from shroodler.program import load, mark_tested, save
+
+        state = load(program_slug)
+        urls = [str(p.get("url") or "") for p in (higher_doc.get("pages") or [])]
+        mark_tested(state, urls, "tested_authz")
+        save(state)
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
     return 0
@@ -455,6 +477,14 @@ def cmd_peer_write(args: argparse.Namespace) -> int:
         target=str(playbook.get("target") or args.target or ""),
         only_id=getattr(args, "only_id", None),
     )
+    from_program = getattr(args, "from_program", None)
+    if from_program:
+        from shroodler.program import apply_program_ids, load as load_program
+
+        state = load_program(from_program)
+        merged = apply_program_ids(
+            merged, state, only_id=getattr(args, "only_id", None)
+        )
     target = str(merged.get("target") or "")
     owner_cookie = resolve_cookie_header(
         pairs=list(getattr(args, "owner_cookie", None) or []),
@@ -488,6 +518,15 @@ def cmd_peer_write(args: argparse.Namespace) -> int:
         require_confirm=require_confirm,
         allow_unconfirmed=allow_unconfirmed,
     )
+    program_slug = getattr(args, "program", None)
+    if program_slug:
+        from shroodler.program import load as load_program
+        from shroodler.program import mark_tested, save
+
+        state = load_program(program_slug)
+        urls = [str(w.get("url") or "") for w in (merged.get("writes") or [])]
+        mark_tested(state, urls, "tested_peer_write")
+        save(state)
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
     return 0
@@ -514,6 +553,80 @@ def cmd_js_routes(args: argparse.Namespace) -> int:
     out = extract_js_routes_file(args.js_file)
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
+    return 0
+
+
+def cmd_program_init(args: argparse.Namespace) -> int:
+    from shroodler.program import load, load_scope_file, save
+
+    state = load(args.slug)
+    scope_file = getattr(args, "scope_file", None)
+    if scope_file:
+        ins, out = load_scope_file(scope_file)
+        state.scope_urls = ins
+        state.scope_out = out
+        save(state)
+    print(f"program {state.slug}: {len(state.endpoints)} endpoints")
+    return 0
+
+
+def cmd_program_status(args: argparse.Namespace) -> int:
+    from shroodler.program import as_briefing, coverage_gaps, load, stale_sessions
+
+    state = load(args.slug)
+    briefing = as_briefing(state)
+    gaps = coverage_gaps(state)
+    stale = stale_sessions(state)
+    lines = [
+        f"program {state.slug}",
+        f"endpoints: {briefing['endpoint_count']}",
+        f"findings: {briefing['finding_count']}",
+        f"coverage gaps: {briefing['coverage_gap_count']}",
+        f"unconfirmed leads: {briefing['unconfirmed_leads']}",
+        f"stale sessions: {len(stale)}",
+    ]
+    if briefing.get("stale_session_warning"):
+        lines.append(briefing["stale_session_warning"])
+    if gaps:
+        lines.append("top coverage gaps:")
+        for gap in gaps[:10]:
+            flags = []
+            if not gap["tested_authz"]:
+                flags.append("authz")
+            if not gap["tested_peer_write"]:
+                flags.append("peer-write")
+            lines.append(f"  {gap['url']}  missing={','.join(flags)}  last_seen={gap['last_seen']}")
+    print("\n".join(lines))
+    return 0
+
+
+def cmd_program_merge(args: argparse.Namespace) -> int:
+    from shroodler.program import load, merge_crawl, save
+
+    state = load(args.slug)
+    delta = merge_crawl(state, args.crawl_json)
+    save(state)
+    print(
+        json.dumps(
+            {"slug": state.slug, **delta, "endpoints": len(state.endpoints)},
+            indent=2,
+        )
+    )
+    return 0
+
+
+def cmd_program_add_session(args: argparse.Namespace) -> int:
+    from shroodler.program import add_session, load, save
+
+    state = load(args.slug)
+    record = add_session(
+        state,
+        args.path,
+        label=args.label,
+        expires=getattr(args, "expires", None),
+    )
+    save(state)
+    print(json.dumps(record, indent=2))
     return 0
 
 
@@ -1219,9 +1332,31 @@ def build_parser() -> argparse.ArgumentParser:
     )
     crawl.add_argument(
         "--login-recipe",
-        help="JSON {url, method, fields} posted once before crawling (merges hidden "
-        "fields). If a later fetch returns 401 or a login redirect, the recipe is "
-        "re-run once and that URL retried.",
+        help="JSON login recipe posted before crawling (merges hidden fields). "
+        "If a later fetch returns 401 or a login redirect, the recipe is "
+        "re-run up to --reauth-max-retries times with exponential backoff "
+        "(1s, 2s, 4s). A recipe may include steps: oauth_pkce (token_url, "
+        "client_id, scope — client-credentials or authorization-code+PKCE, "
+        "injects Authorization: Bearer) and hook (an optional shell command "
+        "run before the recipe, e.g. to fetch a Castle.io token). WARNING: "
+        "a hook step executes arbitrary commands from the recipe file and "
+        "must only be used with recipes you trust.",
+    )
+    crawl.add_argument(
+        "--reauth-max-retries",
+        type=int,
+        default=3,
+        metavar="N",
+        help="How many times to re-run --login-recipe after a mid-crawl 401 "
+        "or login redirect (default 3). Backoff is 1s, 2s, 4s. If every "
+        "retry fails, emit a session-died finding and stop crawling that "
+        "origin instead of continuing with a dead session.",
+    )
+    crawl.add_argument(
+        "--program",
+        metavar="SLUG",
+        help="Merge this crawl into ~/.shroodler/programs/<SLUG>/state.json "
+        "when the crawl finishes (creates the program if missing).",
     )
     crawl.add_argument(
         "--user-agent",
@@ -1750,6 +1885,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Plain field-name wordlist (one name per line) used the same way as "
         "--gql-schema (repeatable)",
     )
+    authz.add_argument(
+        "--program",
+        metavar="SLUG",
+        help="Mark replayed URLs as tested_authz in ~/.shroodler/programs/<SLUG>",
+    )
     authz.set_defaults(func=cmd_authz_diff)
 
     peer = sub.add_parser(
@@ -1873,6 +2013,18 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Emit probable leads even when both owner and peer jars are set "
         "(overrides the default two-jar confirm)",
+    )
+    peer.add_argument(
+        "--program",
+        metavar="SLUG",
+        help="Mark replayed write URLs as tested_peer_write in "
+        "~/.shroodler/programs/<SLUG>",
+    )
+    peer.add_argument(
+        "--from-program",
+        metavar="SLUG",
+        help="Pull stored object IDs from ~/.shroodler/programs/<SLUG> and "
+        "expand playbook writes across matching URL patterns",
     )
     peer.set_defaults(func=cmd_peer_write)
 
@@ -2036,6 +2188,48 @@ def build_parser() -> argparse.ArgumentParser:
     hlist.add_argument("--history-dir")
     hlist.set_defaults(func=cmd_history_list)
 
+    program = sub.add_parser(
+        "program",
+        help="Per-program engagement memory (endpoints, object IDs, coverage)",
+        description=(
+            "Persistent state under ~/.shroodler/programs/<slug>/state.json. "
+            "Init a program, merge crawl JSON, track sessions, and list "
+            "coverage gaps (endpoints not yet authz-diffed or peer-write tested)."
+        ),
+    )
+    program_sub = program.add_subparsers(dest="program_command", required=True)
+    pinit = program_sub.add_parser("init", help="Create program state (no-op if it exists)")
+    pinit.add_argument("slug", help="Short identifier, e.g. etoro-bugcrowd")
+    pinit.add_argument(
+        "--scope-file",
+        metavar="FILE",
+        help="One URL/glob per line (lines starting with ! or - are out of scope)",
+    )
+    pinit.set_defaults(func=cmd_program_init)
+    pstatus = program_sub.add_parser(
+        "status", help="Print endpoint/finding counts, coverage gaps, stale sessions"
+    )
+    pstatus.add_argument("slug")
+    pstatus.set_defaults(func=cmd_program_status)
+    pmerge = program_sub.add_parser(
+        "merge", help="Ingest a crawl JSON into program state and print the delta"
+    )
+    pmerge.add_argument("slug")
+    pmerge.add_argument("crawl_json", help="Path to crawl JSON")
+    pmerge.set_defaults(func=cmd_program_merge)
+    padd = program_sub.add_parser(
+        "add-session", help="Record a session jar/storageState path on the program"
+    )
+    padd.add_argument("slug")
+    padd.add_argument("path", help="Path to a cookie jar, storageState, or HAR")
+    padd.add_argument("--label", required=True, help="Session label, e.g. owner / peer")
+    padd.add_argument(
+        "--expires",
+        metavar="ISO",
+        help="Optional expiry hint (ISO-8601 date/datetime)",
+    )
+    padd.set_defaults(func=cmd_program_add_session)
+
     trend = sub.add_parser(
         "trend",
         help="Diff findings between two recorded (or arbitrary) scans",
@@ -2126,7 +2320,10 @@ def build_parser() -> argparse.ArgumentParser:
             "  reverify_fix        re-scan one route and report if a finding is gone\n"
             "  diff_since_baseline compare a scan to a checked-in baseline\n"
             "  explain_finding     static remediation guidance for a finding id\n"
+            "  program_state       compact engagement briefing for a program slug\n"
+            "  coverage_gaps       untested endpoints from program memory\n"
             "Active tools require a scan-policy consent manifest by default. "
+            "Finding tools default to compact summary output (summary=false for full JSON). "
             "Pass --list-tools to print names, descriptions, and input schemas "
             "and exit, without starting the stdio loop."
         ),

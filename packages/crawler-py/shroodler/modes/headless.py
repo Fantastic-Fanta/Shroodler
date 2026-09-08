@@ -82,6 +82,7 @@ class HeadlessFetcher:
             ctx["proxy"] = {"server": proxy}
         if extra_headers:
             ctx["extra_http_headers"] = extra_headers
+        self._extra_headers = dict(extra_headers or {})
         self._context = self._browser.new_context(**ctx)
         self.requests = 0
 
@@ -94,6 +95,12 @@ class HeadlessFetcher:
         payload = playwright_cookie_payload(cookies, page_url)
         if payload:
             self._context.add_cookies(payload)
+
+    def set_extra_headers(self, headers: dict[str, str]) -> None:
+        merged = dict(self._extra_headers)
+        merged.update(headers)
+        self._extra_headers = merged
+        self._context.set_extra_http_headers(merged)
 
     def set_local_storage(self, origin_url: str, items: dict[str, str]) -> None:
         """Inject key/value pairs into localStorage for the given origin.

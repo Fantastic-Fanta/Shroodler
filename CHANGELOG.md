@@ -7,6 +7,27 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Auth hardening.** `--login-recipe` re-runs up to `--reauth-max-retries`
+  (default 3) times on a mid-crawl 401 or login redirect, with exponential
+  backoff (1s, 2s, 4s). If every retry fails, crawl emits a high
+  `session-died` finding (last good URL + request count) and stops that
+  origin instead of continuing with a dead session. Login recipes gain
+  `oauth_pkce` (token endpoint → `Authorization: Bearer`) and opt-in
+  `hook` steps (arbitrary command from a trusted recipe, e.g. Castle.io
+  token fetch).
+
+- **MCP summary output.** `scan_route`, `check_idor`, `peer_write`, and
+  `diff_since_baseline` default to compact `{leads, confirmed, probable,
+  top, next_step}` instead of raw JSON (`summary=false` for the full
+  blob). `next_step` is a plain-English instruction for the agent.
+
+- **Engagement memory.** `shroodler program` (`init` / `status` / `merge` /
+  `add-session`) stores per-program state at
+  `~/.shroodler/programs/<slug>/state.json`. `crawl --program`,
+  `authz-diff --program`, and `peer-write --program` / `--from-program`
+  update coverage and object IDs. MCP tools `program_state` and
+  `coverage_gaps` return a compact briefing for the agent's orient step.
+
 - **CSRF harvest fail-closed.** If a captured write already carried a
   CSRF field/header and a fresh token cannot be harvested, `peer-write`
   skips the write (`csrf-missing`) instead of sending a tokenless POST.

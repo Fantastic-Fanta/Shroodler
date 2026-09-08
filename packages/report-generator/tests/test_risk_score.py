@@ -119,7 +119,7 @@ def test_partial_coverage_flag():
     blocked = _crs(
         [
             {"id": "missing-csp", "severity": "medium", "category": "header"},
-            {"id": "waf-challenge-sitewide", "severity": "info", "category": "waf-challenge"},
+            {"id": "waf-blocking-active-scan", "severity": "info", "category": "waf-challenge"},
         ]
     )
     assert blocked["partial_coverage"] is True

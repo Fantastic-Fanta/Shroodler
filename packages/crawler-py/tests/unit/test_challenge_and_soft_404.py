@@ -172,7 +172,7 @@ def test_sitewide_challenge_escalation(fx):
     for path in ("/a", "/b", "/c"):
         fx.html(path, "Just a moment...", status=503)
     result = crawl_url(fx.origin + "/", depth=1)
-    assert any(f.id == "waf-challenge-sitewide" for f in result.findings)
+    assert any(f.id == "waf-blocking-active-scan" for f in result.findings)
     assert result.stats.pages_challenged >= 3
 
 

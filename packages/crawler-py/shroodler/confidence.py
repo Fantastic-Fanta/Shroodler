@@ -24,6 +24,7 @@ _BY_ID: dict[str, str] = {
     "auth-stack-next-auth": "heuristic",
     "auth-stack-keycloak": "heuristic",
     "auth-stack-auth0": "heuristic",
+    "oauth-redirect-uri-unvalidated": "confirmed",
     "next-auth-callback-url-unvalidated": "confirmed",
     "idor-adjacent-id-accessible": "probable",
     "authz-still-accessible": "probable",

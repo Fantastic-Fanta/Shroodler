@@ -27,3 +27,22 @@ def test_extracts_jsonrpc_trpc_react_query_and_graphql():
 
 def test_empty_js_is_empty():
     assert extract_js_api_surface("http://x/a.js", "") == ([], [])
+
+
+def test_crawl_seeds_from_react_query_and_trpc():
+    from shroodler.extractors.js_api_surface import crawl_seeds_from_endpoint
+
+    origin = "http://127.0.0.1:8081"
+    assert crawl_seeds_from_endpoint(origin, "react-query:/api/folders/list") == [
+        "http://127.0.0.1:8081/api/folders/list"
+    ]
+    assert crawl_seeds_from_endpoint(origin, "trpc:user.get") == [
+        "http://127.0.0.1:8081/trpc/user.get"
+    ]
+    assert crawl_seeds_from_endpoint(origin, "jsonrpc:tx.status") == []
+    assert crawl_seeds_from_endpoint(origin, "react-query:https://evil.example/x") == []
+    assert crawl_seeds_from_endpoint(origin, "react-query://evil.example/x") == []
+    assert crawl_seeds_from_endpoint(origin, "trpc:../etc/passwd") == []
+    assert crawl_seeds_from_endpoint(origin, "trpc:https://evil.example/x") == []
+    assert crawl_seeds_from_endpoint(origin, "react-query:/api/\x0cfolder") == []
+    assert crawl_seeds_from_endpoint(origin, "react-query:/../../admin") == []

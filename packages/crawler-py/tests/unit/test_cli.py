@@ -43,6 +43,11 @@ def test_cli_has_format_flags():
     args = p.parse_args(["crawl", "http://127.0.0.1:8081", "--no-sitemap"])
     assert args.no_sitemap is True
     args = p.parse_args(
+        ["crawl", "http://127.0.0.1:8081", "--from-capture", "sess.jsonl", "--proxy", "http://127.0.0.1:8888"]
+    )
+    assert args.from_capture == "sess.jsonl"
+    assert args.proxy == "http://127.0.0.1:8888"
+    args = p.parse_args(
         ["crawl", "http://127.0.0.1:8081", "--max-pages", "2", "--max-time", "1.5"]
     )
     assert args.max_pages == 2
@@ -85,6 +90,8 @@ def test_payload_and_proxy_parse():
         ["payload", "scan.json", "--oob-host", "collab.example.com"]
     )
     assert args.oob_host == "collab.example.com"
+    args = p.parse_args(["payload", "scan.json", "--no-csrf"])
+    assert args.no_csrf is True
     args = p.parse_args(["proxy", "start", "--record", "sess.jsonl"])
     assert args.proxy_args == ["start", "--record", "sess.jsonl"]
     text = p.format_help()
@@ -199,6 +206,10 @@ def test_peer_write_parses():
     assert args.require_confirm is True
     assert args.csrf_from == "http://127.0.0.1/edit"
     assert "peer-write" in p.format_help()
+    args = p.parse_args(
+        ["peer-write", "play.json", "--allow-unconfirmed"]
+    )
+    assert args.allow_unconfirmed is True
 
 
 def test_session_export_parses():

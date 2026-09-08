@@ -90,3 +90,41 @@ def extract_js_api_surface(
                 f"JS references GraphQL {op} {name}",
             )
     return endpoints, findings
+
+
+def crawl_seeds_from_endpoint(origin: str, marker: str) -> list[str]:
+    """Turn tRPC / React Query markers into same-origin URLs the crawler can queue.
+
+    JSON-RPC method names and GraphQL operation names are not URLs.
+    """
+    from shroodler.urls import normalize_url, same_origin
+
+    if not origin or not marker:
+        return []
+    kind, _, rest = marker.partition(":")
+    if not rest:
+        return []
+    if kind == "react-query":
+        path = rest.strip()
+        if not path.startswith("/") or path.startswith("//"):
+            return []
+        if ".." in path or any(ord(c) < 32 for c in path):
+            return []
+        joined = normalize_url(origin if origin.endswith("/") else origin + "/", path)
+        if joined and same_origin(joined, origin):
+            return [joined]
+        return []
+    if kind == "trpc":
+        proc = rest.strip()
+        if not proc or ".." in proc or "://" in proc or any(c in proc for c in " <>{}\\"):
+            return []
+        if any(ord(c) < 32 for c in proc):
+            return []
+        joined = normalize_url(
+            origin if origin.endswith("/") else origin + "/",
+            "/trpc/" + proc,
+        )
+        if joined and same_origin(joined, origin):
+            return [joined]
+        return []
+    return []

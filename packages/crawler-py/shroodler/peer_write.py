@@ -22,12 +22,18 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 import httpx
 
 from shroodler.cookie_source import load_captured_sessions
-from shroodler.csrf import apply_csrf, looks_like_csrf_rejection, refresh_csrf
+from shroodler.csrf import (
+    apply_csrf,
+    captured_write_requires_csrf,
+    csrf_harvest_url_ok,
+    looks_like_csrf_rejection,
+    refresh_csrf,
+)
 from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer, compose_user_agent
 from shroodler.sessions import _body_text
-from shroodler.urls import is_loopback_or_local, origin as origin_of
+from shroodler.urls import is_loopback_or_local, origin as origin_of, same_origin
 
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 MAX_WRITES = 50
@@ -42,7 +48,16 @@ _SKIP_HEADERS = {
     "transfer-encoding",
     "keep-alive",
     "proxy-connection",
+    "authorization",
+    "proxy-authorization",
+    "x-api-key",
+    "x-auth-token",
+    "x-csrf-token",
+    "x-csrftoken",
+    "x-xsrf-token",
+    "requestverificationtoken",
 }
+_SAFE_VERIFY = {"GET", "HEAD"}
 _NUMERIC_ID = re.compile(r"^\d{3,}$")
 _LOGIN_REDIRECT_HINTS = ("login", "signin", "sign-in", "log-in", "auth", "session/new")
 
@@ -77,11 +92,19 @@ def _swap_in_json(value: Any, object_id: str, replacement: str) -> Any:
 def swap_id_in_body(body: str, object_id: str, replacement: str) -> str:
     if not body or not object_id:
         return body
-    try:
-        data = json.loads(body)
-    except json.JSONDecodeError:
-        return body
-    return json.dumps(_swap_in_json(data, object_id, replacement), separators=(",", ":"))
+    stripped = body.lstrip()
+    if stripped.startswith("{") or stripped.startswith("["):
+        try:
+            data = json.loads(body)
+        except json.JSONDecodeError:
+            data = None
+        else:
+            return json.dumps(_swap_in_json(data, object_id, replacement), separators=(",", ":"))
+    if "=" in body and not stripped.startswith("<"):
+        pairs = list(parse_qsl(body, keep_blank_values=True))
+        if any(v == object_id for _, v in pairs):
+            return urlencode([(k, replacement if v == object_id else v) for k, v in pairs])
+    return body
 
 
 def infer_id_value(url: str, body: str = "") -> str | None:
@@ -148,6 +171,43 @@ def _abs_url(target: str, url: str) -> str:
     if "://" in url:
         return url
     return urljoin(target if target.endswith("/") else target + "/", url.lstrip("/"))
+
+
+def _replay_url_ok(url: str, target: str, *, allow_external: bool) -> bool:
+    if not url or not csrf_harvest_url_ok(url, allow_external=allow_external):
+        return False
+    try:
+        if not same_origin(url, target):
+            return False
+    except ValueError:
+        return False
+    return True
+
+
+def _resolve_verify(
+    write: dict[str, Any],
+    *,
+    target: str,
+    url: str,
+    method: str,
+    owner_cookie: str,
+    allow_external: bool,
+) -> tuple[str, str]:
+    """Safe GET/HEAD view URL, or empty if confirmation cannot be done."""
+    if not owner_cookie:
+        return "", "GET"
+    verify = write.get("verify") if isinstance(write.get("verify"), dict) else None
+    verify_url = _abs_url(target, str((verify or {}).get("url") or ""))
+    verify_method = str((verify or {}).get("method") or "GET").upper()
+    if verify_url:
+        if verify_method not in _SAFE_VERIFY:
+            return "", "GET"
+        if not _replay_url_ok(verify_url, target, allow_external=allow_external):
+            return "", "GET"
+        return verify_url, verify_method
+    if method in _SAFE_VERIFY and _replay_url_ok(url, target, allow_external=allow_external):
+        return url, "GET"
+    return "", "GET"
 
 
 def _clean_headers(headers: dict[str, Any] | None) -> dict[str, str]:
@@ -257,6 +317,8 @@ def _session_headers(
 ) -> dict[str, str]:
     headers = _clean_headers(write_headers)
     for key, value in (extra or {}).items():
+        if str(key).lower() in _SKIP_HEADERS:
+            continue
         headers[key] = value
     if cookie:
         headers["Cookie"] = cookie
@@ -293,9 +355,12 @@ def _send(
     if method.upper() in {"POST", "PUT", "PATCH"} and body is not None:
         kwargs["content"] = body.encode("utf-8") if isinstance(body, str) else body
     try:
-        return http.request(method.upper(), url, **kwargs)
+        resp = http.request(method.upper(), url, **kwargs)
     except httpx.HTTPError:
         return None
+    finally:
+        http.cookies.clear()
+    return resp
 
 
 def _checked(
@@ -340,6 +405,7 @@ def run(
     csrf: bool = True,
     csrf_from: str = "",
     require_confirm: bool = False,
+    allow_unconfirmed: bool = False,
 ) -> dict[str, Any]:
     """Replay known writes as the peer. Returns `{target, findings, checked}`."""
     loaded = load_playbook(
@@ -351,6 +417,12 @@ def run(
     target = str(loaded.get("target") or "")
     if not target:
         raise ValueError("peer-write needs a target (playbook.target or --target)")
+    if owner_cookie and peer_cookie and not allow_unconfirmed:
+        require_confirm = True
+    if require_confirm and not owner_cookie:
+        raise ValueError(
+            "peer-write --require-confirm needs --owner-cookie / --owner-cookies-from"
+        )
     if not allow_external and not is_loopback_or_local(target):
         raise ValueError(
             "peer-write refuses non-local targets without --allow-external "
@@ -359,7 +431,7 @@ def run(
 
     ua = compose_user_agent(user_agent or None, user_agent_suffix or None)
     clock = pacer or Pacer(rate)
-    http = client or httpx.Client(timeout=8.0, follow_redirects=False)
+    http = client or httpx.Client(timeout=8.0, follow_redirects=False, trust_env=False)
     own = client is None
     findings: list[dict[str, Any]] = []
     checked: list[dict[str, Any]] = []
@@ -371,7 +443,7 @@ def run(
             if not url:
                 checked.append(_checked(write, verdict="skipped", note="missing url"))
                 continue
-            if not allow_external and not is_loopback_or_local(url):
+            if not _replay_url_ok(url, target, allow_external=allow_external):
                 checked.append(_checked(write, verdict="skipped", note="off-origin"))
                 continue
             body = write.get("body")
@@ -382,26 +454,45 @@ def run(
                 checked.append(_checked(write, verdict="skipped", note="no object id"))
                 continue
 
-            verify = write.get("verify") if isinstance(write.get("verify"), dict) else None
-            verify_url = _abs_url(target, str((verify or {}).get("url") or ""))
-            verify_method = str((verify or {}).get("method") or "GET").upper()
-            if not verify_url and owner_cookie:
-                verify_url = url
-                verify_method = "GET"
+            verify_url, verify_method = _resolve_verify(
+                write,
+                target=target,
+                url=url,
+                method=method,
+                owner_cookie=owner_cookie,
+                allow_external=allow_external,
+            )
 
             peer_headers = _session_headers(peer_cookie, extra_headers, write.get("headers"), ua)
             owner_headers = _session_headers(owner_cookie, extra_headers, None, ua)
+            write_headers = write.get("headers") if isinstance(write.get("headers"), dict) else None
             if csrf:
                 harvest_url = csrf_from or origin_of(url) or target
-                token = refresh_csrf(http, harvest_url, headers=peer_headers)
-                if token is None and owner_headers.get("Cookie"):
-                    token = refresh_csrf(http, harvest_url, headers=owner_headers)
+                write_origin = origin_of(url) or target
+                token = refresh_csrf(
+                    http,
+                    harvest_url,
+                    headers=peer_headers,
+                    allow_external=allow_external,
+                    same_origin_as=write_origin,
+                    enforcer=enforcer,
+                )
                 if token is not None:
                     peer_headers, body = apply_csrf(
                         headers=peer_headers, body=body, token=token
                     )
+                elif captured_write_requires_csrf(body, write_headers):
+                    checked.append(
+                        _checked(
+                            write,
+                            verdict="csrf-missing",
+                            note="captured write required a CSRF token and harvest failed; not sent",
+                        )
+                    )
+                    continue
 
             owner_before = ""
+            owner_before_ok = False
             if verify_url and owner_cookie:
                 before = _send(
                     http,
@@ -412,11 +503,23 @@ def run(
                     enforcer=enforcer,
                     pacer=clock,
                 )
-                if before is not None:
+                if before is not None and _is_success(before.status_code):
                     owner_before = before.text
+                    owner_before_ok = True
 
             nonsense_url = swap_object_id(url, object_id, nonsense_id)
             nonsense_body = swap_id_in_body(body, object_id, nonsense_id)
+            if nonsense_id == object_id or (
+                nonsense_url == url and nonsense_body == body
+            ):
+                checked.append(
+                    _checked(
+                        write,
+                        verdict="skipped",
+                        note="nonsense-id did not change the request; not sent",
+                    )
+                )
+                continue
             nonsense_resp = _send(
                 http,
                 method=method,
@@ -474,7 +577,14 @@ def run(
                 continue
             if csrf and looks_like_csrf_rejection(real_resp.status_code, real_resp.text):
                 harvest_url = csrf_from or origin_of(url) or target
-                token = refresh_csrf(http, harvest_url, headers=peer_headers)
+                token = refresh_csrf(
+                    http,
+                    harvest_url,
+                    headers=peer_headers,
+                    allow_external=allow_external,
+                    same_origin_as=origin_of(url) or target,
+                    enforcer=enforcer,
+                )
                 if token is not None:
                     peer_headers, body = apply_csrf(
                         headers=peer_headers, body=body, token=token
@@ -503,7 +613,11 @@ def run(
                     enforcer=enforcer,
                     pacer=clock,
                 )
-                if after is not None:
+                if (
+                    after is not None
+                    and _is_success(after.status_code)
+                    and owner_before_ok
+                ):
                     owner_after = after.text
                     owner_changed = not _bodies_equivalent(owner_before, owner_after)
 
@@ -559,7 +673,7 @@ def run(
                 )
                 continue
 
-            if require_confirm and not owner_changed:
+            if require_confirm and owner_changed is not True:
                 checked.append(
                     _checked(
                         write,

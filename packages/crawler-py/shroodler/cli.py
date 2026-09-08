@@ -132,6 +132,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         plugins=list(getattr(args, "plugin", None) or []),
         exclude_paths=list(getattr(args, "exclude_path", None) or []),
         gql_field_names=_gql_field_names(args),
+        from_capture=getattr(args, "from_capture", None),
         **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
@@ -466,6 +467,10 @@ def cmd_peer_write(args: argparse.Namespace) -> int:
         origin_url=target,
     )
     extra_headers = parse_header_lines(list(getattr(args, "header", None) or []))
+    require_confirm = bool(getattr(args, "require_confirm", False))
+    allow_unconfirmed = bool(getattr(args, "allow_unconfirmed", False))
+    if owner_cookie and peer_cookie and not allow_unconfirmed:
+        require_confirm = True
     out = peer_write_run(
         merged,
         owner_cookie=owner_cookie,
@@ -480,7 +485,8 @@ def cmd_peer_write(args: argparse.Namespace) -> int:
         only_id=getattr(args, "only_id", None),
         csrf=not bool(getattr(args, "no_csrf", False)),
         csrf_from=str(getattr(args, "csrf_from", None) or ""),
-        require_confirm=bool(getattr(args, "require_confirm", False)),
+        require_confirm=require_confirm,
+        allow_unconfirmed=allow_unconfirmed,
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -495,6 +501,7 @@ def cmd_session_export(args: argparse.Namespace) -> int:
         cdp=getattr(args, "cdp", None),
         origin=str(getattr(args, "origin", None) or ""),
         pairs=list(getattr(args, "cookie", None) or []),
+        allow_external=bool(getattr(args, "allow_external", False)),
     )
     text = json.dumps(doc, indent=2) + "\n"
     _write(text, args.output)
@@ -738,6 +745,7 @@ def cmd_payload(args: argparse.Namespace) -> int:
         oob_host=getattr(args, "oob_host", None),
         enforcer=enforcer,
         adaptive=bool(getattr(args, "adaptive", False)),
+        csrf=not bool(getattr(args, "no_csrf", False)),
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -1247,6 +1255,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     crawl.add_argument("--seed-from", help="HAR or proxy session JSONL; enqueue captured same-origin URLs")
     crawl.add_argument(
+        "--from-capture",
+        metavar="FILE",
+        help="HAR or proxy JSONL: ingest captured pages (no re-fetch) and live-crawl "
+        "only the links/API seeds the recording mentioned. Use with --proxy when "
+        "the HTML crawler is WAF-blocked.",
+    )
+    crawl.add_argument(
         "--cookies-from",
         help="HAR or proxy session JSONL; Cookie header from captured Set-Cookie / Cookie",
     )
@@ -1594,6 +1609,11 @@ def build_parser() -> argparse.ArgumentParser:
         "giving up (SHROODLER_PAYLOAD_MUTATE_CMD if set, else a built-in mutator); "
         "never reports a mutated match at confidence=confirmed.",
     )
+    payload.add_argument(
+        "--no-csrf",
+        action="store_true",
+        help="Do not harvest or attach CSRF tokens on write methods",
+    )
     payload.set_defaults(func=cmd_payload)
 
     nuclei = sub.add_parser(
@@ -1845,7 +1865,14 @@ def build_parser() -> argparse.ArgumentParser:
     peer.add_argument(
         "--require-confirm",
         action="store_true",
-        help="Only emit a finding when the owner re-read shows the object changed",
+        help="Only emit a finding when the owner re-read shows the object changed "
+        "(default when both owner and peer jars are set)",
+    )
+    peer.add_argument(
+        "--allow-unconfirmed",
+        action="store_true",
+        help="Emit probable leads even when both owner and peer jars are set "
+        "(overrides the default two-jar confirm)",
     )
     peer.set_defaults(func=cmd_peer_write)
 
@@ -1868,12 +1895,12 @@ def build_parser() -> argparse.ArgumentParser:
     session_export.add_argument(
         "--cdp",
         metavar="URL",
-        help="Chrome DevTools URL, e.g. http://127.0.0.1:9222",
+        help="Chrome DevTools URL, e.g. http://127.0.0.1:9222 (loopback only)",
     )
     session_export.add_argument(
         "--origin",
         default="",
-        help="Only keep cookies that match this origin's host",
+        help="Absolute http(s) origin; only keep cookies for that host",
     )
     session_export.add_argument(
         "--cookie",
@@ -1881,6 +1908,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=[],
         metavar="name=value",
         help="Include this cookie (repeatable)",
+    )
+    session_export.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow --cdp against a non-loopback DevTools URL",
     )
     session_export.add_argument("--output", "-o", help="Write storageState JSON (default stdout)")
     session_export.set_defaults(func=cmd_session_export)

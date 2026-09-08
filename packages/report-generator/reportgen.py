@@ -33,6 +33,16 @@ def _env() -> Environment:
     )
 
 
+def _chain_key(row: dict) -> tuple:
+    url = str(row.get("url") or "")
+    try:
+        from shroodler.urls import origin as origin_of
+
+        return (row.get("id"), origin_of(url) or url)
+    except ImportError:
+        return (row.get("id"), url)
+
+
 def _enrich_doc(doc: dict) -> dict:
     """Add chain findings and cluster repeating header rows for display."""
     findings = [dict(f) for f in (doc.get("findings") or [])]
@@ -40,11 +50,12 @@ def _enrich_doc(doc: dict) -> dict:
         from shroodler.chains import chain_findings, collapse_systemic_findings
 
         extra = chain_findings(findings, doc.get("pages") or [])
-        existing = {(f.get("id"), f.get("url")) for f in findings}
+        existing = {_chain_key(f) for f in findings}
         for item in extra:
             row = item.model_dump(exclude_none=True)
-            if (row.get("id"), row.get("url")) not in existing:
+            if _chain_key(row) not in existing:
                 findings.append(row)
+                existing.add(_chain_key(row))
         findings = collapse_systemic_findings(findings)
     except ImportError:
         pass

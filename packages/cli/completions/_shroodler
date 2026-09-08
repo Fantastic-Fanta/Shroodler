@@ -86,6 +86,7 @@ _shroodler() {
             '*--seed[Extra same-origin URL to enqueue]:url' \
             '*--spec[Local OpenAPI or Postman collection to seed from]:file:_files' \
             '--seed-from[HAR or proxy session JSONL]:file:_files' \
+            '--from-capture[Ingest captured pages, live-crawl only new seeds]:file:_files' \
             '--cookies-from[HAR or proxy session JSONL]:file:_files' \
             '*--gql-schema[Clairvoyance / introspection JSON for GraphQL field names]:file:_files' \
             '*--gql-wordlist[GraphQL field-name wordlist]:file:_files' \
@@ -172,6 +173,7 @@ _shroodler() {
             '--policy-file[Use a local scan-policy.json instead of fetching one]:file:_files' \
             '--audit-log[Append a JSONL audit trail of allowed/blocked requests]:file:_files' \
             '--adaptive[Retry once with an adapted payload on a baseline miss]' \
+            '--no-csrf[Do not harvest or attach CSRF tokens]' \
             '1:crawl json:_files'
           ;;
         nuclei-ingest)
@@ -224,6 +226,7 @@ _shroodler() {
             '--csrf-from[URL to harvest a CSRF token from]:url' \
             '--no-csrf[Do not harvest or attach a CSRF token]' \
             '--require-confirm[Only emit a finding when the owner re-read changed]' \
+            '--allow-unconfirmed[Emit probable leads even when both jars are set]' \
             '1:playbook json:_files'
           ;;
         session-export)
@@ -232,6 +235,7 @@ _shroodler() {
             '--cdp[Chrome DevTools URL]:url' \
             '--origin[Only keep cookies matching this origin]:url' \
             '*--cookie[Include this cookie name=value]:cookie' \
+            '--allow-external[Allow --cdp against a non-local DevTools URL]' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files'
           ;;
         js-routes)

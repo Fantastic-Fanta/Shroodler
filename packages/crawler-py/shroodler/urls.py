@@ -5,7 +5,10 @@ from urllib.parse import parse_qsl, urljoin, urlparse, urlunparse
 
 def origin(url: str) -> str:
     p = urlparse(url)
-    netloc = p.hostname or ""
+    host = p.hostname or ""
+    if ":" in host and not host.startswith("["):
+        host = f"[{host}]"
+    netloc = host
     if p.port:
         netloc = f"{netloc}:{p.port}"
     return f"{p.scheme}://{netloc}"
@@ -21,9 +24,12 @@ def is_loopback_or_local(url: str) -> bool:
 
 
 def same_origin(a: str, b: str) -> bool:
-    pa, pb = urlparse(a), urlparse(b)
-    port_a = pa.port or (443 if pa.scheme == "https" else 80)
-    port_b = pb.port or (443 if pb.scheme == "https" else 80)
+    try:
+        pa, pb = urlparse(a), urlparse(b)
+        port_a = pa.port or (443 if pa.scheme == "https" else 80)
+        port_b = pb.port or (443 if pb.scheme == "https" else 80)
+    except ValueError:
+        return False
     return (
         pa.scheme == pb.scheme
         and (pa.hostname or "").lower() == (pb.hostname or "").lower()

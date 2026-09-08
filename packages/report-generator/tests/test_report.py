@@ -467,3 +467,45 @@ def test_findings_from_sarif_and_merge_dedupes():
     ids = [f["id"] for f in merged]
     assert ids.count("missing-csp") == 1
     assert "python.lang.security.audit.hardcoded-password" in ids
+
+
+def test_enrich_does_not_duplicate_chain_across_urls():
+    from reportgen import _enrich_doc
+
+    doc = {
+        "target": "http://127.0.0.1/",
+        "pages": [
+            {
+                "url": "http://127.0.0.1/search",
+                "cookies": [
+                    {
+                        "name": "sessionid",
+                        "secure": True,
+                        "http_only": False,
+                        "same_site": "Lax",
+                    }
+                ],
+            }
+        ],
+        "findings": [
+            {
+                "id": "payload-xss-reflect",
+                "severity": "medium",
+                "category": "payload",
+                "url": "http://127.0.0.1/search",
+                "description": "xss",
+                "evidence": None,
+            },
+            {
+                "id": "chain-xss-cookie-theft",
+                "severity": "high",
+                "category": "auth",
+                "url": "http://127.0.0.1/search",
+                "description": "pair",
+                "evidence": "xss",
+            },
+        ],
+    }
+    out = _enrich_doc(doc)
+    chains = [f for f in out["findings"] if f["id"] == "chain-xss-cookie-theft"]
+    assert len(chains) == 1

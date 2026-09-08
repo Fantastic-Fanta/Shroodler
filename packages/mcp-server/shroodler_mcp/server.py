@@ -173,6 +173,7 @@ def main(argv: list[str] | None = None) -> int:
             "  program_state         Compact engagement briefing for a program slug\n"
             "  coverage_gaps         Untested endpoints from program memory\n"
             "  run_agent             Autonomous crawl / authz-diff / peer-write loop\n"
+            "  discover_scope        Live subdomains (crt.sh) + JS API endpoints\n"
             "\n"
             "Finding tools default to compact summary output (summary=false for full JSON).\n"
             "Active tools require a scan-policy consent manifest by default.\n"

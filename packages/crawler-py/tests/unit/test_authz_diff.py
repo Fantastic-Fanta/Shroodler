@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from shroodler.authz_diff import run
+from shroodler.authz_diff import headers_from_auth_line, run
 
 
 def _doc(origin: str, urls: list[str]) -> dict:
@@ -299,3 +299,55 @@ def test_replays_supplied_graphql_fields_when_introspection_blocked(fx):
     }
     out = run(doc, cookie_header="session=user")
     assert any(f["id"] == "graphql-field-authz" for f in out["findings"])
+
+
+def test_headers_from_auth_line_authorization_and_cookie():
+    assert headers_from_auth_line("Authorization: Bearer api-xxx") == {
+        "Authorization": "Bearer api-xxx"
+    }
+    assert headers_from_auth_line("Cookie: session=x") == {"Cookie": "session=x"}
+    assert headers_from_auth_line("session=x") == {"Cookie": "session=x"}
+    assert headers_from_auth_line("") == {}
+    assert headers_from_auth_line(None) == {}
+
+
+def test_authorization_header_is_sent_not_cookie(fx):
+    seen = []
+
+    def handle(inc):
+        seen.append(inc.headers)
+        if inc.headers.get("Authorization") == "Bearer tok":
+            return 200, {}, b"secret"
+        return 403, {}, b"no"
+
+    fx.on("GET", "/admin/report/1", handle)
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(doc, cookie_header="Authorization: Bearer tok")
+    assert seen
+    assert seen[0].get("Authorization") == "Bearer tok"
+    assert "Cookie" not in seen[0] or "Bearer tok" not in seen[0].get("Cookie", "")
+    assert {f["id"] for f in out["findings"]} == {"authz-broken-access-control"}
+
+
+def test_higher_cookie_header_fetches_owner_baseline(fx):
+    roles = []
+
+    def handle(inc):
+        auth = inc.headers.get("Authorization", "")
+        roles.append(auth)
+        if auth == "Bearer owner":
+            return 200, {}, b"owner-secret-report-data"
+        if auth == "Bearer peer":
+            return 200, {}, b"owner-secret-report-data"
+        return 403, {}, b"no"
+
+    fx.on("GET", "/admin/report/1", handle)
+    doc = _doc(fx.origin, [fx.origin + "/admin/report/1"])
+    out = run(
+        doc,
+        cookie_header="Authorization: Bearer peer",
+        higher_cookie_header="Authorization: Bearer owner",
+    )
+    assert "Bearer owner" in roles
+    assert "Bearer peer" in roles
+    assert out["findings"]

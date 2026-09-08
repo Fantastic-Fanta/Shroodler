@@ -43,6 +43,8 @@ _shroodler_commands=(
   'attack-path:Correlate findings with reachability + weak-token context'
   'self-scan:Fuzz the tool'"'"'s own report renderers with hostile content'
   'program:Per-program engagement memory (endpoints, object IDs, coverage)'
+  'agent:Run the autonomous engagement loop for a program'
+  'discover:Find live subdomains and JS API endpoints for a program'
   'version:Print version'
 )
 
@@ -274,6 +276,32 @@ _shroodler() {
             'status[Print coverage and stale sessions]' \
             'merge[Ingest a crawl JSON]' \
             'add-session[Record a session jar path]'
+          ;;
+        agent)
+          _arguments \
+            '--program[Program slug]:slug' \
+            '--target[Base URL]:url' \
+            '--max-iterations[Loop budget]:count' \
+            '--max-pages-per-crawl[Cap on URLs per crawl action]:count' \
+            '--login-recipe[Login recipe JSON]:file:_files' \
+            '--higher-priv-jar[Higher-privilege cookie jar]:file:_files' \
+            '--lower-priv-jar[Lower-privilege cookie jar]:file:_files' \
+            '--owner-cookie[Owner Cookie header]:cookie' \
+            '--peer-cookie[Peer Cookie header]:cookie' \
+            '--dry-run[Print the plan without making requests]' \
+            '--llm-triage[Rank leads with Claude (requires ANTHROPIC_API_KEY)]' \
+            '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
+            '--write-authz-spec[JSON file of write-authz probes]:file:_files'
+          ;;
+        discover)
+          _arguments \
+            '--program[Program slug]:slug' \
+            '--target[Base URL]:url' \
+            '--max-subdomains[Cap candidate FQDNs before probing]:count' \
+            '--probe-workers[Concurrent live probes]:count' \
+            '--skip-crtsh[Skip Certificate Transparency discovery]' \
+            '--skip-js-surface[Skip JS API surface expansion]' \
+            '--dry-run[Print what would be added without writing state]'
           ;;
         trend)
           _arguments \

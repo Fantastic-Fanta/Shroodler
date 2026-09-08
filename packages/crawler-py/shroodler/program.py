@@ -295,11 +295,28 @@ def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
         new_findings += 1
 
     new_object_ids = sum(len(v) for v in state.object_ids.values())
+    pages_snapshot: list[dict[str, Any]] = []
+    for page in doc.get("pages") or []:
+        if not isinstance(page, dict):
+            continue
+        page_url = str(page.get("url") or "")
+        if not page_url:
+            continue
+        js_files = page.get("js_files") or []
+        if not isinstance(js_files, list):
+            js_files = []
+        pages_snapshot.append(
+            {
+                "url": page_url,
+                "js_files": [str(u) for u in js_files if u],
+            }
+        )
     state.scans.append(
         {
             "timestamp": last_seen,
             "type": "crawl",
             "finding_count": len(doc.get("findings") or []),
+            "pages": pages_snapshot,
         }
     )
     return {

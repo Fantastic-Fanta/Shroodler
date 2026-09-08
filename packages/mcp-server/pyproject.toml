@@ -5,7 +5,7 @@ description = "MCP server exposing Shroodler (scan_route, check_idor, peer_write
 requires-python = ">=3.11"
 license = "Apache-2.0"
 authors = [{ name = "The Shroodler Authors" }]
-dependencies = ["shroodler", "jsonschema>=4.22"]
+dependencies = ["shroodler", "jsonschema>=4.22", "websockets>=13"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

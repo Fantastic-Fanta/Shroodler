@@ -22,11 +22,12 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 import httpx
 
 from shroodler.cookie_source import load_captured_sessions
+from shroodler.csrf import apply_csrf, looks_like_csrf_rejection, refresh_csrf
 from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer, compose_user_agent
 from shroodler.sessions import _body_text
-from shroodler.urls import is_loopback_or_local
+from shroodler.urls import is_loopback_or_local, origin as origin_of
 
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 MAX_WRITES = 50
@@ -336,6 +337,9 @@ def run(
     nonsense_id: str = DEFAULT_NONSENSE_ID,
     only_id: str | None = None,
     max_writes: int = MAX_WRITES,
+    csrf: bool = True,
+    csrf_from: str = "",
+    require_confirm: bool = False,
 ) -> dict[str, Any]:
     """Replay known writes as the peer. Returns `{target, findings, checked}`."""
     loaded = load_playbook(
@@ -381,9 +385,21 @@ def run(
             verify = write.get("verify") if isinstance(write.get("verify"), dict) else None
             verify_url = _abs_url(target, str((verify or {}).get("url") or ""))
             verify_method = str((verify or {}).get("method") or "GET").upper()
+            if not verify_url and owner_cookie:
+                verify_url = url
+                verify_method = "GET"
 
             peer_headers = _session_headers(peer_cookie, extra_headers, write.get("headers"), ua)
             owner_headers = _session_headers(owner_cookie, extra_headers, None, ua)
+            if csrf:
+                harvest_url = csrf_from or origin_of(url) or target
+                token = refresh_csrf(http, harvest_url, headers=peer_headers)
+                if token is None and owner_headers.get("Cookie"):
+                    token = refresh_csrf(http, harvest_url, headers=owner_headers)
+                if token is not None:
+                    peer_headers, body = apply_csrf(
+                        headers=peer_headers, body=body, token=token
+                    )
 
             owner_before = ""
             if verify_url and owner_cookie:
@@ -456,6 +472,24 @@ def run(
                     )
                 )
                 continue
+            if csrf and looks_like_csrf_rejection(real_resp.status_code, real_resp.text):
+                harvest_url = csrf_from or origin_of(url) or target
+                token = refresh_csrf(http, harvest_url, headers=peer_headers)
+                if token is not None:
+                    peer_headers, body = apply_csrf(
+                        headers=peer_headers, body=body, token=token
+                    )
+                    retried = _send(
+                        http,
+                        method=method,
+                        url=url,
+                        headers=peer_headers,
+                        body=body,
+                        enforcer=enforcer,
+                        pacer=clock,
+                    )
+                    if retried is not None:
+                        real_resp = retried
 
             owner_after = ""
             owner_changed = None
@@ -497,6 +531,9 @@ def run(
                 )
                 continue
             if json_write_rejected(real_resp.text):
+                note = ""
+                if looks_like_csrf_rejection(real_resp.status_code, real_resp.text):
+                    note = "server rejected the write as a CSRF/token mismatch"
                 checked.append(
                     _checked(
                         write,
@@ -504,6 +541,7 @@ def run(
                         peer_status=real_resp.status_code,
                         nonsense_status=nonsense_resp.status_code,
                         owner_changed=owner_changed,
+                        note=note,
                     )
                 )
                 continue
@@ -517,6 +555,19 @@ def run(
                         peer_status=real_resp.status_code,
                         nonsense_status=nonsense_resp.status_code,
                         owner_changed=owner_changed,
+                    )
+                )
+                continue
+
+            if require_confirm and not owner_changed:
+                checked.append(
+                    _checked(
+                        write,
+                        verdict="unconfirmed",
+                        peer_status=real_resp.status_code,
+                        nonsense_status=nonsense_resp.status_code,
+                        owner_changed=owner_changed,
+                        note="peer write differed from control but owner re-read did not change",
                     )
                 )
                 continue

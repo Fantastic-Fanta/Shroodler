@@ -189,3 +189,41 @@ def test_cli_ingest_and_fusion_flags(fx, tmp_path):
     except SystemExit as ex:
         assert ex.code == 0
     assert "ingest" in out.read_text()
+
+
+def test_ingest_har_builds_pages_from_captured_bodies(fx, tmp_path):
+    from shroodler.cli import main
+    from shroodler.validate import validate_crawl
+
+    html = "<html><body><form action='/login' method='post'><input name='q'></form></body></html>"
+    har = {
+        "log": {
+            "creator": {"name": "Chrome", "version": "1"},
+            "entries": [
+                {
+                    "request": {
+                        "method": "GET",
+                        "url": fx.origin + "/",
+                        "headers": [{"name": "Cookie", "value": "sid=abc"}],
+                    },
+                    "response": {
+                        "status": 200,
+                        "headers": [{"name": "Content-Type", "value": "text/html"}],
+                        "content": {"mimeType": "text/html", "text": html},
+                    },
+                }
+            ],
+        }
+    }
+    har_path = tmp_path / "cap.har"
+    har_path.write_text(json.dumps(har), encoding="utf-8")
+    out = tmp_path / "from-har.json"
+    try:
+        main(["ingest-har", str(har_path), "--target", fx.origin, "--output", str(out)])
+    except SystemExit as ex:
+        assert ex.code == 0
+    doc = json.loads(out.read_text(encoding="utf-8"))
+    validate_crawl(doc)
+    assert doc["crawler"]["mode"] == "ingest"
+    assert any(p["url"].rstrip("/") == fx.origin.rstrip("/") for p in doc["pages"])
+    assert any(p.get("forms") for p in doc["pages"])

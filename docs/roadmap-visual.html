@@ -1,0 +1,886 @@
+<title>Shroodler Roadmap</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=DM+Mono:wght@400;500&family=Figtree:wght@400;500;600&display=swap">
+
+<style>
+:root {
+  --bg:              #080C17;
+  --bg-subtle:       #0C1120;
+  --surface:         #0F1729;
+  --surface-raised:  #172038;
+  --border:          #1C2840;
+  --border-muted:    #121A2E;
+  --text:            #C4D0E6;
+  --text-muted:      #566380;
+  --text-dim:        #2E3D58;
+  --accent:          #4E9E87;
+  --accent-glow:     rgba(78,158,135,0.12);
+
+  --phase-0-color:   #4E9E87;
+  --phase-1-color:   #5B82C8;
+  --phase-2-color:   #8A6BC8;
+  --phase-3-color:   #C8883A;
+  --phase-4-color:   #72A85C;
+  --defer-color:     #3A4A68;
+
+  --tag-bg:          rgba(78,158,135,0.12);
+  --tag-text:        #4E9E87;
+
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body:    'Figtree', system-ui, sans-serif;
+  --font-mono:    'DM Mono', 'Courier New', monospace;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg:              #EFF1F7;
+    --bg-subtle:       #E8EBF4;
+    --surface:         #FFFFFF;
+    --surface-raised:  #F7F9FC;
+    --border:          #D2D9E8;
+    --border-muted:    #E4E8F2;
+    --text:            #101828;
+    --text-muted:      #6070A0;
+    --text-dim:        #B8C4D8;
+    --accent:          #2E7A68;
+    --accent-glow:     rgba(46,122,104,0.08);
+    --tag-bg:          rgba(46,122,104,0.10);
+    --tag-text:        #2E7A68;
+    --defer-color:     #8090B0;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg:              #080C17;
+  --bg-subtle:       #0C1120;
+  --surface:         #0F1729;
+  --surface-raised:  #172038;
+  --border:          #1C2840;
+  --border-muted:    #121A2E;
+  --text:            #C4D0E6;
+  --text-muted:      #566380;
+  --text-dim:        #2E3D58;
+  --accent:          #4E9E87;
+  --accent-glow:     rgba(78,158,135,0.12);
+  --tag-bg:          rgba(78,158,135,0.12);
+  --tag-text:        #4E9E87;
+  --defer-color:     #3A4A68;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 64px 32px 96px;
+}
+
+@media (max-width: 640px) {
+  .page { padding: 40px 20px 72px; }
+}
+
+.site-header {
+  margin-bottom: 64px;
+}
+
+.site-header .eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.site-header h1 {
+  font-family: var(--font-display);
+  font-size: clamp(36px, 6vw, 58px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+  margin: 0 0 20px;
+  color: var(--text);
+}
+
+.site-header .subtitle {
+  font-size: 16px;
+  color: var(--text-muted);
+  max-width: 560px;
+  margin: 0 0 32px;
+  line-height: 1.6;
+}
+
+.header-meta {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.header-meta-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.header-meta-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.header-meta-value {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.honest-state {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 24px 28px;
+  margin-bottom: 64px;
+}
+
+.honest-state h2 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 16px;
+}
+
+.state-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 40px;
+}
+
+@media (max-width: 620px) {
+  .state-grid { grid-template-columns: 1fr; }
+}
+
+.state-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.state-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
+.state-dot.good  { background: var(--phase-4-color); }
+.state-dot.warn  { background: var(--phase-3-color); }
+.state-dot.risk  { background: #B85050; }
+
+.state-item p {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.state-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.phase {
+  margin-bottom: 56px;
+}
+
+.phase-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border-muted);
+  position: relative;
+}
+
+.phase-header::before {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 80px;
+  height: 1px;
+  background: var(--phase-color);
+}
+
+.phase-number {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  color: var(--phase-color);
+  margin-right: 20px;
+  padding: 3px 10px;
+  border: 1px solid var(--phase-color);
+  border-radius: 3px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.phase-name {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.5vw, 30px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  line-height: 1.1;
+  flex: 1;
+}
+
+.phase-timing {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: 16px;
+}
+
+.phase-outcome {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+  max-width: 660px;
+  line-height: 1.6;
+  border-left: 2px solid var(--phase-color);
+  padding-left: 14px;
+  opacity: 0.9;
+}
+
+.phase-outcome strong {
+  color: var(--text);
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 680px) {
+  .items-grid { grid-template-columns: 1fr; }
+}
+
+.item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.item.priority-1 {
+  border-color: var(--phase-color);
+  background: var(--surface-raised);
+}
+
+.item-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.item-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.item.priority-1 .item-name {
+  color: var(--phase-color);
+}
+
+.priority-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.priority-badge.p1 {
+  background: var(--accent-glow);
+  color: var(--phase-color);
+  border: 1px solid var(--phase-color);
+  opacity: 0.85;
+}
+
+.priority-badge.blocker {
+  background: rgba(184,80,80,0.12);
+  color: #B85050;
+  border: 1px solid rgba(184,80,80,0.4);
+}
+
+.item-desc {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.item-cmd {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-dim);
+  background: var(--bg-subtle);
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-top: 2px;
+  width: fit-content;
+}
+
+.deferred-block {
+  background: var(--bg-subtle);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-top: 8px;
+}
+
+.deferred-block h4 {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--defer-color);
+  margin: 0 0 10px;
+}
+
+.deferred-block ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.deferred-block li {
+  font-size: 13px;
+  color: var(--text-dim);
+  padding-left: 16px;
+  position: relative;
+  line-height: 1.5;
+}
+
+.deferred-block li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--text-dim);
+  opacity: 0.5;
+}
+
+.dep-note {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-muted);
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.dep-note strong {
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+.never-build {
+  margin-top: 72px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border-muted);
+}
+
+.never-build h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 8px;
+}
+
+.never-build .sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.never-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@media (max-width: 600px) {
+  .never-grid { grid-template-columns: 1fr; }
+}
+
+.never-item {
+  background: var(--surface);
+  border: 1px solid var(--border-muted);
+  border-radius: 7px;
+  padding: 14px 18px;
+}
+
+.never-item-name {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.never-item-why {
+  font-size: 13px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
+.doc-footer {
+  margin-top: 72px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.doc-footer span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+}
+</style>
+
+<div class="page">
+
+  <header class="site-header">
+    <p class="eyebrow">Shroodler · Strategic Roadmap</p>
+    <h1>Agentic Bug Bounty Suite</h1>
+    <p class="subtitle">A sequenced plan to build Shroodler from a capable personal research tool into the primary loop for running a bug bounty engagement — where an agent finds, confirms, and reports, and you direct the work. <strong>Pure CLI and MCP. No UI, no dashboard, no web layer — ever.</strong></p>
+    <div class="header-meta">
+      <div class="header-meta-item">
+        <span class="header-meta-label">Document date</span>
+        <span class="header-meta-value">2026-09-08</span>
+      </div>
+      <div class="header-meta-item">
+        <span class="header-meta-label">Horizon</span>
+        <span class="header-meta-value">~9 months</span>
+      </div>
+      <div class="header-meta-item">
+        <span class="header-meta-label">Phases</span>
+        <span class="header-meta-value">5 (0–4)</span>
+      </div>
+      <div class="header-meta-item">
+        <span class="header-meta-label">Current branch</span>
+        <span class="header-meta-value">main (unstaged)</span>
+      </div>
+    </div>
+  </header>
+
+  <div class="honest-state">
+    <h2>Honest state snapshot</h2>
+    <div class="state-grid">
+      <div class="state-item">
+        <div class="state-dot good"></div>
+        <p><strong>Architecture is right.</strong> Two-session authz-diff, nonsense-id control on peer-write, guardrails, MCP server — the core abstractions are well-designed and not easily matched.</p>
+      </div>
+      <div class="state-item">
+        <div class="state-dot risk"></div>
+        <p><strong>Most modules are brand new.</strong> The roadmap audit ran yesterday. peer-write, CSRF harvest, JS API surface, and chain findings have never been exercised on a real engagement under pressure.</p>
+      </div>
+      <div class="state-item">
+        <div class="state-dot warn"></div>
+        <p><strong>Auth is the #1 reliability gap.</strong> Mid-crawl re-auth runs once on 401. OAuth/PKCE, Castle.io anti-fraud tokens, and MFA breaks lose the entire run with no recoverable signal.</p>
+      </div>
+      <div class="state-item">
+        <div class="state-dot warn"></div>
+        <p><strong>No engagement memory.</strong> Every scan is independent. An agent can't ask "what endpoints haven't I tested on this program?" or "what object IDs did I find last week?"</p>
+      </div>
+      <div class="state-item">
+        <div class="state-dot risk"></div>
+        <p><strong>MCP outputs are agent-hostile.</strong> Tools return raw JSON. An agent driving a loop needs compact, decision-oriented outputs — not 400-line crawl blobs to reason over.</p>
+      </div>
+      <div class="state-item">
+        <div class="state-dot good"></div>
+        <p><strong>The ingest pattern is solid.</strong> HAR → crawl JSON → authz-diff → peer-write is a real pipeline. The proxy-and-record workflow is already the correct fallback for WAF-protected targets.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="phase" style="--phase-color: #4E9E87;">
+    <div class="phase-header">
+      <span class="phase-number">PHASE 0</span>
+      <h2 class="phase-name">Foundation</h2>
+      <span class="phase-timing">Now → 6 weeks</span>
+    </div>
+    <p class="phase-outcome">
+      <strong>Outcome:</strong> The code that already exists is reliable enough to trust on a real engagement. Auth doesn't break silently. The MCP surface is usable by an agent without drowning it in raw JSON. No new features until this gate is clear.
+    </p>
+    <div class="dep-note">
+      <strong>Prerequisite:</strong> Everything downstream depends on this. Adding Phase 1 engagement memory to an unreliable crawler just makes the wrong state persistent.
+    </div>
+    <div class="items-grid">
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Auth hardening</span>
+          <span class="priority-badge blocker">Blocker</span>
+        </div>
+        <p class="item-desc">Extend <code>--login-recipe</code> to handle OAuth callback + PKCE. Retry re-auth up to N times (configurable), not just once. On terminal failure, surface "session died at request N" with the last good URL — never silently produce garbage results. Add support for anti-fraud token injection hooks (Castle.io, DataDome) that require a JS-executing browser step.</p>
+        <span class="item-cmd">--login-recipe · --reauth-max-retries · --session-died hook</span>
+      </div>
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">MCP output compression</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Every MCP tool that returns findings should have a <code>--summary</code> mode emitting compact, decision-oriented output: "3 IDOR leads — 2 need confirmation, 1 confirmed. Curl repros follow." Raw JSON stays available but must not be the default. An agent reasoning over 400-line blobs is an agent wasting tokens on formatting.</p>
+        <span class="item-cmd">check_idor · peer_write · authz_diff → summary mode</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Test coverage for new modules</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">peer-write, CSRF harvest, JS API surface, chain findings, and stored XSS are all untracked or just-landed. Each needs unit tests before they can be trusted. Integration tests against the existing target-apps submodule are the right harness. Don't add more features until these have test coverage.</p>
+        <span class="item-cmd">packages/crawler-py/tests/unit/</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">FP calibration pass</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Run peer-write, CSRF harvest, and JS API surface against 3+ real programs from your existing engagements. Log every false positive. A confidence-grade of <code>probable</code> that fires on every second endpoint isn't a signal — it's alert fatigue. Calibrate thresholds before filing bugs based on these checks.</p>
+        <span class="item-cmd">confidence.py thresholds · known-benign list</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Commit surface reduction</span>
+        </div>
+        <p class="item-desc">The working tree has ~30 modified files and 10+ untracked modules. Commit what works, cut what doesn't, and get to a clean main. A chaotic working tree is a signal that the codebase is outrunning comprehension — the right response is to stop and consolidate, not ship the next feature.</p>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">WAF-blocked-session handling</span>
+        </div>
+        <p class="item-desc">When WAF/bot-detection blocks the headless crawler, emit a structured <code>waf-blocking-active-scan</code> finding with a clear "switch to proxy-and-record workflow" recommendation and the exact CLI sequence. The current behavior silently produces a mostly-empty crawl JSON with no explanation.</p>
+        <span class="item-cmd">waf-blocking-active-scan finding · recovery suggestion</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="phase" style="--phase-color: #5B82C8;">
+    <div class="phase-header">
+      <span class="phase-number">PHASE 1</span>
+      <h2 class="phase-name">Engagement Memory</h2>
+      <span class="phase-timing">6 → 12 weeks</span>
+    </div>
+    <p class="phase-outcome">
+      <strong>Outcome:</strong> Shroodler knows what it's already done on a program. An agent can ask "what endpoints haven't been tested yet?" and get a real answer. Scans accumulate, not restart from zero.
+    </p>
+    <div class="items-grid">
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">shroodler program init</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Per-program state store: crawl JSON history, confirmed findings, discovered object IDs, session cookie snapshots, scan timestamps. Keyed by program slug (e.g. <code>etoro-bugcrowd</code>). Lives in <code>~/.shroodler/programs/</code>. This is the foundation the agent loop reads from — without it, every session is amnesia.</p>
+        <span class="item-cmd">shroodler program init etoro-bugcrowd</span>
+      </div>
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Endpoint coverage tracking</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Track which endpoints have been: crawled, authz-diffed, peer-write tested, payload-tested. On each new scan, emit a coverage delta: "12 endpoints discovered since last run — 4 not yet authz-tested." MCP tool <code>coverage_gaps</code> returns this as a prioritized queue for the agent.</p>
+        <span class="item-cmd">MCP: coverage_gaps · shroodler program status</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Object ID persistence</span>
+        </div>
+        <p class="item-desc">Accumulate discovered object IDs (transaction IDs, account IDs, resource UUIDs) across scans per program. The peer-write playbook can pull from this store instead of requiring manual extraction each session. Cross-session ID correlation is where IDOR bugs live — if account #1's IDs from week 1 are still accessible in week 4, that's the finding.</p>
+        <span class="item-cmd">program.object_ids · peer-write --from-program</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Cross-scan finding dedup</span>
+        </div>
+        <p class="item-desc">Findings with the same id+url key across scans should surface as "persisted" rather than re-discovered. A finding that's been <code>probable</code> for 3 scans with no fix is more credible than one from a single scan. Surface a "persistence score" alongside confidence.</p>
+        <span class="item-cmd">history · trend --persist-signal</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">MCP: program_state tool</span>
+        </div>
+        <p class="item-desc">A single MCP tool the agent calls at the start of any session to load engagement context: known endpoints, object IDs, unconfirmed leads, last scan timestamp, gaps. Returns a compact briefing, not raw JSON. This is the agent's "orient" step before deciding what to test next.</p>
+        <span class="item-cmd">MCP: program_state · start_session</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Session cookie lifecycle</span>
+        </div>
+        <p class="item-desc">Store session snapshots with their capture timestamp and expected expiry. Warn before running an authz-diff with a cookie that's likely expired. Auto-suggest a session refresh via <code>session-export --cdp</code> when the stored state is stale. Avoids running a whole peer-write pass on an expired session and getting 401s everywhere.</p>
+        <span class="item-cmd">program.sessions · --cookie-max-age</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="phase" style="--phase-color: #8A6BC8;">
+    <div class="phase-header">
+      <span class="phase-number">PHASE 2</span>
+      <h2 class="phase-name">The Agent Loop</h2>
+      <span class="phase-timing">12 → 20 weeks</span>
+    </div>
+    <p class="phase-outcome">
+      <strong>Outcome:</strong> An agent can drive a full engagement cycle — triage → crawl → authz-diff → confirm IDOR leads → draft submission — with you reviewing and approving at each gate, not doing the mechanical work. This is Shroodler's differentiator; nothing else closes this loop.
+    </p>
+    <div class="dep-note">
+      <strong>Depends on:</strong> Phase 0 (reliable auth + compact MCP outputs) and Phase 1 (engagement memory). The agent loop is useless if it can't tell what it's already done.
+    </div>
+    <div class="items-grid">
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Agent-driven IDOR confirmation</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">The existing IDOR probe explicitly documents "manual confirmation required." Close that gap: spin up a second test-account session, replay the candidate URL, compare ownership/PII fields (user ID, email, account-specific data) between sessions to confirm or drop the lead. MCP <code>check_idor</code> already has the right interface — this wires the second session to it systematically.</p>
+        <span class="item-cmd">check_idor --peer-session · --require-identity-confirmation</span>
+      </div>
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Orchestration entrypoint</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">A single MCP tool that sequences a full engagement pass: load program state → triage new hosts → crawl → authz-diff → peer-write against stored IDs → surface confirmed leads → generate draft submission. Each step has an explicit approval gate before the next active step. The agent proposes; you approve. Never fully autonomous on writes.</p>
+        <span class="item-cmd">MCP: run_engagement · --gate-on-active</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">shroodler ask — refinement</span>
+        </div>
+        <p class="item-desc">The <code>ask</code> interface already exists. Make it useful: it should answer "what's new since Tuesday?", "which findings are <code>confirmed</code> and unfiled?", "show me the authz-diff results for <code>/api/orders/</code>." Structured queries over the engagement state, not freeform LLM chat over raw JSON.</p>
+        <span class="item-cmd">shroodler ask "confirmed findings not yet filed"</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Adaptive payload — feedback loop</span>
+        </div>
+        <p class="item-desc"><code>payload --adaptive</code> already exists as a single mutation per pack miss. Wire it to the agent loop: after a 403 on a payload-shaped request, the agent proposes a WAF-evasion variant, you approve, it fires once. Log the outcome. Never more than one extra request per approval. The audit log from guardrails already covers this — just surface it to the agent.</p>
+        <span class="item-cmd">payload --adaptive · MCP: propose_payload_variant</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Submission draft generator</span>
+        </div>
+        <p class="item-desc">Given a confirmed finding (with curl repro, ownership proof, and confidence chain), generate a draft Bugcrowd/HackerOne submission: title, severity justification, impact, steps to reproduce, supporting evidence. Plaintext, not an upload. You edit and file; the tool does the mechanical structure.</p>
+        <span class="item-cmd">shroodler report --format bugcrowd-draft</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Pre-submission calibration</span>
+        </div>
+        <p class="item-desc">Before you submit: a checklist tool that asks the questions the bug-bounty-playbook learned the hard way — "Is the impact section doing hypothetical chaining work? Is the finding excluded by the program's scope? Does the severity match the program's reward scale?" Catches the bcrypt-salt class of near-miss before it burns your signal score.</p>
+        <span class="item-cmd">shroodler calibrate --finding findings.json</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="phase" style="--phase-color: #C8883A;">
+    <div class="phase-header">
+      <span class="phase-number">PHASE 3</span>
+      <h2 class="phase-name">Discovery Pipeline</h2>
+      <span class="phase-timing">20 → 28 weeks</span>
+    </div>
+    <p class="phase-outcome">
+      <strong>Outcome:</strong> Triage is the orchestrated entry point for every engagement, not a standalone tool. The pipeline from "I have a program scope" to "here are the hosts worth crawling and here are the endpoints worth testing" is fast, safe, and reproducible.
+    </p>
+    <div class="items-grid">
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Triage as workflow entry</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc"><code>shroodler triage</code> exists but is a standalone command. Make it the canonical first step: pipe its output directly into <code>crawl --hosts-from</code>, store the classification results in program state, and have the agent begin every session by checking whether the triage is stale. The wien.gv.at incident (unbounded fan-out tripping a WAF) is the anti-pattern the tool exists to prevent.</p>
+        <span class="item-cmd">triage --save-to-program · crawl --hosts-from triage.json</span>
+      </div>
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Auth-stack probe library</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Extend auth-stack fingerprinting beyond next-auth/Keycloak/Auth0. Each detected stack should automatically trigger its known-pattern probes: Supabase (JWT secret bruteforce resistance check), Firebase (rules misconfiguration), Cognito (user enumeration via error messages), generic OAuth (state param CSRF, implicit flow). Start with the stacks you actually encounter on your programs.</p>
+        <span class="item-cmd">extractors/auth_stack.py · --auth-probes</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">GraphQL discovery depth</span>
+        </div>
+        <p class="item-desc">When introspection is blocked, the Clairvoyance integration already feeds field names. Extend: auto-detect common GQL frameworks (Apollo, Hasura, Relay) by response signatures and apply known framework-specific checks (Hasura's <code>X-Hasura-Admin-Secret</code>, Apollo's persisted queries endpoint). Maintain a small built-in wordlist of high-value field names (<code>password</code>, <code>token</code>, <code>ssn</code>, <code>adminOverride</code>) as a default.</p>
+        <span class="item-cmd">--gql-wordlist built-in · gql-framework fingerprint</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">JS route → authz-diff pipeline</span>
+        </div>
+        <p class="item-desc"><code>shroodler js-routes</code> extracts URL templates from bundles. Complete the pipeline: extracted templates → parameterize with stored object IDs → feed into authz-diff as additional test targets. Today these are separate manual steps. The agent should be able to run "extract routes from bundle, test each parameterized URL against the lower-priv session" as one orchestrated pass.</p>
+        <span class="item-cmd">js-routes | authz-diff --template-urls</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">OAuth / OIDC probe expansion</span>
+        </div>
+        <p class="item-desc">Beyond the existing state-param and implicit-flow checks: PKCE downgrade (does the server accept <code>plain</code> when the client sends <code>S256</code>?), token leakage via <code>Referer</code> on redirect, <code>prompt=none</code> silent auth bypass, cross-origin token endpoint probing. Each probe is a discrete finding with a clear description of the conditions that trigger it.</p>
+        <span class="item-cmd">extractors/oauth.py · --oauth-deep</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Program scope management</span>
+        </div>
+        <p class="item-desc">Store the program's in-scope / out-of-scope specification in program state. Before any active test, check the target URL against the scope. Emit a clear warning (not a block, but a warning) when a crawl or payload test is about to hit an out-of-scope host — the safe-harbor risk of testing out-of-scope is real and was felt on the eToro engagement.</p>
+        <span class="item-cmd">program set-scope · --scope-check-strict</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="phase" style="--phase-color: #72A85C;">
+    <div class="phase-header">
+      <span class="phase-number">PHASE 4</span>
+      <h2 class="phase-name">Submission Quality</h2>
+      <span class="phase-timing">28 → 36 weeks</span>
+    </div>
+    <p class="phase-outcome">
+      <strong>Outcome:</strong> Findings that come out of Shroodler are submission-ready. Minimal repros are tight. Severity is calibrated. Duplicate-check against known program history is automatic. The gap between "Shroodler found this" and "I submitted this" collapses.
+    </p>
+    <div class="items-grid">
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Minimal repro automation</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Binary-search the payload pack down to the shortest variant that still triggers the same confidence-level result. Today Shroodler reports whichever payload hit first — that's rarely the cleanest repro. A tight, minimal curl command is a significantly better bug report than a payload-dump, and it demonstrates the researcher understood the vulnerability rather than running a scanner.</p>
+        <span class="item-cmd">payload --minimal-repro · minimal_repro: true</span>
+      </div>
+      <div class="item priority-1">
+        <div class="item-label">
+          <span class="item-name">Duplicate detection</span>
+          <span class="priority-badge p1">P1</span>
+        </div>
+        <p class="item-desc">Before finalizing a submission: check the finding against your own previously-filed findings (by endpoint pattern + finding type) and, where available, check against known program disclosures. Filing a duplicate that you yourself found 3 months ago is avoidable. The program state store from Phase 1 makes this possible; this is the output layer for it.</p>
+        <span class="item-cmd">shroodler calibrate --check-duplicates</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">CVSS auto-scoring</span>
+        </div>
+        <p class="item-desc">Given a finding's type, confidence, and the conditions under which it fires, emit a draft CVSS 3.1 vector with a plain-English explanation of each axis choice. Not a replacement for judgment — a starting point that prevents the "I said Critical, triager said Low, now I'm appealing" cycle. Especially useful for the cost-of-attack axis the codebase already partially computes.</p>
+        <span class="item-cmd">report --cvss · cost_of_attack.py</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Platform-specific report formats</span>
+        </div>
+        <p class="item-desc">Bugcrowd and HackerOne have different submission templates, severity scales, and required evidence fields. Shroodler should know the difference. A <code>--format bugcrowd</code> report maps severity to Bugcrowd's P1-P5 scale and includes the fields their form expects; <code>--format hackerone</code> does the same for HackerOne's structure. Less time reformatting, more time finding.</p>
+        <span class="item-cmd">report --format bugcrowd · --format hackerone</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Evidence packaging</span>
+        </div>
+        <p class="item-desc">A confirmed finding should produce a self-contained evidence bundle: the curl repro, the request/response pair, the ownership-proof comparison (for IDOR), and the confidence chain. One file, attached to the submission. Today this is assembled manually from scattered JSON output. Bundle it automatically at confirmation time.</p>
+        <span class="item-cmd">shroodler report --bundle-evidence · evidence.zip</span>
+      </div>
+      <div class="item">
+        <div class="item-label">
+          <span class="item-name">Regression test on close</span>
+        </div>
+        <p class="item-desc">When a program closes a finding as fixed, <code>shroodler gen-regression-test</code> already exists. Integrate it into the ticket-sync workflow: when a GitHub issue is closed as fixed, auto-generate the regression test and add it to the program's test suite. The finding's fix comes with a guard by default, not as an afterthought.</p>
+        <span class="item-cmd">ticket sync --on-close gen-regression-test</span>
+      </div>
+    </div>
+    <div class="deferred-block">
+      <h4>Considered for Phase 4, intentionally deferred</h4>
+      <ul>
+        <li>AI-written submission narratives — adds AI noise to a document where your credibility is the point</li>
+        <li>Automatic submission filing — program platforms require human attestation; keep the human in the loop here</li>
+        <li>CVSS arbitration / triager negotiation tooling — this is a relationship problem, not a tool problem</li>
+      </ul>
+    </div>
+  </section>
+
+  <div class="never-build">
+    <h2>Hard DEFER — do not build these</h2>
+    <p class="sub">These are attractive because they look like scope. They are not scope. Each one is a multi-year distraction from a better-executed core.</p>
+    <div class="never-grid">
+      <div class="never-item">
+        <div class="never-item-name">WebSocket / gRPC / SOAP / protobuf</div>
+        <div class="never-item-why">Multi-year protocol catch-up. ZAP already has all of it. The right answer is <code>ingest-har</code> for WS traffic, not a WS scanner.</div>
+      </div>
+      <div class="never-item">
+        <div class="never-item-name">Nuclei-scale template library</div>
+        <div class="never-item-why">Community scale is not replicable solo. <code>nuclei-ingest</code> is already the right answer — consume their templates, don't compete on volume.</div>
+      </div>
+      <div class="never-item">
+        <div class="never-item-name">Multi-role authz-diff (>2 sessions)</div>
+        <div class="never-item-why">Two-session diff covers 95% of real bug bounty authorization bugs. Three-role complexity is for internal pentest tooling, not a single-researcher workflow.</div>
+      </div>
+      <div class="never-item">
+        <div class="never-item-name">Free-form LLM payload generation</div>
+        <div class="never-item-why"><code>--adaptive</code> with guardrails is the safe version and already exists. Unconstrained live generation against a production target is not controllable enough to be defensible.</div>
+      </div>
+      <div class="never-item">
+        <div class="never-item-name">Running Slither / Nuclei as subprocesses</div>
+        <div class="never-item-why">The ingest pattern is correct. Vendoring or shelling out to external analyzers creates a maintenance dependency and version-compatibility burden with no upside.</div>
+      </div>
+      <div class="never-item">
+        <div class="never-item-name">Any UI — GUI, web dashboard, TUI</div>
+        <div class="never-item-why">CLI is the interface. MCP is the agent interface. Every hour spent on a UI is an hour not spent on making the crawler and authz-diff more reliable. The audience is one researcher who is fluent in a terminal.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="doc-footer">
+    <span>Shroodler · Internal roadmap · 2026-09-08</span>
+    <span>Next review: after Phase 0 gate</span>
+  </footer>
+
+</div>

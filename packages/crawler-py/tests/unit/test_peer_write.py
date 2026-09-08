@@ -262,6 +262,43 @@ def test_error_status_is_not_a_finding(fx):
     assert out["checked"][0]["verdict"] == "error"
 
 
+def test_csrf_token_is_attached_to_json_write(fx):
+    fx.html("/", '<input type="hidden" name="csrf_token" value="tok-abcdefgh">')
+    seen = {}
+
+    def peer_write(inc):
+        seen["body"] = inc.body.decode()
+        seen["csrf"] = inc.headers.get("X-CSRF-Token") or inc.headers.get("X-Csrf-Token")
+        if inc.path.endswith("/1"):
+            return 404, {}, b'{"detail":"missing"}'
+        return 200, {}, b'{"ok":true}'
+
+    fx.on("POST", "/photo/1", peer_write)
+    fx.on("POST", "/photo/10464573", peer_write)
+    out = run(
+        _playbook(fx.origin, [_write(fx.origin)]),
+        peer_cookie="session=b",
+        pacer=_pacer(),
+    )
+    assert "tok-abcdefgh" in seen["body"]
+    assert seen["csrf"] == "tok-abcdefgh"
+    assert out["findings"][0]["id"] == "peer-write-idor"
+
+
+def test_require_confirm_drops_probable_lead(fx):
+    fx.on("POST", "/photo/1", lambda inc: (404, {}, b"no"))
+    fx.on("POST", "/photo/10464573", lambda inc: (200, {}, b'{"ok":true}'))
+    out = run(
+        _playbook(fx.origin, [_write(fx.origin)]),
+        peer_cookie="session=b",
+        pacer=_pacer(),
+        require_confirm=True,
+        csrf=False,
+    )
+    assert out["findings"] == []
+    assert out["checked"][0]["verdict"] == "unconfirmed"
+
+
 def test_challenge_is_recorded_not_solved(fx):
     body = b"Just a moment... checking your browser before accessing"
     fx.on("POST", "/photo/1", lambda inc: (403, {}, body))

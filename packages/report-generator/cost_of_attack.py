@@ -47,6 +47,11 @@ _BY_ID: dict[str, str] = {
     "authz-broken-access-control": "medium",
     "idor-adjacent-id-accessible": "medium",
     "peer-write-idor": "medium",
+    "csrf-state-change-unprotected": "none",
+    "chain-xss-cookie-theft": "none",
+    "chain-cors-credentialed": "none",
+    "payload-xss-stored": "none",
+    "graphql-field-authz": "medium",
     "oauth-implicit-flow": "medium",
     "next-auth-callback-url-unvalidated": "none",
     # Session fixation and a missing OAuth "state" parameter are both
@@ -81,6 +86,8 @@ _BY_CATEGORY: dict[str, str] = {
     "autocomplete": "none",
     "payload": "none",
     "auth": "none",
+    "smart-contract": "none",
+    "sast": "none",
 }
 
 _DEFAULT = "none"

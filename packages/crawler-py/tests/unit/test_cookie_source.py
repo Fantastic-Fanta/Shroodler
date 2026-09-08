@@ -94,6 +94,63 @@ def test_har_sessions_and_write_extract(tmp_path):
     assert writes[0]["method"] == "POST"
     assert "s=owner" in load_cookie_header(path, "http://127.0.0.1/photo/10464573/")
     assert sessions_from_har(har)[0]["request"]["url"].endswith("/10464573/")
+    assert sessions_from_har(har)[0]["request"]["body"]["content"] == '{"title":"x"}'
+
+
+def test_har_captures_response_body_and_skips_non_http():
+    har = {
+        "log": {
+            "entries": [
+                {
+                    "request": {
+                        "method": "GET",
+                        "url": "http://127.0.0.1/note",
+                        "headers": [{"name": "Accept", "value": "text/html"}],
+                    },
+                    "response": {
+                        "status": 200,
+                        "headers": [{"name": "Content-Type", "value": "text/html"}],
+                        "content": {"mimeType": "text/html", "text": "<html>secret</html>"},
+                    },
+                },
+                {
+                    "request": {
+                        "method": "GET",
+                        "url": "chrome-extension://abc/page.html",
+                        "headers": [],
+                    },
+                    "response": {"status": 200, "headers": [], "content": {"text": "nope"}},
+                },
+            ]
+        }
+    }
+    sessions = sessions_from_har(har)
+    assert len(sessions) == 1
+    assert sessions[0]["response"]["body"]["content"] == "<html>secret</html>"
+    assert sessions[0]["response"]["status_code"] == 200
+
+
+def test_seed_urls_accepts_har(tmp_path):
+    from shroodler.sessions import seed_urls
+
+    har = {
+        "log": {
+            "entries": [
+                {
+                    "request": {
+                        "method": "GET",
+                        "url": "http://127.0.0.1/hidden/api",
+                        "headers": [],
+                    },
+                    "response": {"status": 200, "headers": [], "content": {"text": "ok"}},
+                }
+            ]
+        }
+    }
+    path = tmp_path / "cap.har"
+    path.write_text(json.dumps(har), encoding="utf-8")
+    seeds = seed_urls(load_captured_sessions(path), "http://127.0.0.1/")
+    assert seeds == ["http://127.0.0.1/hidden/api"]
 
 
 def test_merge_cookie_headers_skips_junk():

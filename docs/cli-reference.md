@@ -15,6 +15,8 @@ shroodler payload out.json --plugin ./my-checks -o hits.json
 shroodler mcp-server --list-tools
 shroodler mcp-server   # stdio JSON-RPC; driven by an MCP client
 shroodler crawl http://127.0.0.1:8081 --spec ./openapi.json --output out.json
+shroodler crawl http://127.0.0.1:8081 --gql-schema ./clairvoyance.json --output out.json
+shroodler crawl http://127.0.0.1:8081 --seed-from captured.har --output out.json
 shroodler crawl http://127.0.0.1:8081 --user-agent "Mozilla/5.0 (compatible; my-scan/1.0)" --output out.json
 shroodler crawl http://127.0.0.1:8081 --login-recipe packages/target-apps/app1-server-rendered/login-recipe.json --output authed.json
 shroodler crawl http://127.0.0.1:8082 --mode headless --output spa.json
@@ -25,6 +27,11 @@ shroodler report out.json --format html --output out.html
 shroodler payload out.json --pack extra.yaml -o hits.json
 shroodler nuclei-ingest ./nuclei-http.yaml -o from-nuclei.yaml
 shroodler payload out.json --pack from-nuclei.yaml -o hits.json
+shroodler ingest-har captured.har --allow-external -o from-har.json
+shroodler slither-ingest slither-report.json -o sc.json
+shroodler report out.json --merge-sarif semgrep.sarif --format html -o out.html
+shroodler crawl http://127.0.0.1:8081 --gql-wordlist common-gql-fields.txt --output out.json
+shroodler authz-diff admin.json --cookie session=user --gql-schema clairvoyance.json
 shroodler payload out.json --oob-host collab.example.com -o hits.json   # blind checks
 shroodler payload out.json --require-policy -o hits.json   # refuse without a consent manifest
 shroodler payload out.json --audit-log audit.jsonl -o hits.json   # record every allow/block decision
@@ -51,6 +58,11 @@ shroodler authz-diff higher-priv-crawl.json --cookie session=abc123
 # Known-object peer-write replay (not n±1 enum). Nonsense-id control + owner re-read.
 shroodler peer-write playbook.json --peer-cookie session=b --owner-cookie session=a --rate 1
 shroodler peer-write --from-sessions captured.har --peer-cookies-from b-state.json --only-id 10464573 --allow-external
+shroodler peer-write playbook.json --peer-cookies-from b.json --owner-cookies-from a.json --require-confirm --csrf-from https://app.example/edit
+
+# Dump a replayable Playwright storageState (HttpOnly cookies included)
+shroodler session-export --cdp http://127.0.0.1:9222 --origin https://app.example -o owner.json
+shroodler session-export --from captured.har --origin https://app.example -o peer.json
 
 # Parameterized URL templates from a JS bundle (no fetch)
 shroodler js-routes app.bundle.js -o routes.json

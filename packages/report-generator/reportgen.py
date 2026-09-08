@@ -33,6 +33,26 @@ def _env() -> Environment:
     )
 
 
+def _enrich_doc(doc: dict) -> dict:
+    """Add chain findings and cluster repeating header rows for display."""
+    findings = [dict(f) for f in (doc.get("findings") or [])]
+    try:
+        from shroodler.chains import chain_findings, collapse_systemic_findings
+
+        extra = chain_findings(findings, doc.get("pages") or [])
+        existing = {(f.get("id"), f.get("url")) for f in findings}
+        for item in extra:
+            row = item.model_dump(exclude_none=True)
+            if (row.get("id"), row.get("url")) not in existing:
+                findings.append(row)
+        findings = collapse_systemic_findings(findings)
+    except ImportError:
+        pass
+    out = dict(doc)
+    out["findings"] = findings
+    return out
+
+
 def group_findings(findings: list[dict]) -> list[dict]:
     """Roll up findings that share an id, for a scannable summary.
 
@@ -64,6 +84,7 @@ def group_findings(findings: list[dict]) -> list[dict]:
 
 
 def render_html(doc: dict) -> str:
+    doc = _enrich_doc(doc)
     findings = []
     for f in doc.get("findings", []):
         item = dict(f)
@@ -104,6 +125,7 @@ def _csv_safe(value: str) -> str:
 
 
 def render_csv(doc: dict) -> str:
+    doc = _enrich_doc(doc)
     buf = io.StringIO()
     writer = csv.DictWriter(
         buf,
@@ -147,6 +169,133 @@ SARIF_LEVEL = {
     "low": "note",
     "info": "note",
 }
+
+_SARIF_LEVEL_TO_SEV = {
+    "error": "high",
+    "warning": "medium",
+    "note": "info",
+    "none": "info",
+}
+
+_SARIF_PROP_SEV = {
+    "critical": "critical",
+    "error": "high",
+    "high": "high",
+    "warning": "medium",
+    "medium": "medium",
+    "note": "info",
+    "info": "info",
+    "informational": "info",
+    "low": "low",
+}
+
+
+def _sarif_severity(result: dict, level: str) -> str:
+    props = result.get("properties") if isinstance(result.get("properties"), dict) else {}
+    for key in ("severity", "problem.severity", "security-severity"):
+        raw = props.get(key)
+        if isinstance(raw, str) and raw.lower() in _SARIF_PROP_SEV:
+            return _SARIF_PROP_SEV[raw.lower()]
+        if isinstance(raw, (int, float)):
+            # GitHub-style 0.0–10.0 security-severity
+            score = float(raw)
+            if score >= 9:
+                return "critical"
+            if score >= 7:
+                return "high"
+            if score >= 4:
+                return "medium"
+            if score > 0:
+                return "low"
+            return "info"
+    return _SARIF_LEVEL_TO_SEV.get((level or "note").lower(), "info")
+
+
+def _sarif_message(result: dict) -> str:
+    message = result.get("message")
+    if isinstance(message, dict):
+        text = message.get("text") or message.get("markdown") or ""
+        return str(text)
+    if isinstance(message, str):
+        return message
+    return ""
+
+
+def _sarif_location_url(result: dict, default_url: str) -> str:
+    locations = result.get("locations") or []
+    if not isinstance(locations, list):
+        locations = []
+    for loc in locations:
+        if not isinstance(loc, dict):
+            continue
+        physical = loc.get("physicalLocation")
+        if not isinstance(physical, dict):
+            continue
+        artifact = physical.get("artifactLocation")
+        uri = ""
+        if isinstance(artifact, dict):
+            uri = str(artifact.get("uri") or "")
+        region = physical.get("region") if isinstance(physical.get("region"), dict) else {}
+        line = region.get("startLine")
+        if uri and line:
+            return f"{uri}#L{line}"
+        if uri:
+            return uri
+    return default_url or "sarif"
+
+
+def findings_from_sarif(doc: dict, *, default_url: str = "") -> list[dict]:
+    """Fold a SARIF 2.x document into Shroodler finding dicts.
+
+    Translation only — does not re-run Semgrep/CodeQL/Slither. Unknown
+    extra SARIF fields are dropped so the result validates against the
+    finding schema.
+    """
+    runs = doc.get("runs") or []
+    if not isinstance(runs, list):
+        return []
+    out: list[dict] = []
+    for run in runs:
+        if not isinstance(run, dict):
+            continue
+        results = run.get("results") or []
+        if not isinstance(results, list):
+            continue
+        for result in results:
+            if not isinstance(result, dict):
+                continue
+            rule_id = str(result.get("ruleId") or result.get("ruleID") or "sarif-finding")
+            level = str(result.get("level") or "note")
+            url = _sarif_location_url(result, default_url)
+            desc = _sarif_message(result) or rule_id
+            out.append(
+                {
+                    "id": rule_id,
+                    "severity": _sarif_severity(result, level),
+                    "category": "sast",
+                    "url": url,
+                    "description": desc,
+                    "evidence": url,
+                    "confidence": "probable",
+                }
+            )
+    return out
+
+
+def merge_findings(base: list, extra: list) -> list:
+    """Append extra findings that are not already present by (id, url)."""
+    seen = {(f.get("id"), f.get("url")) for f in base if isinstance(f, dict)}
+    out = list(base)
+    for finding in extra:
+        if not isinstance(finding, dict):
+            continue
+        key = (finding.get("id"), finding.get("url"))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(finding)
+    return out
+
 
 SEVERITY_ORDER = ("critical", "high", "medium", "low", "info")
 
@@ -304,6 +453,7 @@ def _md_inline_code_safe(value: str) -> str:
 
 
 def render_markdown(doc: dict) -> str:
+    doc = _enrich_doc(doc)
     findings = list(doc.get("findings") or [])
     crawler = doc.get("crawler") or {}
     target = _md_inline_code_safe(doc.get("target") or "")

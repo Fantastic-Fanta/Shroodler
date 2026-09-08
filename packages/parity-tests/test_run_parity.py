@@ -50,6 +50,17 @@ def test_compare_ok_when_id_path_and_severity_all_match():
     assert compare(py_doc, go_doc) == []
 
 
+def test_python_only_finding_id_excluded_from_comparison():
+    doc = {
+        "id": "csrf-state-change-unprotected",
+        "url": "http://x/edit",
+        "severity": "medium",
+        "category": "auth",
+    }
+    assert finding_set(_doc([doc])) == set()
+    assert compare(_doc([doc]), _doc([])) == []
+
+
 def test_python_only_category_excluded_from_comparison():
     # sri-missing/mixed-content (category "subresource") run unconditionally
     # in crawler-py but have no Go implementation yet -- a Python-only

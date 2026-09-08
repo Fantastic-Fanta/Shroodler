@@ -111,6 +111,7 @@ def run(
     higher_priv_identity_markers: list[str] | None = None,
     lower_priv_identity_markers: list[str] | None = None,
     require_identity_confirmation: bool = False,
+    gql_field_names: list[str] | None = None,
 ) -> dict:
     """`enforcer`, if given, is a `shroodler_guardrails.policy.PolicyEnforcer`
     consulted before every live request this replay makes (both the
@@ -257,8 +258,57 @@ def run(
                     f"account's own identity marker ({marker!r})."
                 )
             findings.append(finding)
+
+        gql_urls = _graphql_urls(higher_doc)
+        field_names = _graphql_field_names(higher_doc, gql_field_names)
+        for url in gql_urls:
+            if not allow_external and not is_loopback_or_local(url):
+                continue
+            if enforcer is not None and not enforcer.check(url)[0]:
+                continue
+            from shroodler.extractors.graphql import replay_graphql_fields
+
+            extra = replay_graphql_fields(
+                url,
+                http,
+                lower_headers=lower_headers,
+                field_names=field_names or None,
+                enforcer=enforcer,
+            )
+            findings.extend(f.model_dump(exclude_none=True) for f in extra)
     finally:
         if own:
             http.close()
 
     return {"target": target, "findings": findings}
+
+
+def _graphql_urls(doc: dict) -> list[str]:
+    out: list[str] = []
+    for page in doc.get("pages") or []:
+        url = str(page.get("url") or "")
+        if url and "graphql" in url.lower() and url not in out:
+            out.append(url)
+    for ep in doc.get("js_endpoints") or []:
+        source = str(ep.get("source") or "")
+        marker = str(ep.get("endpoint") or "")
+        if "graphql" in (source + marker).lower() and source.startswith("http") and source not in out:
+            out.append(source)
+    return out
+
+
+def _graphql_field_names(doc: dict, extra: list[str] | None) -> list[str]:
+    from shroodler.extractors.graphql import field_name_from_endpoint
+
+    names: list[str] = []
+    seen: set[str] = set()
+    for name in extra or []:
+        if name and name not in seen:
+            seen.add(name)
+            names.append(name)
+    for ep in doc.get("js_endpoints") or []:
+        extracted = field_name_from_endpoint(str(ep.get("endpoint") or ""))
+        if extracted and extracted not in seen:
+            seen.add(extracted)
+            names.append(extracted)
+    return names

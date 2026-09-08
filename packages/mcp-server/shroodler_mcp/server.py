@@ -164,6 +164,7 @@ def main(argv: list[str] | None = None) -> int:
             "  check_idor            Confirm or drop an IDOR lead (second session)\n"
             "  check_ws_idor         Test WS subscription authorization (IDOR probe)\n"
             "  peer_write            Replay known-object writes as a peer session\n"
+            "  session_export        Dump storageState from HAR/JSONL/CDP\n"
             "  extract_js_routes     Mine {id} URL templates from a local JS file\n"
             "  paced_fetch           GET a short URL list at 1 req/s\n"
             "  reverify_fix          Re-scan a route; report whether a finding is gone\n"

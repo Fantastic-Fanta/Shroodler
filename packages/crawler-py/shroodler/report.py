@@ -6,6 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "report-generator"))
 
+from reportgen import findings_from_sarif  # noqa: E402
+from reportgen import merge_findings  # noqa: E402
 from reportgen import render  # noqa: E402
 from reportgen import render_diff_junit as _diff_junit  # noqa: E402
 from reportgen import render_diff_sarif as _diff_sarif  # noqa: E402

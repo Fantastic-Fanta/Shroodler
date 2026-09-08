@@ -26,6 +26,16 @@ def path_set(doc: dict) -> set[str]:
 #: being invisible to users who'd never think to enable it. If shroodler-go
 #: gains this check, remove it from here rather than leaving a stale exclusion.
 PYTHON_ONLY_CATEGORIES = {"subresource", "tls"}
+PYTHON_ONLY_FINDING_IDS = {
+    "csrf-state-change-unprotected",
+    "chain-xss-cookie-theft",
+    "chain-cors-credentialed",
+    "js-jsonrpc-method",
+    "js-trpc-procedure",
+    "js-react-query-key",
+    "js-graphql-operation",
+    "graphql-field-authz",
+}
 
 
 def finding_set(doc: dict) -> set[tuple[str, str, str, str]]:
@@ -49,6 +59,7 @@ def finding_set(doc: dict) -> set[tuple[str, str, str, str]]:
         (f["id"], urlparse(f["url"]).path, urlparse(f["url"]).query, f["severity"])
         for f in doc.get("findings", [])
         if f.get("category") not in PYTHON_ONLY_CATEGORIES
+        and f.get("id") not in PYTHON_ONLY_FINDING_IDS
     }
 
 

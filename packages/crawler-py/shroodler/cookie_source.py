@@ -74,8 +74,55 @@ def _header_map(items: object) -> dict[str, str]:
         name = item.get("name")
         if not name:
             continue
-        out[str(name)] = str(item.get("value") or "")
+        key = str(name)
+        value = str(item.get("value") or "")
+        if key in out:
+            out[key] = out[key] + ", " + value
+        else:
+            out[key] = value
     return out
+
+
+def _cookie_header_from_list(items: object) -> str:
+    parts: list[str] = []
+    if not isinstance(items, list):
+        return ""
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            continue
+        parts.append(f"{name}={item.get('value') or ''}")
+    return "; ".join(parts)
+
+
+def _har_body(payload: dict[str, Any] | None, *, text_key: str = "text") -> dict[str, str]:
+    """HAR postData / response.content → the session body shape ingest uses."""
+    if not payload:
+        return {"encoding": "utf8", "content": ""}
+    text = str(payload.get(text_key) or "")
+    encoding = str(payload.get("encoding") or "utf8").lower()
+    if encoding != "base64":
+        encoding = "utf8"
+    if not text:
+        params = payload.get("params")
+        if isinstance(params, list):
+            from urllib.parse import urlencode
+
+            pairs: list[tuple[str, str]] = []
+            for item in params:
+                if not isinstance(item, dict) or not item.get("name"):
+                    continue
+                pairs.append((str(item["name"]), str(item.get("value") or "")))
+            if pairs:
+                text = urlencode(pairs)
+    return {"encoding": encoding, "content": text}
+
+
+def _http_url(url: str) -> bool:
+    lower = url.lower()
+    return lower.startswith("http://") or lower.startswith("https://")
 
 
 def sessions_from_har(doc: dict[str, Any]) -> list[dict[str, Any]]:
@@ -90,25 +137,41 @@ def sessions_from_har(doc: dict[str, Any]) -> list[dict[str, Any]]:
         resp = entry.get("response") or {}
         if not isinstance(req, dict):
             continue
-        post = req.get("postData") if isinstance(req.get("postData"), dict) else {}
-        body_text = str((post or {}).get("text") or "")
+        url = str(req.get("url") or "")
+        if not _http_url(url):
+            continue
+        post = req.get("postData") if isinstance(req.get("postData"), dict) else None
+        headers = _header_map(req.get("headers"))
+        if not any(k.lower() == "cookie" for k in headers):
+            cookie = _cookie_header_from_list(req.get("cookies"))
+            if cookie:
+                headers["Cookie"] = cookie
         status = 0
+        resp_headers: dict[str, str] = {}
+        resp_body = {"encoding": "utf8", "content": ""}
         if isinstance(resp, dict):
             try:
                 status = int(resp.get("status") or 0)
             except (TypeError, ValueError):
                 status = 0
+            resp_headers = _header_map(resp.get("headers"))
+            content = resp.get("content") if isinstance(resp.get("content"), dict) else None
+            resp_body = _har_body(content)
+            mime = str((content or {}).get("mimeType") or "")
+            if mime and not any(k.lower() == "content-type" for k in resp_headers):
+                resp_headers["Content-Type"] = mime
         out.append(
             {
                 "request": {
                     "method": str(req.get("method") or "GET"),
-                    "url": str(req.get("url") or ""),
-                    "headers": _header_map(req.get("headers")),
-                    "body": {"encoding": "utf8", "content": body_text},
+                    "url": url,
+                    "headers": headers,
+                    "body": _har_body(post),
                 },
                 "response": {
                     "status_code": status,
-                    "headers": _header_map(resp.get("headers") if isinstance(resp, dict) else []),
+                    "headers": resp_headers,
+                    "body": resp_body,
                 },
             }
         )

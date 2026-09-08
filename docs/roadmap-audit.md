@@ -33,12 +33,23 @@ Status key:
 | Auth-stack fingerprinting + standard probe library | 4 | **DONE** | `extractors/auth_stack.py` during crawl. next-auth `callbackUrl` probe; Keycloak/Auth0 fingerprint-only. |
 | Reduce URL-embedded-token false positives in entropy secret detector | 3 | **DONE** | `extractors/secrets.py`: benign query names (`bookmark`, `cursor`, tracking IDs) skip `generic-api-key`; high-signal names still fire. |
 
+## External tool integration
+
+Added 2026-09-08 from Whatnot engagement + Immunefi coverage analysis.
+
+| Idea | Useful | Status | Where / what's missing |
+|---|---|---|---|
+| `ingest-har` (Burp/mitmproxy/Caido/DevTools HAR → crawl seeds) | 5 | **DONE** | `shroodler ingest-har`. HAR entries become Page records (with response bodies) plus passive findings. `ingest-sessions` and `crawl --seed-from`/`--cookies-from` auto-detect HAR too. |
+| `--gql-schema` / `--gql-wordlist` on crawl (Clairvoyance output → `replay_graphql_fields()`) | 4 | **DONE** | Flags on `crawl` (records Query field names on discovered GraphQL endpoints) and `authz-diff` (feeds `replay_graphql_fields` when introspection is blocked). MCP `check_idor` takes the same. |
+| `slither-ingest` (Slither JSON → Shroodler findings) | 4 | **DONE** | `shroodler slither-ingest`. Translation only; does not run Slither. Category `smart-contract`. |
+| `--merge-sarif` on report (fold external SARIF into report) | 3 | **DONE** | `report --merge-sarif FILE` (repeatable). Dedupes by id+url. Category `sast`. |
+
 ## Closing the gap with ZAP
 
 | Idea | Useful | Status | Where / what's missing |
 |---|---|---|---|
 | Plugin/extension API for checks (payload packs, secret rules) | 5 | **DONE** | `packages/crawler-py/shroodler/plugins.py`; `--plugin` / `$SHROODLER_PLUGIN_PATH` on `crawl` and `payload`. |
-| Protocol coverage breadth (WebSockets, gRPC, SOAP, deeper GraphQL, OpenAPI/HAR import) | 4 | **DEFER** | Multi-year catch-up. GraphQL introspection and OpenAPI discovery during crawl exist; HAR ingest is `ingest-sessions`; local OpenAPI/Postman *seed* is the separate `--spec` item (DONE). Do not build WS/gRPC/SOAP. |
+| Protocol coverage breadth (WebSockets, gRPC, SOAP, deeper GraphQL, OpenAPI/HAR import) | 4 | **DEFER** | Multi-year catch-up. GraphQL introspection and OpenAPI discovery during crawl exist; HAR ingest is `ingest-har` (DONE, separate item); local OpenAPI/Postman *seed* is `--spec` (DONE). Do not build WS/gRPC/SOAP. |
 | Authenticated-scan ergonomics (auto re-auth on session expiry, multi-role beyond two-session diff) | 4 | **PARTIAL** | Mid-crawl re-auth shipped (`--login-recipe` re-runs once on 401/login-redirect). Multi-role beyond two-session `authz-diff` remains **DEFER**. |
 | CVE-signature/template library | 3 | **DONE** | Loader only: `shroodler nuclei-ingest` + `payload --pack` auto-detect. Not a Nuclei-scale template collection (that stays DEFER). |
 
@@ -83,6 +94,10 @@ Buildable queue — all shipped in this pass unless DEFER:
 10. OpenAPI/Postman `--spec` seed
 11. `shroodler cadence`
 12. Nuclei YAML ingest (loader only)
+13. `ingest-har` + HAR auto-detect on ingest-sessions / --seed-from
+14. `--gql-schema` / `--gql-wordlist` on crawl and authz-diff
+15. `slither-ingest`
+16. `report --merge-sarif`
 
 ## Explicitly not building (still DEFER)
 

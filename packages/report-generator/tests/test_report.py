@@ -12,7 +12,9 @@ from bs4 import BeautifulSoup
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from remediation import remediation_for
 from reportgen import (
+    findings_from_sarif,
     format_evidence,
+    merge_findings,
     render,
     render_csv,
     render_html,
@@ -409,3 +411,59 @@ def test_render_csv_neutralizes_formula_injection():
     rows = list(csv.DictReader(io.StringIO(text)))
     assert rows[0]["description"] == "'=cmd|'/c calc'!A1"
     assert rows[0]["evidence"] == "'+SUM(1+1)"
+
+
+def test_findings_from_sarif_and_merge_dedupes():
+    sarif = {
+        "version": "2.1.0",
+        "runs": [
+            {
+                "results": [
+                    {
+                        "ruleId": "python.lang.security.audit.hardcoded-password",
+                        "level": "error",
+                        "message": {"text": "Hardcoded password"},
+                        "locations": [
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "app/auth.py"},
+                                    "region": {"startLine": 12},
+                                }
+                            }
+                        ],
+                    },
+                    {
+                        "ruleId": "missing-csp",
+                        "level": "warning",
+                        "message": {"text": "already in crawl"},
+                        "locations": [
+                            {
+                                "physicalLocation": {
+                                    "artifactLocation": {"uri": "http://127.0.0.1:8081/login"}
+                                }
+                            }
+                        ],
+                    },
+                ]
+            }
+        ],
+    }
+    extra = findings_from_sarif(sarif, default_url="http://127.0.0.1:8081/")
+    assert extra[0]["id"] == "python.lang.security.audit.hardcoded-password"
+    assert extra[0]["severity"] == "high"
+    assert extra[0]["category"] == "sast"
+    assert extra[0]["url"] == "app/auth.py#L12"
+    base = [
+        {
+            "id": "missing-csp",
+            "severity": "medium",
+            "category": "header",
+            "url": "http://127.0.0.1:8081/login",
+            "description": "CSP missing",
+            "evidence": None,
+        }
+    ]
+    merged = merge_findings(base, extra)
+    ids = [f["id"] for f in merged]
+    assert ids.count("missing-csp") == 1
+    assert "python.lang.security.audit.hardcoded-password" in ids

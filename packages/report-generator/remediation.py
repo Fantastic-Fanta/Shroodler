@@ -64,6 +64,15 @@ _BY_ID: dict[str, str] = {
     "authz-broken-access-control": "This URL enforces *some* session but not the *right* one -- a lower-privileged session can reach it while an anonymous request is denied. Enforce authorization checks server-side per-object, not just per-route.",
     "idor-adjacent-id-accessible": "First confirm the adjacent ID actually belongs to a different account (not just another of your own records); if so, enforce an object-level authorization check on this endpoint instead of trusting that any valid session may access any ID.",
     "peer-write-idor": "A second session could modify a known object it does not own. Enforce object-level authorization on this write (compare the session's user to the object's owner) and do not treat a generic 200 / empty JSON as success.",
+    "csrf-state-change-unprotected": "Add a per-session CSRF token (or strict Origin allowlist) on this state-changing endpoint, and do not use SameSite=None on the session cookie unless the token is also required.",
+    "chain-xss-cookie-theft": "Fix the XSS and set HttpOnly on the session cookie. Either half alone is incomplete.",
+    "chain-cors-credentialed": "Do not reflect arbitrary Origins with credentials, and do not set SameSite=None on the session cookie unless you also enforce a CSRF token.",
+    "payload-xss-stored": "Encode the stored value on output (context-aware) and treat this as a stored-XSS incident, not a reflection-only issue.",
+    "graphql-field-authz": "Authorize this GraphQL field per object, not just 'is logged in'. Replay as a second user and deny if they do not own the record.",
+    "js-jsonrpc-method": "Informational: a JSON-RPC method name was found in client JS; confirm the method enforces its own authz.",
+    "js-trpc-procedure": "Informational: a tRPC procedure name was found in client JS; confirm the procedure enforces its own authz.",
+    "js-react-query-key": "Informational: a React Query key names an API path; confirm that path enforces its own authz.",
+    "js-graphql-operation": "Informational: a GraphQL operation name was found in client JS; confirm the resolver enforces object-level authz.",
     "oauth-missing-state": "Add a random, unguessable state parameter to the authorization request and verify it matches on the callback, to prevent CSRF against the OAuth flow.",
     "reset-token-sequential": "Generate reset/verification tokens with a CSPRNG (e.g. 32+ random bytes), never a sequential, incrementing, or timestamp-derived value.",
     "reset-token-small-keyspace": "Lengthen the reset/verification token and/or widen its alphabet, and add real rate limiting/lockout on repeated attempts against this endpoint.",
@@ -90,6 +99,8 @@ _BY_CATEGORY: dict[str, str] = {
     "verbose-error": "Disable verbose/debug error output in production.",
     "js-endpoint": "Informational: an API endpoint was discovered in client-side JS; confirm it enforces its own authz.",
     "scan-note": "Informational: an active probe was intentionally skipped for this URL, not a vulnerability by itself -- other checks against it were not meaningfully performed either.",
+    "smart-contract": "Review this Slither detector hit on the named contract/function; Shroodler only translated the finding, it did not re-analyze the bytecode.",
+    "sast": "Review this SAST finding imported from SARIF; confirm it still applies in this deployment.",
 }
 
 _DEFAULT = "Review this finding's evidence and confirm whether it is exploitable in this deployment."

@@ -67,6 +67,16 @@ def _write(text: str, output: str | None) -> None:
         print(text, end="")
 
 
+def _gql_field_names(args: argparse.Namespace) -> list[str]:
+    from shroodler.extractors.graphql import load_graphql_field_names
+
+    paths = list(getattr(args, "gql_schema", None) or [])
+    paths.extend(getattr(args, "gql_wordlist", None) or [])
+    if not paths:
+        return []
+    return load_graphql_field_names(paths)
+
+
 def cmd_crawl(args: argparse.Namespace) -> int:
     depth = None if args.depth < 0 else args.depth
     max_pages = getattr(args, "max_pages", 400)
@@ -92,13 +102,14 @@ def cmd_crawl(args: argparse.Namespace) -> int:
     cookies_from = getattr(args, "cookies_from", None)
     seed_from = getattr(args, "seed_from", None)
     if cookies_from or seed_from:
-        from shroodler.sessions import cookie_header, load_sessions, seed_urls
+        from shroodler.cookie_source import load_captured_sessions
+        from shroodler.sessions import cookie_header, seed_urls
 
         if cookies_from:
-            hdr = cookie_header(load_sessions(cookies_from), args.url)
+            hdr = cookie_header(load_captured_sessions(cookies_from), args.url)
             cookies.extend(p.strip() for p in hdr.split(";") if p.strip())
         if seed_from:
-            extra_seeds.extend(seed_urls(load_sessions(seed_from), args.url))
+            extra_seeds.extend(seed_urls(load_captured_sessions(seed_from), args.url))
     result = crawl_url(
         args.url,
         mode=args.mode,
@@ -120,6 +131,7 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         check_idor=bool(getattr(args, "check_idor", False)),
         plugins=list(getattr(args, "plugin", None) or []),
         exclude_paths=list(getattr(args, "exclude_path", None) or []),
+        gql_field_names=_gql_field_names(args),
         **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
     )
     doc = result.to_dict()
@@ -287,6 +299,19 @@ def cmd_report(args: argparse.Namespace) -> int:
     doc = load_json(args.findings)
     rules = load_suppressions(getattr(args, "suppressions", None))
     _warn_expired_suppressions(rules)
+    merge_paths = list(getattr(args, "merge_sarif", None) or [])
+    if merge_paths:
+        from shroodler.confidence import stamp_findings
+        from shroodler.report import findings_from_sarif, merge_findings
+
+        extra: list[dict] = []
+        default_url = str(doc.get("target") or "")
+        for path in merge_paths:
+            sarif_doc = json.loads(Path(path).read_text(encoding="utf-8"))
+            extra.extend(findings_from_sarif(sarif_doc, default_url=default_url))
+        stamp_findings(extra)
+        doc = dict(doc)
+        doc["findings"] = merge_findings(list(doc.get("findings") or []), extra)
     if rules:
         doc = dict(doc)
         doc["findings"] = filter_findings(doc.get("findings") or [], rules)
@@ -375,6 +400,7 @@ def cmd_authz_diff(args: argparse.Namespace) -> int:
         higher_priv_identity_markers=list(getattr(args, "higher_priv_marker", None) or []),
         lower_priv_identity_markers=list(getattr(args, "lower_priv_marker", None) or []),
         require_identity_confirmation=bool(getattr(args, "require_identity_confirmation", False)),
+        gql_field_names=_gql_field_names(args),
     )
     text = json.dumps(out, indent=2) + "\n"
     _write(text, args.output)
@@ -452,8 +478,25 @@ def cmd_peer_write(args: argparse.Namespace) -> int:
         user_agent_suffix=getattr(args, "user_agent_suffix", None) or "",
         nonsense_id=str(getattr(args, "nonsense_id", None) or "1"),
         only_id=getattr(args, "only_id", None),
+        csrf=not bool(getattr(args, "no_csrf", False)),
+        csrf_from=str(getattr(args, "csrf_from", None) or ""),
+        require_confirm=bool(getattr(args, "require_confirm", False)),
     )
     text = json.dumps(out, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
+
+
+def cmd_session_export(args: argparse.Namespace) -> int:
+    from shroodler.session_export import export_session
+
+    doc = export_session(
+        source=getattr(args, "source", None),
+        cdp=getattr(args, "cdp", None),
+        origin=str(getattr(args, "origin", None) or ""),
+        pairs=list(getattr(args, "cookie", None) or []),
+    )
+    text = json.dumps(doc, indent=2) + "\n"
     _write(text, args.output)
     return 0
 
@@ -637,6 +680,17 @@ def cmd_nuclei_ingest(args: argparse.Namespace) -> int:
     text = nuclei_ingest.dumps_pack(packs)
     _write(text, args.output)
     return 0 if packs else 1
+
+
+def cmd_slither_ingest(args: argparse.Namespace) -> int:
+    from shroodler.slither_ingest import convert_file
+
+    result = convert_file(args.report, target=getattr(args, "target", None))
+    doc = result.to_dict()
+    validate_crawl(doc)
+    text = json.dumps(doc, indent=2) + "\n"
+    _write(text, args.output)
+    return 0
 
 
 def cmd_payload(args: argparse.Namespace) -> int:
@@ -1191,10 +1245,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Local OpenAPI/Swagger or Postman collection; enqueue same-origin "
         "paths as extra crawl seeds (repeatable)",
     )
-    crawl.add_argument("--seed-from", help="Proxy session JSONL; enqueue captured same-origin URLs")
+    crawl.add_argument("--seed-from", help="HAR or proxy session JSONL; enqueue captured same-origin URLs")
     crawl.add_argument(
         "--cookies-from",
-        help="Proxy session JSONL; Cookie header from captured Set-Cookie / Cookie",
+        help="HAR or proxy session JSONL; Cookie header from captured Set-Cookie / Cookie",
+    )
+    crawl.add_argument(
+        "--gql-schema",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="Clairvoyance / GraphQL introspection JSON; Query field names are "
+        "recorded on discovered GraphQL endpoints so authz-diff can replay them "
+        "when live introspection is blocked (repeatable)",
+    )
+    crawl.add_argument(
+        "--gql-wordlist",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="Plain field-name wordlist (one name per line) used the same way as "
+        "--gql-schema when introspection is disabled (repeatable)",
     )
     crawl.add_argument(
         "--plugin",
@@ -1249,6 +1320,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     report.add_argument("--output", "-o")
     report.add_argument("--suppressions", default=None)
+    report.add_argument(
+        "--merge-sarif",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="Fold an external SARIF 2.x file (Semgrep, CodeQL, Slither, ...) into "
+        "this report's findings before rendering. Dedupes by id+url against "
+        "findings already in the crawl JSON. Repeatable.",
+    )
     report.set_defaults(func=cmd_report)
 
     baseline = sub.add_parser(
@@ -1281,7 +1361,10 @@ def build_parser() -> argparse.ArgumentParser:
     expected.add_argument("--suppressions", default=None)
     expected.set_defaults(func=cmd_baseline)
 
-    ingest = sub.add_parser("ingest-sessions", help="Turn captured proxy JSONL into findings")
+    ingest = sub.add_parser(
+        "ingest-sessions",
+        help="Turn captured proxy JSONL (or a HAR) into findings",
+    )
     ingest.add_argument("sessions")
     ingest.add_argument("--target", default=None)
     ingest.add_argument("--output", "-o")
@@ -1291,6 +1374,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Allow ingesting sessions captured against a non-local target; off by default",
     )
     ingest.set_defaults(func=cmd_ingest)
+
+    ingest_har = sub.add_parser(
+        "ingest-har",
+        help="Turn a Burp/mitmproxy/Caido/DevTools HAR into crawl JSON",
+        description=(
+            "Accept a HAR 1.2 export as crawl seeds: each HTTP entry becomes a "
+            "Page record (URL, status, forms, params) plus passive findings from "
+            "the captured bodies. Same output shape as ingest-sessions / crawl, "
+            "so authz-diff and payload can consume it. Does not re-fetch the "
+            "target. ingest-sessions also auto-detects HAR; this command is the "
+            "named path for browser/Burp exports."
+        ),
+    )
+    ingest_har.add_argument("sessions", help="HAR 1.2 file (Burp, mitmproxy, Caido, DevTools)")
+    ingest_har.add_argument("--target", default=None)
+    ingest_har.add_argument("--output", "-o")
+    ingest_har.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow ingesting a HAR captured against a non-local target; off by default",
+    )
+    ingest_har.set_defaults(func=cmd_ingest)
 
     tokens = sub.add_parser(
         "tokens",
@@ -1509,6 +1614,24 @@ def build_parser() -> argparse.ArgumentParser:
     nuclei.add_argument("--output", "-o", help="Write converted pack YAML (default stdout)")
     nuclei.set_defaults(func=cmd_nuclei_ingest)
 
+    slither = sub.add_parser(
+        "slither-ingest",
+        help="Convert a local Slither JSON report into Shroodler findings",
+        description=(
+            "A loader, not an EVM analyzer: translates Slither JSON you already "
+            "have on disk into a crawl-shaped findings document `report` / `diff` "
+            "can consume. Does not run Slither or vendor its detectors."
+        ),
+    )
+    slither.add_argument("report", help="Slither --json output file")
+    slither.add_argument(
+        "--target",
+        default=None,
+        help="Override the document target (default: first finding's file path)",
+    )
+    slither.add_argument("--output", "-o")
+    slither.set_defaults(func=cmd_slither_ingest)
+
     authz = sub.add_parser(
         "authz-diff",
         help="Replay a privileged crawl's pages under a second (lower-priv) "
@@ -1590,6 +1713,22 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Drop a lead entirely instead of reporting it at lower confidence when "
         "no --higher-priv-marker was found in the response.",
+    )
+    authz.add_argument(
+        "--gql-schema",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="Clairvoyance / GraphQL introspection JSON; Query field names fed to "
+        "replay_graphql_fields when live introspection is blocked (repeatable)",
+    )
+    authz.add_argument(
+        "--gql-wordlist",
+        action="append",
+        default=[],
+        metavar="FILE",
+        help="Plain field-name wordlist (one name per line) used the same way as "
+        "--gql-schema (repeatable)",
     )
     authz.set_defaults(func=cmd_authz_diff)
 
@@ -1692,7 +1831,59 @@ def build_parser() -> argparse.ArgumentParser:
         help="Append a JSONL audit trail of every active request the guardrail "
         "allowed or blocked.",
     )
+    peer.add_argument(
+        "--csrf-from",
+        metavar="URL",
+        help="GET this URL to harvest a CSRF token before each write "
+        "(default: the write's origin)",
+    )
+    peer.add_argument(
+        "--no-csrf",
+        action="store_true",
+        help="Do not harvest or attach CSRF tokens",
+    )
+    peer.add_argument(
+        "--require-confirm",
+        action="store_true",
+        help="Only emit a finding when the owner re-read shows the object changed",
+    )
     peer.set_defaults(func=cmd_peer_write)
+
+    session_export = sub.add_parser(
+        "session-export",
+        help="Write a Playwright storageState JSON from a browser or captured jar",
+        description=(
+            "Dump HttpOnly cookies a hunt can actually replay. Connect to Chrome "
+            "via --cdp (launch with --remote-debugging-port=9222), or convert a "
+            "HAR / proxy JSONL / Netscape jar / existing storageState. The output "
+            "is the file --owner-cookies-from / --peer-cookies-from already accept."
+        ),
+    )
+    session_export.add_argument(
+        "--from",
+        dest="source",
+        metavar="PATH",
+        help="HAR, proxy JSONL, Netscape cookies.txt, or storageState JSON",
+    )
+    session_export.add_argument(
+        "--cdp",
+        metavar="URL",
+        help="Chrome DevTools URL, e.g. http://127.0.0.1:9222",
+    )
+    session_export.add_argument(
+        "--origin",
+        default="",
+        help="Only keep cookies that match this origin's host",
+    )
+    session_export.add_argument(
+        "--cookie",
+        action="append",
+        default=[],
+        metavar="name=value",
+        help="Include this cookie (repeatable)",
+    )
+    session_export.add_argument("--output", "-o", help="Write storageState JSON (default stdout)")
+    session_export.set_defaults(func=cmd_session_export)
 
     js_routes = sub.add_parser(
         "js-routes",
@@ -1897,6 +2088,7 @@ def build_parser() -> argparse.ArgumentParser:
             "  scan_route          crawl one URL (optional active payloads)\n"
             "  check_idor          confirm or drop an IDOR lead with a second session\n"
             "  peer_write          replay known-object writes as a peer session\n"
+            "  session_export      dump storageState from HAR/JSONL/CDP\n"
             "  extract_js_routes   mine {id} URL templates from a local JS file\n"
             "  paced_fetch         GET a short URL list at 1 req/s\n"
             "  reverify_fix        re-scan one route and report if a finding is gone\n"

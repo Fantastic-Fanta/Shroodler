@@ -198,6 +198,16 @@ def check_idor(args: dict) -> dict:
     if not higher_doc:
         raise ValueError("check_idor requires 'higher_priv_crawl' (doc or path)")
     enforcer = _build_enforcer(args, higher_doc.get("target", ""))
+    gql_names = list(args.get("gql_field_names") or [])
+    paths: list[Path] = []
+    if args.get("gql_schema"):
+        paths.append(_resolve_safe_path(args["gql_schema"]))
+    if args.get("gql_wordlist"):
+        paths.append(_resolve_safe_path(args["gql_wordlist"]))
+    if paths:
+        from shroodler.extractors.graphql import load_graphql_field_names
+
+        gql_names.extend(load_graphql_field_names(paths))
     return authz_diff_run(
         higher_doc,
         cookie_header=args.get("lower_priv_cookie", ""),
@@ -207,6 +217,7 @@ def check_idor(args: dict) -> dict:
         higher_priv_identity_markers=list(args.get("higher_priv_identity_markers") or []),
         lower_priv_identity_markers=list(args.get("lower_priv_identity_markers") or []),
         require_identity_confirmation=bool(args.get("require_identity_confirmation", False)),
+        gql_field_names=gql_names,
     )
 
 
@@ -310,6 +321,24 @@ def peer_write(args: dict) -> dict:
         user_agent_suffix=str(args.get("user_agent_suffix") or ""),
         nonsense_id=str(args.get("nonsense_id") or "1"),
         only_id=args.get("only_id"),
+        csrf=not bool(args.get("no_csrf", False)),
+        csrf_from=str(args.get("csrf_from") or ""),
+        require_confirm=bool(args.get("require_confirm", False)),
+    )
+
+
+def session_export(args: dict) -> dict:
+    """Convert a captured jar or CDP browser into Playwright storageState JSON."""
+    from shroodler.session_export import export_session
+
+    source = args.get("from")
+    path = str(_resolve_safe_path(str(source))) if source else None
+    pairs = [str(args["cookie"])] if args.get("cookie") else None
+    return export_session(
+        source=path,
+        cdp=args.get("cdp"),
+        origin=str(args.get("origin") or ""),
+        pairs=pairs,
     )
 
 
@@ -565,6 +594,19 @@ TOOLS: dict[str, dict[str, Any]] = {
                     "default": False,
                     "description": "Drop a lead entirely instead of reporting it unconfirmed",
                 },
+                "gql_field_names": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "GraphQL Query field names to replay when introspection is blocked",
+                },
+                "gql_schema": {
+                    "type": "string",
+                    "description": "Path to Clairvoyance / introspection JSON with Query field names",
+                },
+                "gql_wordlist": {
+                    "type": "string",
+                    "description": "Path to a plain field-name wordlist (one name per line)",
+                },
             },
             "required": ["higher_priv_crawl"],
         },
@@ -603,9 +645,42 @@ TOOLS: dict[str, dict[str, Any]] = {
                 "allow_without_policy": {"type": "boolean", "default": False},
                 "policy_file": {"type": "string"},
                 "audit_log": {"type": "string"},
+                "csrf_from": {
+                    "type": "string",
+                    "description": "GET this URL to harvest a CSRF token before writes",
+                },
+                "no_csrf": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Do not harvest or attach CSRF tokens",
+                },
+                "require_confirm": {
+                    "type": "boolean",
+                    "default": False,
+                    "description": "Only emit a finding when the owner re-read changed",
+                },
             },
         },
         "handler": peer_write,
+    },
+    "session_export": {
+        "description": "Write a Playwright storageState JSON from a HAR, proxy "
+        "JSONL, Netscape jar, cookie pairs, or a Chrome --cdp URL. Does not "
+        "fetch the target.",
+        "input_schema": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "from": {
+                    "type": "string",
+                    "description": "HAR, JSONL, Netscape, or storageState path",
+                },
+                "cdp": {"type": "string", "description": "Chrome DevTools URL"},
+                "origin": {"type": "string"},
+                "cookie": {"type": "string", "description": "name=value (single pair)"},
+            },
+        },
+        "handler": session_export,
     },
     "extract_js_routes": {
         "description": "Extract parameterized URL templates ({userId}, {pk}, :id) "

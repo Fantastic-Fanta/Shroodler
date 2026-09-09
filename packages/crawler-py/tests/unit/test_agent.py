@@ -1962,3 +1962,96 @@ def test_cmd_agent_llm_agent_requires_api_key(tmp_path, monkeypatch, capsys):
     assert "ANTHROPIC_API_KEY" in err
 
 
+def test_agent_config_js_analysis_default_on():
+    cfg = AgentConfig(program="lab", target="http://127.0.0.1/")
+    assert cfg.run_js_analysis is True
+
+
+def test_decide_js_analysis_after_crawl():
+    from shroodler.agent import JSAnalysisAction
+
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/": _endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True)
+        },
+        js_urls=["http://127.0.0.1/static/app.js"],
+    )
+    action = decide_next_action(state, _config(run_js_analysis=True))
+    assert isinstance(action, JSAnalysisAction)
+    assert "http://127.0.0.1/static/app.js" in action.urls
+
+
+def test_decide_skips_js_analysis_when_disabled():
+    from shroodler.agent import JSAnalysisAction
+
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/": _endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True)
+        },
+        js_urls=["http://127.0.0.1/static/app.js"],
+    )
+    action = decide_next_action(state, _config(run_js_analysis=False))
+    assert not isinstance(action, JSAnalysisAction)
+
+
+def test_execute_js_analysis_fetches_and_merges(monkeypatch):
+    from shroodler.agent import JSAnalysisAction
+
+    class FakeResp:
+        status_code = 200
+        text = 'fetch("/api/from-bundle"); const apiKey = "sk_live_abcdefghijklmnop";'
+        content = text.encode()
+
+    monkeypatch.setattr("shroodler.probes.common.request", lambda *a, **k: FakeResp())
+    state = ProgramState(slug="lab", js_urls=["http://127.0.0.1/app.js"])
+    result = execute_action(
+        JSAnalysisAction(urls=["http://127.0.0.1/app.js"]),
+        state,
+        _config(dry_run=False, run_js_analysis=True),
+        pacer=Pacer(0),
+    )
+    assert result["js_files"] == 1
+    assert result["api_endpoints"] >= 1
+    assert result["secrets"] >= 1
+    ids = {f.id for f in state.findings}
+    assert "js-api-endpoint-found" in ids
+    assert "js-hardcoded-secret" in ids
+    assert "js-analysis-complete" in ids
+    secret_ev = next(f.evidence for f in state.findings if f.id == "js-hardcoded-secret")
+    assert "sk_live_abcdefghijklmnop" not in (secret_ev or "")
+
+
+def test_cmd_agent_no_js_analysis_disables_flag(tmp_path, monkeypatch, capsys):
+    import argparse
+
+    from shroodler.cli import cmd_agent
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    captured: list = []
+
+    def fake_run(config):
+        captured.append(config)
+        from shroodler.agent import AgentResult
+
+        return AgentResult(iterations=0, confirmed=0, log=[], state_path="")
+
+    monkeypatch.setattr("shroodler.agent.run_agent", fake_run)
+    ns = argparse.Namespace(
+        program="lab",
+        target="http://127.0.0.1/",
+        max_iterations=1,
+        max_pages_per_crawl=5,
+        login_recipe=None,
+        higher_priv_jar=None,
+        lower_priv_jar=None,
+        owner_cookie=None,
+        peer_cookie=None,
+        dry_run=True,
+        no_js_analysis=True,
+    )
+    assert cmd_agent(ns) == 0
+    assert captured[0].run_js_analysis is False
+
+

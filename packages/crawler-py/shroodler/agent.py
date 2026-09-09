@@ -1,9 +1,9 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (tls-check → crawl → diff → openapi-discover → auto-register →
-authz-diff → write-authz → peer-write → content-discover → probe →
-openapi-probe → business-logic → chain → report),
+action (tls-check → crawl → js-analysis → diff → openapi-discover →
+auto-register → authz-diff → write-authz → peer-write → content-discover →
+probe → openapi-probe → business-logic → chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -84,6 +84,7 @@ class AgentConfig:
     llm_agent: bool = False  # --llm-agent; requires ANTHROPIC_API_KEY
     llm_agent_model: str = "claude-sonnet-5"
     llm_agent_max_cost_usd: float = 5.0
+    run_js_analysis: bool = True  # --no-js-analysis to skip
 
 
 @dataclass
@@ -99,6 +100,11 @@ class ContentDiscoverAction:
 @dataclass
 class CrawlAction:
     urls: list[str]
+
+
+@dataclass
+class JSAnalysisAction:
+    urls: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -160,6 +166,7 @@ AgentAction = (
     TLSCheckAction
     | ContentDiscoverAction
     | CrawlAction
+    | JSAnalysisAction
     | DiffAction
     | OpenApiDiscoverAction
     | AutoRegisterAction
@@ -550,9 +557,9 @@ def decide_next_action(
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: TLSCheck > Crawl > Diff > OpenApiDiscover > AutoRegister >
-    AuthzDiff > WriteAuthz > PeerWrite > ContentDiscover > Probe > OpenApiProbe >
-    BusinessLogic > Chain > Report."""
+    """Priority: TLSCheck > Crawl > JSAnalysis > Diff > OpenApiDiscover >
+    AutoRegister > AuthzDiff > WriteAuthz > PeerWrite > ContentDiscover >
+    Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
     from urllib.parse import urlparse
 
     if config.run_tls_check and not getattr(config, "_tls_check_done", False):
@@ -563,6 +570,14 @@ def decide_next_action(
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
         return CrawlAction(urls=crawl_urls)
+
+    js_urls = _js_urls_for_analysis(state)
+    if (
+        config.run_js_analysis
+        and not getattr(config, "_js_analysis_done", False)
+        and js_urls
+    ):
+        return JSAnalysisAction(urls=js_urls)
 
     if _should_run_diff(state, config):
         return DiffAction()
@@ -918,6 +933,135 @@ def run_write_authz(
         "probes": probes,
         "skipped": skipped,
     }
+
+
+def _js_urls_for_analysis(state: ProgramState) -> list[str]:
+    """Prefer state.js_urls; otherwise collect script srcs from crawl snapshots."""
+    from urllib.parse import urljoin
+
+    seen: set[str] = set()
+    out: list[str] = []
+
+    def add(raw: str) -> None:
+        url = (raw or "").strip()
+        if not url or url in seen:
+            return
+        seen.add(url)
+        out.append(url)
+
+    for item in getattr(state, "js_urls", None) or []:
+        add(str(item))
+    if out:
+        return out
+    for scan in state.scans or []:
+        if not isinstance(scan, dict):
+            continue
+        for page in scan.get("pages") or []:
+            if not isinstance(page, dict):
+                continue
+            base = str(page.get("url") or "")
+            for key in ("js_files", "script_srcs", "scripts", "js_urls"):
+                val = page.get(key)
+                items = val if isinstance(val, list) else ([val] if val else [])
+                for raw in items:
+                    if not raw:
+                        continue
+                    text = str(raw).strip()
+                    add(urljoin(base, text) if base else text)
+    for bundle in getattr(state, "js_bundles", None) or []:
+        if isinstance(bundle, dict) and bundle.get("url"):
+            add(str(bundle["url"]))
+        elif isinstance(bundle, str) and bundle.startswith(("http://", "https://")):
+            add(bundle)
+    return out
+
+
+def _dedupe_js_findings(findings: list[Finding]) -> list[Finding]:
+    seen: set[tuple[str, str, str]] = set()
+    out: list[Finding] = []
+    for item in findings:
+        key = (item.id, item.url, (item.evidence or "")[:80])
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
+def _execute_js_analysis(
+    action: JSAnalysisAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.js_analyzer import JSAnalyzer
+    from shroodler.probes.common import body_text, request
+    from shroodler.urls import is_loopback_or_local
+
+    config._js_analysis_done = True
+    urls = list(action.urls or _js_urls_for_analysis(state))
+    if urls and not getattr(state, "js_urls", None):
+        state.js_urls = list(urls)
+    analyzer = JSAnalyzer()
+    findings: list[Finding] = []
+    errors: list[str] = []
+    analyzed = 0
+    allow_external = _allow_external(config.target)
+    owner, _peer = _probe_auth_headers(config)
+
+    for url in urls:
+        if not url.startswith(("http://", "https://")):
+            continue
+        if not allow_external and not is_loopback_or_local(url):
+            continue
+        if not _url_in_program_scope(url, state, config):
+            continue
+        try:
+            resp = request("GET", url, cookie_header=owner, pacer=pacer)
+        except Exception as exc:  # noqa: BLE001 - fail closed per URL
+            errors.append(f"{url}: {type(exc).__name__}: {exc}")
+            continue
+        if resp is None:
+            errors.append(f"{url}: fetch failed")
+            continue
+        body = body_text(resp)
+        if not body:
+            continue
+        analyzed += 1
+        try:
+            findings.extend(analyzer.analyze(body, url, state))
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{url} analyze: {type(exc).__name__}: {exc}")
+
+    findings = _dedupe_js_findings(findings)
+    api_n = sum(1 for f in findings if f.id == "js-api-endpoint-found")
+    secret_n = sum(1 for f in findings if f.id == "js-hardcoded-secret")
+    findings.append(
+        Finding(
+            id="js-analysis-complete",
+            severity="info",
+            category="scan-note",
+            url=str(config.target or ""),
+            description="Finished JavaScript bundle analysis.",
+            evidence=(
+                f"analyzed {analyzed} js files; found {api_n} api endpoints, "
+                f"{secret_n} secrets"
+            ),
+            confidence="confirmed",
+        )
+    )
+    added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": added,
+        "urls_tested": analyzed,
+        "js_files": analyzed,
+        "api_endpoints": api_n,
+        "secrets": secret_n,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
 
 
 def _stamp_last_seen(state: ProgramState, url: str) -> None:
@@ -1620,6 +1764,8 @@ def execute_action(
         return _execute_content_discover(action, state, config, clock)
     if isinstance(action, CrawlAction):
         return _execute_crawl(action, state, config, clock)
+    if isinstance(action, JSAnalysisAction):
+        return _execute_js_analysis(action, state, config, clock)
     if isinstance(action, DiffAction):
         return _execute_diff(action, state, config, clock)
     if isinstance(action, OpenApiDiscoverAction):
@@ -1652,6 +1798,8 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"content_discover": True}
     if isinstance(action, CrawlAction):
         return {"urls": list(action.urls)}
+    if isinstance(action, JSAnalysisAction):
+        return {"js_analysis": True, "urls": list(action.urls)}
     if isinstance(action, DiffAction):
         return {"diff": True}
     if isinstance(action, OpenApiDiscoverAction):
@@ -1920,6 +2068,7 @@ def run_agent(config: AgentConfig) -> AgentResult:
     config._openapi_discover_done = False
     config._tls_check_done = False
     config._content_discover_done = False
+    config._js_analysis_done = False
 
     mutated = False
     if config.reprobe:

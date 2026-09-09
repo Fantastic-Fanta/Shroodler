@@ -1,8 +1,9 @@
-"""Error-based and time-based SQL injection probes."""
+"""Error-based, time-based, and boolean-based SQL injection probes."""
 
 from __future__ import annotations
 
 import json
+import statistics
 
 import httpx
 
@@ -24,6 +25,18 @@ _ERROR_PAYLOADS = (
     "1 AND 1=2",
 )
 _TIME_PAYLOAD = "'; WAITFOR DELAY '0:0:2'--"
+_TIME_PAYLOADS_4S = (
+    "' AND SLEEP(4)--",
+    "1 AND SLEEP(4)--",
+    "'; WAITFOR DELAY '0:0:4'--",
+    "1; WAITFOR DELAY '0:0:4'--",
+    "'; SELECT pg_sleep(4)--",
+    "1; SELECT pg_sleep(4)--",
+    "' AND 1=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(300000000/2))))--",
+    "' OR SLEEP(4)--",
+)
+_BOOLEAN_TRUE = "' AND '1'='1"
+_BOOLEAN_FALSE = "' AND '1'='2"
 _ERROR_MARKERS = (
     "SQL syntax",
     "ORA-",
@@ -42,6 +55,9 @@ _ERROR_MARKERS = (
     "org.h2.jdbc",
 )
 _TIME_THRESHOLD = 2.0
+_TIME_BASED_THRESHOLD = 3.5
+_BASELINE_SKIP = 2.0
+_BOOLEAN_LENGTH_RATIO = 0.20
 
 
 def _has_sql_error(body: str) -> bool:
@@ -78,16 +94,57 @@ def _finding(
     description: str,
     evidence: str,
     confidence: str,
+    severity: str = "critical",
 ) -> Finding:
     return Finding(
         id=finding_id,
-        severity="critical",
+        severity=severity,  # type: ignore[arg-type]
         category="payload",
         url=url,
         description=description,
         evidence=evidence,
         confidence=confidence,  # type: ignore[arg-type]
     )
+
+
+def _median_baseline(
+    method: str,
+    url: str,
+    cookie_header: str,
+    *,
+    client: httpx.Client | None,
+    pacer: Pacer | None,
+    samples: int = 2,
+) -> float | None:
+    """Median elapsed of clean requests. None if every request failed."""
+    elapsed: list[float] = []
+    for _ in range(samples):
+        resp = request(
+            method,
+            url,
+            cookie_header=cookie_header,
+            client=client,
+            pacer=pacer,
+        )
+        if resp is None:
+            continue
+        elapsed.append(response_elapsed(resp, 0.0))
+    if not elapsed:
+        return None
+    return float(statistics.median(elapsed))
+
+
+def _boolean_differs(true_resp: httpx.Response, false_resp: httpx.Response) -> bool:
+    true_status = int(getattr(true_resp, "status_code", 0) or 0)
+    false_status = int(getattr(false_resp, "status_code", 0) or 0)
+    if true_status != false_status:
+        return True
+    true_len = len(body_text(true_resp))
+    false_len = len(body_text(false_resp))
+    largest = max(true_len, false_len)
+    if largest <= 0:
+        return False
+    return abs(true_len - false_len) / largest > _BOOLEAN_LENGTH_RATIO
 
 
 def probe_sqli(
@@ -99,7 +156,11 @@ def probe_sqli(
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
 ) -> list[Finding]:
-    """Replay GET/POST params with classic SQLi payloads, one param at a time."""
+    """Replay GET/POST params with classic SQLi payloads, one param at a time.
+
+    Cascade: error-based first; time-based only if error-based found nothing;
+    boolean-based only if error-based and time-based found nothing.
+    """
     method_u = (method or "GET").upper()
     if method_u not in {"GET", "POST"}:
         return []
@@ -108,21 +169,51 @@ def probe_sqli(
         return []
 
     findings: list[Finding] = []
-    baseline = request(
-        method_u,
-        url,
-        cookie_header=cookie_header,
-        client=client,
-        pacer=pacer,
-    )
-    baseline_elapsed = response_elapsed(baseline, 0.0) if baseline is not None else 0.0
-    saw_error = False
-    saw_time = False
 
     for item in normalized:
         name = item["name"]
-        if not saw_error:
-            for payload in _ERROR_PAYLOADS:
+        for payload in _ERROR_PAYLOADS:
+            resp = inject(
+                url,
+                method_u,
+                normalized,
+                name,
+                payload,
+                cookie_header=cookie_header,
+                client=client,
+                pacer=pacer,
+            )
+            if resp is None:
+                continue
+            body = body_text(resp)
+            if _has_sql_error(body) or _webgoat_lesson_output(resp, body):
+                findings.append(
+                    _finding(
+                        finding_id="sqli",
+                        url=url,
+                        description=(
+                            f"{method_u} parameter {name!r} reflected a database "
+                            "error after a SQL injection payload."
+                        ),
+                        evidence=f"param={name} payload={payload!r}",
+                        confidence="confirmed",
+                    )
+                )
+                return dedupe(findings)
+
+    baseline = _median_baseline(
+        method_u,
+        url,
+        cookie_header,
+        client=client,
+        pacer=pacer,
+    )
+    saw_time = False
+    if baseline is not None and baseline <= _BASELINE_SKIP:
+        for item in normalized:
+            name = item["name"]
+            hit_4s = False
+            for payload in _TIME_PAYLOADS_4S:
                 resp = inject(
                     url,
                     method_u,
@@ -135,55 +226,110 @@ def probe_sqli(
                 )
                 if resp is None:
                     continue
-                body = body_text(resp)
-                if _has_sql_error(body) or _webgoat_lesson_output(resp, body):
+                elapsed = response_elapsed(resp, 0.0)
+                if elapsed > baseline + _TIME_BASED_THRESHOLD:
                     findings.append(
                         _finding(
-                            finding_id="sqli",
+                            finding_id="sqli-time-based",
                             url=url,
                             description=(
-                                f"{method_u} parameter {name!r} reflected a database "
-                                "error after a SQL injection payload."
+                                f"{method_u} parameter {name!r} delayed the response "
+                                "after a 4s time-based SQL injection payload."
                             ),
-                            evidence=f"param={name} payload={payload!r}",
+                            evidence=(
+                                f"param={name} payload={payload!r} "
+                                f"elapsed={elapsed:.2f}s baseline={baseline:.2f}s"
+                            ),
                             confidence="confirmed",
+                            severity="high",
                         )
                     )
-                    saw_error = True
+                    saw_time = True
+                    hit_4s = True
                     break
+            if hit_4s:
+                break
+            # Keep the legacy 2s WAITFOR heuristic only when the 4s path
+            # did not already confirm this param (avoid double-emitting).
+            resp = inject(
+                url,
+                method_u,
+                normalized,
+                name,
+                _TIME_PAYLOAD,
+                cookie_header=cookie_header,
+                client=client,
+                pacer=pacer,
+            )
+            if resp is None:
+                continue
+            elapsed = response_elapsed(resp, 0.0)
+            if elapsed > baseline + _TIME_THRESHOLD:
+                findings.append(
+                    _finding(
+                        finding_id="sqli-blind",
+                        url=url,
+                        description=(
+                            f"{method_u} parameter {name!r} delayed the response by more "
+                            "than 2s after a WAITFOR DELAY payload (blind SQLi)."
+                        ),
+                        evidence=(
+                            f"param={name} elapsed={elapsed:.2f}s "
+                            f"baseline={baseline:.2f}s"
+                        ),
+                        confidence="heuristic",
+                    )
+                )
+                saw_time = True
+                break
         if saw_time:
-            continue
-        resp = inject(
+            return dedupe(findings)
+
+    for item in normalized:
+        name = item["name"]
+        true_resp = inject(
             url,
             method_u,
             normalized,
             name,
-            _TIME_PAYLOAD,
+            _BOOLEAN_TRUE,
             cookie_header=cookie_header,
             client=client,
             pacer=pacer,
         )
-        if resp is None:
+        false_resp = inject(
+            url,
+            method_u,
+            normalized,
+            name,
+            _BOOLEAN_FALSE,
+            cookie_header=cookie_header,
+            client=client,
+            pacer=pacer,
+        )
+        if true_resp is None or false_resp is None:
             continue
-        elapsed = response_elapsed(resp, 0.0)
-        if elapsed > baseline_elapsed + _TIME_THRESHOLD:
-            findings.append(
-                _finding(
-                    finding_id="sqli-blind",
-                    url=url,
-                    description=(
-                        f"{method_u} parameter {name!r} delayed the response by more "
-                        "than 2s after a WAITFOR DELAY payload (blind SQLi)."
-                    ),
-                    evidence=(
-                        f"param={name} elapsed={elapsed:.2f}s "
-                        f"baseline={baseline_elapsed:.2f}s"
-                    ),
-                    confidence="heuristic",
-                )
+        if not _boolean_differs(true_resp, false_resp):
+            continue
+        true_len = len(body_text(true_resp))
+        false_len = len(body_text(false_resp))
+        findings.append(
+            _finding(
+                finding_id="sqli-boolean-blind",
+                url=url,
+                description=(
+                    f"{method_u} parameter {name!r} changed status or body length "
+                    "between true and false boolean SQL payloads."
+                ),
+                evidence=(
+                    f"param={name} true_status={int(true_resp.status_code)} "
+                    f"false_status={int(false_resp.status_code)} "
+                    f"true_len={true_len} false_len={false_len}"
+                ),
+                confidence="heuristic",
+                severity="high",
             )
-            saw_time = True
-        if saw_error and saw_time:
-            break
+        )
+        break
 
     return dedupe(findings)

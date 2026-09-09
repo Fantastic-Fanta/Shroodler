@@ -9,6 +9,7 @@ from shroodler.agent import (
     _TOOL_NOISE_IDS,
     AgentConfig,
     AuthzDiffAction,
+    AutoRegisterAction,
     CrawlAction,
     OpenApiDiscoverAction,
     OpenApiProbeAction,
@@ -563,6 +564,45 @@ def test_cmd_agent_no_openapi_disables_both_flags(tmp_path, monkeypatch, capsys)
     assert captured[0].run_openapi_probes is False
 
 
+def test_cmd_agent_no_probe_flags_disable_new_probes(tmp_path, monkeypatch, capsys):
+    import argparse
+
+    from shroodler.cli import cmd_agent
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    load("lab")
+    captured: list = []
+
+    def fake_run(config):
+        captured.append(config)
+        from shroodler.agent import AgentResult
+
+        return AgentResult(iterations=0, confirmed=0, log=[], state_path="")
+
+    monkeypatch.setattr("shroodler.agent.run_agent", fake_run)
+    ns = argparse.Namespace(
+        program="lab",
+        target="http://127.0.0.1/",
+        max_iterations=1,
+        max_pages_per_crawl=5,
+        login_recipe=None,
+        higher_priv_jar=None,
+        lower_priv_jar=None,
+        owner_cookie=None,
+        peer_cookie=None,
+        dry_run=True,
+        no_ssrf=True,
+        no_open_redirect=True,
+        no_host_header=True,
+        no_auto_register=True,
+    )
+    assert cmd_agent(ns) == 0
+    assert captured[0].run_ssrf is False
+    assert captured[0].run_open_redirect is False
+    assert captured[0].run_host_header is False
+    assert captured[0].auto_register is False
+
+
 def test_run_agent_stops_immediately_when_nothing_left(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     state = load("lab")
@@ -910,6 +950,10 @@ def test_agent_config_run_probes_defaults_off():
     assert cfg.probe_path_traversal is True
     assert cfg.probe_jwt is True
     assert cfg.probe_idor is True
+    assert cfg.run_ssrf is True
+    assert cfg.run_open_redirect is True
+    assert cfg.run_host_header is True
+    assert cfg.auto_register is True
     assert cfg.run_diff is False
     assert cfg.run_business_logic is False
     assert cfg.chain_specs == []
@@ -1020,6 +1064,13 @@ def test_execute_probe_merges_findings_and_marks_tested(monkeypatch):
     )
     monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", lambda *a, **k: [])
     monkeypatch.setattr("shroodler.probes.idor.probe_idor", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.ssrf.probe_ssrf", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "shroodler.probes.open_redirect.probe_open_redirect", lambda *a, **k: []
+    )
+    monkeypatch.setattr(
+        "shroodler.probes.host_header.probe_host_header", lambda *a, **k: []
+    )
 
     url = "http://127.0.0.1/search?q=1"
     state = ProgramState(
@@ -1054,6 +1105,13 @@ def test_execute_probe_records_per_probe_errors(monkeypatch):
     )
     monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", lambda *a, **k: [])
     monkeypatch.setattr("shroodler.probes.idor.probe_idor", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.ssrf.probe_ssrf", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "shroodler.probes.open_redirect.probe_open_redirect", lambda *a, **k: []
+    )
+    monkeypatch.setattr(
+        "shroodler.probes.host_header.probe_host_header", lambda *a, **k: []
+    )
 
     url = "http://127.0.0.1/search?q=1"
     state = ProgramState(
@@ -1386,4 +1444,195 @@ def test_dry_run_describes_openapi_discover(tmp_path, monkeypatch):
     assert result.log[0]["action"] == "OpenApiDiscoverAction"
     assert result.log[0].get("openapi_discover") is True
     assert result.log[0]["dry_run"] is True
+
+
+def test_decide_auto_register_before_authz():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(last_seen=_now_iso(), tested_authz=False),
+            "http://127.0.0.1/register": {
+                **_endpoint(last_seen=_now_iso(), tested_authz=False),
+                "method": "POST",
+            },
+        },
+    )
+    action = decide_next_action(
+        state,
+        _config(higher_priv_jar="/tmp/higher.json", owner_cookie="session=owner"),
+    )
+    assert isinstance(action, AutoRegisterAction)
+
+
+def test_decide_skips_auto_register_when_peer_exists():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(last_seen=_now_iso(), tested_authz=False),
+            "http://127.0.0.1/register": {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "POST",
+            },
+        },
+    )
+    action = decide_next_action(
+        state,
+        _config(
+            higher_priv_jar="/tmp/higher.json",
+            lower_priv_jar="/tmp/lower.json",
+            owner_cookie="session=owner",
+        ),
+    )
+    assert isinstance(action, AuthzDiffAction)
+
+
+def test_decide_skips_auto_register_when_disabled():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+            "http://127.0.0.1/register": {
+                **_endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True),
+                "method": "POST",
+            },
+        },
+    )
+    action = decide_next_action(
+        state,
+        _config(auto_register=False, owner_cookie="session=owner"),
+    )
+    assert not isinstance(action, AutoRegisterAction)
+
+
+def test_execute_auto_register_sets_peer_cookie(monkeypatch):
+    from shroodler.models import Finding as F
+
+    def fake_register(state, config, **kw):
+        config.peer_cookie = "session=peer"
+        state.peer_session = {"name": "session", "value": "peer"}
+        return [
+            F(
+                id="peer-account-registered",
+                severity="info",
+                category="scan-note",
+                url="http://127.0.0.1/register",
+                description="registered",
+                confidence="confirmed",
+            )
+        ]
+
+    monkeypatch.setattr("shroodler.second_account.auto_register_peer", fake_register)
+    state = ProgramState(slug="lab")
+    config = _config(dry_run=False, owner_cookie="session=owner")
+    result = execute_action(AutoRegisterAction(), state, config, pacer=Pacer(0))
+    assert result["findings_added"] == 1
+    assert config.peer_cookie == "session=peer"
+    assert state.findings[0].id == "peer-account-registered"
+
+
+def test_execute_probe_runs_ssrf_and_host_header(monkeypatch):
+    called: list[str] = []
+
+    def mark(name):
+        def _fn(*a, **k):
+            called.append(name)
+            return []
+
+        return _fn
+
+    monkeypatch.setattr("shroodler.probes.sqli.probe_sqli", mark("sqli"))
+    monkeypatch.setattr("shroodler.probes.xss.probe_xss", mark("xss"))
+    monkeypatch.setattr(
+        "shroodler.probes.path_traversal.probe_path_traversal", mark("path")
+    )
+    monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", mark("jwt"))
+    monkeypatch.setattr("shroodler.probes.idor.probe_idor", mark("idor"))
+    monkeypatch.setattr("shroodler.probes.ssrf.probe_ssrf", mark("ssrf"))
+    monkeypatch.setattr(
+        "shroodler.probes.open_redirect.probe_open_redirect", mark("open-redirect")
+    )
+    monkeypatch.setattr(
+        "shroodler.probes.host_header.probe_host_header", mark("host-header")
+    )
+
+    url_a = "http://127.0.0.1/fetch?url=1"
+    url_b = "http://127.0.0.1/other?url=2"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url_a: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "url"}],
+            },
+            url_b: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "url"}],
+            },
+        },
+    )
+    execute_action(
+        ProbeAction(urls=[url_a, url_b]),
+        state,
+        _config(dry_run=False, owner_cookie="session=owner"),
+        pacer=Pacer(0),
+    )
+    assert called.count("ssrf") == 2
+    assert called.count("open-redirect") == 2
+    assert called.count("host-header") == 1
+
+
+def test_execute_probe_honors_no_ssrf_flags(monkeypatch):
+    called: list[str] = []
+
+    def mark(name):
+        def _fn(*a, **k):
+            called.append(name)
+            return []
+
+        return _fn
+
+    monkeypatch.setattr("shroodler.probes.sqli.probe_sqli", mark("sqli"))
+    monkeypatch.setattr("shroodler.probes.xss.probe_xss", mark("xss"))
+    monkeypatch.setattr(
+        "shroodler.probes.path_traversal.probe_path_traversal", mark("path")
+    )
+    monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.idor.probe_idor", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.ssrf.probe_ssrf", mark("ssrf"))
+    monkeypatch.setattr(
+        "shroodler.probes.open_redirect.probe_open_redirect", mark("open-redirect")
+    )
+    monkeypatch.setattr(
+        "shroodler.probes.host_header.probe_host_header", mark("host-header")
+    )
+
+    url = "http://127.0.0.1/fetch?url=1"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "url"}],
+            }
+        },
+    )
+    execute_action(
+        ProbeAction(urls=[url]),
+        state,
+        _config(
+            dry_run=False,
+            run_ssrf=False,
+            run_open_redirect=False,
+            run_host_header=False,
+        ),
+        pacer=Pacer(0),
+    )
+    assert "ssrf" not in called
+    assert "open-redirect" not in called
+    assert "host-header" not in called
 

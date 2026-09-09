@@ -1,8 +1,9 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (crawl → diff → openapi-discover → authz-diff → write-authz →
-peer-write → probe → openapi-probe → business-logic → chain → report),
+action (crawl → diff → openapi-discover → auto-register → authz-diff →
+write-authz → peer-write → probe → openapi-probe → business-logic → chain →
+report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -56,6 +57,10 @@ class AgentConfig:
     probe_path_traversal: bool = True
     probe_jwt: bool = True
     probe_idor: bool = True
+    run_ssrf: bool = True
+    run_open_redirect: bool = True
+    run_host_header: bool = True
+    auto_register: bool = True
     reprobe: bool = False  # reset tested_payload before the loop
     run_diff: bool = False  # opt-in; also auto-runs when a previous run exists
     run_business_logic: bool = False  # --llm-business-logic
@@ -76,6 +81,11 @@ class DiffAction:
 
 @dataclass
 class OpenApiDiscoverAction:
+    pass
+
+
+@dataclass
+class AutoRegisterAction:
     pass
 
 
@@ -123,6 +133,7 @@ AgentAction = (
     CrawlAction
     | DiffAction
     | OpenApiDiscoverAction
+    | AutoRegisterAction
     | AuthzDiffAction
     | WriteAuthzAction
     | PeerWriteAction
@@ -454,13 +465,39 @@ def _pending_chains(state: ProgramState, config: AgentConfig) -> bool:
     return bool(bind_builtin_chains(state, config))
 
 
+def _has_owner_session(config: AgentConfig) -> bool:
+    return bool(
+        (config.higher_priv_jar or "").strip() or (config.owner_cookie or "").strip()
+    )
+
+
+def _has_peer_session(config: AgentConfig) -> bool:
+    return bool(
+        (config.lower_priv_jar or "").strip() or (config.peer_cookie or "").strip()
+    )
+
+
+def _pending_auto_register(state: ProgramState, config: AgentConfig) -> bool:
+    if not getattr(config, "auto_register", True):
+        return False
+    if getattr(config, "_auto_register_done", False):
+        return False
+    if not _has_owner_session(config):
+        return False
+    if _has_peer_session(config):
+        return False
+    from shroodler.second_account import detect_registration_url, peer_cookie_from_state
+
+    return bool(peer_cookie_from_state(state) or detect_registration_url(state))
+
+
 def decide_next_action(
     state: ProgramState,
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Crawl > Diff > OpenApiDiscover > AuthzDiff > WriteAuthz >
-    PeerWrite > Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
+    """Priority: Crawl > Diff > OpenApiDiscover > AutoRegister > AuthzDiff >
+    WriteAuthz > PeerWrite > Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
         return CrawlAction(urls=crawl_urls)
@@ -475,10 +512,15 @@ def decide_next_action(
     ):
         return OpenApiDiscoverAction()
 
+    if _pending_auto_register(state, config):
+        return AutoRegisterAction()
+
     authz_urls: list[str] = []
     object_ids: list[str] = []
     write_endpoints: list[dict] = []
     if config.higher_priv_jar and config.lower_priv_jar:
+        authz_urls = _untested_authz_urls(state, config)
+    elif config.higher_priv_jar and (config.peer_cookie or "").strip():
         authz_urls = _untested_authz_urls(state, config)
     if config.owner_cookie and config.peer_cookie:
         object_ids = _pending_peer_write_ids(state, config)
@@ -1119,16 +1161,45 @@ def _execute_write_authz(
     return out
 
 
+def _execute_auto_register(
+    action: AutoRegisterAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.second_account import auto_register_peer
+
+    config._auto_register_done = True
+    findings: list[Any] = []
+    errors: list[str] = []
+    try:
+        findings = auto_register_peer(state, config, pacer=pacer)
+    except Exception as exc:  # noqa: BLE001 - fail closed
+        errors.append(f"auto-register: {type(exc).__name__}: {exc}")
+    findings_added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": findings_added,
+        "urls_tested": 1 if findings else 0,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def _execute_probe(
     action: ProbeAction,
     state: ProgramState,
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
+    from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.sqli import probe_sqli
+    from shroodler.probes.ssrf import probe_ssrf
     from shroodler.probes.xss import probe_xss
 
     owner, peer = _probe_auth_headers(config)
@@ -1136,6 +1207,7 @@ def _execute_probe(
     cookie_header = "" if auth_header else owner
     findings: list[Any] = []
     errors: list[str] = []
+    seen_hosts: set[str] = set()
 
     def _run(label: str, fn) -> None:
         try:
@@ -1170,6 +1242,18 @@ def _execute_probe(
             )
         if config.probe_idor and peer:
             _run("idor", lambda: probe_idor(url, owner, peer, pacer=pacer))
+        if config.run_ssrf and method in {"GET", "POST"} and params:
+            _run("ssrf", lambda: probe_ssrf(url, method, params, owner, pacer=pacer))
+        if config.run_open_redirect and method in {"GET", "POST"} and params:
+            _run(
+                "open-redirect",
+                lambda: probe_open_redirect(url, method, params, owner, pacer=pacer),
+            )
+        if config.run_host_header:
+            host = hostname_of(url)
+            if host and host not in seen_hosts:
+                seen_hosts.add(host)
+                _run("host-header", lambda: probe_host_header(url, owner, pacer=pacer))
     findings_added = _merge_findings(state, findings)
     program.mark_tested(state, action.urls, "tested_payload")
     out: dict[str, Any] = {
@@ -1301,6 +1385,8 @@ def execute_action(
         return _execute_diff(action, state, config, clock)
     if isinstance(action, OpenApiDiscoverAction):
         return _execute_openapi_discover(action, state, config, clock)
+    if isinstance(action, AutoRegisterAction):
+        return _execute_auto_register(action, state, config, clock)
     if isinstance(action, AuthzDiffAction):
         return _execute_authz(action, state, config, clock)
     if isinstance(action, WriteAuthzAction):
@@ -1327,6 +1413,8 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"diff": True}
     if isinstance(action, OpenApiDiscoverAction):
         return {"openapi_discover": True}
+    if isinstance(action, AutoRegisterAction):
+        return {"auto_register": True}
     if isinstance(action, AuthzDiffAction):
         return {"urls": list(action.urls)}
     if isinstance(action, WriteAuthzAction):

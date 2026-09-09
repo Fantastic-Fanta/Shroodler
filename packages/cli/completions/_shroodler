@@ -295,8 +295,12 @@ _shroodler() {
             '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \
             '--ignore-robots[Bypass robots.txt during crawl legs]' \
-            '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR)]' \
+            '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/SSRF/open-redirect/host-header)]' \
             '--no-openapi[Disable OpenAPI spec discovery and spec-driven probes]' \
+            '--no-ssrf[Disable SSRF probes]' \
+            '--no-open-redirect[Disable open-redirect probes]' \
+            '--no-host-header[Disable host-header injection probes]' \
+            '--no-auto-register[Do not auto-register a peer account before authz-diff]' \
             '--reprobe[Reset tested_payload on all endpoints before the agent loop]' \
             '--run-diff[Diff endpoints against the previous engagement snapshot after crawl]' \
             '--llm-business-logic[Infer app domain and run business-logic probes]' \

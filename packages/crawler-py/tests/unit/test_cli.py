@@ -352,6 +352,8 @@ def test_agent_flags_parse():
             "12",
             "--login-recipe",
             "login.json",
+            "--reauth-max-retries",
+            "5",
             "--higher-priv-jar",
             "high.json",
             "--lower-priv-jar",
@@ -373,6 +375,7 @@ def test_agent_flags_parse():
     assert args.max_iterations == 4
     assert args.max_pages_per_crawl == 12
     assert args.login_recipe == "login.json"
+    assert args.reauth_max_retries == 5
     assert args.higher_priv_jar == "high.json"
     assert args.lower_priv_jar == "low.json"
     assert args.owner_cookie == "session=a"

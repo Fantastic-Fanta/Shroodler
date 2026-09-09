@@ -10,12 +10,14 @@ from shroodler.agent import (
     AgentConfig,
     AuthzDiffAction,
     AutoRegisterAction,
+    ContentDiscoverAction,
     CrawlAction,
     OpenApiDiscoverAction,
     OpenApiProbeAction,
     PeerWriteAction,
     ProbeAction,
     ReportAction,
+    TLSCheckAction,
     WriteAuthzAction,
     _auth_header_for_diff,
     _confirmed_findings,
@@ -47,6 +49,8 @@ def _config(**kwargs) -> AgentConfig:
         "dry_run": True,
         "run_openapi_discovery": False,
         "run_openapi_probes": False,
+        "run_tls_check": False,
+        "run_content_discovery": False,
     }
     defaults.update(kwargs)
     return AgentConfig(**defaults)
@@ -966,6 +970,23 @@ def test_agent_config_run_probes_defaults_off():
     assert cfg.run_diff is False
     assert cfg.run_business_logic is False
     assert cfg.chain_specs == []
+    assert cfg.run_dom_xss is False
+    assert cfg.run_crlf is True
+    assert cfg.run_prototype_pollution is True
+    assert cfg.run_content_discovery is False  # test helper
+    assert cfg.run_tls_check is False  # test helper
+    assert cfg.run_rate_limit is True
+    assert cfg.run_mass_assignment is True
+    assert cfg.run_smuggling is False
+    assert cfg.run_websocket is True
+
+
+def test_agent_config_tls_and_content_discovery_default_on():
+    cfg = AgentConfig(program="lab", target="http://127.0.0.1/")
+    assert cfg.run_tls_check is True
+    assert cfg.run_content_discovery is True
+    assert cfg.run_dom_xss is False
+    assert cfg.run_smuggling is False
 
 
 def test_agent_config_openapi_defaults_on():
@@ -1574,6 +1595,20 @@ def test_execute_probe_runs_ssrf_and_host_header(monkeypatch):
     monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", mark("ssti"))
     monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", mark("xxe"))
     monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", mark("graphql"))
+    monkeypatch.setattr("shroodler.probes.crlf.probe_crlf", mark("crlf"))
+    monkeypatch.setattr(
+        "shroodler.probes.prototype_pollution.probe_prototype_pollution",
+        mark("pp"),
+    )
+    monkeypatch.setattr("shroodler.probes.dom_xss.probe_dom_xss", mark("dom-xss"))
+    monkeypatch.setattr("shroodler.probes.rate_limit.probe_rate_limit", mark("rl"))
+    monkeypatch.setattr(
+        "shroodler.probes.mass_assignment.probe_mass_assignment", mark("ma")
+    )
+    monkeypatch.setattr("shroodler.probes.smuggling.probe_smuggling", mark("smuggle"))
+    monkeypatch.setattr(
+        "shroodler.probes.websocket.probe_websocket", lambda *a, **k: ([], [])
+    )
 
     url_a = "http://127.0.0.1/fetch?url=1"
     url_b = "http://127.0.0.1/other?url=2"
@@ -1633,6 +1668,20 @@ def test_execute_probe_honors_no_ssrf_flags(monkeypatch):
     monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", mark("ssti"))
     monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", mark("xxe"))
     monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", mark("graphql"))
+    monkeypatch.setattr("shroodler.probes.crlf.probe_crlf", mark("crlf"))
+    monkeypatch.setattr(
+        "shroodler.probes.prototype_pollution.probe_prototype_pollution",
+        mark("pp"),
+    )
+    monkeypatch.setattr("shroodler.probes.dom_xss.probe_dom_xss", mark("dom-xss"))
+    monkeypatch.setattr("shroodler.probes.rate_limit.probe_rate_limit", mark("rl"))
+    monkeypatch.setattr(
+        "shroodler.probes.mass_assignment.probe_mass_assignment", mark("ma")
+    )
+    monkeypatch.setattr("shroodler.probes.smuggling.probe_smuggling", mark("smuggle"))
+    monkeypatch.setattr(
+        "shroodler.probes.websocket.probe_websocket", lambda *a, **k: ([], [])
+    )
 
     url = "http://127.0.0.1/fetch?url=1"
     state = ProgramState(
@@ -1665,4 +1714,251 @@ def test_execute_probe_honors_no_ssrf_flags(monkeypatch):
     assert "ssti" not in called
     assert "xxe" not in called
     assert "graphql" not in called
+
+
+def test_decide_tls_check_before_crawl_for_https():
+    state = ProgramState(slug="lab")
+    action = decide_next_action(
+        state, _config(target="https://example.com/", run_tls_check=True)
+    )
+    assert isinstance(action, TLSCheckAction)
+
+
+def test_decide_content_discover_before_probe():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            )
+        },
+    )
+    action = decide_next_action(
+        state, _config(run_content_discovery=True, run_probes=True)
+    )
+    assert isinstance(action, ContentDiscoverAction)
+
+
+def test_decide_peer_write_still_before_probe():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/users/1": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=False
+            )
+        },
+        object_ids={"/api/users/{id}": ["1"]},
+    )
+    action = decide_next_action(
+        state,
+        _config(
+            owner_cookie="session=owner",
+            peer_cookie="session=peer",
+            run_probes=True,
+        ),
+    )
+    assert isinstance(action, PeerWriteAction)
+
+
+def test_untested_probe_urls_skip_out_of_scope(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    from shroodler.scope import save_scope
+
+    save_scope(
+        "lab",
+        {"include": ["example.com"], "exclude": [], "allow_subdomains": True},
+    )
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": {
+                **_endpoint(last_seen=_now_iso()),
+                "params": [{"name": "q"}],
+            }
+        },
+    )
+    assert _untested_probe_urls(state, _config(run_probes=True)) == []
+    err = capsys.readouterr().err
+    assert "scope-excluded" in err
+
+
+def test_execute_report_deduplicates_findings():
+    state = ProgramState(
+        slug="lab",
+        findings=[
+            Finding(
+                id="xss-reflected",
+                severity="high",
+                category="payload",
+                url="http://127.0.0.1/x",
+                description="a",
+                evidence="param=q",
+                confidence="heuristic",
+            ),
+            Finding(
+                id="xss-reflected",
+                severity="high",
+                category="payload",
+                url="http://127.0.0.1/x",
+                description="b",
+                evidence="param=q",
+                confidence="confirmed",
+            ),
+        ],
+    )
+    result = execute_action(ReportAction(), state, _config())
+    assert len(state.findings) == 1
+    assert state.findings[0].confidence == "confirmed"
+    assert result["confirmed"] == 1
+
+
+def test_agent_config_llm_agent_defaults_off():
+    cfg = _config()
+    assert cfg.llm_agent is False
+    assert cfg.llm_agent_model == "claude-sonnet-5"
+    assert cfg.llm_agent_max_cost_usd == 5.0
+
+
+def test_default_loop_does_not_call_planner(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    load("lab")
+
+    def boom(*_a, **_k):
+        raise AssertionError("planner must not run when llm_agent is False")
+
+    monkeypatch.setattr("shroodler.llm_agent.planner.plan_next_action", boom)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            max_iterations=1,
+            llm_agent=False,
+        )
+    )
+    assert result.iterations == 1
+    assert result.log[0]["action"] == "CrawlAction"
+
+
+def test_llm_agent_uses_planner_and_logs_reasoning(tmp_path, monkeypatch, capsys):
+    from shroodler.llm_agent.planner import PlannerDecision
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    load("lab")
+
+    def fake_plan(*_a, **_k):
+        return PlannerDecision(
+            action="hypothesise",
+            params={"hypothesis": "try xss", "target_url": "http://127.0.0.1/", "reasoning": "x"},
+            reasoning="check search next",
+        )
+
+    monkeypatch.setattr("shroodler.llm_agent.planner.plan_next_action", fake_plan)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            max_iterations=1,
+            llm_agent=True,
+            run_tls_check=False,
+            run_content_discovery=False,
+        )
+    )
+    assert result.iterations == 1
+    assert result.log[0]["action"] == "hypothesise"
+    assert result.log[0]["reasoning"] == "check search next"
+    assert result.log[0]["findings_added"] == 0
+
+
+def test_llm_agent_falls_back_to_decide_next_action(tmp_path, monkeypatch):
+    from shroodler.llm_agent.planner import PlannerDecision
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    load("lab")
+
+    def fake_plan(*_a, **_k):
+        return PlannerDecision(action=None, fallback=True, fallback_reason="invalid JSON")
+
+    monkeypatch.setattr("shroodler.llm_agent.planner.plan_next_action", fake_plan)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            max_iterations=1,
+            llm_agent=True,
+            run_tls_check=False,
+            run_content_discovery=False,
+        )
+    )
+    assert result.log[0]["action"] == "CrawlAction"
+    assert "reasoning" in result.log[0]
+
+
+def test_llm_agent_cost_cap_emits_finding_and_stops(tmp_path, monkeypatch):
+    from shroodler.llm_agent.planner import PlannerDecision
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    load("lab")
+
+    def fake_plan(*_a, **_k):
+        d = PlannerDecision(
+            action="crawl",
+            params={"url": "http://127.0.0.1/"},
+            reasoning="explore",
+            input_tokens=2_000_000,
+            output_tokens=0,
+            model="claude-sonnet-5",
+        )
+        return d
+
+    monkeypatch.setattr("shroodler.llm_agent.planner.plan_next_action", fake_plan)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=False,
+            max_iterations=3,
+            llm_agent=True,
+            llm_agent_max_cost_usd=5.0,
+            run_tls_check=False,
+            run_content_discovery=False,
+            run_openapi_discovery=False,
+            run_openapi_probes=False,
+        )
+    )
+    assert any(e.get("action") == "llm-cost-cap-reached" for e in result.log)
+    state = load("lab")
+    assert any(f.id == "llm-cost-cap-reached" for f in state.findings)
+    assert any(f.category == "scan-note" for f in state.findings if f.id == "llm-cost-cap-reached")
+
+
+def test_cmd_agent_llm_agent_requires_api_key(tmp_path, monkeypatch, capsys):
+    import argparse
+
+    from shroodler.cli import cmd_agent
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    called = {"n": 0}
+
+    def boom(*_a, **_k):
+        called["n"] += 1
+        raise AssertionError("run_agent must not start")
+
+    monkeypatch.setattr("shroodler.agent.run_agent", boom)
+    ns = argparse.Namespace(
+        program="lab",
+        target="http://127.0.0.1/",
+        llm_agent=True,
+    )
+    assert cmd_agent(ns) == 2
+    assert called["n"] == 0
+    err = capsys.readouterr().err
+    assert "ANTHROPIC_API_KEY" in err
+
 

@@ -69,6 +69,35 @@ wraps that Markdown in a single-file HTML document.
 folds an external SARIF 2.x file (Semgrep, CodeQL, Slither, any SARIF
 emitter) into the report's findings before rendering; repeatable.
 Duplicates (same id+url already in the crawl JSON) are skipped.
+.B \-\-dedup
+is on by default and collapses duplicate findings (same id+url+param, or
+one host-level header/TLS/CORS finding per origin) before rendering;
+.B \-\-no\-dedup
+keeps the raw list.
+.TP
+.B dedup \fIFINDINGS.JSON\fR
+Write a deduplicated findings document (or a raw findings array) to stdout
+or
+.BR \-o .
+Same rules as
+.B report \-\-dedup .
+.TP
+.B ci\-template \-\-platform \fIgithub\fR|\fIgitlab\fR|\fIbitbucket\fR
+Print a ready-to-paste CI workflow that crawls
+.B $TARGET
+, diffs against
+.I expected_findings.json
+with
+.B \-\-gate \-\-format github\-annotations ,
+caches
+.IR .venv ,
+and uploads
+.I scan.json
+as an artifact. Optional
+.BI \-\-program " SLUG"
+and
+.BI \-\-target " URL"
+pre-fill the template.
 .TP
 \fBbaseline\fR \fIFINDINGS\fR, \fBexpected\fR \fIFINDINGS\fR
 Write an
@@ -380,7 +409,7 @@ or
 .BR $SHROODLER_HISTORY_DIR ),
 or list what has been recorded.
 .TP
-\fBprogram init\fR \fISLUG\fR, \fBprogram status\fR \fISLUG\fR, \fBprogram merge\fR \fISLUG\fR \fICRAWL.JSON\fR, \fBprogram add\-session\fR \fISLUG\fR \fIPATH\fR
+\fBprogram init\fR \fISLUG\fR, \fBprogram status\fR \fISLUG\fR, \fBprogram merge\fR \fISLUG\fR \fICRAWL.JSON\fR, \fBprogram add\-session\fR \fISLUG\fR \fIPATH\fR, \fBprogram scope\fR
 Per-program engagement memory under
 .IR ~/.shroodler/programs/<slug>/state.json .
 .B init
@@ -396,6 +425,14 @@ records a jar/storageState path with
 .B \-\-label
 and optional
 .BR \-\-expires .
+.B program scope \-\-program \fISLUG\fR
+writes
+.I ~/.shroodler/programs/<slug>/scope.json
+with
+.B \-\-include
+and
+.B \-\-exclude
+hostname globs (exclude wins; missing file means everything is in scope).
 .TP
 .B discover
 Find live subdomains (crt.sh Certificate Transparency) and JS API
@@ -408,12 +445,31 @@ runs the same step before the engagement loop;
 .B agent \-\-llm\-triage
 ranks unconfirmed leads with Claude (requires
 .BR ANTHROPIC_API_KEY ).
+.B agent \-\-llm\-agent
+lets Claude pick each action from the probe toolbox (requires
+.BR ANTHROPIC_API_KEY );
+.B agent \-\-llm\-agent\-model
+selects the model (default
+.BR claude\-sonnet\-5 ;
+.B opus
+or
+.B claude\-opus\-5
+selects Opus);
+.B agent \-\-llm\-agent\-max\-cost
+stops the loop if estimated API spend exceeds N USD (default 5.0).
 .B agent \-\-write\-authz\-spec
 replays a JSON list of write probes (POST/PATCH/DELETE) as both
 principals after authz-diff.
 .B agent \-\-run\-probes
 fires active injection probes (SQLi, XSS, path-traversal, JWT, IDOR, SSRF,
-open-redirect, host-header, SSTI, XXE, GraphQL) after authz-diff.
+open-redirect, host-header, SSTI, XXE, GraphQL, CRLF, prototype-pollution,
+rate-limit, mass-assignment, WebSocket) after authz-diff.
+.B agent \-\-dom\-xss
+opts in to Playwright DOM XSS probes (off by default).
+.B agent \-\-smuggling
+opts in to HTTP request-smuggling probes (off by default);
+.B agent \-\-no\-smuggling
+forces them off.
 .B agent \-\-no\-openapi
 disables OpenAPI spec discovery and spec-driven probes (both on by default).
 .B agent \-\-no\-ssrf ,
@@ -421,10 +477,23 @@ disables OpenAPI spec discovery and spec-driven probes (both on by default).
 .B agent \-\-no\-host\-header ,
 .B agent \-\-no\-ssti ,
 .B agent \-\-no\-xxe ,
+.B agent \-\-no\-graphql ,
+.B agent \-\-no\-crlf ,
+.B agent \-\-no\-prototype\-pollution ,
+.B agent \-\-no\-rate\-limit\-check ,
+.B agent \-\-no\-mass\-assignment ,
 and
-.B agent \-\-no\-graphql
+.B agent \-\-no\-websocket
 disable individual probe classes that otherwise run with
 .BR \-\-run\-probes .
+.B agent \-\-no\-content\-discovery
+and
+.B agent \-\-no\-tls\-check
+skip the one-shot content-discovery and TLS legs.
+.B agent \-\-scope\-file
+loads include/exclude host patterns from an explicit file.
+.B agent \-\-allow\-external
+allows smuggling probes against non-localhost targets.
 .B agent \-\-no\-auto\-register
 skips automatic peer-account registration before authz-diff.
 .B agent \-\-run\-diff

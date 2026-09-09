@@ -91,6 +91,8 @@ class ProgramState:
     bearer_token: str = ""
     registration_url: str | None = None
     peer_session: dict[str, str] | str | None = None
+    websocket_endpoints: list[str] = field(default_factory=list)
+    hypotheses: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _finding_to_dict(finding: Finding | dict) -> dict[str, Any]:
@@ -196,6 +198,12 @@ def load(slug: str) -> ProgramState:
         bearer_token=bearer_token,
         registration_url=registration_url,
         peer_session=peer_session,
+        websocket_endpoints=[
+            str(u) for u in (data.get("websocket_endpoints") or []) if str(u)
+        ],
+        hypotheses=[
+            dict(row) for row in (data.get("hypotheses") or []) if isinstance(row, dict)
+        ],
     )
 
 
@@ -222,6 +230,8 @@ def save(state: ProgramState) -> Path:
         "bearer_token": state.bearer_token,
         "registration_url": state.registration_url,
         "peer_session": state.peer_session,
+        "websocket_endpoints": list(getattr(state, "websocket_endpoints", None) or []),
+        "hypotheses": list(getattr(state, "hypotheses", None) or []),
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

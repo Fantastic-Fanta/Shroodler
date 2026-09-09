@@ -330,6 +330,11 @@ def cmd_report(args: argparse.Namespace) -> int:
     if rules:
         doc = dict(doc)
         doc["findings"] = filter_findings(doc.get("findings") or [], rules)
+    if getattr(args, "dedup", True):
+        from shroodler.dedup import deduplicate
+
+        doc = dict(doc)
+        doc["findings"] = deduplicate(list(doc.get("findings") or []))
     if args.format == "json":
         text = json.dumps(doc, indent=2) + "\n"
         _write(text, args.output)
@@ -648,7 +653,31 @@ def cmd_agent(args: argparse.Namespace) -> int:
         run_xxe=not bool(getattr(args, "no_xxe", False)),
         run_graphql=not bool(getattr(args, "no_graphql", False)),
         auto_register=not bool(getattr(args, "no_auto_register", False)),
+        run_dom_xss=bool(getattr(args, "dom_xss", False)),
+        run_crlf=not bool(getattr(args, "no_crlf", False)),
+        run_prototype_pollution=not bool(getattr(args, "no_prototype_pollution", False)),
+        run_content_discovery=not bool(getattr(args, "no_content_discovery", False)),
+        run_tls_check=not bool(getattr(args, "no_tls_check", False)),
+        run_rate_limit=not bool(getattr(args, "no_rate_limit_check", False)),
+        run_mass_assignment=not bool(getattr(args, "no_mass_assignment", False)),
+        run_smuggling=bool(getattr(args, "smuggling", False))
+        and not bool(getattr(args, "no_smuggling", False)),
+        run_websocket=not bool(getattr(args, "no_websocket", False)),
+        allow_external=bool(getattr(args, "allow_external", False)),
+        scope_file=getattr(args, "scope_file", None),
+        llm_agent=bool(getattr(args, "llm_agent", False)),
+        llm_agent_model=str(
+            getattr(args, "llm_agent_model", None) or "claude-sonnet-5"
+        ),
+        llm_agent_max_cost_usd=(
+            5.0
+            if getattr(args, "llm_agent_max_cost", None) is None
+            else float(args.llm_agent_max_cost)
+        ),
     )
+    if config.llm_agent and not os.environ.get("ANTHROPIC_API_KEY"):
+        print("error: --llm-agent requires ANTHROPIC_API_KEY", file=sys.stderr)
+        return 2
     result = run_agent(config)
     payload: dict = {
         "iterations": result.iterations,
@@ -1339,6 +1368,53 @@ def cmd_mcp_server(args: argparse.Namespace) -> int:
     return mcp_main(argv)
 
 
+def cmd_program_scope(args: argparse.Namespace) -> int:
+    from shroodler.scope import load_scope, save_scope
+
+    slug = str(args.program)
+    scope = load_scope(slug)
+    includes = [str(item) for item in (getattr(args, "include", None) or []) if str(item)]
+    excludes = [str(item) for item in (getattr(args, "exclude", None) or []) if str(item)]
+    if includes:
+        existing = [str(item) for item in (scope.get("include") or []) if str(item)]
+        scope["include"] = list(dict.fromkeys(existing + includes))
+    if excludes:
+        existing = [str(item) for item in (scope.get("exclude") or []) if str(item)]
+        scope["exclude"] = list(dict.fromkeys(existing + excludes))
+    scope.setdefault("allow_subdomains", True)
+    path = save_scope(slug, scope)
+    print(json.dumps({"path": str(path), **scope}))
+    return 0
+
+
+def cmd_dedup(args: argparse.Namespace) -> int:
+    from shroodler.dedup import deduplicate
+
+    doc = load_json(args.findings)
+    if isinstance(doc, list):
+        payload: object = deduplicate(doc)
+    else:
+        payload = dict(doc)
+        payload["findings"] = deduplicate(list(doc.get("findings") or []))
+    text = json.dumps(payload, indent=2) + "\n"
+    _write(text, getattr(args, "output", None))
+    return 0
+
+
+def cmd_ci_template(args: argparse.Namespace) -> int:
+    from shroodler.ci_templates import render_ci_template
+
+    text = render_ci_template(
+        str(args.platform),
+        program=str(getattr(args, "program", None) or ""),
+        target=str(getattr(args, "target", None) or ""),
+    )
+    if not text.endswith("\n"):
+        text += "\n"
+    print(text, end="")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="shroodler",
@@ -1620,6 +1696,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Fold an external SARIF 2.x file (Semgrep, CodeQL, Slither, ...) into "
         "this report's findings before rendering. Dedupes by id+url against "
         "findings already in the crawl JSON. Repeatable.",
+    )
+    report.add_argument(
+        "--dedup",
+        dest="dedup",
+        action="store_true",
+        default=True,
+        help="Deduplicate findings before rendering (default on)",
+    )
+    report.add_argument(
+        "--no-dedup",
+        dest="dedup",
+        action="store_false",
+        help="Keep duplicate findings when rendering",
     )
     report.set_defaults(func=cmd_report)
 
@@ -2385,6 +2474,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="Optional expiry hint (ISO-8601 date/datetime)",
     )
     padd.set_defaults(func=cmd_program_add_session)
+    pscope = program_sub.add_parser(
+        "scope", help="Write include/exclude host patterns to scope.json"
+    )
+    pscope.add_argument("--program", required=True, metavar="SLUG", help="Program slug")
+    pscope.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help="Hostname glob to include (repeatable), e.g. *.example.com",
+    )
+    pscope.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="PATTERN",
+        help="Hostname glob to exclude (repeatable); exclude wins",
+    )
+    pscope.set_defaults(func=cmd_program_scope)
 
     agent = sub.add_parser(
         "agent",
@@ -2451,6 +2559,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Rank unconfirmed leads with Claude before acting (requires ANTHROPIC_API_KEY)",
     )
     agent.add_argument(
+        "--llm-agent",
+        action="store_true",
+        help="Use Claude to decide each action (requires ANTHROPIC_API_KEY)",
+    )
+    agent.add_argument(
+        "--llm-agent-model",
+        default="claude-sonnet-5",
+        metavar="STR",
+        help="Claude model to use (default: claude-sonnet-5; 'opus' selects claude-opus-5)",
+    )
+    agent.add_argument(
+        "--llm-agent-max-cost",
+        type=float,
+        default=5.0,
+        metavar="N",
+        help="Stop if estimated API cost exceeds N USD (default: 5.0)",
+    )
+    agent.add_argument(
         "--run-discovery",
         action="store_true",
         help="Run subdomain/JS discovery before the first iteration",
@@ -2505,6 +2631,66 @@ def build_parser() -> argparse.ArgumentParser:
         help="Disable GraphQL probes (on by default when --run-probes is set)",
     )
     agent.add_argument(
+        "--dom-xss",
+        action="store_true",
+        help="Enable DOM XSS probes (Playwright; off by default)",
+    )
+    agent.add_argument(
+        "--no-crlf",
+        action="store_true",
+        help="Disable CRLF header-injection probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-prototype-pollution",
+        action="store_true",
+        help="Disable prototype-pollution probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-content-discovery",
+        action="store_true",
+        help="Skip the one-shot content-discovery pass",
+    )
+    agent.add_argument(
+        "--no-tls-check",
+        action="store_true",
+        help="Skip the one-shot TLS certificate check",
+    )
+    agent.add_argument(
+        "--no-rate-limit-check",
+        action="store_true",
+        help="Disable missing-rate-limit probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-mass-assignment",
+        action="store_true",
+        help="Disable mass-assignment probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--smuggling",
+        action="store_true",
+        help="Enable HTTP request-smuggling probes (off by default)",
+    )
+    agent.add_argument(
+        "--no-smuggling",
+        action="store_true",
+        help="Force HTTP request-smuggling probes off",
+    )
+    agent.add_argument(
+        "--no-websocket",
+        action="store_true",
+        help="Disable WebSocket discovery/probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--allow-external",
+        action="store_true",
+        help="Allow smuggling probes against non-localhost targets",
+    )
+    agent.add_argument(
+        "--scope-file",
+        metavar="FILE",
+        help="Load include/exclude host patterns from FILE instead of program scope.json",
+    )
+    agent.add_argument(
         "--no-auto-register",
         action="store_true",
         help="Do not auto-register a peer account before authz-diff",
@@ -2545,6 +2731,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Operator attack-chain JSON spec (repeatable). Runs regardless of --run-probes.",
     )
     agent.set_defaults(func=cmd_agent)
+
+    dedup = sub.add_parser(
+        "dedup",
+        help="Deduplicate findings JSON by id/url/param and host-level checks",
+    )
+    dedup.add_argument("findings", help="Crawl JSON or a raw findings array")
+    dedup.add_argument("--output", "-o", help="Write deduplicated JSON to FILE")
+    dedup.set_defaults(func=cmd_dedup)
+
+    ci_template = sub.add_parser(
+        "ci-template",
+        help="Print a ready-to-paste CI workflow for shroodler crawl+diff",
+    )
+    ci_template.add_argument(
+        "--platform",
+        required=True,
+        choices=["github", "gitlab", "bitbucket"],
+        help="CI platform",
+    )
+    ci_template.add_argument("--program", metavar="SLUG", help="Pre-fill --program")
+    ci_template.add_argument("--target", metavar="URL", help="Pre-fill crawl target URL")
+    ci_template.set_defaults(func=cmd_ci_template)
 
     discover = sub.add_parser(
         "discover",

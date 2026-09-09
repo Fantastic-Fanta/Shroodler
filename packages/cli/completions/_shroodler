@@ -48,6 +48,8 @@ _shroodler_commands=(
   'engagement-history:Show engagement history and endpoint diffs for a program'
   'engagement-diff:Diff current program state against the saved engagement snapshot'
   'version:Print version'
+  'dedup:Deduplicate findings JSON'
+  'ci-template:Print a CI workflow template'
 )
 
 _shroodler() {
@@ -118,6 +120,8 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--suppressions[Suppression rules file]:file:_files' \
             '*--merge-sarif[Fold an external SARIF file into the report]:file:_files' \
+            '--dedup[Deduplicate findings before rendering (default)]' \
+            '--no-dedup[Keep duplicate findings when rendering]' \
             '1:findings json:_files'
           ;;
         baseline|expected)
@@ -277,7 +281,8 @@ _shroodler() {
             'init[Create program state]' \
             'status[Print coverage and stale sessions]' \
             'merge[Ingest a crawl JSON]' \
-            'add-session[Record a session jar path]'
+            'add-session[Record a session jar path]' \
+            'scope[Write include/exclude host patterns]'
           ;;
         agent)
           _arguments \
@@ -292,6 +297,9 @@ _shroodler() {
             '--peer-cookie[Peer Cookie header]:cookie' \
             '--dry-run[Print the plan without making requests]' \
             '--llm-triage[Rank leads with Claude (requires ANTHROPIC_API_KEY)]' \
+            '--llm-agent[Use Claude to decide each action (requires ANTHROPIC_API_KEY)]' \
+            '--llm-agent-model[Claude model (default claude-sonnet-5; opus selects claude-opus-5)]:model' \
+            '--llm-agent-max-cost[Stop if estimated API cost exceeds N USD]:usd' \
             '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \
             '--ignore-robots[Bypass robots.txt during crawl legs]' \
@@ -307,7 +315,19 @@ _shroodler() {
             '--reprobe[Reset tested_payload on all endpoints before the agent loop]' \
             '--run-diff[Diff endpoints against the previous engagement snapshot after crawl]' \
             '--llm-business-logic[Infer app domain and run business-logic probes]' \
-            '--chain-spec[Operator attack-chain JSON spec]:file:_files'
+            '--chain-spec[Operator attack-chain JSON spec]:file:_files' \
+            '--dom-xss[Enable DOM XSS probes (Playwright; off by default)]' \
+            '--no-crlf[Disable CRLF header-injection probes]' \
+            '--no-prototype-pollution[Disable prototype-pollution probes]' \
+            '--no-content-discovery[Skip the one-shot content-discovery pass]' \
+            '--no-tls-check[Skip the one-shot TLS certificate check]' \
+            '--no-rate-limit-check[Disable missing-rate-limit probes]' \
+            '--no-mass-assignment[Disable mass-assignment probes]' \
+            '--smuggling[Enable HTTP request-smuggling probes]' \
+            '--no-smuggling[Force HTTP request-smuggling probes off]' \
+            '--no-websocket[Disable WebSocket discovery/probes]' \
+            '--allow-external[Allow smuggling probes against non-localhost targets]' \
+            '--scope-file[Load include/exclude host patterns from FILE]:file:_files'
           ;;
         engagement-history)
           _arguments \
@@ -326,6 +346,17 @@ _shroodler() {
             '--skip-crtsh[Skip Certificate Transparency discovery]' \
             '--skip-js-surface[Skip JS API surface expansion]' \
             '--dry-run[Print what would be added without writing state]'
+          ;;
+        dedup)
+          _arguments \
+            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
+            '1:findings json:_files'
+          ;;
+        ci-template)
+          _arguments \
+            '--platform[CI platform]:(github gitlab bitbucket)' \
+            '--program[Program slug]:slug' \
+            '--target[Crawl target URL]:url'
           ;;
         trend)
           _arguments \

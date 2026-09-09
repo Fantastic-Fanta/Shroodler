@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program agent discover engagement-history engagement-diff version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program agent discover engagement-history engagement-diff version dedup ci-template"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -22,7 +22,7 @@ _shroodler_flags_for() {
             echo "--pages-only --gate --suppressions --format --output --source-root"
             ;;
         report)
-            echo "--format --output --suppressions --merge-sarif"
+            echo "--format --output --suppressions --merge-sarif --dedup --no-dedup"
             ;;
         baseline|expected)
             echo "--output --name --suppressions"
@@ -123,8 +123,17 @@ _shroodler_flags_for() {
         program-add-session)
             echo "--label --expires"
             ;;
+        program-scope)
+            echo "--program --include --exclude"
+            ;;
         agent)
-            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec"
+            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --llm-agent --llm-agent-model --llm-agent-max-cost --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec --dom-xss --no-crlf --no-prototype-pollution --no-content-discovery --no-tls-check --no-rate-limit-check --no-mass-assignment --smuggling --no-smuggling --no-websocket --allow-external --scope-file"
+            ;;
+        dedup)
+            echo "--output"
+            ;;
+        ci-template)
+            echo "--platform --program --target"
             ;;
         engagement-history)
             echo "--program"
@@ -166,11 +175,11 @@ _shroodler_complete() {
         local psub=""
         for ((i = 1; i < COMP_CWORD; i++)); do
             case "${COMP_WORDS[i]}" in
-                init|status|merge|add-session) psub="${COMP_WORDS[i]}"; break ;;
+                init|status|merge|add-session|scope) psub="${COMP_WORDS[i]}"; break ;;
             esac
         done
         if [[ -z "$psub" ]]; then
-            COMPREPLY=($(compgen -W "init status merge add-session" -- "$cur"))
+            COMPREPLY=($(compgen -W "init status merge add-session scope" -- "$cur"))
             return
         fi
         subcmd="program-$psub"
@@ -256,6 +265,10 @@ _shroodler_complete() {
             ;;
         --profile)
             COMPREPLY=($(compgen -W "safe balanced aggressive" -- "$cur"))
+            return
+            ;;
+        --platform)
+            COMPREPLY=($(compgen -W "github gitlab bitbucket" -- "$cur"))
             return
             ;;
         --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--from-capture|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec|--gql-schema|--gql-wordlist|--merge-sarif|--scope-file)

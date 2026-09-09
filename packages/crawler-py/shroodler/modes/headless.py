@@ -8,6 +8,14 @@ from shroodler.auth import CookieSpec, LoginRecipe, playwright_cookie_payload
 from shroodler.modes.static import FetchResult, _decode_body
 from shroodler.robots import DEFAULT_UA
 from shroodler.urls import same_origin
+from shroodler.webgoat import (
+    captured_endpoint,
+    is_webgoat_url,
+    lesson_nav_urls,
+    parse_lesson_menu,
+    start_mvc_url,
+    webgoat_prefix,
+)
 
 _HISTORY_HOOK = """
 () => {
@@ -239,7 +247,9 @@ class HeadlessFetcher:
     def fetch(self, url: str) -> FetchResult:
         self.requests += 1
         page = self._context.new_page()
+        captured: list[dict] = []
         try:
+            page.on("request", lambda req: self._record_request(req, captured))
             page.add_init_script(_HISTORY_HOOK)
             response = page.goto(url, wait_until="networkidle", timeout=15000)
             status = response.status if response else 0
@@ -260,28 +270,16 @@ class HeadlessFetcher:
                     redirect_to=page.url,
                     set_cookies=[],
                     discovered_urls=[],
+                    xhr_requests=list(captured),
                 )
             discovered = self._enumerate_routes(page, url)
-            body = page.content().encode("utf-8")
-            set_cookies = []
-            for c in self._context.cookies():
-                parts = [f"{c['name']}={c['value']}"]
-                if c.get("secure"):
-                    parts.append("Secure")
-                if c.get("httpOnly"):
-                    parts.append("HttpOnly")
-                if c.get("sameSite"):
-                    parts.append(f"SameSite={c['sameSite']}")
-                set_cookies.append("; ".join(parts))
-            return FetchResult(
-                url=page.url,
-                status_code=status,
-                headers={k.title(): v for k, v in headers.items()},
-                body=body,
-                text=_decode_body(body, headers.get("content-type", "text/html")),
-                redirect_to=None,
-                set_cookies=set_cookies,
-                discovered_urls=discovered,
+            return self._result_from_page(
+                page,
+                url,
+                response,
+                discovered=discovered,
+                xhr_requests=captured,
+                click_routes=False,
             )
         except Exception as exc:  # playwright timeout / crash
             return FetchResult(
@@ -292,9 +290,198 @@ class HeadlessFetcher:
                 text="",
                 redirect_to=None,
                 error=str(exc),
+                xhr_requests=list(captured),
             )
         finally:
             page.close()
+
+    def seed_webgoat_lessons(
+        self, start_url: str, max_lessons: int = 150
+    ) -> list[FetchResult]:
+        """Open each WebGoat lesson as the current browser session (owner).
+
+        Hash routes on start.mvc never appear as distinct URLs in the BFS
+        queue, so ProbeAction would otherwise see only the shell page. This
+        walks ``lessonmenu.mvc`` (and DOM fallbacks), navigates each lesson,
+        and returns one FetchResult per lesson with intercepted XHR pairs.
+        """
+        if not is_webgoat_url(start_url):
+            return []
+        page = self._context.new_page()
+        captured: list[dict] = []
+        results: list[FetchResult] = []
+        try:
+            page.on("request", lambda req: self._record_request(req, captured))
+            page.add_init_script(_HISTORY_HOOK)
+            start = start_mvc_url(start_url)
+            self.requests += 1
+            response = page.goto(start, wait_until="networkidle", timeout=20000)
+            page.wait_for_timeout(400)
+            menu = self._lesson_menu_json(page)
+            links = parse_lesson_menu(menu)
+            try:
+                hrefs = page.evaluate(
+                    """() => Array.from(document.querySelectorAll(
+                      '#menu a[href], .page-sidebar a[href], nav a[href], a[href^="#"]'
+                    )).map(a => a.getAttribute('href') || '')"""
+                )
+            except Exception:
+                hrefs = []
+            for href in hrefs or []:
+                if href and href not in links:
+                    links.append(str(href))
+            nav_urls = lesson_nav_urls(webgoat_prefix(start_url), links)
+            start_xhr = list(captured)
+            captured.clear()
+            results.append(
+                self._result_from_page(
+                    page,
+                    start,
+                    response,
+                    discovered=nav_urls,
+                    xhr_requests=start_xhr,
+                    click_routes=False,
+                )
+            )
+            for lesson_url in nav_urls[: max(0, int(max_lessons))]:
+                captured.clear()
+                self.requests += 1
+                try:
+                    lesson_resp = page.goto(
+                        lesson_url, wait_until="networkidle", timeout=15000
+                    )
+                    page.wait_for_timeout(300)
+                except Exception as exc:  # playwright timeout / crash
+                    results.append(
+                        FetchResult(
+                            url=lesson_url,
+                            status_code=0,
+                            headers={},
+                            body=b"",
+                            text="",
+                            redirect_to=None,
+                            error=str(exc),
+                            xhr_requests=list(captured),
+                        )
+                    )
+                    continue
+                results.append(
+                    self._result_from_page(
+                        page,
+                        lesson_url,
+                        lesson_resp,
+                        discovered=[],
+                        xhr_requests=list(captured),
+                        click_routes=False,
+                    )
+                )
+            return results
+        except Exception as exc:  # playwright timeout / crash
+            if not results:
+                return [
+                    FetchResult(
+                        url=start_url,
+                        status_code=0,
+                        headers={},
+                        body=b"",
+                        text="",
+                        redirect_to=None,
+                        error=str(exc),
+                    )
+                ]
+            return results
+        finally:
+            page.close()
+
+    def _lesson_menu_json(self, page) -> object:
+        try:
+            return page.evaluate(
+                """async () => {
+                  const r = await fetch('service/lessonmenu.mvc', {
+                    credentials: 'same-origin',
+                  });
+                  const text = await r.text();
+                  try { return JSON.parse(text); } catch { return null; }
+                }"""
+            )
+        except Exception:
+            return None
+
+    def _record_request(self, request, bucket: list[dict]) -> None:
+        try:
+            headers = request.headers or {}
+            rec = captured_endpoint(
+                request.url,
+                request.method,
+                post_data=request.post_data,
+                content_type=str(headers.get("content-type") or ""),
+                resource_type=str(request.resource_type or "xhr"),
+            )
+        except Exception:
+            return
+        if rec:
+            bucket.append(rec)
+
+    def _cookie_header_list(self) -> list[str]:
+        set_cookies: list[str] = []
+        for c in self._context.cookies():
+            parts = [f"{c['name']}={c['value']}"]
+            if c.get("secure"):
+                parts.append("Secure")
+            if c.get("httpOnly"):
+                parts.append("HttpOnly")
+            if c.get("sameSite"):
+                parts.append(f"SameSite={c['sameSite']}")
+            set_cookies.append("; ".join(parts))
+        return set_cookies
+
+    def _result_from_page(
+        self,
+        page,
+        requested_url: str,
+        response,
+        *,
+        discovered: list[str],
+        xhr_requests: list[dict],
+        click_routes: bool = True,
+    ) -> FetchResult:
+        status = response.status if response else 0
+        headers = dict(response.headers) if response else {}
+        if not same_origin(page.url, requested_url):
+            return FetchResult(
+                url=requested_url,
+                status_code=status,
+                headers={k.title(): v for k, v in headers.items()},
+                body=b"",
+                text="",
+                redirect_to=page.url,
+                set_cookies=[],
+                discovered_urls=[],
+                xhr_requests=list(xhr_requests),
+            )
+        routes = list(discovered)
+        if click_routes:
+            routes.extend(self._enumerate_routes(page, requested_url))
+        # Preserve insertion order, drop duplicates.
+        seen: set[str] = set()
+        unique_routes: list[str] = []
+        for item in routes:
+            if item in seen:
+                continue
+            seen.add(item)
+            unique_routes.append(item)
+        body = page.content().encode("utf-8")
+        return FetchResult(
+            url=page.url,
+            status_code=status or 200,
+            headers={k.title(): v for k, v in headers.items()},
+            body=body,
+            text=_decode_body(body, headers.get("content-type", "text/html")),
+            redirect_to=None,
+            set_cookies=self._cookie_header_list(),
+            discovered_urls=unique_routes,
+            xhr_requests=list(xhr_requests),
+        )
 
     def _enumerate_routes(self, page, origin_url: str) -> list[str]:
         found: list[str] = []

@@ -62,6 +62,7 @@ def test_flags_broken_access_control_when_anon_denied(fx):
     out = run(doc, cookie_header="session=admin-or-user")
     ids = {f["id"] for f in out["findings"]}
     assert "authz-broken-access-control" in ids
+    assert out["findings"][0]["confidence"] == "confirmed"
 
 
 def test_identity_marker_upgrades_confidence_to_confirmed(fx):
@@ -122,7 +123,12 @@ def test_short_degenerate_marker_is_ignored(fx):
         cookie_header="session=x",
         higher_priv_identity_markers=["admin"],
     )
-    assert "confidence" not in out["findings"][0]
+    finding = out["findings"][0]
+    assert finding["id"] == "authz-broken-access-control"
+    # Short markers must not add identity-confirmation text, but peer=200 /
+    # anon-denied is still enough to stamp confidence=confirmed.
+    assert finding["confidence"] == "confirmed"
+    assert "identity marker" not in finding["description"]
 
 
 def test_marker_present_in_anonymous_response_is_not_confirmation(fx):
@@ -149,7 +155,7 @@ def test_marker_present_in_anonymous_response_is_not_confirmation(fx):
     assert "confidence" not in finding
 
 
-def test_no_marker_match_leaves_confidence_unset(fx):
+def test_broken_access_control_is_confirmed_without_markers(fx):
     fx.on(
         "GET",
         "/admin/report/1",
@@ -164,7 +170,8 @@ def test_no_marker_match_leaves_confidence_unset(fx):
         higher_priv_identity_markers=["victim@example.com"],
     )
     finding = out["findings"][0]
-    assert "confidence" not in finding
+    assert finding["id"] == "authz-broken-access-control"
+    assert finding["confidence"] == "confirmed"
 
 
 def test_require_identity_confirmation_drops_unconfirmed_lead(fx):
@@ -351,3 +358,33 @@ def test_higher_cookie_header_fetches_owner_baseline(fx):
     assert "Bearer owner" in roles
     assert "Bearer peer" in roles
     assert out["findings"]
+
+
+def test_post_form_replay_flags_broken_access_control(fx):
+    def handle(inc):
+        if inc.method != "POST":
+            return 405, {}, b"no"
+        if "session=user" in inc.cookies:
+            return 200, {}, b'{"lessonCompleted":false}'
+        return 302, {"Location": "/login"}, b""
+
+    fx.on("POST", "/access-control/hidden-menu", handle)
+    fx.on("GET", "/access-control/hidden-menu", handle)
+    doc = {
+        "target": fx.origin + "/",
+        "pages": [
+            {
+                "url": fx.origin + "/access-control/hidden-menu",
+                "method": "POST",
+                "params": [
+                    {"name": "hiddenMenu1"},
+                    {"name": "hiddenMenu2"},
+                    {"name": "submit"},
+                ],
+            }
+        ],
+    }
+    out = run(doc, cookie_header="session=user")
+    finding = out["findings"][0]
+    assert finding["id"] == "authz-broken-access-control"
+    assert finding["confidence"] == "confirmed"

@@ -99,3 +99,22 @@ def fetch_urls(
     if truncated:
         out["truncated"] = True
     return out
+
+
+_shared_pacer: Pacer | None = None
+
+
+def pace(pacer: Pacer | None = None) -> None:
+    """Block until the next live request is allowed by the rate limiter.
+
+    Probe modules must call this before every HTTP request. Pass the agent's
+    Pacer when one is available so crawl/probe share a clock; otherwise a
+    module-level 1 req/s pacer is used.
+    """
+    global _shared_pacer
+    clock = pacer
+    if clock is None:
+        if _shared_pacer is None:
+            _shared_pacer = Pacer(DEFAULT_RATE)
+        clock = _shared_pacer
+    clock.wait()

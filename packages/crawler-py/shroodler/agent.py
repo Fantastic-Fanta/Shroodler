@@ -1,7 +1,8 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (crawl coverage gaps → authz-diff → write-authz → peer-write → report),
+action (crawl coverage gaps → authz-diff → write-authz → peer-write → probe →
+report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -47,6 +48,13 @@ class AgentConfig:
     ignore_robots: bool = False  # bypass robots.txt (use for API-first targets)
     write_authz_spec: str | None = None
     write_authz_endpoints: list[dict] | None = None
+    run_probes: bool = False  # opt-in; default off
+    probe_sqli: bool = True
+    probe_xss: bool = True
+    probe_path_traversal: bool = True
+    probe_jwt: bool = True
+    probe_idor: bool = True
+    reprobe: bool = False  # reset tested_payload before the loop
 
 
 @dataclass
@@ -70,12 +78,22 @@ class PeerWriteAction:
 
 
 @dataclass
+class ProbeAction:
+    urls: list[str]
+
+
+@dataclass
 class ReportAction:
     pass
 
 
 AgentAction = (
-    CrawlAction | AuthzDiffAction | WriteAuthzAction | PeerWriteAction | ReportAction
+    CrawlAction
+    | AuthzDiffAction
+    | WriteAuthzAction
+    | PeerWriteAction
+    | ProbeAction
+    | ReportAction
 )
 
 
@@ -186,16 +204,86 @@ def crawl_coverage_gaps(state: ProgramState, config: AgentConfig) -> list[str]:
 
 def _untested_authz_urls(state: ProgramState, config: AgentConfig) -> list[str]:
     cap = max(0, int(config.max_pages_per_crawl))
-    out: list[str] = []
-    for url, meta in state.endpoints.items():
+    ranked: list[tuple[int, int, str]] = []
+    for index, (url, meta) in enumerate(state.endpoints.items()):
         if not _in_target_origin(url, config.target):
             continue
-        if bool((meta or {}).get("tested_authz")):
+        meta = meta or {}
+        if bool(meta.get("tested_authz")):
             continue
-        out.append(url)
-        if len(out) >= cap:
-            break
-    return out
+        ranked.append((_probe_rank(url, meta), index, url))
+    ranked.sort()
+    return [url for _, _, url in ranked[:cap]]
+
+
+_PROBE_PRIORITY = (
+    "sqlinjection",
+    "pathtraversal",
+    "crositescripting",
+    "/jwt/",
+    "/idor/",
+    "access-control",
+)
+
+
+def _probe_rank(url: str, meta: dict | None) -> int:
+    path = (url or "").lower()
+    for i, token in enumerate(_PROBE_PRIORITY):
+        if token in path:
+            return i
+    if (meta or {}).get("params"):
+        return 50
+    return 100
+
+
+def _stale_payload(meta: dict | None) -> bool:
+    """Re-queue when params exist and last_seen is newer than tested_payload_at."""
+    meta = meta or {}
+    params = meta.get("params") or []
+    if not params:
+        return False
+    last_seen = _parse_ts(str(meta.get("last_seen") or "") or None)
+    tested_at = _parse_ts(str(meta.get("tested_payload_at") or "") or None)
+    if last_seen is None or tested_at is None:
+        return False
+    return last_seen > tested_at
+
+
+def _untested_probe_urls(state: ProgramState, config: AgentConfig) -> list[str]:
+    cap = max(0, int(config.max_pages_per_crawl))
+    ranked: list[tuple[int, int, str]] = []
+    for index, (url, meta) in enumerate(state.endpoints.items()):
+        if not _in_target_origin(url, config.target):
+            continue
+        meta = meta or {}
+        if bool(meta.get("tested_payload")) and not _stale_payload(meta):
+            continue
+        ranked.append((_probe_rank(url, meta), index, url))
+    ranked.sort()
+    return [url for _, _, url in ranked[:cap]]
+
+
+def _reset_tested_payload(state: ProgramState) -> int:
+    n = 0
+    for meta in state.endpoints.values():
+        if not isinstance(meta, dict):
+            continue
+        if meta.get("tested_payload"):
+            meta["tested_payload"] = False
+            n += 1
+    return n
+
+
+def _backfill_authz_confidence(state: ProgramState) -> int:
+    """Existing authz-broken-access-control leads already passed peer=200/anon=denied."""
+    n = 0
+    for finding in state.findings:
+        if finding.id != "authz-broken-access-control":
+            continue
+        if finding.confidence is None:
+            finding.confidence = "confirmed"
+            n += 1
+    return n
 
 
 def _owning_endpoints(state: ProgramState, object_id: str) -> list[str]:
@@ -272,7 +360,7 @@ def decide_next_action(
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Crawl > AuthzDiff > WriteAuthz > PeerWrite > Report."""
+    """Priority: Crawl > AuthzDiff > WriteAuthz > PeerWrite > Probe > Report."""
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
         return CrawlAction(urls=crawl_urls)
@@ -307,6 +395,11 @@ def decide_next_action(
         return WriteAuthzAction(endpoints=write_endpoints)
     if object_ids:
         return PeerWriteAction(object_ids=object_ids)
+
+    if config.run_probes:
+        probe_urls = _untested_probe_urls(state, config)
+        if probe_urls:
+            return ProbeAction(urls=probe_urls)
 
     if _confirmed_findings(state):
         return ReportAction()
@@ -355,6 +448,33 @@ def _auth_header_for_diff(config: AgentConfig, role: str) -> str:
     return (override or "").strip()
 
 
+def _probe_auth_headers(config: AgentConfig) -> tuple[str, str]:
+    """Owner + peer Cookie/Authorization lines for active probes."""
+    try:
+        owner = _auth_header_for_diff(config, "higher")
+    except Exception:  # noqa: BLE001 - probes must fail closed
+        owner = (config.owner_cookie or "").strip()
+    try:
+        peer = _auth_header_for_diff(config, "lower")
+    except Exception:  # noqa: BLE001
+        peer = (config.peer_cookie or "").strip()
+    return owner, peer
+
+
+def _probe_params(url: str, meta: dict | None) -> tuple[str, list[dict]]:
+    from shroodler.probes.common import normalize_params, params_from_url
+
+    meta = meta or {}
+    method = str(meta.get("method") or "GET").upper() or "GET"
+    params = normalize_params(meta.get("params") or [])
+    seen = {item["name"] for item in params}
+    for item in params_from_url(url):
+        if item["name"] not in seen:
+            params.append(item)
+            seen.add(item["name"])
+    return method, params
+
+
 def run_authz_diff(
     urls: list[str],
     *,
@@ -366,6 +486,7 @@ def run_authz_diff(
     peer_cookie: str | None = None,
     higher_header: str | None = None,
     lower_header: str | None = None,
+    endpoint_meta: dict[str, dict] | None = None,
 ) -> dict[str, Any]:
     from shroodler.authz_diff import run as authz_run
 
@@ -382,7 +503,17 @@ def run_authz_diff(
             higher_header = _auth_header_for_diff(cfg, "higher")
         if lower_header is None:
             lower_header = _auth_header_for_diff(cfg, "lower")
-    higher_doc = {"target": target, "pages": [{"url": u} for u in urls]}
+    pages: list[dict[str, Any]] = []
+    for u in urls:
+        meta = (endpoint_meta or {}).get(u) or {}
+        pages.append(
+            {
+                "url": u,
+                "method": str(meta.get("method") or "GET").upper() or "GET",
+                "params": list(meta.get("params") or []),
+            }
+        )
+    higher_doc = {"target": target, "pages": pages}
     return authz_run(
         higher_doc,
         cookie_header=lower_header or "",
@@ -580,6 +711,12 @@ def _execute_crawl(
     new_endpoints = 0
     errors: list[str] = []
     allow_external = _allow_external(config.target)
+    from shroodler.webgoat import is_webgoat_url
+
+    webgoat = is_webgoat_url(config.target) or any(
+        is_webgoat_url(u) for u in action.urls
+    )
+    mode = "headless" if webgoat else "static"
     for url in action.urls:
         if not _in_target_origin(url, config.target):
             continue
@@ -592,6 +729,7 @@ def _execute_crawl(
                 login_recipe=config.login_recipe,
                 allow_external=allow_external,
                 ignore_robots=config.ignore_robots,
+                mode=mode,
             )
         except Exception as exc:  # noqa: BLE001 - per-URL, loop must continue
             errors.append(f"{url}: {type(exc).__name__}: {exc}")
@@ -631,6 +769,7 @@ def _execute_authz(
         allow_external=_allow_external(config.target),
         owner_cookie=config.owner_cookie,
         peer_cookie=config.peer_cookie,
+        endpoint_meta={u: (state.endpoints.get(u) or {}) for u in action.urls},
     )
     findings_added = _merge_findings(state, list(raw.get("findings") or []))
     program.mark_tested(state, action.urls, "tested_authz")
@@ -698,6 +837,69 @@ def _execute_write_authz(
     return out
 
 
+def _execute_probe(
+    action: ProbeAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.probes.idor import probe_idor
+    from shroodler.probes.jwt import probe_jwt
+    from shroodler.probes.path_traversal import probe_path_traversal
+    from shroodler.probes.sqli import probe_sqli
+    from shroodler.probes.xss import probe_xss
+
+    owner, peer = _probe_auth_headers(config)
+    auth_header = owner if owner.lower().startswith("authorization:") else ""
+    cookie_header = "" if auth_header else owner
+    findings: list[Any] = []
+    errors: list[str] = []
+
+    def _run(label: str, fn) -> None:
+        try:
+            findings.extend(fn())
+        except Exception as exc:  # noqa: BLE001 - per-probe, loop must continue
+            errors.append(f"{url} {label}: {type(exc).__name__}: {exc}")
+
+    for url in action.urls:
+        if not _in_target_origin(url, config.target):
+            continue
+        meta = state.endpoints.get(url) or {}
+        method, params = _probe_params(url, meta)
+        view_url = str(meta.get("view_url") or "")
+        if config.probe_sqli and method in {"GET", "POST"} and params:
+            _run("sqli", lambda: probe_sqli(url, method, params, owner, pacer=pacer))
+        if config.probe_xss and method in {"GET", "POST"} and params:
+            _run(
+                "xss",
+                lambda: probe_xss(
+                    url, method, params, owner, view_url=view_url, pacer=pacer
+                ),
+            )
+        if config.probe_path_traversal:
+            _run(
+                "path-traversal",
+                lambda: probe_path_traversal(url, params, owner, pacer=pacer),
+            )
+        if config.probe_jwt and (cookie_header or auth_header):
+            _run(
+                "jwt",
+                lambda: probe_jwt(url, cookie_header, auth_header, pacer=pacer),
+            )
+        if config.probe_idor and peer:
+            _run("idor", lambda: probe_idor(url, owner, peer, pacer=pacer))
+    findings_added = _merge_findings(state, findings)
+    program.mark_tested(state, action.urls, "tested_payload")
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": findings_added,
+        "urls_tested": len(action.urls),
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def _execute_report(state: ProgramState) -> dict[str, Any]:
     confirmed = _confirmed_findings(state)
     return {
@@ -731,6 +933,8 @@ def execute_action(
         return _execute_write_authz(action, state, config, clock)
     if isinstance(action, PeerWriteAction):
         return _execute_peer_write(action, state, config, clock)
+    if isinstance(action, ProbeAction):
+        return _execute_probe(action, state, config, clock)
     if isinstance(action, ReportAction):
         return _execute_report(state)
     raise TypeError(f"unknown action {type(action)!r}")
@@ -749,6 +953,8 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         }
     if isinstance(action, PeerWriteAction):
         return {"object_ids": list(action.object_ids)}
+    if isinstance(action, ProbeAction):
+        return {"urls": list(action.urls)}
     if isinstance(action, ReportAction):
         return {"report": True}
     return {}
@@ -765,6 +971,13 @@ def run_agent(config: AgentConfig) -> AgentResult:
     pacer = _new_pacer()
     if config.write_authz_spec:
         _ensure_write_authz_endpoints(config)
+
+    mutated = False
+    if config.reprobe:
+        mutated = _reset_tested_payload(state) > 0 or mutated
+    mutated = _backfill_authz_confidence(state) > 0 or mutated
+    if mutated:
+        program.save(state)
 
     if config.run_discovery:
         from dataclasses import asdict

@@ -39,10 +39,10 @@ from shroodler.extractors.cors import (
 from shroodler.extractors.csrf import confirm_csrf_origin, csrf_findings
 from shroodler.extractors.forms import extract_forms
 from shroodler.extractors.graphql import probe_graphql
-from shroodler.extractors.js_api_surface import crawl_seeds_from_endpoint, extract_js_api_surface
 from shroodler.extractors.headers import extract_headers
 from shroodler.extractors.html_markup import extract_html_markup
 from shroodler.extractors.idor import probe_idor
+from shroodler.extractors.js_api_surface import crawl_seeds_from_endpoint, extract_js_api_surface
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.jwt_audit import audit_text as audit_jwts
 from shroodler.extractors.links import extract_css_urls, extract_links
@@ -60,6 +60,7 @@ from shroodler.extractors.subresource import extract_subresource_findings
 from shroodler.extractors.tls import check_tls
 from shroodler.extractors.verbose import extract_verbose_errors
 from shroodler.models import (
+    CapturedEndpoint,
     CrawlerInfo,
     CrawlResult,
     CrawlStats,
@@ -86,10 +87,13 @@ from shroodler.urls import (
     canonical_key,
     is_loopback_or_local,
     normalize_url,
-    origin as origin_of,
     query_param_names,
     same_origin,
 )
+from shroodler.urls import (
+    origin as origin_of,
+)
+from shroodler.webgoat import dedupe_captured, is_webgoat_url
 
 ProgressCb = Callable[[int, str], None]
 
@@ -298,6 +302,24 @@ class Crawler:
         # time until --max-pages/--max-time happens to run out.
         redirect_chain_depth: dict[str, int] = {}
         robots_blocked: list[str] = []
+        xhr_endpoints: list[CapturedEndpoint] = []
+        if (
+            self.mode == "headless"
+            and is_webgoat_url(seed)
+            and not self.from_capture
+        ):
+            self._seed_webgoat_lessons(
+                seed,
+                origin_url,
+                queue,
+                queued,
+                seen,
+                pages,
+                findings,
+                js_endpoints,
+                xhr_endpoints,
+                t0,
+            )
 
         while queue:
             hit = self._budget_hit(t0, len(pages))
@@ -329,6 +351,7 @@ class Crawler:
                 family_counts[fam] += 1
 
             result = self._fetch_with_retries(url, t0)
+            xhr_endpoints.extend(_captured_from_fetch(result, origin_url))
             if self._session_looks_expired(result):
                 result = self._reauth_until_ok(result, seed, url, t0)
                 if self._session_died:
@@ -555,6 +578,7 @@ class Crawler:
             pages=pages,
             findings=deduped_findings,
             js_endpoints=_dedupe_endpoints(js_endpoints),
+            xhr_endpoints=_dedupe_captured_endpoints(xhr_endpoints),
             stats=CrawlStats(
                 pages_crawled=len(pages),
                 pages_challenged=pages_challenged,
@@ -860,6 +884,47 @@ class Crawler:
             findings = list(findings) + map_findings
         return page, findings, endpoints, result
 
+    def _seed_webgoat_lessons(
+        self,
+        seed: str,
+        origin_url: str,
+        queue: deque[tuple[str, int]],
+        queued: set[str],
+        seen: set[str],
+        pages: list[Page],
+        findings: list[Finding],
+        js_endpoints: list,
+        xhr_endpoints: list[CapturedEndpoint],
+        t0: float,
+    ) -> None:
+        seeder = getattr(self.fetcher, "seed_webgoat_lessons", None)
+        if seeder is None:
+            return
+        try:
+            fetched_pages = seeder(seed)
+        except Exception:  # noqa: BLE001 - walker must not abort the crawl
+            return
+        for fetched in fetched_pages:
+            xhr_endpoints.extend(_captured_from_fetch(fetched, origin_url))
+            if fetched.error and fetched.status_code == 0 and not fetched.text:
+                continue
+            if fetched.url:
+                seen.add(canonical_key(fetched.url))
+                queued.add(canonical_key(fetched.url))
+            page, page_findings, page_eps, fetched = self._page_from_result(fetched, t0)
+            pages.append(page)
+            findings.extend(page_findings)
+            js_endpoints.extend(page_eps)
+            for extra in fetched.discovered_urls or []:
+                resolved = extra if "://" in extra else urljoin(seed, extra)
+                if not same_origin(resolved, origin_url):
+                    continue
+                extra_key = canonical_key(resolved)
+                if extra_key in queued:
+                    continue
+                queued.add(extra_key)
+                queue.append((resolved, 0))
+
     def _from_source_map(self, js_url: str, js_text: str) -> tuple[list[JsEndpoint], list[Finding]]:
         spec = source_mapping_url(js_text)
         if not spec:
@@ -1150,6 +1215,39 @@ def _dedupe_endpoints(items: list[JsEndpoint]) -> list[JsEndpoint]:
         seen.add(key)
         out.append(item)
     return out
+
+
+def _captured_from_fetch(result: FetchResult, origin_url: str) -> list[CapturedEndpoint]:
+    items: list[dict] = []
+    for raw in getattr(result, "xhr_requests", None) or []:
+        if not isinstance(raw, dict):
+            continue
+        url = str(raw.get("url") or "")
+        if not url or not same_origin(url, origin_url):
+            continue
+        items.append(raw)
+    return _dedupe_captured_endpoints(
+        [
+            CapturedEndpoint(
+                url=str(item.get("url") or ""),
+                method=str(item.get("method") or "GET"),
+                params=list(item.get("params") or []),
+            )
+            for item in items
+        ]
+    )
+
+
+def _dedupe_captured_endpoints(items: list[CapturedEndpoint]) -> list[CapturedEndpoint]:
+    raw = [
+        {
+            "url": item.url,
+            "method": item.method,
+            "params": list(item.params or []),
+        }
+        for item in items
+    ]
+    return [CapturedEndpoint(**row) for row in dedupe_captured(raw)]
 
 
 def crawl_url(url: str, **kwargs) -> CrawlResult:

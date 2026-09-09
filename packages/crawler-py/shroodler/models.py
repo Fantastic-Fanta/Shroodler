@@ -87,6 +87,14 @@ class JsEndpoint(BaseModel):
     endpoint: str
 
 
+class CapturedEndpoint(BaseModel):
+    """XHR/fetch (or form POST) intercepted during a headless crawl."""
+
+    url: str
+    method: str = "GET"
+    params: list[dict] = Field(default_factory=list)
+
+
 class CrawlStats(BaseModel):
     pages_crawled: int = 0
     pages_challenged: int = 0
@@ -103,6 +111,7 @@ class CrawlResult(BaseModel):
     pages: list[Page]
     findings: list[Finding]
     js_endpoints: list[JsEndpoint] = Field(default_factory=list)
+    xhr_endpoints: list[CapturedEndpoint] = Field(default_factory=list)
     stats: CrawlStats | None = None
 
     def to_dict(self) -> dict:

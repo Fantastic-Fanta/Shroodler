@@ -307,9 +307,11 @@ _shroodler() {
             '--owner-cookie[Owner Cookie header]:cookie' \
             '--peer-cookie[Peer Cookie header]:cookie' \
             '--dry-run[Print the plan without making requests]' \
-            '--llm-triage[Rank leads with Claude (requires ANTHROPIC_API_KEY)]' \
-            '--llm-agent[Use Claude to decide each action (requires ANTHROPIC_API_KEY)]' \
-            '--llm-agent-model[Claude model (default claude-sonnet-5; opus selects claude-opus-5)]:model' \
+            '--llm-triage[Rank leads with an LLM (requires ANTHROPIC_API_KEY or DEEPSEEK_API_KEY)]' \
+            '--llm-agent[Use an LLM to decide each action (requires ANTHROPIC_API_KEY or DEEPSEEK_API_KEY)]' \
+            '--llm-provider[LLM provider (default anthropic)]:(anthropic deepseek)' \
+            '--llm-agent-model[Model name (default claude-sonnet-5; opus selects claude-opus-5)]:model' \
+            '--llm-model[Alias for --llm-agent-model]:model' \
             '--llm-agent-max-cost[Stop if estimated API cost exceeds N USD]:usd' \
             '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \

@@ -677,3 +677,71 @@ def test_triage_findings_and_submit_format_parse():
     assert args.format == "submit"
 
 
+def test_llm_provider_deepseek_flags_parse_to_agent_config(monkeypatch):
+    from types import SimpleNamespace
+
+    from shroodler.agent import AgentConfig
+    from shroodler.cli import cmd_agent
+
+    captured: dict = {}
+
+    def fake_run(config):
+        captured["config"] = config
+        return SimpleNamespace(iterations=0, confirmed=0, state_path="", errors=[])
+
+    monkeypatch.setattr("shroodler.agent.run_agent", fake_run)
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--llm-provider",
+            "deepseek",
+            "--llm-model",
+            "deepseek-chat",
+        ]
+    )
+    assert args.llm_provider == "deepseek"
+    assert args.llm_agent_model == "deepseek-chat"
+    assert cmd_agent(args) == 0
+    cfg = captured["config"]
+    assert isinstance(cfg, AgentConfig)
+    assert cfg.llm_provider == "deepseek"
+    assert cfg.llm_agent_model == "deepseek-chat"
+
+
+def test_cmd_agent_deepseek_requires_deepseek_key(monkeypatch, capsys):
+    from shroodler.cli import cmd_agent
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    called = {"n": 0}
+
+    def boom(*_a, **_k):
+        called["n"] += 1
+        raise AssertionError("run_agent must not start")
+
+    monkeypatch.setattr("shroodler.agent.run_agent", boom)
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--llm-agent",
+            "--llm-provider",
+            "deepseek",
+        ]
+    )
+    assert cmd_agent(args) == 2
+    assert called["n"] == 0
+    err = capsys.readouterr().err
+    assert "DEEPSEEK_API_KEY" in err
+    assert "ANTHROPIC_API_KEY" not in err
+
+

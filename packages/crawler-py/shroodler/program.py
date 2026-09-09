@@ -93,6 +93,21 @@ class ProgramState:
     peer_session: dict[str, str] | str | None = None
     websocket_endpoints: list[str] = field(default_factory=list)
     hypotheses: list[dict[str, Any]] = field(default_factory=list)
+    js_urls: list[str] = field(default_factory=list)
+    extra_graphql_operations: list[str] = field(default_factory=list)
+    source_map_urls: list[str] = field(default_factory=list)
+
+
+def _unique_str_list(raw: Any) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in raw or []:
+        value = str(item).strip() if item is not None else ""
+        if not value or value in seen:
+            continue
+        seen.add(value)
+        out.append(value)
+    return out
 
 
 def _finding_to_dict(finding: Finding | dict) -> dict[str, Any]:
@@ -204,6 +219,9 @@ def load(slug: str) -> ProgramState:
         hypotheses=[
             dict(row) for row in (data.get("hypotheses") or []) if isinstance(row, dict)
         ],
+        js_urls=_unique_str_list(data.get("js_urls")),
+        extra_graphql_operations=_unique_str_list(data.get("extra_graphql_operations")),
+        source_map_urls=_unique_str_list(data.get("source_map_urls")),
     )
 
 
@@ -232,6 +250,11 @@ def save(state: ProgramState) -> Path:
         "peer_session": state.peer_session,
         "websocket_endpoints": list(getattr(state, "websocket_endpoints", None) or []),
         "hypotheses": list(getattr(state, "hypotheses", None) or []),
+        "js_urls": list(getattr(state, "js_urls", None) or []),
+        "extra_graphql_operations": list(
+            getattr(state, "extra_graphql_operations", None) or []
+        ),
+        "source_map_urls": list(getattr(state, "source_map_urls", None) or []),
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -499,6 +522,12 @@ def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
         urls.append(url)
         _count(_upsert_endpoint(state, url, last_seen, params=page.get("params") or []))
         _ingest_page_samples(state, page)
+        for js_ref in page.get("js_files") or []:
+            if not js_ref:
+                continue
+            joined = urljoin(url, str(js_ref)) if url else str(js_ref)
+            if joined and joined not in state.js_urls:
+                state.js_urls.append(joined)
         for form in page.get("forms") or []:
             if not isinstance(form, dict):
                 continue

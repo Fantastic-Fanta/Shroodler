@@ -490,6 +490,9 @@ disable individual probe classes that otherwise run with
 and
 .B agent \-\-no\-tls\-check
 skip the one-shot content-discovery and TLS legs.
+.B agent \-\-no\-js\-analysis
+skips deep JavaScript bundle analysis (API harvest, secrets, JWT, GraphQL,
+source maps) that otherwise runs after crawl.
 .B agent \-\-scope\-file
 loads include/exclude host patterns from an explicit file.
 .B agent \-\-allow\-external

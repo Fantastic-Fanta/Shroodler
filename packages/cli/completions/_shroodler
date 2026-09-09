@@ -326,6 +326,7 @@ _shroodler() {
             '--smuggling[Enable HTTP request-smuggling probes]' \
             '--no-smuggling[Force HTTP request-smuggling probes off]' \
             '--no-websocket[Disable WebSocket discovery/probes]' \
+            '--no-js-analysis[Skip deep JavaScript bundle analysis after crawl]' \
             '--allow-external[Allow smuggling probes against non-localhost targets]' \
             '--scope-file[Load include/exclude host patterns from FILE]:file:_files'
           ;;

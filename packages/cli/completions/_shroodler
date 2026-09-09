@@ -114,7 +114,7 @@ _shroodler() {
           ;;
         report)
           _arguments \
-            '--format[Output format]:(html csv json sarif junit md markdown)' \
+            '--format[Output format]:(html csv json sarif junit md markdown pentest pentest-html)' \
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--suppressions[Suppression rules file]:file:_files' \
             '*--merge-sarif[Fold an external SARIF file into the report]:file:_files' \
@@ -295,11 +295,14 @@ _shroodler() {
             '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \
             '--ignore-robots[Bypass robots.txt during crawl legs]' \
-            '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/SSRF/open-redirect/host-header)]' \
+            '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/SSRF/open-redirect/host-header/SSTI/XXE/GraphQL)]' \
             '--no-openapi[Disable OpenAPI spec discovery and spec-driven probes]' \
             '--no-ssrf[Disable SSRF probes]' \
             '--no-open-redirect[Disable open-redirect probes]' \
             '--no-host-header[Disable host-header injection probes]' \
+            '--no-ssti[Disable SSTI probes]' \
+            '--no-xxe[Disable XXE probes]' \
+            '--no-graphql[Disable GraphQL probes]' \
             '--no-auto-register[Do not auto-register a peer account before authz-diff]' \
             '--reprobe[Reset tested_payload on all endpoints before the agent loop]' \
             '--run-diff[Diff endpoints against the previous engagement snapshot after crawl]' \

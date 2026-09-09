@@ -124,7 +124,7 @@ _shroodler_flags_for() {
             echo "--label --expires"
             ;;
         agent)
-            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec"
+            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec"
             ;;
         engagement-history)
             echo "--program"
@@ -239,7 +239,7 @@ _shroodler_complete() {
             case "$subcmd" in
                 crawl) COMPREPLY=($(compgen -W "json html csv sarif junit" -- "$cur")) ;;
                 diff) COMPREPLY=($(compgen -W "text junit sarif github-annotations" -- "$cur")) ;;
-                report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown" -- "$cur")) ;;
+                report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown pentest pentest-html" -- "$cur")) ;;
                 history-list) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 cadence) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 triage) COMPREPLY=($(compgen -W "text json hosts" -- "$cur")) ;;

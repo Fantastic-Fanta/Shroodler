@@ -59,8 +59,12 @@ Heuristic/best-effort, not a real router analysis.
 .TP
 .B report \fIFINDINGS\fR
 Render a findings JSON document as
-.BR html ", " csv ", " json ", " sarif ", " junit ", or " md / markdown
+.BR html ", " csv ", " json ", " sarif ", " junit ", " md / markdown ", " pentest ", or " pentest-html
 (\fB\-\-format\fR).
+.B pentest
+writes a professional Markdown report (executive summary, CVSS, reproduction curl);
+.B pentest-html
+wraps that Markdown in a single-file HTML document.
 .BI \-\-merge\-sarif " FILE"
 folds an external SARIF 2.x file (Semgrep, CodeQL, Slither, any SARIF
 emitter) into the report's findings before rendering; repeatable.
@@ -409,13 +413,16 @@ replays a JSON list of write probes (POST/PATCH/DELETE) as both
 principals after authz-diff.
 .B agent \-\-run\-probes
 fires active injection probes (SQLi, XSS, path-traversal, JWT, IDOR, SSRF,
-open-redirect, host-header) after authz-diff.
+open-redirect, host-header, SSTI, XXE, GraphQL) after authz-diff.
 .B agent \-\-no\-openapi
 disables OpenAPI spec discovery and spec-driven probes (both on by default).
 .B agent \-\-no\-ssrf ,
 .B agent \-\-no\-open\-redirect ,
+.B agent \-\-no\-host\-header ,
+.B agent \-\-no\-ssti ,
+.B agent \-\-no\-xxe ,
 and
-.B agent \-\-no\-host\-header
+.B agent \-\-no\-graphql
 disable individual probe classes that otherwise run with
 .BR \-\-run\-probes .
 .B agent \-\-no\-auto\-register
@@ -850,6 +857,14 @@ Render an HTML report:
 .RS
 .EX
 shroodler report out.json --format html -o out.html
+.EE
+.RE
+.PP
+Render a professional pentest report:
+.RS
+.EX
+shroodler report out.json --format pentest -o pentest.md
+shroodler report out.json --format pentest-html -o pentest.html
 .EE
 .RE
 .PP

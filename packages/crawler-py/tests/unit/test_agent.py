@@ -594,12 +594,18 @@ def test_cmd_agent_no_probe_flags_disable_new_probes(tmp_path, monkeypatch, caps
         no_ssrf=True,
         no_open_redirect=True,
         no_host_header=True,
+        no_ssti=True,
+        no_xxe=True,
+        no_graphql=True,
         no_auto_register=True,
     )
     assert cmd_agent(ns) == 0
     assert captured[0].run_ssrf is False
     assert captured[0].run_open_redirect is False
     assert captured[0].run_host_header is False
+    assert captured[0].run_ssti is False
+    assert captured[0].run_xxe is False
+    assert captured[0].run_graphql is False
     assert captured[0].auto_register is False
 
 
@@ -953,6 +959,9 @@ def test_agent_config_run_probes_defaults_off():
     assert cfg.run_ssrf is True
     assert cfg.run_open_redirect is True
     assert cfg.run_host_header is True
+    assert cfg.run_ssti is True
+    assert cfg.run_xxe is True
+    assert cfg.run_graphql is True
     assert cfg.auto_register is True
     assert cfg.run_diff is False
     assert cfg.run_business_logic is False
@@ -1071,6 +1080,9 @@ def test_execute_probe_merges_findings_and_marks_tested(monkeypatch):
     monkeypatch.setattr(
         "shroodler.probes.host_header.probe_host_header", lambda *a, **k: []
     )
+    monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", lambda *a, **k: [])
 
     url = "http://127.0.0.1/search?q=1"
     state = ProgramState(
@@ -1112,6 +1124,9 @@ def test_execute_probe_records_per_probe_errors(monkeypatch):
     monkeypatch.setattr(
         "shroodler.probes.host_header.probe_host_header", lambda *a, **k: []
     )
+    monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", lambda *a, **k: [])
 
     url = "http://127.0.0.1/search?q=1"
     state = ProgramState(
@@ -1556,6 +1571,9 @@ def test_execute_probe_runs_ssrf_and_host_header(monkeypatch):
     monkeypatch.setattr(
         "shroodler.probes.host_header.probe_host_header", mark("host-header")
     )
+    monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", mark("ssti"))
+    monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", mark("xxe"))
+    monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", mark("graphql"))
 
     url_a = "http://127.0.0.1/fetch?url=1"
     url_b = "http://127.0.0.1/other?url=2"
@@ -1583,6 +1601,9 @@ def test_execute_probe_runs_ssrf_and_host_header(monkeypatch):
     assert called.count("ssrf") == 2
     assert called.count("open-redirect") == 2
     assert called.count("host-header") == 1
+    assert called.count("ssti") == 2
+    assert called.count("xxe") == 2
+    assert called.count("graphql") == 1
 
 
 def test_execute_probe_honors_no_ssrf_flags(monkeypatch):
@@ -1609,6 +1630,9 @@ def test_execute_probe_honors_no_ssrf_flags(monkeypatch):
     monkeypatch.setattr(
         "shroodler.probes.host_header.probe_host_header", mark("host-header")
     )
+    monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", mark("ssti"))
+    monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", mark("xxe"))
+    monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", mark("graphql"))
 
     url = "http://127.0.0.1/fetch?url=1"
     state = ProgramState(
@@ -1629,10 +1653,16 @@ def test_execute_probe_honors_no_ssrf_flags(monkeypatch):
             run_ssrf=False,
             run_open_redirect=False,
             run_host_header=False,
+            run_ssti=False,
+            run_xxe=False,
+            run_graphql=False,
         ),
         pacer=Pacer(0),
     )
     assert "ssrf" not in called
     assert "open-redirect" not in called
     assert "host-header" not in called
+    assert "ssti" not in called
+    assert "xxe" not in called
+    assert "graphql" not in called
 

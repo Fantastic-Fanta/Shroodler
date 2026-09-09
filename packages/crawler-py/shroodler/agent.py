@@ -26,7 +26,7 @@ from shroodler import program
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.program import ProgramState, object_ids_flat, url_to_pattern
-from shroodler.urls import is_loopback_or_local, same_origin
+from shroodler.urls import is_loopback_or_local, origin as origin_of, same_origin
 
 _STALE_AFTER = timedelta(hours=24)
 _DEFAULT_RATE_CEILING = 0.1  # 100 ms between HTTP requests if no guardrail
@@ -60,6 +60,9 @@ class AgentConfig:
     run_ssrf: bool = True
     run_open_redirect: bool = True
     run_host_header: bool = True
+    run_ssti: bool = True
+    run_xxe: bool = True
+    run_graphql: bool = True
     auto_register: bool = True
     reprobe: bool = False  # reset tested_payload before the loop
     run_diff: bool = False  # opt-in; also auto-runs when a previous run exists
@@ -1193,6 +1196,7 @@ def _execute_probe(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    from shroodler.probes.graphql import probe_graphql
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
@@ -1200,7 +1204,9 @@ def _execute_probe(
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.sqli import probe_sqli
     from shroodler.probes.ssrf import probe_ssrf
+    from shroodler.probes.ssti import probe_ssti
     from shroodler.probes.xss import probe_xss
+    from shroodler.probes.xxe import probe_xxe
 
     owner, peer = _probe_auth_headers(config)
     auth_header = owner if owner.lower().startswith("authorization:") else ""
@@ -1208,6 +1214,7 @@ def _execute_probe(
     findings: list[Any] = []
     errors: list[str] = []
     seen_hosts: set[str] = set()
+    seen_graphql: set[str] = set()
 
     def _run(label: str, fn) -> None:
         try:
@@ -1254,6 +1261,26 @@ def _execute_probe(
             if host and host not in seen_hosts:
                 seen_hosts.add(host)
                 _run("host-header", lambda: probe_host_header(url, owner, pacer=pacer))
+        if config.run_ssti and method in {"GET", "POST"} and params:
+            _run("ssti", lambda: probe_ssti(url, method, params, owner, pacer=pacer))
+        if config.run_xxe and method in {"GET", "POST"}:
+            content_type = str(meta.get("content_type") or meta.get("content-type") or "")
+            _run(
+                "xxe",
+                lambda: probe_xxe(
+                    url,
+                    method,
+                    params,
+                    owner,
+                    pacer=pacer,
+                    content_type=content_type,
+                ),
+            )
+        if config.run_graphql:
+            origin = origin_of(url)
+            if origin and origin not in seen_graphql:
+                seen_graphql.add(origin)
+                _run("graphql", lambda: probe_graphql(url, owner, pacer=pacer))
     findings_added = _merge_findings(state, findings)
     program.mark_tested(state, action.urls, "tested_payload")
     out: dict[str, Any] = {

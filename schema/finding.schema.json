@@ -54,6 +54,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/js_endpoint" }
     },
+    "xhr_endpoints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/xhr_endpoint" },
+      "description": "Optional XHR/fetch pairs intercepted during a headless crawl. Absent on older scans."
+    },
     "stats": {
       "$ref": "#/$defs/stats",
       "description": "Optional crawl metrics. Absent on older scans; not required."
@@ -246,6 +251,29 @@
       "properties": {
         "source": { "type": "string" },
         "endpoint": { "type": "string" }
+      }
+    },
+    "xhr_endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "method"],
+      "properties": {
+        "url": { "type": "string", "minLength": 1 },
+        "method": { "type": "string", "minLength": 1 },
+        "params": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/xhr_param" }
+        }
+      }
+    },
+    "xhr_param": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "in": { "type": "string" }
       }
     },
     "stats": {

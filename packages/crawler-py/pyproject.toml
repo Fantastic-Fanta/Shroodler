@@ -27,6 +27,7 @@ dependencies = [
   "jinja2>=3.1",
   "cryptography>=42",
   "anthropic>=0.30",
+  "PyJWT>=2.8",
 ]
 
 [project.optional-dependencies]

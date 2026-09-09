@@ -377,7 +377,36 @@ def test_agent_flags_parse():
     assert args.llm_triage is True
     assert args.run_discovery is True
     assert args.write_authz_spec == "writes.json"
+    assert args.run_probes is False
+    assert args.reprobe is False
     assert "agent" in p.format_help()
+
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--run-probes",
+        ]
+    )
+    assert args.run_probes is True
+    assert args.reprobe is False
+
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--run-probes",
+            "--reprobe",
+        ]
+    )
+    assert args.run_probes is True
+    assert args.reprobe is True
 
 
 def test_discover_flags_parse():

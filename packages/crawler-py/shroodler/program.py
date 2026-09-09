@@ -98,6 +98,8 @@ class ProgramState:
     source_map_urls: list[str] = field(default_factory=list)
     login_headers: dict[str, str] = field(default_factory=dict)
     login_cookies: dict[str, str] = field(default_factory=dict)
+    peer_headers: dict[str, str] = field(default_factory=dict)
+    peer_cookies: dict[str, str] = field(default_factory=dict)
     login_failed: bool = False
     reauth_attempts: int = 0
     reauth_callback: Any | None = field(default=None, repr=False, compare=False)

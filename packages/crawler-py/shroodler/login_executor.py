@@ -53,6 +53,19 @@ def apply_session(
     state.login_cookies = _cookies_to_dict(cookies)
 
 
+def apply_peer_session(
+    state: ProgramState,
+    headers: dict[str, str] | None,
+    cookies: dict[str, str] | list | None,
+) -> None:
+    """Write peer_headers / peer_cookies onto ProgramState (runtime, not persisted).
+
+    Does not touch owner login_headers / login_cookies.
+    """
+    state.peer_headers = {str(k): str(v) for k, v in dict(headers or {}).items()}
+    state.peer_cookies = _cookies_to_dict(cookies)
+
+
 def _cookies_to_dict(cookies: dict[str, str] | list | None) -> dict[str, str]:
     if not cookies:
         return {}

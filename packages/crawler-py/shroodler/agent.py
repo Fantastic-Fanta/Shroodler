@@ -48,7 +48,7 @@ class AgentConfig:
     owner_cookie: str | None = None
     peer_cookie: str | None = None
     dry_run: bool = False
-    llm_triage: bool = False  # opt-in; requires ANTHROPIC_API_KEY in env
+    llm_triage: bool = False  # opt-in; requires the provider API key in env
     run_discovery: bool = False  # run discover() before the first iteration
     ignore_robots: bool = False  # bypass robots.txt (use for API-first targets)
     write_authz_spec: str | None = None
@@ -83,7 +83,8 @@ class AgentConfig:
     run_websocket: bool = True
     allow_external: bool = False
     scope_file: str | None = None
-    llm_agent: bool = False  # --llm-agent; requires ANTHROPIC_API_KEY
+    llm_agent: bool = False  # --llm-agent; requires the provider API key
+    llm_provider: str = "anthropic"  # "anthropic" | "deepseek"
     llm_agent_model: str = "claude-sonnet-5"
     llm_agent_max_cost_usd: float = 5.0
     run_js_analysis: bool = True  # --no-js-analysis to skip
@@ -1453,18 +1454,21 @@ def _execute_business_logic(
     )
 
     config._business_logic_done = True
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    from shroodler.llm_provider import llm_api_key_env
+
+    env_name = llm_api_key_env(getattr(config, "llm_provider", "anthropic"))
+    if not os.environ.get(env_name):
         return {
             "pages_crawled": 0,
             "findings_added": 0,
             "urls_tested": 0,
-            "errors": ["--llm-business-logic requires ANTHROPIC_API_KEY"],
+            "errors": [f"--llm-business-logic requires {env_name}"],
         }
     findings: list[Any] = []
     errors: list[str] = []
     urls_tested = 0
     try:
-        model = infer_app_domain(state.js_bundles, state.api_samples)
+        model = infer_app_domain(state.js_bundles, state.api_samples, config=config)
         if model.financial:
             owner = _owner_for_probes(state, config)
             _session_cm = _bind_probe_session(state, config, pacer)
@@ -2344,6 +2348,25 @@ class _LlmStep:
     errors: list[str] = field(default_factory=list)
 
 
+def _probe_memory_db_path(config: AgentConfig) -> str:
+    """Prefer program_dir/program/probe_memory.db; else a temp file."""
+    import tempfile
+
+    slug = str(getattr(config, "program", "") or "")
+    explicit = getattr(config, "program_dir", None)
+    if explicit:
+        base = Path(explicit)
+        if slug:
+            return str(base / slug / "probe_memory.db")
+        return str(base / "probe_memory.db")
+    if slug:
+        try:
+            return str(program.program_dir(slug) / "probe_memory.db")
+        except ValueError:
+            pass
+    return str(Path(tempfile.gettempdir()) / "shroodler-probe-memory.db")
+
+
 def _llm_agent_step(
     state: ProgramState,
     config: AgentConfig,
@@ -2351,6 +2374,7 @@ def _llm_agent_step(
     iteration: int,
     history: list[Any],
     crawl_stall_count: int,
+    probe_memory: Any = None,
 ) -> _LlmStep:
     """One LLM iteration. Fallback uses decide_next_action; never raises."""
     from shroodler.llm_agent.context import build_context
@@ -2377,7 +2401,9 @@ def _llm_agent_step(
         )
 
     ctx = build_context(state, state.findings, history, config)
-    decision = plan_next_action(ctx, TOOLS, config, history)
+    decision = plan_next_action(
+        ctx, TOOLS, config, history, probe_memory=probe_memory
+    )
     delta = estimate_cost_usd(
         decision.model, decision.input_tokens, decision.output_tokens
     )
@@ -2444,7 +2470,15 @@ def _llm_agent_step(
         return _LlmStep(executed=True, entry=entry)
 
     try:
-        result = execute_tool(decision, state, config, None, None, pacer)
+        result = execute_tool(
+            decision,
+            state,
+            config,
+            None,
+            None,
+            pacer,
+            probe_memory=probe_memory,
+        )
     except Exception as exc:  # noqa: BLE001
         message = f"{type(exc).__name__}: {exc}"
         return _LlmStep(
@@ -2494,14 +2528,31 @@ def _llm_agent_step(
 
 
 def run_agent(config: AgentConfig) -> AgentResult:
-    if config.llm_agent and not os.environ.get("ANTHROPIC_API_KEY"):
-        return AgentResult(
-            iterations=0,
-            confirmed=0,
-            log=[],
-            state_path="",
-            errors=["--llm-agent requires ANTHROPIC_API_KEY"],
-        )
+    if config.llm_agent:
+        from shroodler.llm_provider import llm_api_key_env
+
+        env_name = llm_api_key_env(getattr(config, "llm_provider", "anthropic"))
+        if not os.environ.get(env_name):
+            return AgentResult(
+                iterations=0,
+                confirmed=0,
+                log=[],
+                state_path="",
+                errors=[f"--llm-agent requires {env_name}"],
+            )
+    probe_memory = None
+    if config.llm_agent:
+        from shroodler.llm_agent.probe_memory import ProbeMemory
+
+        probe_memory = ProbeMemory(_probe_memory_db_path(config))
+    try:
+        return _run_agent_body(config, probe_memory)
+    finally:
+        if probe_memory is not None:
+            probe_memory.close()
+
+
+def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResult:
     state = program.load(config.program)
     assert_target_in_scope(state, config.target)
     path = str(program.state_path(state.slug))
@@ -2558,6 +2609,7 @@ def run_agent(config: AgentConfig) -> AgentResult:
                 i + 1,
                 llm_history,
                 _crawl_stall_count,
+                probe_memory=probe_memory,
             )
             if step.stop:
                 if step.entry:

@@ -7,6 +7,12 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any
 
+from shroodler.llm_provider import (
+    LLMConfig,
+    LLMProvider,
+    llm_api_key_env,
+    llm_complete_sync,
+)
 from shroodler.llm_triage import _parse_json_object
 from shroodler.models import Finding
 from shroodler.probes.common import body_text, request
@@ -86,15 +92,44 @@ def _bundle_texts(js_bundles: Any) -> list[str]:
     return out[:3]
 
 
-def infer_app_domain(js_bundles: Any, api_samples: Any, pages: Any = None) -> AppDomainModel:
-    """Call Claude when ANTHROPIC_API_KEY is set; otherwise return unknown."""
+def _provider_for(config: Any) -> LLMProvider:
+    if config is None:
+        raw = "anthropic"
+    else:
+        raw = str(getattr(config, "llm_provider", "anthropic") or "anthropic")
+    try:
+        return LLMProvider(raw.strip().lower())
+    except ValueError:
+        return LLMProvider.ANTHROPIC
+
+
+def _model_for(config: Any, provider: LLMProvider) -> str:
+    if config is None:
+        raw = ""
+    else:
+        raw = str(getattr(config, "llm_agent_model", "") or "").strip()
+    if provider is LLMProvider.DEEPSEEK:
+        lowered = raw.lower()
+        if not raw or lowered in {"sonnet", "opus", "claude-sonnet-5", "claude-opus-5"}:
+            return ""
+        return raw
+    return raw or BUSINESS_LOGIC_MODEL
+
+
+def infer_app_domain(
+    js_bundles: Any,
+    api_samples: Any,
+    pages: Any = None,
+    *,
+    config: Any = None,
+) -> AppDomainModel:
+    """Call the configured LLM when its API key is set; otherwise return unknown."""
     empty = AppDomainModel()
-    if not os.environ.get("ANTHROPIC_API_KEY"):
+    provider = _provider_for(config)
+    if not os.environ.get(llm_api_key_env(provider)):
         return empty
     try:
         import json
-
-        import anthropic
 
         samples = api_samples if isinstance(api_samples, dict) else {}
         payload = {
@@ -102,19 +137,20 @@ def infer_app_domain(js_bundles: Any, api_samples: Any, pages: Any = None) -> Ap
             "api_samples": {str(k): str(v)[:200] for k, v in list(samples.items())[:40]},
             "page_count": len(pages or []),
         }
-        client = anthropic.Anthropic()
-        message = client.messages.create(
-            model=BUSINESS_LOGIC_MODEL,
+        llm_config = LLMConfig(
+            provider=provider,
+            model=_model_for(config, provider),
             max_tokens=BUSINESS_LOGIC_MAX_TOKENS,
             temperature=0,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": json.dumps(payload, default=str)}],
         )
-        text = ""
-        content = getattr(message, "content", None) or []
-        if content:
-            text = getattr(content[0], "text", "") or ""
-        data = _parse_json_object(text)
+        response = llm_complete_sync(
+            [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": json.dumps(payload, default=str)},
+            ],
+            llm_config,
+        )
+        data = _parse_json_object(response.text)
         if data is None:
             return empty
         workflows = data.get("workflows") or []

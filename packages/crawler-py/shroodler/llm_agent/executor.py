@@ -3,17 +3,31 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 from urllib.parse import urlencode, urlparse, urlunparse
 
 import httpx
 
 from shroodler.llm_agent.planner import PlannerDecision
+from shroodler.llm_agent.probe_memory import ProbeMemory, ProbeRecord, normalise_url
 from shroodler.llm_agent.tools import tool_by_name
 from shroodler.pacer import Pacer
 from shroodler.probes.common import body_text, request
 
 _FETCH_BODY_CAP = 2000
+_PROBE_TYPE_BY_TOOL = {
+    "probe_sqli": "sqli",
+    "probe_xss": "xss",
+    "probe_idor": "idor",
+    "probe_ssrf": "ssrf",
+    "probe_open_redirect": "open_redirect",
+    "probe_path_traversal": "path_traversal",
+    "probe_ssti": "ssti",
+    "probe_host_header": "host_header",
+    "probe_jwt": "jwt",
+    "probe_graphql": "graphql",
+}
 
 
 @dataclass
@@ -26,6 +40,115 @@ class ToolResult:
 
 def _params_of(decision: PlannerDecision) -> dict[str, Any]:
     return dict(decision.params or {})
+
+
+def _probe_url_and_param(decision: PlannerDecision) -> tuple[str, str | None]:
+    params = _params_of(decision)
+    url = str(params.get("url") or params.get("target_url") or "").strip()
+    raw = params.get("param")
+    if raw is None or str(raw).strip() in {"", "null", "None"}:
+        return url, None
+    return url, str(raw).strip()
+
+
+def _finding_ids(findings: list[Any]) -> list[str]:
+    ids: list[str] = []
+    for item in findings or []:
+        fid = getattr(item, "id", None)
+        if fid is None and isinstance(item, dict):
+            fid = item.get("id")
+        if fid:
+            ids.append(str(fid))
+    return ids
+
+
+def _classify_probe_result(result: ToolResult) -> tuple[str, str | None]:
+    raw = result.raw_output if isinstance(result.raw_output, dict) else {}
+    err = str(raw.get("error") or "")
+    blob = f"{err} {result.summary or ''}".lower()
+    if raw.get("skipped"):
+        return "skipped", None
+    if "timeout" in blob:
+        status = "timeout"
+    elif err:
+        status = "error"
+    elif int(result.findings_added or 0) >= 1:
+        status = "finding"
+    else:
+        status = "no-finding"
+    finding_id = None
+    if status == "finding":
+        ids = raw.get("finding_ids")
+        if isinstance(ids, list) and ids:
+            finding_id = str(ids[0])
+        elif isinstance(ids, str) and ids:
+            finding_id = ids
+    return status, finding_id
+
+
+def _skip_if_already_tried(
+    name: str,
+    decision: PlannerDecision,
+    probe_memory: ProbeMemory | None,
+) -> ToolResult | None:
+    if probe_memory is None:
+        return None
+    probe_type = _PROBE_TYPE_BY_TOOL.get(name)
+    if not probe_type:
+        return None
+    url, param = _probe_url_and_param(decision)
+    if not url:
+        return None
+    try:
+        pattern = normalise_url(url)
+        if not probe_memory.already_tried(pattern, probe_type, param):
+            return None
+    except Exception:  # noqa: BLE001 - never block the probe
+        return None
+    return ToolResult(
+        findings_added=0,
+        summary=f"skipped — already tried {probe_type} on {pattern}",
+        raw_output={
+            "skipped": True,
+            "reason": "already tried",
+            "url": url,
+            "param": param,
+            "probe_type": probe_type,
+            "endpoint_pattern": pattern,
+        },
+    )
+
+
+def _remember_probe(
+    name: str,
+    decision: PlannerDecision,
+    result: ToolResult,
+    probe_memory: ProbeMemory | None,
+) -> None:
+    if probe_memory is None:
+        return
+    probe_type = _PROBE_TYPE_BY_TOOL.get(name)
+    if not probe_type:
+        return
+    url, param = _probe_url_and_param(decision)
+    if not url:
+        return
+    status, finding_id = _classify_probe_result(result)
+    if status == "skipped":
+        return
+    try:
+        probe_memory.record(
+            ProbeRecord(
+                endpoint_pattern=normalise_url(url),
+                probe_type=probe_type,
+                param_name=param,
+                result=status,
+                tried_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                finding_id=finding_id,
+            )
+        )
+    except Exception:  # noqa: BLE001 - memory must not break the agent
+        return
 
 
 def _one_param(
@@ -199,7 +322,12 @@ def _probe(
     return ToolResult(
         findings_added=added,
         summary=_summarize_findings(findings, f"{name} on {url} found nothing"),
-        raw_output={"findings": len(findings), "url": url, "param": param},
+        raw_output={
+            "findings": len(findings),
+            "url": url,
+            "param": param,
+            "finding_ids": _finding_ids(findings),
+        },
     )
 
 
@@ -330,6 +458,7 @@ def execute_tool(
     owner_client: httpx.Client | None,
     peer_client: httpx.Client | None,
     pacer: Pacer,
+    probe_memory: ProbeMemory | None = None,
 ) -> ToolResult:
     """Run one planner decision. Does not duplicate probe logic."""
     _ = peer_client
@@ -348,7 +477,12 @@ def execute_tool(
         if name == "crawl":
             return _crawl(decision, state, config, pacer)
         if name.startswith("probe_"):
-            return _probe(name, decision, state, config, pacer, owner_client)
+            skipped = _skip_if_already_tried(name, decision, probe_memory)
+            if skipped is not None:
+                return skipped
+            result = _probe(name, decision, state, config, pacer, owner_client)
+            _remember_probe(name, decision, result, probe_memory)
+            return result
         if name == "check_authz":
             return _check_authz(decision, state, config, pacer)
         if name == "fetch_and_read":
@@ -358,8 +492,11 @@ def execute_tool(
         if name == "report":
             return _report(state)
     except Exception as exc:  # noqa: BLE001
-        return ToolResult(
+        result = ToolResult(
             summary=f"{name} error: {type(exc).__name__}: {exc}",
             raw_output={"error": f"{type(exc).__name__}: {exc}"},
         )
+        if name.startswith("probe_"):
+            _remember_probe(name, decision, result, probe_memory)
+        return result
     return ToolResult(summary=f"unhandled tool {name}", raw_output={"error": name})

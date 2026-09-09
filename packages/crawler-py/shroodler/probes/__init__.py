@@ -6,6 +6,7 @@ live request and fails closed on transport errors.
 
 from __future__ import annotations
 
+from shroodler.probes.graphql import probe_graphql
 from shroodler.probes.host_header import probe_host_header
 from shroodler.probes.idor import probe_idor
 from shroodler.probes.jwt import probe_jwt
@@ -13,9 +14,12 @@ from shroodler.probes.open_redirect import probe_open_redirect
 from shroodler.probes.path_traversal import probe_path_traversal
 from shroodler.probes.sqli import probe_sqli
 from shroodler.probes.ssrf import probe_ssrf
+from shroodler.probes.ssti import probe_ssti
 from shroodler.probes.xss import probe_xss
+from shroodler.probes.xxe import probe_xxe
 
 __all__ = [
+    "probe_graphql",
     "probe_host_header",
     "probe_idor",
     "probe_jwt",
@@ -23,5 +27,7 @@ __all__ = [
     "probe_path_traversal",
     "probe_sqli",
     "probe_ssrf",
+    "probe_ssti",
     "probe_xss",
+    "probe_xxe",
 ]

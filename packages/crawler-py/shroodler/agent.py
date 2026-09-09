@@ -1,7 +1,7 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (tls-check → crawl → js-analysis → diff → openapi-discover →
+action (login → tls-check → crawl → js-analysis → diff → openapi-discover →
 auto-register → authz-diff → write-authz → peer-write → content-discover →
 probe → openapi-probe → business-logic → chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
@@ -12,6 +12,7 @@ No new dependencies. Single-threaded. Dry-run makes no HTTP requests.
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import json
 import os
@@ -41,6 +42,7 @@ class AgentConfig:
     max_iterations: int = 10
     max_pages_per_crawl: int = 30
     login_recipe: str | None = None
+    reauth_max_retries: int = 3
     higher_priv_jar: str | None = None
     lower_priv_jar: str | None = None
     owner_cookie: str | None = None
@@ -85,6 +87,11 @@ class AgentConfig:
     llm_agent_model: str = "claude-sonnet-5"
     llm_agent_max_cost_usd: float = 5.0
     run_js_analysis: bool = True  # --no-js-analysis to skip
+
+
+@dataclass
+class LoginAction:
+    pass
 
 
 @dataclass
@@ -163,7 +170,8 @@ class ReportAction:
 
 
 AgentAction = (
-    TLSCheckAction
+    LoginAction
+    | TLSCheckAction
     | ContentDiscoverAction
     | CrawlAction
     | JSAnalysisAction
@@ -552,15 +560,156 @@ def _pending_auto_register(state: ProgramState, config: AgentConfig) -> bool:
     return bool(peer_cookie_from_state(state) or detect_registration_url(state))
 
 
+def _pending_login(state: ProgramState, config: AgentConfig) -> bool:
+    if not str(getattr(config, "login_recipe", None) or "").strip():
+        return False
+    if getattr(state, "login_failed", False):
+        return False
+    if getattr(config, "_login_done", False):
+        return False
+    return True
+
+
+def _cookie_payload(raw: str) -> str:
+    text = (raw or "").strip()
+    lowered = text.lower()
+    if lowered.startswith("cookie:"):
+        return text.split(":", 1)[1].strip()
+    if lowered.startswith("authorization:"):
+        return ""
+    return text
+
+
+def _login_extra_headers(state: ProgramState, config: AgentConfig) -> dict[str, str]:
+    extra = {
+        str(k): str(v)
+        for k, v in dict(getattr(state, "login_headers", None) or {}).items()
+    }
+    owner, _peer = _probe_auth_headers(config)
+    if owner.lower().startswith("authorization:") and "Authorization" not in extra:
+        extra["Authorization"] = owner.split(":", 1)[1].strip()
+    return extra
+
+
+def _merged_owner_cookie(state: ProgramState, config: AgentConfig) -> str:
+    owner, _peer = _probe_auth_headers(config)
+    parts: list[str] = []
+    payload = _cookie_payload(owner)
+    if payload:
+        parts.append(payload)
+    for name, value in dict(getattr(state, "login_cookies", None) or {}).items():
+        if name:
+            parts.append(f"{name}={value}")
+    return "; ".join(parts)
+
+
+def _owner_auth_line(state: ProgramState, config: AgentConfig) -> str:
+    extra = _login_extra_headers(state, config)
+    owner, _peer = _probe_auth_headers(config)
+    if owner.lower().startswith("authorization:"):
+        return owner
+    auth = extra.get("Authorization") or ""
+    if not auth:
+        return ""
+    if auth.lower().startswith("authorization:"):
+        return auth
+    return f"Authorization: {auth}"
+
+
+def _owner_for_probes(state: ProgramState, config: AgentConfig) -> str:
+    merged = _merged_owner_cookie(state, config)
+    if merged:
+        return merged
+    auth = _owner_auth_line(state, config)
+    if auth:
+        return auth
+    owner, _peer = _probe_auth_headers(config)
+    return owner
+
+
+def _apply_login_to_config(config: AgentConfig, result: Any) -> None:
+    cookies = dict(getattr(result, "inject_cookies", None) or {})
+    headers = dict(getattr(result, "inject_headers", None) or {})
+    if cookies and not str(config.owner_cookie or "").strip():
+        config.owner_cookie = "; ".join(f"{k}={v}" for k, v in cookies.items() if k)
+    auth = headers.get("Authorization") or ""
+    if auth and not str(config.owner_cookie or "").strip():
+        if auth.lower().startswith("authorization:"):
+            config.owner_cookie = auth
+        else:
+            config.owner_cookie = f"Authorization: {auth}"
+
+
+def _make_reauth_callback(state: ProgramState, config: AgentConfig, pacer: Pacer):
+    def _reauth() -> bool:
+        path = str(getattr(config, "login_recipe", None) or "").strip()
+        if not path:
+            return False
+        cap = max(0, int(getattr(config, "reauth_max_retries", 0) or 0))
+        if cap <= 0:
+            return False
+        attempts = int(getattr(state, "reauth_attempts", 0) or 0)
+        if attempts >= cap:
+            return False
+        state.reauth_attempts = attempts + 1
+        from shroodler.login_executor import LoginExecutor, apply_session
+        from shroodler.probes.common import update_probe_http_session
+
+        executor = LoginExecutor(pacer=pacer)
+        result = executor.run_sync(path, seed=config.target)
+        if not result.success:
+            return False
+        apply_session(state, result.inject_headers, result.inject_cookies)
+        _apply_login_to_config(config, result)
+        token = (result.extracted.get("access_token") or result.extracted.get("token") or "")
+        if token:
+            state.bearer_token = token
+        elif result.inject_headers.get("Authorization"):
+            state.bearer_token = (
+                result.inject_headers["Authorization"].split(None, 1)[-1].strip()
+            )
+        owner = _owner_for_probes(state, config)
+        update_probe_http_session(
+            extra_headers=dict(result.inject_headers or {}),
+            extra_cookies=dict(result.inject_cookies or {}),
+            owner_cookie_header=owner,
+        )
+        return True
+
+    return _reauth
+
+
+def _bind_probe_session(state: ProgramState, config: AgentConfig, pacer: Pacer):
+    from shroodler.probes.common import probe_http_session
+
+    owner = _owner_for_probes(state, config)
+    extra_headers = _login_extra_headers(state, config)
+    extra_cookies = dict(getattr(state, "login_cookies", None) or {})
+    callback = getattr(state, "reauth_callback", None)
+    if callback is None and str(getattr(config, "login_recipe", None) or "").strip():
+        if int(getattr(config, "reauth_max_retries", 0) or 0) > 0:
+            callback = _make_reauth_callback(state, config, pacer)
+            state.reauth_callback = callback
+    return probe_http_session(
+        extra_headers=extra_headers,
+        extra_cookies=extra_cookies,
+        reauth=callback,
+        owner_cookie_header=owner,
+    )
+
+
 def decide_next_action(
     state: ProgramState,
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: TLSCheck > Crawl > JSAnalysis > Diff > OpenApiDiscover >
+    """Priority: Login > TLSCheck > Crawl > JSAnalysis > Diff > OpenApiDiscover >
     AutoRegister > AuthzDiff > WriteAuthz > PeerWrite > ContentDiscover >
     Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
     from urllib.parse import urlparse
+
+    if _pending_login(state, config):
+        return LoginAction()
 
     if config.run_tls_check and not getattr(config, "_tls_check_done", False):
         if urlparse(config.target).scheme == "https":
@@ -1007,31 +1156,35 @@ def _execute_js_analysis(
     errors: list[str] = []
     analyzed = 0
     allow_external = _allow_external(config.target)
-    owner, _peer = _probe_auth_headers(config)
-
-    for url in urls:
-        if not url.startswith(("http://", "https://")):
-            continue
-        if not allow_external and not is_loopback_or_local(url):
-            continue
-        if not _url_in_program_scope(url, state, config):
-            continue
-        try:
-            resp = request("GET", url, cookie_header=owner, pacer=pacer)
-        except Exception as exc:  # noqa: BLE001 - fail closed per URL
-            errors.append(f"{url}: {type(exc).__name__}: {exc}")
-            continue
-        if resp is None:
-            errors.append(f"{url}: fetch failed")
-            continue
-        body = body_text(resp)
-        if not body:
-            continue
-        analyzed += 1
-        try:
-            findings.extend(analyzer.analyze(body, url, state))
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"{url} analyze: {type(exc).__name__}: {exc}")
+    owner = _owner_for_probes(state, config)
+    _session_cm = _bind_probe_session(state, config, pacer)
+    _session_cm.__enter__()
+    try:
+        for url in urls:
+            if not url.startswith(("http://", "https://")):
+                continue
+            if not allow_external and not is_loopback_or_local(url):
+                continue
+            if not _url_in_program_scope(url, state, config):
+                continue
+            try:
+                resp = request("GET", url, cookie_header=owner, pacer=pacer)
+            except Exception as exc:  # noqa: BLE001 - fail closed per URL
+                errors.append(f"{url}: {type(exc).__name__}: {exc}")
+                continue
+            if resp is None:
+                errors.append(f"{url}: fetch failed")
+                continue
+            body = body_text(resp)
+            if not body:
+                continue
+            analyzed += 1
+            try:
+                findings.extend(analyzer.analyze(body, url, state))
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{url} analyze: {type(exc).__name__}: {exc}")
+    finally:
+        _session_cm.__exit__(None, None, None)
 
     findings = _dedupe_js_findings(findings)
     api_n = sum(1 for f in findings if f.id == "js-api-endpoint-found")
@@ -1224,18 +1377,23 @@ def _execute_business_logic(
     try:
         model = infer_app_domain(state.js_bundles, state.api_samples)
         if model.financial:
-            owner, _peer = _probe_auth_headers(config)
-            for url in _financial_urls(state, config):
-                for probe in financial_probes_for(url):
-                    try:
-                        findings.extend(
-                            run_business_probe(
-                                probe, cookie_header=owner, pacer=pacer
+            owner = _owner_for_probes(state, config)
+            _session_cm = _bind_probe_session(state, config, pacer)
+            _session_cm.__enter__()
+            try:
+                for url in _financial_urls(state, config):
+                    for probe in financial_probes_for(url):
+                        try:
+                            findings.extend(
+                                run_business_probe(
+                                    probe, cookie_header=owner, pacer=pacer
+                                )
                             )
-                        )
-                        urls_tested += 1
-                    except Exception as exc:  # noqa: BLE001
-                        errors.append(f"{url} {probe.id}: {type(exc).__name__}: {exc}")
+                            urls_tested += 1
+                        except Exception as exc:  # noqa: BLE001
+                            errors.append(f"{url} {probe.id}: {type(exc).__name__}: {exc}")
+            finally:
+                _session_cm.__exit__(None, None, None)
     except Exception as exc:  # noqa: BLE001 - fail closed
         errors.append(f"business-logic: {type(exc).__name__}: {exc}")
     findings_added = _merge_findings(state, findings)
@@ -1396,11 +1554,127 @@ def _execute_auto_register(
     return out
 
 
+def _execute_login(
+    action: LoginAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.login_executor import LoginExecutor, apply_session
+
+    config._login_done = True
+    recipe_path = str(config.login_recipe or "")
+    errors: list[str] = []
+    result = None
+    try:
+        executor = LoginExecutor(pacer=pacer)
+        result = asyncio.run(executor.run(recipe_path, seed=config.target))
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"login-recipe: {type(exc).__name__}: {exc}")
+
+    url = str(config.target or "")
+    if result is not None and result.success:
+        apply_session(state, result.inject_headers, result.inject_cookies)
+        _apply_login_to_config(config, result)
+        token = result.extracted.get("access_token") or result.extracted.get("token") or ""
+        if token:
+            state.bearer_token = token
+        elif result.inject_headers.get("Authorization"):
+            state.bearer_token = (
+                result.inject_headers["Authorization"].split(None, 1)[-1].strip()
+            )
+        if int(getattr(config, "reauth_max_retries", 0) or 0) > 0:
+            state.reauth_callback = _make_reauth_callback(state, config, pacer)
+        finding = Finding(
+            id="login-recipe-success",
+            severity="info",
+            category="scan-note",
+            url=url,
+            description="Login recipe succeeded; session cookies/headers stored for probes.",
+            evidence=(
+                f"headers={len(result.inject_headers)} "
+                f"cookies={len(result.inject_cookies)} "
+                f"extracted={','.join(result.extracted) or '-'}"
+            ),
+            confidence="confirmed",
+        )
+        added = _merge_findings(state, [finding])
+        return {
+            "pages_crawled": 0,
+            "findings_added": added,
+            "urls_tested": 1,
+            "login": True,
+        }
+
+    state.login_failed = True
+    err = ""
+    if result is not None:
+        err = result.error or "login failed"
+    elif errors:
+        err = errors[0]
+    finding = Finding(
+        id="login-recipe-failed",
+        severity="medium",
+        category="scan-note",
+        url=url,
+        description="Login recipe failed; probes will continue without that session.",
+        evidence=err or "login failed",
+        confidence="confirmed",
+    )
+    added = _merge_findings(state, [finding])
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": added,
+        "urls_tested": 1,
+        "login": False,
+    }
+    if errors:
+        out["errors"] = errors
+    elif err:
+        out["errors"] = [err]
+    return out
+
+
 def _execute_probe(
     action: ProbeAction,
     state: ProgramState,
     config: AgentConfig,
     pacer: Pacer,
+) -> dict[str, Any]:
+    owner = _owner_for_probes(state, config)
+    peer = _probe_auth_headers(config)[1]
+    auth_header = _owner_auth_line(state, config)
+    if not auth_header and owner.lower().startswith("authorization:"):
+        auth_header = owner
+    cookie_header = _merged_owner_cookie(state, config)
+    if not cookie_header:
+        cookie_header = "" if auth_header else owner
+    _session_cm = _bind_probe_session(state, config, pacer)
+    _session_cm.__enter__()
+    try:
+        return _finish_probe_action(
+            action,
+            state,
+            config,
+            pacer,
+            owner,
+            peer,
+            auth_header,
+            cookie_header,
+        )
+    finally:
+        _session_cm.__exit__(None, None, None)
+
+
+def _finish_probe_action(
+    action: ProbeAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+    owner: str,
+    peer: str,
+    auth_header: str,
+    cookie_header: str,
 ) -> dict[str, Any]:
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss
@@ -1422,9 +1696,6 @@ def _execute_probe(
     from shroodler.probes.xss import probe_xss
     from shroodler.probes.xxe import probe_xxe
 
-    owner, peer = _probe_auth_headers(config)
-    auth_header = owner if owner.lower().startswith("authorization:") else ""
-    cookie_header = "" if auth_header else owner
     findings: list[Any] = []
     errors: list[str] = []
     seen_hosts: set[str] = set()
@@ -1585,10 +1856,13 @@ def _execute_probe(
 
 
 def _openapi_auth_header(state: ProgramState, config: AgentConfig) -> tuple[str, str]:
-    owner, peer = _probe_auth_headers(config)
+    owner = _owner_for_probes(state, config)
+    peer = _probe_auth_headers(config)[1]
     token = (state.bearer_token or "").strip()
     if token and not owner.lower().startswith("authorization:"):
-        owner = f"Authorization: Bearer {token}"
+        extra = getattr(state, "login_headers", None) or {}
+        if not extra.get("Authorization"):
+            owner = f"Authorization: Bearer {token}"
     return owner, peer
 
 
@@ -1605,6 +1879,8 @@ def _execute_openapi_discover(
     errors: list[str] = []
     new_endpoints = 0
     spec_urls: list[str] = []
+    _session_cm = _bind_probe_session(state, config, pacer)
+    _session_cm.__enter__()
     try:
         found = discover_specs(
             config.target,
@@ -1614,6 +1890,8 @@ def _execute_openapi_discover(
     except Exception as exc:  # noqa: BLE001
         errors.append(f"openapi-discover: {type(exc).__name__}: {exc}")
         found = []
+    finally:
+        _session_cm.__exit__(None, None, None)
     for spec_url, spec in found:
         try:
             endpoints = parse_spec(spec, config.target)
@@ -1644,22 +1922,27 @@ def _execute_openapi_probe(
     findings: list[Any] = []
     errors: list[str] = []
     tested: list[str] = []
-    for row in action.endpoints:
-        url = str(row.get("url") or "")
-        try:
-            findings.extend(
-                probe_openapi_endpoints(
-                    [row],
-                    cookie_header=owner,
-                    peer_cookie=peer,
-                    pacer=pacer,
+    _session_cm = _bind_probe_session(state, config, pacer)
+    _session_cm.__enter__()
+    try:
+        for row in action.endpoints:
+            url = str(row.get("url") or "")
+            try:
+                findings.extend(
+                    probe_openapi_endpoints(
+                        [row],
+                        cookie_header=owner,
+                        peer_cookie=peer,
+                        pacer=pacer,
+                    )
                 )
-            )
-        except Exception as exc:  # noqa: BLE001 - per-endpoint, loop must continue
-            errors.append(f"{url} openapi-probe: {type(exc).__name__}: {exc}")
-        if url:
-            tested.append(url)
-            row["tested_payload"] = True
+            except Exception as exc:  # noqa: BLE001 - per-endpoint, loop must continue
+                errors.append(f"{url} openapi-probe: {type(exc).__name__}: {exc}")
+            if url:
+                tested.append(url)
+                row["tested_payload"] = True
+    finally:
+        _session_cm.__exit__(None, None, None)
     findings_added = _merge_findings(state, findings)
     program.mark_tested(state, tested, "tested_payload")
     out: dict[str, Any] = {
@@ -1706,13 +1989,17 @@ def _execute_content_discover(
     from shroodler.content_discovery import discover_content
 
     config._content_discover_done = True
-    owner, _peer = _probe_auth_headers(config)
+    owner = _owner_for_probes(state, config)
     errors: list[str] = []
     findings: list[Any] = []
+    _session_cm = _bind_probe_session(state, config, pacer)
+    _session_cm.__enter__()
     try:
         findings = discover_content(config.target, owner, pacer=pacer)
     except Exception as exc:  # noqa: BLE001
         errors.append(f"content-discover: {type(exc).__name__}: {exc}")
+    finally:
+        _session_cm.__exit__(None, None, None)
     added = _merge_findings(state, findings)
     out: dict[str, Any] = {
         "pages_crawled": 0,
@@ -1758,6 +2045,8 @@ def execute_action(
     pacer: Pacer | None = None,
 ) -> dict[str, Any]:
     clock = pacer or _new_pacer()
+    if isinstance(action, LoginAction):
+        return _execute_login(action, state, config, clock)
     if isinstance(action, TLSCheckAction):
         return _execute_tls_check(action, state, config)
     if isinstance(action, ContentDiscoverAction):
@@ -1792,6 +2081,8 @@ def execute_action(
 
 
 def _describe_action(action: AgentAction) -> dict[str, Any]:
+    if isinstance(action, LoginAction):
+        return {"login": True}
     if isinstance(action, TLSCheckAction):
         return {"tls_check": True}
     if isinstance(action, ContentDiscoverAction):

@@ -34,6 +34,7 @@ def fetch_urls(
     method: str = "GET",
     cookie_header: str = "",
     extra_headers: dict[str, str] | None = None,
+    extra_cookies: dict[str, str] | None = None,
     allow_external: bool = False,
     client: httpx.Client | None = None,
     enforcer=None,
@@ -55,6 +56,14 @@ def fetch_urls(
 
     ua = compose_user_agent(user_agent or None, user_agent_suffix or None)
     headers = dict(extra_headers or {})
+    if extra_cookies:
+        bits = [f"{k}={v}" for k, v in extra_cookies.items() if k]
+        extra_cookie_header = "; ".join(bits)
+        if extra_cookie_header:
+            existing = headers.get("Cookie") or cookie_header
+            cookie_header = (
+                f"{existing}; {extra_cookie_header}" if existing else extra_cookie_header
+            )
     if cookie_header:
         headers["Cookie"] = cookie_header
     if ua:

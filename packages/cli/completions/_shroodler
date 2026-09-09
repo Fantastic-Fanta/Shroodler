@@ -291,6 +291,7 @@ _shroodler() {
             '--max-iterations[Loop budget]:count' \
             '--max-pages-per-crawl[Cap on URLs per crawl action]:count' \
             '--login-recipe[Login recipe JSON]:file:_files' \
+            '--reauth-max-retries[Max probe login-recipe retries (default 3)]:n' \
             '--higher-priv-jar[Higher-privilege cookie jar]:file:_files' \
             '--lower-priv-jar[Lower-privilege cookie jar]:file:_files' \
             '--owner-cookie[Owner Cookie header]:cookie' \

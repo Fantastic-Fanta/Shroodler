@@ -12,6 +12,7 @@ from shroodler.agent import (
     AutoRegisterAction,
     ContentDiscoverAction,
     CrawlAction,
+    LoginAction,
     OpenApiDiscoverAction,
     OpenApiProbeAction,
     PeerWriteAction,
@@ -2053,5 +2054,103 @@ def test_cmd_agent_no_js_analysis_disables_flag(tmp_path, monkeypatch, capsys):
     )
     assert cmd_agent(ns) == 0
     assert captured[0].run_js_analysis is False
+
+
+def test_decide_login_before_tls_when_recipe_set():
+    state = ProgramState(slug="lab")
+    action = decide_next_action(
+        state,
+        _config(
+            target="https://example.com/",
+            run_tls_check=True,
+            login_recipe="/tmp/login.json",
+        ),
+    )
+    assert isinstance(action, LoginAction)
+
+
+def test_decide_skips_login_when_failed_or_done():
+    state = ProgramState(slug="lab")
+    state.login_failed = True
+    action = decide_next_action(
+        state,
+        _config(target="https://example.com/", run_tls_check=True, login_recipe="/tmp/login.json"),
+    )
+    assert isinstance(action, TLSCheckAction)
+
+    state2 = ProgramState(slug="lab")
+    cfg = _config(target="https://example.com/", run_tls_check=True, login_recipe="/tmp/login.json")
+    cfg._login_done = True
+    action2 = decide_next_action(state2, cfg)
+    assert isinstance(action2, TLSCheckAction)
+
+
+def test_decide_without_login_recipe_still_crawls_first_on_http():
+    state = ProgramState(
+        slug="lab",
+        endpoints={"http://127.0.0.1/api/a": _endpoint(last_seen="")},
+    )
+    action = decide_next_action(state, _config())
+    assert isinstance(action, CrawlAction)
+
+
+def test_execute_login_success_stores_session(monkeypatch):
+    from shroodler.login_executor import LoginResult
+
+    async def fake_run(self, recipe, **kwargs):
+        return LoginResult(
+            success=True,
+            inject_headers={"Authorization": "Bearer tok"},
+            inject_cookies={"sid": "abc"},
+            extracted={"access_token": "tok"},
+        )
+
+    monkeypatch.setattr("shroodler.login_executor.LoginExecutor.run", fake_run)
+    state = ProgramState(slug="lab")
+    cfg = _config(login_recipe="/tmp/login.json", dry_run=False)
+    result = execute_action(LoginAction(), state, cfg, pacer=Pacer(0))
+    assert result["login"] is True
+    assert state.login_cookies["sid"] == "abc"
+    assert state.login_headers["Authorization"] == "Bearer tok"
+    assert state.bearer_token == "tok"
+    assert callable(state.reauth_callback)
+    ids = {f.id for f in state.findings}
+    assert "login-recipe-success" in ids
+    hit = next(f for f in state.findings if f.id == "login-recipe-success")
+    assert hit.severity == "info"
+    assert hit.category == "scan-note"
+    assert hit.confidence == "confirmed"
+    assert cfg.owner_cookie
+
+
+def test_execute_login_failure_sets_login_failed(monkeypatch):
+    from shroodler.login_executor import LoginResult
+
+    async def fake_run(self, recipe, **kwargs):
+        return LoginResult(
+            success=False,
+            inject_headers={},
+            inject_cookies={},
+            extracted={},
+            error="login HTTP 401",
+        )
+
+    monkeypatch.setattr("shroodler.login_executor.LoginExecutor.run", fake_run)
+    state = ProgramState(slug="lab")
+    cfg = _config(login_recipe="/tmp/login.json", dry_run=False)
+    result = execute_action(LoginAction(), state, cfg, pacer=Pacer(0))
+    assert result["login"] is False
+    assert state.login_failed is True
+    ids = {f.id for f in state.findings}
+    assert "login-recipe-failed" in ids
+    hit = next(f for f in state.findings if f.id == "login-recipe-failed")
+    assert hit.severity == "medium"
+    assert hit.category == "scan-note"
+    assert not isinstance(decide_next_action(state, cfg), LoginAction)
+
+
+def test_agent_config_reauth_max_retries_default():
+    cfg = AgentConfig(program="lab", target="http://127.0.0.1/")
+    assert cfg.reauth_max_retries == 3
 
 

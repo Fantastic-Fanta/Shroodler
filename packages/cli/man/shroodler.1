@@ -506,6 +506,10 @@ new/removed/changed-param findings.
 infers the app domain with Claude and runs financial/workflow probes.
 .B agent \-\-chain\-spec
 loads an operator attack-chain JSON spec and runs it as a ChainAction.
+.B agent \-\-reauth\-max\-retries
+caps how many times a probe 401/403 re-runs
+.B \-\-login\-recipe
+(default 3; 0 disables probe re-auth).
 .TP
 .B engagement\-history
 Show endpoint and finding history across runs for a program. Reads

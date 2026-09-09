@@ -56,6 +56,10 @@ class LoginRecipe:
     # even when the user is not authenticated.
     auth_marker: str | None = None
     steps: list[RecipeStep] = field(default_factory=list)
+    credentials: dict[str, str] = field(default_factory=dict)
+    extract: list[dict] = field(default_factory=list)
+    verify_url: str | None = None
+    verify_marker: str | None = None
 
 
 def parse_header_lines(lines: list[str] | None) -> dict[str, str]:
@@ -150,8 +154,31 @@ def _step_from_dict(item: dict) -> RecipeStep:
     )
 
 
-def load_login_recipe(path: str) -> LoginRecipe:
-    data = json.loads(Path(path).read_text(encoding="utf-8"))
+def _normalize_extract(raw: object) -> list[dict]:
+    """Accept a list of specs, a name→spec map, or a single spec object."""
+    if not raw:
+        return []
+    if isinstance(raw, list):
+        return [dict(item) for item in raw if isinstance(item, dict)]
+    if not isinstance(raw, dict):
+        return []
+    keys = {str(k).lower() for k in raw}
+    spec_keys = {"json", "cookie", "header", "regex", "as", "name", "inject_header", "inject_cookie"}
+    if keys & spec_keys:
+        return [dict(raw)]
+    out: list[dict] = []
+    for name, spec in raw.items():
+        if isinstance(spec, dict):
+            row = dict(spec)
+            row.setdefault("as", str(name))
+            out.append(row)
+        elif spec is not None:
+            out.append({"as": str(name), "json": str(spec)})
+    return out
+
+
+def recipe_from_dict(data: dict) -> LoginRecipe:
+    """Build a LoginRecipe from a JSON object (file contents or in-memory)."""
     if not isinstance(data, dict):
         raise ValueError("login recipe must be a JSON object with a url")
     steps = _parse_recipe_steps(data)
@@ -177,6 +204,11 @@ def load_login_recipe(path: str) -> LoginRecipe:
     if not isinstance(local_storage, dict):
         raise ValueError("login recipe local_storage must be an object")
     auth_marker = data.get("auth_marker")
+    credentials = data.get("credentials") or {}
+    if not isinstance(credentials, dict):
+        raise ValueError("login recipe credentials must be an object")
+    verify_url = data.get("verify_url")
+    verify_marker = data.get("verify_marker")
     return LoginRecipe(
         url=str(url),
         method=str(data.get("method") or "POST"),
@@ -189,7 +221,18 @@ def load_login_recipe(path: str) -> LoginRecipe:
         local_storage={str(k): str(v) for k, v in local_storage.items()},
         auth_marker=str(auth_marker) if auth_marker else None,
         steps=steps,
+        credentials={str(k): str(v) for k, v in credentials.items()},
+        extract=_normalize_extract(data.get("extract")),
+        verify_url=str(verify_url) if verify_url else None,
+        verify_marker=str(verify_marker) if verify_marker else None,
     )
+
+
+def load_login_recipe(path: str) -> LoginRecipe:
+    data = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("login recipe must be a JSON object with a url")
+    return recipe_from_dict(data)
 
 
 def _json_flag(value: object) -> bool:
@@ -295,6 +338,10 @@ def resolve_recipe_url(recipe: LoginRecipe, seed: str) -> LoginRecipe:
         local_storage=dict(recipe.local_storage),
         auth_marker=recipe.auth_marker,
         steps=resolved_steps,
+        credentials=dict(recipe.credentials),
+        extract=[dict(item) for item in recipe.extract],
+        verify_url=_resolve_one(recipe.verify_url, seed),
+        verify_marker=recipe.verify_marker,
     )
 
 

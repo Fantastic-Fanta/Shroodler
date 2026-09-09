@@ -428,6 +428,26 @@ def test_agent_flags_parse():
             "lab",
             "--target",
             "http://127.0.0.1/",
+            "--run-probes",
+            "--no-ssrf",
+            "--no-open-redirect",
+            "--no-host-header",
+            "--no-auto-register",
+        ]
+    )
+    assert args.run_probes is True
+    assert args.no_ssrf is True
+    assert args.no_open_redirect is True
+    assert args.no_host_header is True
+    assert args.no_auto_register is True
+
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
             "--run-diff",
             "--llm-business-logic",
             "--chain-spec",

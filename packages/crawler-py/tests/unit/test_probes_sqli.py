@@ -192,3 +192,151 @@ def test_sqli_webgoat_empty_output_is_not_a_finding():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def _is_4s_payload(values: list[str]) -> bool:
+    return any(
+        "SLEEP(4)" in v
+        or "pg_sleep(4)" in v
+        or "WAITFOR DELAY '0:0:4'" in v
+        or "RANDOMBLOB" in v
+        for v in values
+    )
+
+
+def test_sqli_time_based_confirmed_on_sleep_payload():
+    def handler(method, url, kw):
+        if _is_4s_payload(_values(kw)):
+            return FakeResp(200, "ok", elapsed=4.2)
+        return FakeResp(200, "ok", elapsed=0.2)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q", "value": "test"}],
+        "session=owner",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    hit = next(f for f in findings if f.id == "sqli-time-based")
+    assert hit.confidence == "confirmed"
+    assert hit.severity == "high"
+    assert hit.category == "payload"
+    assert "elapsed=" in (hit.evidence or "")
+    assert "SLEEP(4)" in (hit.evidence or "") or "WAITFOR" in (hit.evidence or "")
+    assert not any(f.id == "sqli-blind" for f in findings)
+    assert not any(f.id == "sqli-boolean-blind" for f in findings)
+
+
+def test_sqli_time_based_skips_slow_baseline():
+    def handler(method, url, kw):
+        return FakeResp(200, "ok", elapsed=2.5)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert not any(f.id in {"sqli-time-based", "sqli-blind"} for f in findings)
+
+
+def test_sqli_boolean_blind_heuristic_on_length():
+    def handler(method, url, kw):
+        values = _values(kw)
+        if any("'1'='1" in v for v in values):
+            return FakeResp(200, "x" * 200)
+        if any("'1'='2" in v for v in values):
+            return FakeResp(200, "x" * 10)
+        return FakeResp(200, "ok", elapsed=0.05)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    hit = next(f for f in findings if f.id == "sqli-boolean-blind")
+    assert hit.confidence == "heuristic"
+    assert hit.severity == "high"
+    assert hit.category == "payload"
+
+
+def test_sqli_boolean_blind_heuristic_on_status():
+    def handler(method, url, kw):
+        values = _values(kw)
+        if any("'1'='1" in v for v in values):
+            return FakeResp(200, "ok")
+        if any("'1'='2" in v for v in values):
+            return FakeResp(500, "ok")
+        return FakeResp(200, "ok", elapsed=0.05)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "POST",
+        [{"name": "id"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    hit = next(f for f in findings if f.id == "sqli-boolean-blind")
+    assert hit.confidence == "heuristic"
+    assert hit.severity == "high"
+
+
+def test_sqli_error_based_skips_time_and_boolean():
+    calls = []
+
+    def handler(method, url, kw):
+        calls.append(_values(kw))
+        if any("'" in v for v in _values(kw)):
+            return FakeResp(200, "You have an error in your SQL syntax")
+        return FakeResp(200, "ok")
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q", "value": "test"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f.id for f in findings] == ["sqli"]
+    blobs = " ".join(v for row in calls for v in row)
+    assert "SLEEP(4)" not in blobs
+    assert "'1'='2" not in blobs
+
+
+def test_sqli_time_based_skips_boolean():
+    def handler(method, url, kw):
+        if _is_4s_payload(_values(kw)):
+            return FakeResp(200, "ok", elapsed=5.0)
+        return FakeResp(200, "ok", elapsed=0.1)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    ids = [f.id for f in findings]
+    assert "sqli-time-based" in ids
+    assert "sqli-boolean-blind" not in ids
+
+
+def test_sqli_boolean_same_response_is_not_a_finding():
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q"}],
+        "",
+        client=FakeClient(lambda *a, **k: FakeResp(200, "hello world", elapsed=0.05)),
+        pacer=Pacer(0),
+    )
+    assert findings == []

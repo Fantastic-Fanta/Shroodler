@@ -408,10 +408,18 @@ ranks unconfirmed leads with Claude (requires
 replays a JSON list of write probes (POST/PATCH/DELETE) as both
 principals after authz-diff.
 .B agent \-\-run\-probes
-fires active injection probes (SQLi, XSS, path-traversal, JWT, IDOR) after
-authz-diff.
+fires active injection probes (SQLi, XSS, path-traversal, JWT, IDOR, SSRF,
+open-redirect, host-header) after authz-diff.
 .B agent \-\-no\-openapi
 disables OpenAPI spec discovery and spec-driven probes (both on by default).
+.B agent \-\-no\-ssrf ,
+.B agent \-\-no\-open\-redirect ,
+and
+.B agent \-\-no\-host\-header
+disable individual probe classes that otherwise run with
+.BR \-\-run\-probes .
+.B agent \-\-no\-auto\-register
+skips automatic peer-account registration before authz-diff.
 .B agent \-\-run\-diff
 diffs endpoints against the previous engagement snapshot and emits
 new/removed/changed-param findings.

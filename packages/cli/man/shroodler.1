@@ -410,6 +410,8 @@ principals after authz-diff.
 .B agent \-\-run\-probes
 fires active injection probes (SQLi, XSS, path-traversal, JWT, IDOR) after
 authz-diff.
+.B agent \-\-no\-openapi
+disables OpenAPI spec discovery and spec-driven probes (both on by default).
 .B agent \-\-run\-diff
 diffs endpoints against the previous engagement snapshot and emits
 new/removed/changed-param findings.

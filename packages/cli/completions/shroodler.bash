@@ -124,7 +124,7 @@ _shroodler_flags_for() {
             echo "--label --expires"
             ;;
         agent)
-            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec --ignore-robots --run-probes --reprobe --run-diff --llm-business-logic --chain-spec"
+            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --reprobe --run-diff --llm-business-logic --chain-spec"
             ;;
         engagement-history)
             echo "--program"

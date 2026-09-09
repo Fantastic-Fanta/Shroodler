@@ -458,6 +458,40 @@ def test_agent_flags_parse():
             "lab",
             "--target",
             "http://127.0.0.1/",
+            "--run-probes",
+            "--dom-xss",
+            "--no-crlf",
+            "--no-prototype-pollution",
+            "--no-content-discovery",
+            "--no-tls-check",
+            "--no-rate-limit-check",
+            "--no-mass-assignment",
+            "--smuggling",
+            "--no-websocket",
+            "--allow-external",
+            "--scope-file",
+            "scope.json",
+        ]
+    )
+    assert args.dom_xss is True
+    assert args.no_crlf is True
+    assert args.no_prototype_pollution is True
+    assert args.no_content_discovery is True
+    assert args.no_tls_check is True
+    assert args.no_rate_limit_check is True
+    assert args.no_mass_assignment is True
+    assert args.smuggling is True
+    assert args.no_websocket is True
+    assert args.allow_external is True
+    assert args.scope_file == "scope.json"
+
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
             "--run-diff",
             "--llm-business-logic",
             "--chain-spec",
@@ -469,6 +503,36 @@ def test_agent_flags_parse():
     assert args.run_diff is True
     assert args.llm_business_logic is True
     assert args.chain_spec == ["a.json", "b.json"]
+
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--llm-agent",
+            "--llm-agent-model",
+            "opus",
+            "--llm-agent-max-cost",
+            "1.5",
+        ]
+    )
+    assert args.llm_agent is True
+    assert args.llm_agent_model == "opus"
+    assert args.llm_agent_max_cost == 1.5
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+        ]
+    )
+    assert args.llm_agent is False
+    assert args.llm_agent_model == "claude-sonnet-5"
+    assert args.llm_agent_max_cost == 5.0
 
 
 def test_discover_flags_parse():
@@ -516,3 +580,44 @@ def test_engagement_and_suppress_flags_parse():
     assert args.func.__name__ == "cmd_history_list"
     args = p.parse_args(["suppress", "expiring"])
     assert args.func.__name__ == "cmd_suppress_expiring"
+
+
+def test_dedup_and_ci_template_and_program_scope_parse():
+    p = build_parser()
+    args = p.parse_args(["dedup", "findings.json", "--output", "out.json"])
+    assert args.func.__name__ == "cmd_dedup"
+    assert args.findings == "findings.json"
+    assert args.output == "out.json"
+    args = p.parse_args(
+        [
+            "ci-template",
+            "--platform",
+            "github",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+        ]
+    )
+    assert args.func.__name__ == "cmd_ci_template"
+    assert args.platform == "github"
+    args = p.parse_args(
+        [
+            "program",
+            "scope",
+            "--program",
+            "lab",
+            "--include",
+            "*.example.com",
+            "--exclude",
+            "cdn.example.com",
+        ]
+    )
+    assert args.func.__name__ == "cmd_program_scope"
+    assert args.program == "lab"
+    assert args.include == ["*.example.com"]
+    args = p.parse_args(["report", "out.json", "--no-dedup"])
+    assert args.dedup is False
+    args = p.parse_args(["report", "out.json"])
+    assert args.dedup is True
+

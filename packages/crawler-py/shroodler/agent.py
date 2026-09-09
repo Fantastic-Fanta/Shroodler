@@ -1,9 +1,9 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (crawl → diff → openapi-discover → auto-register → authz-diff →
-write-authz → peer-write → probe → openapi-probe → business-logic → chain →
-report),
+action (tls-check → crawl → diff → openapi-discover → auto-register →
+authz-diff → write-authz → peer-write → content-discover → probe →
+openapi-probe → business-logic → chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -70,6 +70,30 @@ class AgentConfig:
     chain_specs: list[str] = field(default_factory=list)
     run_openapi_discovery: bool = True  # on by default; mapping, not probing
     run_openapi_probes: bool = True
+    run_dom_xss: bool = False  # opt-in; headless / slow
+    run_crlf: bool = True
+    run_prototype_pollution: bool = True
+    run_content_discovery: bool = True
+    run_tls_check: bool = True
+    run_rate_limit: bool = True
+    run_mass_assignment: bool = True
+    run_smuggling: bool = False  # opt-in; aggressive
+    run_websocket: bool = True
+    allow_external: bool = False
+    scope_file: str | None = None
+    llm_agent: bool = False  # --llm-agent; requires ANTHROPIC_API_KEY
+    llm_agent_model: str = "claude-sonnet-5"
+    llm_agent_max_cost_usd: float = 5.0
+
+
+@dataclass
+class TLSCheckAction:
+    pass
+
+
+@dataclass
+class ContentDiscoverAction:
+    pass
 
 
 @dataclass
@@ -133,7 +157,9 @@ class ReportAction:
 
 
 AgentAction = (
-    CrawlAction
+    TLSCheckAction
+    | ContentDiscoverAction
+    | CrawlAction
     | DiffAction
     | OpenApiDiscoverAction
     | AutoRegisterAction
@@ -183,6 +209,22 @@ def _in_target_origin(url: str, target: str) -> bool:
         return same_origin(url, target)
     except ValueError:
         return False
+
+
+def _scope_dict(state: ProgramState, config: AgentConfig) -> dict:
+    from shroodler.scope import load_scope
+
+    path = getattr(config, "scope_file", None)
+    return load_scope(state.slug, path=path)
+
+
+def _url_in_program_scope(url: str, state: ProgramState, config: AgentConfig) -> bool:
+    from shroodler.scope import in_scope
+
+    if in_scope(url, _scope_dict(state, config)):
+        return True
+    emit_log_entry({"debug": "scope-excluded", "url": url})
+    return False
 
 
 def _allow_external(target: str) -> bool:
@@ -237,6 +279,8 @@ def crawl_coverage_gaps(state: ProgramState, config: AgentConfig) -> list[str]:
     for url, meta in state.endpoints.items():
         if not _in_target_origin(url, config.target):
             continue
+        if not _url_in_program_scope(url, state, config):
+            continue
         if _has_unresolved_placeholder(url):
             continue
         last_seen = str((meta or {}).get("last_seen") or "")
@@ -246,11 +290,14 @@ def crawl_coverage_gaps(state: ProgramState, config: AgentConfig) -> list[str]:
     stale.sort(key=lambda item: item[1] or "")
     urls = [url for url, _ in stale]
     if not state.endpoints and _in_target_origin(config.target, config.target):
-        urls = [config.target]
+        if _url_in_program_scope(config.target, state, config):
+            urls = [config.target]
     elif not urls and not any(
         _in_target_origin(u, config.target) for u in state.endpoints
     ):
-        if _in_target_origin(config.target, config.target):
+        if _in_target_origin(config.target, config.target) and _url_in_program_scope(
+            config.target, state, config
+        ):
             urls = [config.target]
     return urls[:cap]
 
@@ -260,6 +307,8 @@ def _untested_authz_urls(state: ProgramState, config: AgentConfig) -> list[str]:
     ranked: list[tuple[int, int, str]] = []
     for index, (url, meta) in enumerate(state.endpoints.items()):
         if not _in_target_origin(url, config.target):
+            continue
+        if not _url_in_program_scope(url, state, config):
             continue
         meta = meta or {}
         if bool(meta.get("tested_authz")):
@@ -307,6 +356,8 @@ def _untested_probe_urls(state: ProgramState, config: AgentConfig) -> list[str]:
     ranked: list[tuple[int, int, str]] = []
     for index, (url, meta) in enumerate(state.endpoints.items()):
         if not _in_target_origin(url, config.target):
+            continue
+        if not _url_in_program_scope(url, state, config):
             continue
         meta = meta or {}
         if _has_unresolved_placeholder(url):
@@ -499,8 +550,16 @@ def decide_next_action(
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Crawl > Diff > OpenApiDiscover > AutoRegister > AuthzDiff >
-    WriteAuthz > PeerWrite > Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
+    """Priority: TLSCheck > Crawl > Diff > OpenApiDiscover > AutoRegister >
+    AuthzDiff > WriteAuthz > PeerWrite > ContentDiscover > Probe > OpenApiProbe >
+    BusinessLogic > Chain > Report."""
+    from urllib.parse import urlparse
+
+    if config.run_tls_check and not getattr(config, "_tls_check_done", False):
+        if urlparse(config.target).scheme == "https":
+            return TLSCheckAction()
+        config._tls_check_done = True
+
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
         return CrawlAction(urls=crawl_urls)
@@ -550,6 +609,9 @@ def decide_next_action(
         return WriteAuthzAction(endpoints=write_endpoints)
     if object_ids:
         return PeerWriteAction(object_ids=object_ids)
+
+    if config.run_content_discovery and not getattr(config, "_content_discover_done", False):
+        return ContentDiscoverAction()
 
     if config.run_probes:
         probe_urls = _untested_probe_urls(state, config)
@@ -1196,15 +1258,23 @@ def _execute_probe(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    from shroodler.probes.crlf import probe_crlf
+    from shroodler.probes.dom_xss import probe_dom_xss
     from shroodler.probes.graphql import probe_graphql
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
+    from shroodler.probes.mass_assignment import probe_mass_assignment
     from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
+    from shroodler.probes.prototype_pollution import probe_prototype_pollution
+    from shroodler.probes.rate_limit import probe_rate_limit
+    from shroodler.probes.smuggling import hostname_of as smuggle_host
+    from shroodler.probes.smuggling import probe_smuggling
     from shroodler.probes.sqli import probe_sqli
     from shroodler.probes.ssrf import probe_ssrf
     from shroodler.probes.ssti import probe_ssti
+    from shroodler.probes.websocket import probe_websocket
     from shroodler.probes.xss import probe_xss
     from shroodler.probes.xxe import probe_xxe
 
@@ -1215,6 +1285,8 @@ def _execute_probe(
     errors: list[str] = []
     seen_hosts: set[str] = set()
     seen_graphql: set[str] = set()
+    seen_smuggle: set[str] = set()
+    seen_rl: set[str] = set()
 
     def _run(label: str, fn) -> None:
         try:
@@ -1224,6 +1296,8 @@ def _execute_probe(
 
     for url in action.urls:
         if not _in_target_origin(url, config.target):
+            continue
+        if not _url_in_program_scope(url, state, config):
             continue
         meta = state.endpoints.get(url) or {}
         method, params = _probe_params(url, meta)
@@ -1281,6 +1355,79 @@ def _execute_probe(
             if origin and origin not in seen_graphql:
                 seen_graphql.add(origin)
                 _run("graphql", lambda: probe_graphql(url, owner, pacer=pacer))
+        if config.run_crlf and method in {"GET", "POST", "PUT", "PATCH"}:
+            _run("crlf", lambda: probe_crlf(url, method, params, owner, pacer=pacer))
+        if config.run_prototype_pollution:
+            content_type = str(meta.get("content_type") or meta.get("content-type") or "")
+            _run(
+                "prototype-pollution",
+                lambda: probe_prototype_pollution(
+                    url,
+                    method,
+                    params,
+                    owner,
+                    pacer=pacer,
+                    content_type=content_type,
+                ),
+            )
+        if config.run_dom_xss and method in {"GET", "POST"} and params:
+            _run(
+                "dom-xss",
+                lambda: probe_dom_xss(url, method, params, owner, pacer=pacer),
+            )
+        if config.run_rate_limit and url not in seen_rl:
+            seen_rl.add(url)
+            _run(
+                "rate-limit",
+                lambda: probe_rate_limit(url, method, owner, pacer=pacer),
+            )
+        if config.run_mass_assignment and method in {"POST", "PUT", "PATCH"}:
+            content_type = str(meta.get("content_type") or meta.get("content-type") or "")
+            _run(
+                "mass-assignment",
+                lambda: probe_mass_assignment(
+                    url, method, owner, pacer=pacer, content_type=content_type
+                ),
+            )
+        if config.run_smuggling:
+            host = smuggle_host(url)
+            if host and host not in seen_smuggle:
+                seen_smuggle.add(host)
+                _run(
+                    "smuggling",
+                    lambda: probe_smuggling(
+                        url,
+                        owner,
+                        allow_external=bool(config.allow_external),
+                        pacer=pacer,
+                    ),
+                )
+        if config.run_websocket:
+            js_bits: list[str] = []
+            for bundle in (getattr(state, "js_bundles", None) or [])[:8]:
+                if isinstance(bundle, str):
+                    js_bits.append(bundle)
+                elif isinstance(bundle, dict):
+                    js_bits.append(
+                        str(bundle.get("source") or bundle.get("content") or "")
+                    )
+
+            def _ws_probe(u=url, src="\n".join(js_bits)):
+                hits, found = probe_websocket(
+                    u,
+                    owner,
+                    pacer=pacer,
+                    js_source=src,
+                    base_url=config.target,
+                )
+                existing = list(getattr(state, "websocket_endpoints", None) or [])
+                for item in found:
+                    if item not in existing:
+                        existing.append(item)
+                state.websocket_endpoints = existing
+                return hits
+
+            _run("websocket", _ws_probe)
     findings_added = _merge_findings(state, findings)
     program.mark_tested(state, action.urls, "tested_payload")
     out: dict[str, Any] = {
@@ -1381,7 +1528,68 @@ def _execute_openapi_probe(
     return out
 
 
+def _execute_tls_check(
+    action: TLSCheckAction,
+    state: ProgramState,
+    config: AgentConfig,
+) -> dict[str, Any]:
+    from shroodler.tls_check import check_target_tls
+
+    config._tls_check_done = True
+    errors: list[str] = []
+    findings: list[Any] = []
+    try:
+        findings = check_target_tls(config.target)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"tls-check: {type(exc).__name__}: {exc}")
+    added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": added,
+        "urls_tested": 1,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
+def _execute_content_discover(
+    action: ContentDiscoverAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.content_discovery import discover_content
+
+    config._content_discover_done = True
+    owner, _peer = _probe_auth_headers(config)
+    errors: list[str] = []
+    findings: list[Any] = []
+    try:
+        findings = discover_content(config.target, owner, pacer=pacer)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"content-discover: {type(exc).__name__}: {exc}")
+    added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": added,
+        "urls_tested": 1,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def _execute_report(state: ProgramState) -> dict[str, Any]:
+    from shroodler.dedup import deduplicate
+    from shroodler.program import _finding_from_dict, _finding_to_dict
+
+    rebuilt: list[Finding] = []
+    for item in deduplicate([_finding_to_dict(f) for f in state.findings]):
+        parsed = _finding_from_dict(item)
+        if parsed is not None:
+            rebuilt.append(parsed)
+    state.findings = rebuilt
     confirmed = _confirmed_findings(state)
     return {
         "pages_crawled": 0,
@@ -1406,6 +1614,10 @@ def execute_action(
     pacer: Pacer | None = None,
 ) -> dict[str, Any]:
     clock = pacer or _new_pacer()
+    if isinstance(action, TLSCheckAction):
+        return _execute_tls_check(action, state, config)
+    if isinstance(action, ContentDiscoverAction):
+        return _execute_content_discover(action, state, config, clock)
     if isinstance(action, CrawlAction):
         return _execute_crawl(action, state, config, clock)
     if isinstance(action, DiffAction):
@@ -1434,6 +1646,10 @@ def execute_action(
 
 
 def _describe_action(action: AgentAction) -> dict[str, Any]:
+    if isinstance(action, TLSCheckAction):
+        return {"tls_check": True}
+    if isinstance(action, ContentDiscoverAction):
+        return {"content_discover": True}
     if isinstance(action, CrawlAction):
         return {"urls": list(action.urls)}
     if isinstance(action, DiffAction):
@@ -1469,7 +1685,217 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
     return {}
 
 
+def _llm_cost_cap_finding(config: AgentConfig) -> Finding:
+    cost = float(getattr(config, "_llm_cost_usd", 0.0) or 0.0)
+    cap = float(config.llm_agent_max_cost_usd)
+    return Finding(
+        id="llm-cost-cap-reached",
+        severity="info",
+        category="scan-note",
+        url=str(config.target or ""),
+        description=(
+            f"LLM agent stopped: estimated cost ${cost:.4f} exceeded "
+            f"cap ${cap:.2f}."
+        ),
+        evidence=f"cost_usd={cost:.6f} cap_usd={cap} model={config.llm_agent_model}",
+        confidence="heuristic",
+    )
+
+
+def _history_from_action(
+    iteration: int,
+    action: AgentAction,
+    entry: dict[str, Any],
+    *,
+    reasoning: str = "",
+) -> Any:
+    from shroodler.llm_agent.history import HistoryEntry
+
+    described = _describe_action(action)
+    params: dict[str, Any] = {}
+    urls = described.get("urls") or []
+    if urls:
+        params["url"] = urls[0]
+    result = entry.get("result") if isinstance(entry.get("result"), dict) else {}
+    added = int((result or {}).get("findings_added") or 0)
+    return HistoryEntry(
+        iteration=iteration,
+        action=type(action).__name__,
+        params=params,
+        reasoning=reasoning,
+        findings_added=added,
+        summary=str((result or {}).get("summary") or type(action).__name__),
+    )
+
+
+@dataclass
+class _LlmStep:
+    stop: bool = False
+    executed: bool = False
+    done: bool = False
+    fallback_action: AgentAction | None = None
+    entry: dict[str, Any] = field(default_factory=dict)
+    errors: list[str] = field(default_factory=list)
+
+
+def _llm_agent_step(
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+    iteration: int,
+    history: list[Any],
+    crawl_stall_count: int,
+) -> _LlmStep:
+    """One LLM iteration. Fallback uses decide_next_action; never raises."""
+    from shroodler.llm_agent.context import build_context
+    from shroodler.llm_agent.executor import execute_tool
+    from shroodler.llm_agent.guardrails import check_guardrails
+    from shroodler.llm_agent.history import HistoryEntry, trim_history
+    from shroodler.llm_agent.planner import estimate_cost_usd, plan_next_action
+    from shroodler.llm_agent.tools import TOOLS
+
+    cost = float(getattr(config, "_llm_cost_usd", 0.0) or 0.0)
+    cap = float(config.llm_agent_max_cost_usd)
+    if cost > cap:
+        added = _merge_findings(state, [_llm_cost_cap_finding(config)])
+        if not config.dry_run:
+            program.save(state)
+        return _LlmStep(
+            stop=True,
+            entry={
+                "iteration": iteration,
+                "action": "llm-cost-cap-reached",
+                "reasoning": "estimated API cost exceeded cap",
+                "findings_added": added,
+            },
+        )
+
+    ctx = build_context(state, state.findings, history, config)
+    decision = plan_next_action(ctx, TOOLS, config, history)
+    delta = estimate_cost_usd(
+        decision.model, decision.input_tokens, decision.output_tokens
+    )
+    config._llm_cost_usd = cost + delta
+
+    if float(config._llm_cost_usd) > cap:
+        added = _merge_findings(state, [_llm_cost_cap_finding(config)])
+        if not config.dry_run:
+            program.save(state)
+        return _LlmStep(
+            stop=True,
+            entry={
+                "iteration": iteration,
+                "action": "llm-cost-cap-reached",
+                "reasoning": decision.reasoning or "estimated API cost exceeded cap",
+                "findings_added": added,
+            },
+        )
+
+    blocked_reason = ""
+    use_fallback = bool(decision.fallback or not decision.action)
+    if use_fallback:
+        blocked_reason = decision.fallback_reason or "invalid planner output"
+    else:
+        guard = check_guardrails(decision, history, state, config)
+        if not guard.allowed:
+            use_fallback = True
+            blocked_reason = guard.reason
+    config._llm_last_guardrail = blocked_reason
+
+    if use_fallback:
+        emit_log_entry(
+            {
+                "warning": "llm-agent-fallback",
+                "iteration": iteration,
+                "reason": blocked_reason,
+            }
+        )
+        action = decide_next_action(state, config, crawl_stall_count)
+        return _LlmStep(fallback_action=action)
+
+    if config.dry_run:
+        entry = {
+            "iteration": iteration,
+            "action": decision.action,
+            "reasoning": decision.reasoning,
+            "findings_added": 0,
+            "dry_run": True,
+            "params": dict(decision.params or {}),
+        }
+        history.append(
+            HistoryEntry(
+                iteration=iteration,
+                action=str(decision.action),
+                params=dict(decision.params or {}),
+                reasoning=decision.reasoning,
+                findings_added=0,
+                summary="dry_run",
+            )
+        )
+        kept = trim_history(list(history), 10)
+        history.clear()
+        history.extend(kept)
+        return _LlmStep(executed=True, entry=entry)
+
+    try:
+        result = execute_tool(decision, state, config, None, None, pacer)
+    except Exception as exc:  # noqa: BLE001
+        message = f"{type(exc).__name__}: {exc}"
+        return _LlmStep(
+            executed=True,
+            entry={
+                "iteration": iteration,
+                "action": decision.action,
+                "reasoning": decision.reasoning,
+                "findings_added": 0,
+                "error": message,
+            },
+            errors=[message],
+        )
+    program.save(state)
+    added = int(result.findings_added or 0)
+    entry = {
+        "iteration": iteration,
+        "action": decision.action,
+        "reasoning": decision.reasoning,
+        "findings_added": added,
+        "result": result.raw_output,
+        "summary": result.summary,
+    }
+    history.append(
+        HistoryEntry(
+            iteration=iteration,
+            action=str(decision.action),
+            params=dict(decision.params or {}),
+            reasoning=decision.reasoning,
+            findings_added=added,
+            summary=result.summary,
+        )
+    )
+    kept = trim_history(list(history), 10)
+    history.clear()
+    history.extend(kept)
+    errors = []
+    if isinstance(result.raw_output, dict):
+        for err in result.raw_output.get("errors") or []:
+            errors.append(str(err))
+    return _LlmStep(
+        executed=True,
+        done=bool(result.done),
+        entry=entry,
+        errors=errors,
+    )
+
+
 def run_agent(config: AgentConfig) -> AgentResult:
+    if config.llm_agent and not os.environ.get("ANTHROPIC_API_KEY"):
+        return AgentResult(
+            iterations=0,
+            confirmed=0,
+            log=[],
+            state_path="",
+            errors=["--llm-agent requires ANTHROPIC_API_KEY"],
+        )
     state = program.load(config.program)
     assert_target_in_scope(state, config.target)
     path = str(program.state_path(state.slug))
@@ -1478,6 +1904,9 @@ def run_agent(config: AgentConfig) -> AgentResult:
     consecutive_errors = 0
     _crawl_stall_count = 0
     pacer = _new_pacer()
+    llm_history: list[Any] = []
+    config._llm_cost_usd = 0.0
+    config._llm_last_guardrail = ""
     if config.write_authz_spec:
         _ensure_write_authz_endpoints(config)
 
@@ -1489,6 +1918,8 @@ def run_agent(config: AgentConfig) -> AgentResult:
     config._business_logic_done = False
     config._chain_done = False
     config._openapi_discover_done = False
+    config._tls_check_done = False
+    config._content_discover_done = False
 
     mutated = False
     if config.reprobe:
@@ -1511,7 +1942,32 @@ def run_agent(config: AgentConfig) -> AgentResult:
 
     for i in range(max(0, int(config.max_iterations))):
         config._iteration = i + 1  # used by decide_next_action triage logs
-        action = decide_next_action(state, config, _crawl_stall_count)
+        if config.llm_agent:
+            step = _llm_agent_step(
+                state,
+                config,
+                pacer,
+                i + 1,
+                llm_history,
+                _crawl_stall_count,
+            )
+            if step.stop:
+                if step.entry:
+                    log.append(step.entry)
+                    emit_log_entry(step.entry)
+                errors.extend(step.errors)
+                break
+            if step.executed:
+                log.append(step.entry)
+                emit_log_entry(step.entry)
+                consecutive_errors = 0
+                errors.extend(step.errors)
+                if step.done:
+                    break
+                continue
+            action = step.fallback_action
+        else:
+            action = decide_next_action(state, config, _crawl_stall_count)
         if action is None:
             break
         entry: dict[str, Any] = {
@@ -1545,6 +2001,29 @@ def run_agent(config: AgentConfig) -> AgentResult:
                     log.append(entry)
                     emit_log_entry(entry)
                     break
+        if config.llm_agent:
+            entry.setdefault(
+                "reasoning",
+                str(getattr(config, "_llm_last_guardrail", "") or "fallback"),
+            )
+            result = entry.get("result") if isinstance(entry.get("result"), dict) else {}
+            entry.setdefault(
+                "findings_added",
+                int((result or {}).get("findings_added") or 0),
+            )
+            llm_history.append(
+                _history_from_action(
+                    i + 1,
+                    action,
+                    entry,
+                    reasoning=str(entry.get("reasoning") or ""),
+                )
+            )
+            from shroodler.llm_agent.history import trim_history as _trim
+
+            kept = _trim(list(llm_history), 10)
+            llm_history.clear()
+            llm_history.extend(kept)
         log.append(entry)
         emit_log_entry(entry)
         if isinstance(action, ReportAction):

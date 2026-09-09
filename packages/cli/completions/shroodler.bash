@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program agent discover engagement-history engagement-diff version dedup ci-template"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage triage-findings payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program agent discover engagement-history engagement-diff version dedup ci-template"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -41,6 +41,9 @@ _shroodler_flags_for() {
             ;;
         triage)
             echo "--discover --no-active --allow-external --concurrency --rate --timeout --proxy --user-agent --header --output --format --hosts-out"
+            ;;
+        triage-findings)
+            echo "--min-score --min-confidence --format --output"
             ;;
         payload)
             echo "--output --pack --plugin --allow-external --oob-host --require-policy --policy-file --audit-log --adaptive --no-csrf"
@@ -248,10 +251,11 @@ _shroodler_complete() {
             case "$subcmd" in
                 crawl) COMPREPLY=($(compgen -W "json html csv sarif junit" -- "$cur")) ;;
                 diff) COMPREPLY=($(compgen -W "text junit sarif github-annotations" -- "$cur")) ;;
-                report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown pentest pentest-html" -- "$cur")) ;;
+                report) COMPREPLY=($(compgen -W "html csv json sarif junit md markdown pentest pentest-html submit" -- "$cur")) ;;
                 history-list) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 cadence) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 triage) COMPREPLY=($(compgen -W "text json hosts" -- "$cur")) ;;
+                triage-findings) COMPREPLY=($(compgen -W "text json submit" -- "$cur")) ;;
                 trend) COMPREPLY=($(compgen -W "text json" -- "$cur")) ;;
                 suppress-expiring) COMPREPLY=($(compgen -W "text json github-pr-body" -- "$cur")) ;;
                 attack-path) COMPREPLY=($(compgen -W "json markdown" -- "$cur")) ;;

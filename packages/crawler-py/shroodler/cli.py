@@ -1216,6 +1216,39 @@ def cmd_triage(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_triage_findings(args: argparse.Namespace) -> int:
+    from shroodler.pentest_report import format_submit
+    from shroodler.triage_engine import (
+        findings_from_doc,
+        format_text_table,
+        result_to_dict,
+        triage_findings,
+    )
+
+    doc = load_json(args.state_file)
+    findings = findings_from_doc(doc)
+    min_score = int(getattr(args, "min_score", 50) or 50)
+    min_conf = int(getattr(args, "min_confidence", 65) or 65)
+    results = triage_findings(
+        findings,
+        min_exploitability=min_score,
+        min_confidence=min_conf,
+    )
+    fmt = getattr(args, "format", "text") or "text"
+    if fmt == "json":
+        text = json.dumps([result_to_dict(item) for item in results], indent=2) + "\n"
+    elif fmt == "submit":
+        text = format_submit(
+            findings,
+            min_exploitability=min_score,
+            min_confidence=min_conf,
+        )
+    else:
+        text = format_text_table(results)
+    _write(text, args.output)
+    return 0
+
+
 def cmd_reverify(args: argparse.Namespace) -> int:
     from shroodler.reverify import reverify
 
@@ -1671,7 +1704,8 @@ def build_parser() -> argparse.ArgumentParser:
     diff.set_defaults(func=cmd_diff)
 
     report = sub.add_parser(
-        "report", help="Render findings JSON as HTML, CSV, SARIF, JUnit, Markdown, or pentest"
+        "report",
+        help="Render findings JSON as HTML, CSV, SARIF, JUnit, Markdown, pentest, or submit",
     )
     report.add_argument("findings")
     report.add_argument(
@@ -1686,6 +1720,7 @@ def build_parser() -> argparse.ArgumentParser:
             "markdown",
             "pentest",
             "pentest-html",
+            "submit",
         ],
         default="html",
     )
@@ -1914,6 +1949,41 @@ def build_parser() -> argparse.ArgumentParser:
         help="Also write the worth-crawling URL list (same as --format hosts) to FILE",
     )
     triage.set_defaults(func=cmd_triage)
+
+    triage_findings = sub.add_parser(
+        "triage-findings",
+        help="Score and rank crawl findings for bug-bounty submission",
+        description=(
+            "Load a crawl JSON document or program state.json, score each "
+            "finding by exploitability and confidence, deduplicate repeats, "
+            "and print which ones are worth submitting. Distinct from `triage`, "
+            "which classifies hosts before a crawl."
+        ),
+    )
+    triage_findings.add_argument(
+        "state_file",
+        help="Crawl JSON or program state.json (must contain a findings list)",
+    )
+    triage_findings.add_argument(
+        "--min-score",
+        type=int,
+        default=50,
+        help="Minimum exploitability (0-100) to mark worth_submitting (default 50)",
+    )
+    triage_findings.add_argument(
+        "--min-confidence",
+        type=int,
+        default=65,
+        help="Minimum confidence (0-100) to mark worth_submitting (default 65)",
+    )
+    triage_findings.add_argument(
+        "--format",
+        choices=["text", "json", "submit"],
+        default="text",
+        help="text table (default), json, or submission-ready Markdown",
+    )
+    triage_findings.add_argument("--output", "-o")
+    triage_findings.set_defaults(func=cmd_triage_findings)
 
     payload = sub.add_parser(
         "payload",

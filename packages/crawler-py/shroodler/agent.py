@@ -360,14 +360,24 @@ _PROBE_PRIORITY = (
 )
 
 
+# js-analysis ghost routes sit ahead of generic crawled pages (50/100) but
+# behind the named _PROBE_PRIORITY tokens (0-5).
+_JS_ANALYSIS_PROBE_RANK = 40
+
+
 def _probe_rank(url: str, meta: dict | None) -> int:
     path = (url or "").lower()
+    rank = 100
     for i, token in enumerate(_PROBE_PRIORITY):
         if token in path:
-            return i
-    if (meta or {}).get("params"):
-        return 50
-    return 100
+            rank = i
+            break
+    else:
+        if (meta or {}).get("params"):
+            rank = 50
+    if (meta or {}).get("source") == "js-analysis":
+        rank = min(rank, _JS_ANALYSIS_PROBE_RANK)
+    return rank
 
 
 def _stale_payload(meta: dict | None) -> bool:
@@ -794,6 +804,181 @@ def _bind_probe_session(state: ProgramState, config: AgentConfig, pacer: Pacer):
     )
 
 
+def _ghost_path_pattern(url: str) -> str:
+    """Origin-agnostic path pattern: braces, UUIDs, and digits collapse to {id}."""
+    from urllib.parse import urlparse
+
+    from shroodler.llm_agent.probe_memory import normalise_url
+
+    raw = (url or "").strip()
+    if not raw:
+        return ""
+    if "://" not in raw:
+        raw = "http://ghost.invalid" + (raw if raw.startswith("/") else "/" + raw)
+    try:
+        parsed = urlparse(raw)
+    except ValueError:
+        return ""
+    braced = _PLACEHOLDER_RE.sub("{id}", parsed.path or "")
+    dummy = parsed._replace(
+        scheme="http",
+        netloc="ghost.invalid",
+        path=braced,
+        query="",
+        fragment="",
+    ).geturl()
+    try:
+        norm = normalise_url(dummy)
+    except Exception:  # noqa: BLE001
+        norm = dummy
+    try:
+        path = urlparse(norm).path or ""
+    except ValueError:
+        path = braced
+    parts: list[str] = []
+    for seg in path.split("/"):
+        if not seg:
+            continue
+        if _PLACEHOLDER_RE.fullmatch(seg) or seg.isdigit():
+            parts.append("{id}")
+        else:
+            parts.append(seg)
+    return "/" + "/".join(parts) if parts else "/"
+
+
+def _params_missing(meta: dict | None) -> bool:
+    if not isinstance(meta, dict):
+        return True
+    if "params" not in meta:
+        return True
+    return not meta.get("params")
+
+
+def _infer_ghost_params(url: str) -> list[dict]:
+    from shroodler.probes.common import normalize_params, params_from_url
+
+    params = normalize_params([], url=url)
+    seen = {item["name"] for item in params}
+    for item in params_from_url(url):
+        if item["name"] not in seen:
+            params.append(item)
+            seen.add(item["name"])
+    return params
+
+
+def _absolute_ghost_url(url: str, target: str) -> str:
+    from urllib.parse import urljoin
+
+    text = (url or "").strip()
+    if not text:
+        return ""
+    if text.startswith(("http://", "https://")):
+        return text
+    base = target if str(target).endswith("/") else str(target or "") + "/"
+    return urljoin(base, text)
+
+
+def _maybe_hydrate_ghost_routes(state: ProgramState, config: AgentConfig) -> None:
+    if getattr(config, "_ghost_hydrate_done", False):
+        return
+    has_oa = bool(
+        getattr(state, "openapi_spec_url", None)
+        or getattr(state, "openapi_endpoints", None)
+    )
+    has_js = False
+    for meta in (state.endpoints or {}).values():
+        if isinstance(meta, dict) and meta.get("source") == "js-analysis":
+            if _params_missing(meta):
+                has_js = True
+                break
+    if not (has_oa or has_js):
+        return
+    _hydrate_ghost_routes(state, config)
+
+
+def _hydrate_ghost_routes(state: ProgramState, config: AgentConfig) -> None:
+    """Attach OpenAPI / inferred params onto ghost routes so active probes run.
+
+    Runs once per agent config. OpenAPI path templates are matched against
+    concrete JS-analysis URLs via ``normalise_url`` (plus remaining digit
+    segments). Numeric path IDs get a synthetic ``id`` param when no spec
+    match exists.
+    """
+    setattr(config, "_ghost_hydrate_done", True)
+    now = program._now()
+    target = str(getattr(config, "target", "") or "")
+    oa_by_pattern: dict[str, dict[str, Any]] = {}
+
+    for row in state.openapi_endpoints or []:
+        if not isinstance(row, dict):
+            continue
+        raw_url = str(row.get("url") or "")
+        if not raw_url:
+            continue
+        url = _absolute_ghost_url(raw_url, target) or raw_url
+        params = list(row.get("params") or [])
+        program._upsert_endpoint(
+            state,
+            url,
+            now,
+            method=row.get("method"),
+            params=params,
+            source="openapi",
+        )
+        key = program._endpoint_key(url)
+        meta = state.endpoints.get(key)
+        if meta is not None and row.get("auth_required"):
+            meta["auth_required"] = True
+        pattern = _ghost_path_pattern(url)
+        if pattern:
+            # Prefer a row that actually has params when several share a path.
+            prev = oa_by_pattern.get(pattern)
+            if prev is None or (params and not (prev.get("params") or [])):
+                oa_by_pattern[pattern] = {**row, "url": url}
+
+    for url, meta in list(state.endpoints.items()):
+        if not isinstance(meta, dict):
+            continue
+        if meta.get("source") != "js-analysis":
+            continue
+        if not _params_missing(meta):
+            continue
+        pattern = _ghost_path_pattern(url)
+        oa = oa_by_pattern.get(pattern) if pattern else None
+        method = meta.get("method")
+        auth_required = bool(meta.get("auth_required"))
+        if oa and (oa.get("params") or []):
+            inferred = {p["name"]: p for p in _infer_ghost_params(url)}
+            incoming = []
+            for item in oa.get("params") or []:
+                row = dict(item)
+                inf = inferred.get(str(row.get("name") or ""))
+                if inf and not row.get("value") and inf.get("value"):
+                    row["value"] = inf["value"]
+                incoming.append(row)
+            seen = {str(r.get("name") or "") for r in incoming}
+            for inf in inferred.values():
+                if inf["name"] not in seen:
+                    incoming.append(inf)
+            method = oa.get("method") or method
+            auth_required = auth_required or bool(oa.get("auth_required"))
+        else:
+            incoming = _infer_ghost_params(url)
+        if not incoming:
+            continue
+        last_seen = str(meta.get("last_seen") or "") or now
+        program._upsert_endpoint(
+            state,
+            url,
+            last_seen,
+            method=method,
+            params=incoming,
+        )
+        stored = state.endpoints.get(program._endpoint_key(url))
+        if stored is not None and auth_required:
+            stored["auth_required"] = True
+
+
 def decide_next_action(
     state: ProgramState,
     config: AgentConfig,
@@ -892,6 +1077,11 @@ def decide_next_action(
     if config.run_content_discovery and not getattr(config, "_content_discover_done", False):
         return ContentDiscoverAction()
 
+    # After OpenAPI discover has had a chance to run (this branch is only
+    # reached when it already returned, is disabled, or spec_url is set).
+    # Also hydrates JS-only ghost routes when no spec was found.
+    _maybe_hydrate_ghost_routes(state, config)
+
     if config.run_probes:
         probe_urls = _untested_probe_urls(state, config)
         if probe_urls:
@@ -977,7 +1167,7 @@ def _probe_params(url: str, meta: dict | None) -> tuple[str, list[dict]]:
 
     meta = meta or {}
     method = str(meta.get("method") or "GET").upper() or "GET"
-    params = normalize_params(meta.get("params") or [])
+    params = normalize_params(meta.get("params") or [], url=url)
     seen = {item["name"] for item in params}
     for item in params_from_url(url):
         if item["name"] not in seen:
@@ -1854,11 +2044,23 @@ def _finish_probe_action(
         meta = state.endpoints.get(url) or {}
         method, params = _probe_params(url, meta)
         view_url = str(meta.get("view_url") or "")
+        ghost_or_auth = (
+            str(meta.get("source") or "") == "js-analysis"
+            or bool(meta.get("auth_required"))
+        )
+        # Owner session only. Peer/anon IDOR still uses the separate peer arg.
+        hdr = owner
+        jwt_cookie = cookie_header
+        jwt_auth = auth_header
+        if ghost_or_auth:
+            hdr = cookie_header or auth_header or owner
+            jwt_cookie = cookie_header or hdr
+            jwt_auth = auth_header
         if config.probe_sqli and method in {"GET", "POST"} and params:
             _run(
                 "sqli",
                 lambda: probe_sqli(
-                    url, method, params, owner, pacer=pacer, state=state
+                    url, method, params, hdr, pacer=pacer, state=state
                 ),
             )
         if config.probe_xss and method in {"GET", "POST"} and params:
@@ -1868,7 +2070,7 @@ def _finish_probe_action(
                     url,
                     method,
                     params,
-                    owner,
+                    hdr,
                     view_url=view_url,
                     pacer=pacer,
                     state=state,
@@ -1877,21 +2079,21 @@ def _finish_probe_action(
         if config.probe_path_traversal:
             _run(
                 "path-traversal",
-                lambda: probe_path_traversal(url, params, owner, pacer=pacer),
+                lambda: probe_path_traversal(url, params, hdr, pacer=pacer),
             )
-        if config.probe_jwt and (cookie_header or auth_header):
+        if config.probe_jwt and (jwt_cookie or jwt_auth):
             _run(
                 "jwt",
-                lambda: probe_jwt(url, cookie_header, auth_header, pacer=pacer),
+                lambda: probe_jwt(url, jwt_cookie, jwt_auth, pacer=pacer),
             )
         if config.probe_idor and peer:
-            _run("idor", lambda: probe_idor(url, owner, peer, pacer=pacer))
+            _run("idor", lambda: probe_idor(url, hdr, peer, pacer=pacer))
         if config.run_ssrf and method in {"GET", "POST"} and params:
-            _run("ssrf", lambda: probe_ssrf(url, method, params, owner, pacer=pacer))
+            _run("ssrf", lambda: probe_ssrf(url, method, params, hdr, pacer=pacer))
         if config.run_open_redirect and method in {"GET", "POST"} and params:
             _run(
                 "open-redirect",
-                lambda: probe_open_redirect(url, method, params, owner, pacer=pacer),
+                lambda: probe_open_redirect(url, method, params, hdr, pacer=pacer),
             )
         if config.run_host_header:
             host = hostname_of(url)
@@ -1899,12 +2101,12 @@ def _finish_probe_action(
                 seen_hosts.add(host)
                 _run(
                     "host-header",
-                    lambda: probe_host_header(url, owner, pacer=pacer, state=state),
+                    lambda: probe_host_header(url, hdr, pacer=pacer, state=state),
                 )
         if config.run_ssti and method in {"GET", "POST"} and params:
             _run(
                 "ssti",
-                lambda: probe_ssti(url, method, params, owner, pacer=pacer, state=state),
+                lambda: probe_ssti(url, method, params, hdr, pacer=pacer, state=state),
             )
         if config.run_xxe and method in {"GET", "POST"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")
@@ -1914,7 +2116,7 @@ def _finish_probe_action(
                     url,
                     method,
                     params,
-                    owner,
+                    hdr,
                     pacer=pacer,
                     content_type=content_type,
                 ),
@@ -1923,9 +2125,9 @@ def _finish_probe_action(
             origin = origin_of(url)
             if origin and origin not in seen_graphql:
                 seen_graphql.add(origin)
-                _run("graphql", lambda: probe_graphql(url, owner, pacer=pacer))
+                _run("graphql", lambda: probe_graphql(url, hdr, pacer=pacer))
         if config.run_crlf and method in {"GET", "POST", "PUT", "PATCH"}:
-            _run("crlf", lambda: probe_crlf(url, method, params, owner, pacer=pacer))
+            _run("crlf", lambda: probe_crlf(url, method, params, hdr, pacer=pacer))
         if config.run_prototype_pollution:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")
             _run(
@@ -1934,7 +2136,7 @@ def _finish_probe_action(
                     url,
                     method,
                     params,
-                    owner,
+                    hdr,
                     pacer=pacer,
                     content_type=content_type,
                 ),
@@ -1942,20 +2144,20 @@ def _finish_probe_action(
         if config.run_dom_xss and method in {"GET", "POST"} and params:
             _run(
                 "dom-xss",
-                lambda: probe_dom_xss(url, method, params, owner, pacer=pacer),
+                lambda: probe_dom_xss(url, method, params, hdr, pacer=pacer),
             )
         if config.run_rate_limit and url not in seen_rl:
             seen_rl.add(url)
             _run(
                 "rate-limit",
-                lambda: probe_rate_limit(url, method, owner, pacer=pacer),
+                lambda: probe_rate_limit(url, method, hdr, pacer=pacer),
             )
         if config.run_mass_assignment and method in {"POST", "PUT", "PATCH"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")
             _run(
                 "mass-assignment",
                 lambda: probe_mass_assignment(
-                    url, method, owner, pacer=pacer, content_type=content_type
+                    url, method, hdr, pacer=pacer, content_type=content_type
                 ),
             )
         if config.run_smuggling:
@@ -1966,7 +2168,7 @@ def _finish_probe_action(
                     "smuggling",
                     lambda: probe_smuggling(
                         url,
-                        owner,
+                        hdr,
                         allow_external=bool(config.allow_external),
                         pacer=pacer,
                     ),
@@ -1981,10 +2183,10 @@ def _finish_probe_action(
                         str(bundle.get("source") or bundle.get("content") or "")
                     )
 
-            def _ws_probe(u=url, src="\n".join(js_bits)):
+            def _ws_probe(u=url, src="\n".join(js_bits), cookie=hdr):
                 hits, found = probe_websocket(
                     u,
-                    owner,
+                    cookie,
                     pacer=pacer,
                     js_source=src,
                     base_url=config.target,

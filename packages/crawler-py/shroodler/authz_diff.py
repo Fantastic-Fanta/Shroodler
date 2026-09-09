@@ -24,6 +24,31 @@ def _is_success(status: int) -> bool:
     return 200 <= status < 300
 
 
+def _form_data(params: list | None) -> dict[str, str]:
+    data: dict[str, str] = {}
+    for item in params or []:
+        if isinstance(item, str):
+            name = item.strip()
+            if name and name not in data:
+                data[name] = ""
+            continue
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or item.get("key") or "").strip()
+        if not name or name in data:
+            continue
+        data[name] = str(item.get("value") or "")
+    return data
+
+
+def _request_page(http: httpx.Client, url: str, headers: dict[str, str], page: dict):
+    method = str(page.get("method") or "GET").upper() or "GET"
+    kwargs: dict = {}
+    if method not in {"GET", "HEAD"}:
+        kwargs["data"] = _form_data(page.get("params"))
+    return http.request(method, url, headers=headers, **kwargs)
+
+
 _AUTH_HEADER_NAMES = frozenset({"cookie", "authorization"})
 
 
@@ -205,12 +230,12 @@ def run(
 
             if higher_cookie_header:
                 try:
-                    http.get(url, headers=higher_headers)
+                    _request_page(http, url, higher_headers, page)
                 except httpx.HTTPError:
                     pass
 
             try:
-                lower_resp = http.get(url, headers=lower_headers)
+                lower_resp = _request_page(http, url, lower_headers, page)
             except httpx.HTTPError:
                 continue
             if not _is_success(lower_resp.status_code):
@@ -220,7 +245,7 @@ def run(
             if check_anonymous and (enforcer is None or enforcer.check(url)[0]):
                 try:
                     anon_headers = _strip_auth_headers(lower_headers)
-                    anon_resp = http.get(url, headers=anon_headers)
+                    anon_resp = _request_page(http, url, anon_headers, page)
                 except httpx.HTTPError:
                     anon_resp = None
                 if anon_resp is not None and _is_denied(
@@ -249,9 +274,11 @@ def run(
                             "should be able to see this resource."
                         ),
                         evidence=f"lower={lower_resp.status_code} anon={anon_resp.status_code}",
+                        # peer=2xx while anon is denied is enough to confirm the
+                        # endpoint enforces *a* session but not the *right* one.
+                        confidence="confirmed",
                     ).model_dump(exclude_none=True)
                     if marker is not None:
-                        finding["confidence"] = "confirmed"
                         finding["description"] += (
                             f" CONFIRMED: response body contains the higher-privilege "
                             f"account's own identity marker ({marker!r})."

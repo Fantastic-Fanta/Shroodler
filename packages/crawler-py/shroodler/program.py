@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 from shroodler.models import Finding
 
@@ -239,12 +239,91 @@ def _page_bodies(page: dict) -> list[str]:
     return bodies
 
 
+def _endpoint_key(url: str) -> str:
+    parsed = urlparse(url)
+    path = parsed.path or "/"
+    return parsed._replace(path=path, query="", fragment="").geturl()
+
+
+def _normalize_param_list(raw: Any) -> list[dict[str, str]]:
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for item in raw or []:
+        if isinstance(item, str):
+            name = item.strip()
+            if name and name not in seen:
+                seen.add(name)
+                out.append({"name": name, "value": "", "in": "query"})
+            continue
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get("name") or item.get("key") or "").strip()
+        if not name or name in seen:
+            continue
+        seen.add(name)
+        out.append(
+            {
+                "name": name,
+                "value": str(item.get("value") or ""),
+                "in": str(item.get("in") or "query"),
+            }
+        )
+    return out
+
+
+def _upsert_endpoint(
+    state: ProgramState,
+    url: str,
+    last_seen: str,
+    *,
+    method: str | None = None,
+    params: Any = None,
+) -> str:
+    """Insert or update an endpoint. Returns 'new', 'updated', or ''."""
+    key = _endpoint_key(url)
+    if not key:
+        return ""
+    meta = state.endpoints.get(key)
+    created = meta is None
+    if created:
+        meta = _endpoint_meta(key, last_seen)
+        state.endpoints[key] = meta
+    else:
+        meta["last_seen"] = last_seen
+    if method:
+        incoming = str(method).upper() or "GET"
+        existing = str(meta.get("method") or "GET").upper() or "GET"
+        if not meta.get("method") or (existing == "GET" and incoming != "GET"):
+            meta["method"] = incoming
+        elif incoming != "GET":
+            meta["method"] = incoming
+    incoming_params = _normalize_param_list(params)
+    if incoming_params:
+        merged = _normalize_param_list(meta.get("params") or [])
+        seen = {item["name"] for item in merged}
+        for item in incoming_params:
+            if item["name"] in seen:
+                continue
+            merged.append(item)
+            seen.add(item["name"])
+        meta["params"] = merged
+    return "new" if created else "updated"
+
+
 def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
     """Ingest an in-memory crawl document. Returns a delta of counts."""
     last_seen = str(doc.get("scan_finished_at") or doc.get("scan_started_at") or _now())
     new_endpoints = 0
     updated_endpoints = 0
     urls: list[str] = []
+
+    def _count(status: str) -> None:
+        nonlocal new_endpoints, updated_endpoints
+        if status == "new":
+            new_endpoints += 1
+        elif status == "updated":
+            updated_endpoints += 1
+
     for page in doc.get("pages") or []:
         if not isinstance(page, dict):
             continue
@@ -252,13 +331,27 @@ def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
         if not url:
             continue
         urls.append(url)
-        meta = state.endpoints.get(url)
-        if meta is None:
-            state.endpoints[url] = _endpoint_meta(url, last_seen)
-            new_endpoints += 1
-        else:
-            meta["last_seen"] = last_seen
-            updated_endpoints += 1
+        _count(_upsert_endpoint(state, url, last_seen, params=page.get("params") or []))
+        for form in page.get("forms") or []:
+            if not isinstance(form, dict):
+                continue
+            action = str(form.get("action") or "")
+            form_url = urljoin(url, action) if action else url
+            method = str(form.get("method") or "GET")
+            field_params: list[dict[str, str]] = []
+            loc = "query" if method.upper() == "GET" else "body"
+            for raw_field in form.get("fields") or []:
+                if not isinstance(raw_field, dict):
+                    continue
+                name = str(raw_field.get("name") or "").strip()
+                if not name:
+                    continue
+                field_params.append({"name": name, "value": "", "in": loc})
+            _count(
+                _upsert_endpoint(
+                    state, form_url, last_seen, method=method, params=field_params
+                )
+            )
         pattern = url_to_pattern(url)
         for body in _page_bodies(page):
             ids = extract_object_ids(body)
@@ -268,6 +361,22 @@ def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
             for oid in ids:
                 if oid not in bucket:
                     bucket.append(oid)
+    for ep in doc.get("xhr_endpoints") or []:
+        if not isinstance(ep, dict):
+            continue
+        endpoint = str(ep.get("url") or "")
+        if not endpoint:
+            continue
+        status = _upsert_endpoint(
+            state,
+            endpoint,
+            last_seen,
+            method=ep.get("method"),
+            params=ep.get("params"),
+        )
+        _count(status)
+        if status == "new":
+            urls.append(endpoint)
     for ep in doc.get("js_endpoints") or []:
         if not isinstance(ep, dict):
             continue
@@ -372,6 +481,8 @@ def mark_tested(state: ProgramState, urls: list[str], field: str) -> int:
         if not meta.get(field):
             n += 1
         meta[field] = True
+        if field == "tested_payload":
+            meta["tested_payload_at"] = now
         meta["last_seen"] = meta.get("last_seen") or now
     return n
 

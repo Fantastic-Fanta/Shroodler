@@ -18,6 +18,7 @@ class FetchResult:
     error: str | None = None
     set_cookies: list[str] = field(default_factory=list)
     discovered_urls: list[str] = field(default_factory=list)
+    xhr_requests: list[dict] = field(default_factory=list)
 
 
 def _decode_body(body: bytes, content_type: str) -> str:

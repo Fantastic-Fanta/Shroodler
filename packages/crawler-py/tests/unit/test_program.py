@@ -54,6 +54,52 @@ def test_extract_object_ids_uuid_and_named_ints():
     assert "7" in ids
 
 
+def test_merge_crawl_seeds_form_and_xhr_params(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    state = load("lab")
+    delta = merge_crawl_doc(
+        state,
+        {
+            "scan_finished_at": "2026-09-01T00:00:00Z",
+            "pages": [
+                {
+                    "url": "http://127.0.0.1:8080/WebGoat/start.mvc#SqlInjection",
+                    "status_code": 200,
+                    "params": ["tab"],
+                    "forms": [
+                        {
+                            "action": "/WebGoat/SqlInjection/attack2",
+                            "method": "POST",
+                            "fields": [
+                                {"name": "username", "type": "text", "hidden": False},
+                                {"name": "password", "type": "password", "hidden": False},
+                            ],
+                        }
+                    ],
+                }
+            ],
+            "xhr_endpoints": [
+                {
+                    "url": "http://127.0.0.1:8080/WebGoat/SqlInjection/attack2",
+                    "method": "POST",
+                    "params": [
+                        {"name": "username", "value": "guest", "in": "body"},
+                        {"name": "query", "value": "select", "in": "body"},
+                    ],
+                }
+            ],
+        },
+    )
+    attack = "http://127.0.0.1:8080/WebGoat/SqlInjection/attack2"
+    start = "http://127.0.0.1:8080/WebGoat/start.mvc"
+    assert attack in state.endpoints
+    assert start in state.endpoints
+    assert state.endpoints[attack]["method"] == "POST"
+    names = {p["name"] for p in state.endpoints[attack]["params"]}
+    assert names == {"username", "password", "query"}
+    assert delta["new_endpoints"] >= 2
+
+
 def test_merge_crawl_dedup_and_object_ids(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     state = load("lab")

@@ -25,6 +25,18 @@ def test_scan_with_stats_validates():
     validate_crawl(doc)
 
 
+def test_scan_with_xhr_endpoints_validates():
+    doc = _base()
+    doc["xhr_endpoints"] = [
+        {
+            "url": "http://127.0.0.1:8081/WebGoat/SqlInjection/attack2",
+            "method": "POST",
+            "params": [{"name": "username", "value": "guest", "in": "body"}],
+        }
+    ]
+    validate_crawl(doc)
+
+
 def test_required_fields_unchanged():
     doc = _base()
     for key in (

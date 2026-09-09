@@ -634,6 +634,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         run_discovery=bool(getattr(args, "run_discovery", False)),
         ignore_robots=bool(getattr(args, "ignore_robots", False)),
         write_authz_spec=getattr(args, "write_authz_spec", None),
+        run_probes=bool(getattr(args, "run_probes", False)),
+        reprobe=bool(getattr(args, "reprobe", False)),
     )
     result = run_agent(config)
     payload: dict = {
@@ -2362,6 +2364,19 @@ def build_parser() -> argparse.ArgumentParser:
         "--ignore-robots",
         action="store_true",
         help="Bypass robots.txt during crawl legs (use for API-first targets)",
+    )
+    agent.add_argument(
+        "--run-probes",
+        action="store_true",
+        help=(
+            "Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR) "
+            "after authz and peer-write legs"
+        ),
+    )
+    agent.add_argument(
+        "--reprobe",
+        action="store_true",
+        help="Reset tested_payload on all endpoints before the agent loop starts",
     )
     agent.add_argument(
         "--write-authz-spec",

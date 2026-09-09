@@ -10,9 +10,12 @@ from shroodler.agent import (
     AuthzDiffAction,
     CrawlAction,
     PeerWriteAction,
+    ProbeAction,
     ReportAction,
     WriteAuthzAction,
+    _TOOL_NOISE_IDS,
     _auth_header_for_diff,
+    _untested_probe_urls,
     decide_next_action,
     execute_action,
     run_agent,
@@ -283,6 +286,53 @@ def test_execute_crawl_merges_mocked_result(monkeypatch):
     assert result["pages_crawled"] >= 1
     assert result["new_endpoints"] >= 1
     assert "http://127.0.0.1/api/a" in state.endpoints
+
+
+def test_execute_crawl_uses_headless_for_webgoat(monkeypatch):
+    seen: dict = {}
+
+    class FakeResult:
+        def to_dict(self):
+            return {
+                "pages": [
+                    {
+                        "url": "http://127.0.0.1:8080/WebGoat/start.mvc",
+                        "status_code": 200,
+                    }
+                ],
+                "xhr_endpoints": [
+                    {
+                        "url": "http://127.0.0.1:8080/WebGoat/SqlInjection/attack2",
+                        "method": "POST",
+                        "params": [{"name": "username", "value": "guest", "in": "body"}],
+                    }
+                ],
+                "findings": [],
+            }
+
+    def fake_crawl(url, **kwargs):
+        seen["url"] = url
+        seen["kwargs"] = kwargs
+        return FakeResult()
+
+    monkeypatch.setattr("shroodler.crawler.crawl_url", fake_crawl)
+    state = ProgramState(slug="lab")
+    execute_action(
+        CrawlAction(urls=["http://127.0.0.1:8080/WebGoat/start.mvc"]),
+        state,
+        _config(
+            dry_run=False,
+            target="http://127.0.0.1:8080/WebGoat",
+            login_recipe="/tmp/owner.json",
+        ),
+        pacer=Pacer(0),
+    )
+    assert seen["kwargs"]["mode"] == "headless"
+    assert seen["kwargs"]["login_recipe"] == "/tmp/owner.json"
+    attack = "http://127.0.0.1:8080/WebGoat/SqlInjection/attack2"
+    assert attack in state.endpoints
+    assert state.endpoints[attack]["method"] == "POST"
+    assert state.endpoints[attack]["params"][0]["name"] == "username"
 
 
 def test_execute_crawl_records_per_url_errors(monkeypatch):
@@ -788,3 +838,273 @@ def test_run_write_authz_skips_placeholders_and_records_finding():
     assert any("{member_id}" in s for s in out["skipped"])
     assert all("{member_id}" not in url for _, url, _ in client.calls)
     assert len(client.calls) == 2
+
+
+def test_agent_config_run_probes_defaults_off():
+    cfg = _config()
+    assert cfg.run_probes is False
+    assert cfg.reprobe is False
+    assert cfg.probe_sqli is True
+    assert cfg.probe_xss is True
+    assert cfg.probe_path_traversal is True
+    assert cfg.probe_jwt is True
+    assert cfg.probe_idor is True
+
+
+def test_authz_broken_access_control_is_not_tool_noise():
+    assert "authz-broken-access-control" not in _TOOL_NOISE_IDS
+
+
+def test_decide_probe_when_run_probes_and_queue_empty():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/search?q=1": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+    )
+    action = decide_next_action(state, _config(run_probes=True))
+    assert isinstance(action, ProbeAction)
+    assert action.urls == ["http://127.0.0.1/search?q=1"]
+
+
+def test_decide_skips_probe_when_run_probes_false():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/search?q=1": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+    )
+    assert decide_next_action(state, _config()) is None
+
+
+def test_decide_probe_before_report():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/search?q=1": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+        findings=[
+            Finding(
+                id="authz-broken-access-control",
+                severity="high",
+                category="auth",
+                url="http://127.0.0.1/search?q=1",
+                description="confirmed lead",
+                confidence="confirmed",
+            )
+        ],
+    )
+    action = decide_next_action(state, _config(run_probes=True))
+    assert isinstance(action, ProbeAction)
+
+
+def test_decide_skips_already_tested_payload():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/search?q=1": {
+                **_endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True),
+                "tested_payload": True,
+            },
+        },
+        findings=[
+            Finding(
+                id="sqli",
+                severity="critical",
+                category="payload",
+                url="http://127.0.0.1/search?q=1",
+                description="sqli",
+                confidence="confirmed",
+            )
+        ],
+    )
+    action = decide_next_action(state, _config(run_probes=True))
+    assert isinstance(action, ReportAction)
+
+
+def test_execute_probe_merges_findings_and_marks_tested(monkeypatch):
+    from shroodler.models import Finding as F
+
+    monkeypatch.setattr(
+        "shroodler.probes.sqli.probe_sqli",
+        lambda url, method, params, cookie, **kw: [
+            F(
+                id="sqli",
+                severity="critical",
+                category="payload",
+                url=url,
+                description="error-based",
+                confidence="confirmed",
+            )
+        ],
+    )
+    monkeypatch.setattr("shroodler.probes.xss.probe_xss", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "shroodler.probes.path_traversal.probe_path_traversal", lambda *a, **k: []
+    )
+    monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.idor.probe_idor", lambda *a, **k: [])
+
+    url = "http://127.0.0.1/search?q=1"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "q"}],
+            }
+        },
+    )
+    result = execute_action(
+        ProbeAction(urls=[url]),
+        state,
+        _config(dry_run=False, owner_cookie="session=owner", peer_cookie="session=peer"),
+        pacer=Pacer(0),
+    )
+    assert result["findings_added"] == 1
+    assert state.findings[0].id == "sqli"
+    assert state.endpoints[url]["tested_payload"] is True
+
+
+def test_execute_probe_records_per_probe_errors(monkeypatch):
+    def boom(*a, **k):
+        raise RuntimeError("probe exploded")
+
+    monkeypatch.setattr("shroodler.probes.sqli.probe_sqli", boom)
+    monkeypatch.setattr("shroodler.probes.xss.probe_xss", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "shroodler.probes.path_traversal.probe_path_traversal", lambda *a, **k: []
+    )
+    monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.idor.probe_idor", lambda *a, **k: [])
+
+    url = "http://127.0.0.1/search?q=1"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "q"}],
+            }
+        },
+    )
+    result = execute_action(
+        ProbeAction(urls=[url]),
+        state,
+        _config(dry_run=False),
+        pacer=Pacer(0),
+    )
+    assert result["findings_added"] == 0
+    assert result["errors"]
+    assert state.endpoints[url]["tested_payload"] is True
+
+
+def test_dry_run_describes_probe_action(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    state = load("lab")
+    state.endpoints = {
+        "http://127.0.0.1/search?q=1": _endpoint(
+            last_seen=_now_iso(), tested_authz=True, tested_peer=True
+        )
+    }
+    save(state)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            run_probes=True,
+            max_iterations=1,
+        )
+    )
+    assert result.log[0]["action"] == "ProbeAction"
+    assert result.log[0]["urls"] == ["http://127.0.0.1/search?q=1"]
+    assert result.log[0]["dry_run"] is True
+
+
+def test_reprobe_resets_tested_payload_before_loop(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    url = "http://127.0.0.1/search?q=1"
+    state = load("lab")
+    state.endpoints = {
+        url: {
+            **_endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True),
+            "tested_payload": True,
+            "params": [{"name": "q"}],
+        }
+    }
+    save(state)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            run_probes=True,
+            reprobe=True,
+            max_iterations=1,
+        )
+    )
+    assert result.log[0]["action"] == "ProbeAction"
+    assert result.log[0]["urls"] == [url]
+    reloaded = load("lab")
+    assert reloaded.endpoints[url]["tested_payload"] is False
+
+
+def test_untested_probe_requeues_when_last_seen_newer_than_tested_at():
+    url = "http://127.0.0.1/search"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(
+                    last_seen="2026-09-09T12:00:00Z",
+                    tested_authz=True,
+                    tested_peer=True,
+                ),
+                "tested_payload": True,
+                "tested_payload_at": "2026-09-08T12:00:00Z",
+                "params": [{"name": "q"}],
+            }
+        },
+    )
+    assert _untested_probe_urls(state, _config(run_probes=True)) == [url]
+
+
+def test_backfill_confirms_existing_authz_findings(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    state = load("lab")
+    state.endpoints = {
+        "http://127.0.0.1/IDOR/profile": _endpoint(
+            last_seen=_now_iso(), tested_authz=True, tested_peer=True
+        )
+    }
+    state.findings = [
+        Finding(
+            id="authz-broken-access-control",
+            severity="high",
+            category="auth",
+            url="http://127.0.0.1/IDOR/profile",
+            description="reachable",
+        )
+    ]
+    save(state)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            max_iterations=1,
+        )
+    )
+    assert result.confirmed >= 1
+    reloaded = load("lab")
+    assert reloaded.findings[0].confidence == "confirmed"
+

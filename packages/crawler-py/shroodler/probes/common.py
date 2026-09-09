@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import timedelta
@@ -163,7 +164,73 @@ def response_elapsed(resp: Any, fallback: float = 0.0) -> float:
         return fallback
 
 
-def normalize_params(params: list | None) -> list[dict[str, str]]:
+_UUID_SEG_RE = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{12}$"
+)
+_BRACE_SEG_RE = re.compile(r"^\{([^{}]+)\}$")
+_VERSION_SEG_RE = re.compile(r"^v\d+$", re.I)
+
+
+def _next_id_name(seen: set[str], numeric_n: int) -> tuple[str, int]:
+    """Return a unique id / id2 / id3 name and the updated counter."""
+    while True:
+        name = "id" if numeric_n <= 1 else f"id{numeric_n}"
+        if name not in seen:
+            return name, max(numeric_n, 1)
+        numeric_n += 1
+
+
+def params_from_path(url: str) -> list[dict[str, str]]:
+    """Extract `{name}` placeholders, UUIDs, and all-digit path segments.
+
+    Digit segments become integer path params named ``id`` / ``id2`` / ...
+    Version tokens like ``v2`` are skipped. ``/guilds/1`` still yields ``id``.
+    """
+    if not url:
+        return []
+    path = urlparse(url).path or ""
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    numeric_n = 0
+    prev = ""
+    for seg in path.split("/"):
+        if not seg:
+            continue
+        brace = _BRACE_SEG_RE.fullmatch(seg)
+        if brace:
+            name = brace.group(1).strip()
+            if name and name not in seen:
+                seen.add(name)
+                out.append({"name": name, "value": "", "in": "path"})
+            prev = seg
+            continue
+        if _VERSION_SEG_RE.fullmatch(seg):
+            prev = seg
+            continue
+        if _UUID_SEG_RE.fullmatch(seg):
+            numeric_n += 1
+            name, numeric_n = _next_id_name(seen, numeric_n)
+            seen.add(name)
+            out.append(
+                {"name": name, "value": seg, "in": "path", "type": "string"}
+            )
+            prev = seg
+            continue
+        if seg.isdigit() and not (prev.lower() == "v" and len(seg) <= 2):
+            numeric_n += 1
+            name, numeric_n = _next_id_name(seen, numeric_n)
+            seen.add(name)
+            out.append(
+                {"name": name, "value": seg, "in": "path", "type": "integer"}
+            )
+        prev = seg
+    return out
+
+
+def normalize_params(
+    params: list | None, url: str | None = None
+) -> list[dict[str, str]]:
     out: list[dict[str, str]] = []
     seen: set[str] = set()
     for item in params or []:
@@ -179,13 +246,19 @@ def normalize_params(params: list | None) -> list[dict[str, str]]:
         if not name or name in seen:
             continue
         seen.add(name)
-        out.append(
-            {
-                "name": name,
-                "value": str(item.get("value") or ""),
-                "in": str(item.get("in") or "query"),
-            }
-        )
+        row: dict[str, str] = {
+            "name": name,
+            "value": str(item.get("value") or ""),
+            "in": str(item.get("in") or "query"),
+        }
+        if item.get("type"):
+            row["type"] = str(item["type"])
+        out.append(row)
+    if url:
+        for item in params_from_path(url):
+            if item["name"] not in seen:
+                out.append(item)
+                seen.add(item["name"])
     return out
 
 
@@ -204,6 +277,31 @@ def params_from_url(url: str) -> list[dict[str, str]]:
 def url_without_query(url: str) -> str:
     parsed = urlparse(url)
     return parsed._replace(query="", fragment="").geturl()
+
+
+def _apply_path_params(
+    url: str, params: list[dict[str, str]], values: dict[str, str]
+) -> tuple[str, set[str]]:
+    """Replace `{name}` / stored path values. Returns (url, substituted names)."""
+    path = url
+    substituted: set[str] = set()
+    for item in params:
+        if str(item.get("in") or "") != "path":
+            continue
+        pname = str(item.get("name") or "")
+        if not pname:
+            continue
+        pval = str(values.get(pname, ""))
+        brace = "{" + pname + "}"
+        if brace in path:
+            path = path.replace(brace, pval)
+            substituted.add(pname)
+            continue
+        old = str(item.get("value") or "")
+        if old and f"/{old}" in path:
+            path = path.replace(f"/{old}", f"/{pval}", 1)
+            substituted.add(pname)
+    return path, substituted
 
 
 def body_text(resp: Any) -> str:
@@ -236,6 +334,10 @@ def inject(
     values = {item["name"]: item["value"] for item in params}
     values[name] = payload
     path = url_without_query(url)
+    path, substituted = _apply_path_params(path, params, values)
+    query_values = {
+        key: val for key, val in values.items() if key not in substituted
+    }
     method_u = (method or "GET").upper()
     if method_u == "GET":
         return request(
@@ -247,7 +349,7 @@ def inject(
             client=client,
             pacer=pacer,
             reauth=reauth,
-            params=values,
+            params=query_values,
         )
     return request(
         method_u,
@@ -258,7 +360,7 @@ def inject(
         client=client,
         pacer=pacer,
         reauth=reauth,
-        data=values,
+        data=query_values,
     )
 
 

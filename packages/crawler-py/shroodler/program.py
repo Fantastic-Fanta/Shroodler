@@ -96,6 +96,11 @@ class ProgramState:
     js_urls: list[str] = field(default_factory=list)
     extra_graphql_operations: list[str] = field(default_factory=list)
     source_map_urls: list[str] = field(default_factory=list)
+    login_headers: dict[str, str] = field(default_factory=dict)
+    login_cookies: dict[str, str] = field(default_factory=dict)
+    login_failed: bool = False
+    reauth_attempts: int = 0
+    reauth_callback: Any | None = field(default=None, repr=False, compare=False)
 
 
 def _unique_str_list(raw: Any) -> list[str]:

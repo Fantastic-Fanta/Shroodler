@@ -89,6 +89,8 @@ class ProgramState:
     openapi_spec_url: str | None = None
     openapi_endpoints: list[dict[str, Any]] = field(default_factory=list)
     bearer_token: str = ""
+    registration_url: str | None = None
+    peer_session: dict[str, str] | str | None = None
 
 
 def _finding_to_dict(finding: Finding | dict) -> dict[str, Any]:
@@ -164,6 +166,15 @@ def load(slug: str) -> ProgramState:
     raw_oa = data.get("openapi_endpoints") or []
     openapi_endpoints = [dict(row) for row in raw_oa if isinstance(row, dict)]
     bearer_token = str(data.get("bearer_token") or "")
+    registration_url = str(data.get("registration_url") or "").strip() or None
+    raw_peer = data.get("peer_session")
+    peer_session: dict[str, str] | str | None
+    if isinstance(raw_peer, dict):
+        peer_session = {str(k): str(v) for k, v in raw_peer.items()}
+    elif isinstance(raw_peer, str) and raw_peer.strip():
+        peer_session = raw_peer.strip()
+    else:
+        peer_session = None
     return ProgramState(
         slug=str(data.get("slug") or slug),
         scope_urls=[str(u) for u in (data.get("scope_urls") or []) if str(u)],
@@ -183,6 +194,8 @@ def load(slug: str) -> ProgramState:
         openapi_spec_url=openapi_spec_url or None,
         openapi_endpoints=openapi_endpoints,
         bearer_token=bearer_token,
+        registration_url=registration_url,
+        peer_session=peer_session,
     )
 
 
@@ -207,6 +220,8 @@ def save(state: ProgramState) -> Path:
         "openapi_spec_url": state.openapi_spec_url,
         "openapi_endpoints": list(state.openapi_endpoints),
         "bearer_token": state.bearer_token,
+        "registration_url": state.registration_url,
+        "peer_session": state.peer_session,
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

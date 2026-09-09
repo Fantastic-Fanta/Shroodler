@@ -641,6 +641,10 @@ def cmd_agent(args: argparse.Namespace) -> int:
         chain_specs=list(getattr(args, "chain_spec", None) or []),
         run_openapi_discovery=not bool(getattr(args, "no_openapi", False)),
         run_openapi_probes=not bool(getattr(args, "no_openapi", False)),
+        run_ssrf=not bool(getattr(args, "no_ssrf", False)),
+        run_open_redirect=not bool(getattr(args, "no_open_redirect", False)),
+        run_host_header=not bool(getattr(args, "no_host_header", False)),
+        auto_register=not bool(getattr(args, "no_auto_register", False)),
     )
     result = run_agent(config)
     payload: dict = {
@@ -2447,14 +2451,34 @@ def build_parser() -> argparse.ArgumentParser:
         "--run-probes",
         action="store_true",
         help=(
-            "Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR) "
-            "after authz and peer-write legs"
+            "Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/"
+            "SSRF/open-redirect/host-header) after authz and peer-write legs"
         ),
     )
     agent.add_argument(
         "--no-openapi",
         action="store_true",
         help="Disable OpenAPI spec discovery and spec-driven probes",
+    )
+    agent.add_argument(
+        "--no-ssrf",
+        action="store_true",
+        help="Disable SSRF probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-open-redirect",
+        action="store_true",
+        help="Disable open-redirect probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-host-header",
+        action="store_true",
+        help="Disable host-header injection probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-auto-register",
+        action="store_true",
+        help="Do not auto-register a peer account before authz-diff",
     )
     agent.add_argument(
         "--reprobe",

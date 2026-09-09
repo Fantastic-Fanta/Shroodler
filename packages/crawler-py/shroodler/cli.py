@@ -630,6 +630,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
         max_iterations=int(getattr(args, "max_iterations", 10) or 10),
         max_pages_per_crawl=int(getattr(args, "max_pages_per_crawl", 30) or 30),
         login_recipe=getattr(args, "login_recipe", None),
+        peer_recipe=getattr(args, "peer_recipe", None),
         reauth_max_retries=int(getattr(args, "reauth_max_retries", 3) or 3),
         higher_priv_jar=getattr(args, "higher_priv_jar", None),
         lower_priv_jar=getattr(args, "lower_priv_jar", None),
@@ -2531,6 +2532,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="Login recipe JSON posted before TLS/crawl/probes; session cookies "
         "and extracted headers are reused on probe requests. On mid-probe "
         "401/403 the recipe is re-run up to --reauth-max-retries times.",
+    )
+    agent.add_argument(
+        "--peer-recipe",
+        metavar="FILE",
+        help="Login recipe JSON for the peer/attacker account. After a "
+        "successful owner login, this recipe is run separately and stored "
+        "as peer_headers/peer_cookies (owner session is not overwritten).",
     )
     agent.add_argument(
         "--reauth-max-retries",

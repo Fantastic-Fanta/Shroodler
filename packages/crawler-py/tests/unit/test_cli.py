@@ -643,3 +643,25 @@ def test_agent_no_js_analysis_flag():
     )
     assert args.no_js_analysis is False
 
+
+def test_agent_peer_recipe_flag():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--login-recipe",
+            "owner.json",
+            "--peer-recipe",
+            "peer.json",
+        ]
+    )
+    assert args.peer_recipe == "peer.json"
+    assert args.login_recipe == "owner.json"
+    agent_help = p._subparsers._group_actions[0].choices["agent"].format_help()
+    assert "--peer-recipe" in agent_help
+
+

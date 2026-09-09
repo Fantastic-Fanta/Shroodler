@@ -127,7 +127,7 @@ _shroodler_flags_for() {
             echo "--program --include --exclude"
             ;;
         agent)
-            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --reauth-max-retries --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --llm-agent --llm-agent-model --llm-agent-max-cost --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec --dom-xss --no-crlf --no-prototype-pollution --no-content-discovery --no-tls-check --no-rate-limit-check --no-mass-assignment --smuggling --no-smuggling --no-websocket --no-js-analysis --allow-external --scope-file"
+            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --peer-recipe --reauth-max-retries --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --llm-agent --llm-agent-model --llm-agent-max-cost --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec --dom-xss --no-crlf --no-prototype-pollution --no-content-discovery --no-tls-check --no-rate-limit-check --no-mass-assignment --smuggling --no-smuggling --no-websocket --no-js-analysis --allow-external --scope-file"
             ;;
         dedup)
             echo "--output"
@@ -271,7 +271,7 @@ _shroodler_complete() {
             COMPREPLY=($(compgen -W "github gitlab bitbucket" -- "$cur"))
             return
             ;;
-        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--seed-from|--from-capture|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec|--gql-schema|--gql-wordlist|--merge-sarif|--scope-file)
+        --output|-o|--suppressions|--pack|--cookie-jar|--storage-state|--login-recipe|--peer-recipe|--seed-from|--from-capture|--cookies-from|--history-dir|--owners|--policy-file|--audit-log|--source-root|--hosts-out|--baseline|--state|--spec|--gql-schema|--gql-wordlist|--merge-sarif|--scope-file)
             COMPREPLY=($(compgen -f -- "$cur"))
             return
             ;;

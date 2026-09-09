@@ -12,6 +12,7 @@ from shroodler.agent import (
     AutoRegisterAction,
     ContentDiscoverAction,
     CrawlAction,
+    IDORScanAction,
     LoginAction,
     OpenApiDiscoverAction,
     OpenApiProbeAction,
@@ -2152,5 +2153,132 @@ def test_execute_login_failure_sets_login_failed(monkeypatch):
 def test_agent_config_reauth_max_retries_default():
     cfg = AgentConfig(program="lab", target="http://127.0.0.1/")
     assert cfg.reauth_max_retries == 3
+
+
+def test_decide_idor_scan_after_authz_before_write():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/users/123": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=False
+            ),
+        },
+        object_ids={"/api/users/{id}": ["123"]},
+        login_headers={"Authorization": "Bearer owner"},
+        login_cookies={"sid": "owner"},
+        peer_headers={"Authorization": "Bearer peer"},
+        peer_cookies={"sid": "peer"},
+    )
+    action = decide_next_action(
+        state,
+        _config(
+            owner_cookie="session=owner",
+            peer_cookie="session=peer",
+            write_authz_endpoints=[
+                {
+                    "method": "POST",
+                    "url": "http://127.0.0.1/api/v2/tokens",
+                    "body": {"name": "x"},
+                }
+            ],
+        ),
+    )
+    assert isinstance(action, IDORScanAction)
+
+
+def test_execute_idor_scan_merges_findings(monkeypatch):
+    from shroodler.models import Finding as F
+
+    class FakeEngine:
+        tested_count = 2
+
+        def __init__(self, *a, **k):
+            self.tested_count = 2
+
+        def run_sync(self):
+            return [
+                F(
+                    id="idor-cross-account",
+                    severity="critical",
+                    category="auth",
+                    url="http://127.0.0.1/api/users/123",
+                    description='curl -X GET \'http://127.0.0.1/api/users/123\' -H "Cookie: <session>"',
+                    evidence="owner=200 peer=200 owner_hash=abcd1234 peer_hash=abcd1234",
+                    confidence="confirmed",
+                )
+            ]
+
+    monkeypatch.setattr("shroodler.idor_engine.IDOREngine", FakeEngine)
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/users/123": _endpoint(last_seen=_now_iso())
+        },
+        login_headers={"X-Role": "owner"},
+        login_cookies={"sid": "owner"},
+        peer_headers={"X-Role": "peer"},
+        peer_cookies={"sid": "peer"},
+    )
+    result = execute_action(
+        IDORScanAction(),
+        state,
+        _config(dry_run=False, owner_cookie="sid=owner", peer_cookie="sid=peer"),
+        pacer=Pacer(0),
+    )
+    ids = {f.id for f in state.findings}
+    assert "idor-cross-account" in ids
+    assert "idor-scan-complete" in ids
+    summary = next(f for f in state.findings if f.id == "idor-scan-complete")
+    assert summary.severity == "info"
+    assert summary.category == "scan-note"
+    assert "tested 2 endpoints; found 1 IDOR candidates" in (summary.evidence or "")
+    assert result["findings_added"] == 2
+    for finding in state.findings:
+        assert "sid=owner" not in (finding.evidence or "")
+        assert "sid=peer" not in (finding.evidence or "")
+
+
+def test_execute_login_peer_recipe_stores_peer_session(monkeypatch):
+    from shroodler.login_executor import LoginResult
+
+    async def fake_run(self, recipe, **kwargs):
+        if "peer" in str(recipe):
+            return LoginResult(
+                success=True,
+                inject_headers={"Authorization": "Bearer peer-tok"},
+                inject_cookies={"sid": "peer-abc"},
+                extracted={},
+            )
+        return LoginResult(
+            success=True,
+            inject_headers={"Authorization": "Bearer owner-tok"},
+            inject_cookies={"sid": "owner-abc"},
+            extracted={"access_token": "owner-tok"},
+        )
+
+    monkeypatch.setattr("shroodler.login_executor.LoginExecutor.run", fake_run)
+    state = ProgramState(slug="lab")
+    cfg = _config(
+        login_recipe="/tmp/owner.json",
+        peer_recipe="/tmp/peer.json",
+        dry_run=False,
+    )
+    result = execute_action(LoginAction(), state, cfg, pacer=Pacer(0))
+    assert result["login"] is True
+    assert state.login_cookies["sid"] == "owner-abc"
+    assert state.login_headers["Authorization"] == "Bearer owner-tok"
+    assert state.peer_cookies["sid"] == "peer-abc"
+    assert state.peer_headers["Authorization"] == "Bearer peer-tok"
+    assert cfg.owner_cookie
+    assert "peer-abc" not in (cfg.owner_cookie or "")
+    assert cfg.peer_cookie
+    assert "owner-abc" not in (cfg.peer_cookie or "")
+
+
+def test_agent_config_idor_defaults():
+    cfg = AgentConfig(program="lab", target="http://127.0.0.1/")
+    assert cfg.idor_methods == ["GET"]
+    assert cfg.peer_recipe is None
+
 
 

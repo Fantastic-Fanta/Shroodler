@@ -124,6 +124,15 @@ def _cookie_pair_from_response(resp: httpx.Response | None) -> str:
     return pair if "=" in pair else ""
 
 
+def _store_peer_session(state: Any, cookie_header: str) -> None:
+    """Expose peer cookies on ProgramState so IDORScan can see them."""
+    cookies = _session_from_cookie_header(cookie_header)
+    if cookies.get("name"):
+        state.peer_cookies = {str(cookies["name"]): str(cookies.get("value") or "")}
+    if not getattr(state, "peer_headers", None):
+        state.peer_headers = {}
+
+
 def _session_from_cookie_header(header: str) -> dict[str, str]:
     pair = (header or "").split(";", 1)[0].strip()
     if "=" not in pair:
@@ -178,6 +187,7 @@ def auto_register_peer(
     existing = peer_cookie_from_state(state)
     if existing:
         config.peer_cookie = existing
+        _store_peer_session(state, existing)
         return []
 
     register_url = detect_registration_url(state)
@@ -222,6 +232,7 @@ def auto_register_peer(
     state.peer_session = session
     state.registration_url = register_url
     config.peer_cookie = f"{session['name']}={session['value']}"
+    _store_peer_session(state, config.peer_cookie)
     return [
         Finding(
             id="peer-account-registered",

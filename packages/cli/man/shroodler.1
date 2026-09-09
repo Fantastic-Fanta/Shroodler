@@ -510,6 +510,10 @@ loads an operator attack-chain JSON spec and runs it as a ChainAction.
 caps how many times a probe 401/403 re-runs
 .B \-\-login\-recipe
 (default 3; 0 disables probe re-auth).
+.B agent \-\-peer\-recipe
+runs a second login recipe after a successful owner login and stores the
+peer session separately (for cross-account IDOR comparison). The owner
+session is not overwritten.
 .TP
 .B engagement\-history
 Show endpoint and finding history across runs for a program. Reads

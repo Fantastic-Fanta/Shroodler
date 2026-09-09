@@ -2,7 +2,7 @@
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
 action (login → tls-check → crawl → js-analysis → diff → openapi-discover →
-auto-register → authz-diff → write-authz → peer-write → content-discover →
+auto-register → authz-diff → idor-scan → write-authz → peer-write → content-discover →
 probe → openapi-probe → business-logic → chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
@@ -87,6 +87,8 @@ class AgentConfig:
     llm_agent_model: str = "claude-sonnet-5"
     llm_agent_max_cost_usd: float = 5.0
     run_js_analysis: bool = True  # --no-js-analysis to skip
+    idor_methods: list[str] = field(default_factory=lambda: ["GET"])
+    peer_recipe: str | None = None
 
 
 @dataclass
@@ -135,6 +137,11 @@ class AuthzDiffAction:
 
 
 @dataclass
+class IDORScanAction:
+    pass
+
+
+@dataclass
 class WriteAuthzAction:
     endpoints: list[dict]
 
@@ -179,6 +186,7 @@ AgentAction = (
     | OpenApiDiscoverAction
     | AutoRegisterAction
     | AuthzDiffAction
+    | IDORScanAction
     | WriteAuthzAction
     | PeerWriteAction
     | ProbeAction
@@ -546,6 +554,72 @@ def _has_peer_session(config: AgentConfig) -> bool:
     )
 
 
+def _has_idor_dual_sessions(state: ProgramState, config: AgentConfig) -> bool:
+    owner_state = bool(
+        dict(getattr(state, "login_headers", None) or {})
+        or dict(getattr(state, "login_cookies", None) or {})
+    )
+    peer_state = bool(
+        dict(getattr(state, "peer_headers", None) or {})
+        or dict(getattr(state, "peer_cookies", None) or {})
+    )
+    if owner_state and peer_state:
+        return True
+    return bool(
+        (config.owner_cookie or "").strip() and (config.peer_cookie or "").strip()
+    )
+
+
+def _pending_idor_scan(state: ProgramState, config: AgentConfig) -> bool:
+    if getattr(config, "_idor_scan_done", False):
+        return False
+    if not _has_idor_dual_sessions(state, config):
+        return False
+    from shroodler.idor_engine import collect_idor_targets
+
+    return bool(collect_idor_targets(state, config))
+
+
+def _resolve_idor_sessions(
+    state: ProgramState, config: AgentConfig
+) -> tuple[dict[str, str], dict[str, str], dict[str, str], dict[str, str]] | None:
+    from shroodler.idor_engine import session_from_auth_line
+
+    owner_headers = dict(getattr(state, "login_headers", None) or {})
+    owner_cookies = dict(getattr(state, "login_cookies", None) or {})
+    peer_headers = dict(getattr(state, "peer_headers", None) or {})
+    peer_cookies = dict(getattr(state, "peer_cookies", None) or {})
+    oh, oc = session_from_auth_line(config.owner_cookie or "")
+    ph, pc = session_from_auth_line(config.peer_cookie or "")
+    for key, value in oh.items():
+        owner_headers.setdefault(key, value)
+    for key, value in oc.items():
+        owner_cookies.setdefault(key, value)
+    for key, value in ph.items():
+        peer_headers.setdefault(key, value)
+    for key, value in pc.items():
+        peer_cookies.setdefault(key, value)
+    if not (owner_headers or owner_cookies):
+        return None
+    if not (peer_headers or peer_cookies):
+        return None
+    return owner_headers, owner_cookies, peer_headers, peer_cookies
+
+
+def _sync_peer_session_from_config(state: ProgramState, config: AgentConfig) -> None:
+    """Copy config.peer_cookie onto state.peer_* when AutoRegister only set the flag."""
+    from shroodler.idor_engine import session_from_auth_line
+
+    if dict(getattr(state, "peer_headers", None) or {}) or dict(
+        getattr(state, "peer_cookies", None) or {}
+    ):
+        return
+    headers, cookies = session_from_auth_line(config.peer_cookie or "")
+    if headers or cookies:
+        state.peer_headers = headers
+        state.peer_cookies = cookies
+
+
 def _pending_auto_register(state: ProgramState, config: AgentConfig) -> bool:
     if not getattr(config, "auto_register", True):
         return False
@@ -640,6 +714,19 @@ def _apply_login_to_config(config: AgentConfig, result: Any) -> None:
             config.owner_cookie = f"Authorization: {auth}"
 
 
+def _apply_peer_to_config(config: AgentConfig, result: Any) -> None:
+    cookies = dict(getattr(result, "inject_cookies", None) or {})
+    headers = dict(getattr(result, "inject_headers", None) or {})
+    if cookies and not str(config.peer_cookie or "").strip():
+        config.peer_cookie = "; ".join(f"{k}={v}" for k, v in cookies.items() if k)
+    auth = headers.get("Authorization") or ""
+    if auth and not str(config.peer_cookie or "").strip():
+        if auth.lower().startswith("authorization:"):
+            config.peer_cookie = auth
+        else:
+            config.peer_cookie = f"Authorization: {auth}"
+
+
 def _make_reauth_callback(state: ProgramState, config: AgentConfig, pacer: Pacer):
     def _reauth() -> bool:
         path = str(getattr(config, "login_recipe", None) or "").strip()
@@ -704,7 +791,7 @@ def decide_next_action(
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
     """Priority: Login > TLSCheck > Crawl > JSAnalysis > Diff > OpenApiDiscover >
-    AutoRegister > AuthzDiff > WriteAuthz > PeerWrite > ContentDiscover >
+    AutoRegister > AuthzDiff > IDORScan > WriteAuthz > PeerWrite > ContentDiscover >
     Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
     from urllib.parse import urlparse
 
@@ -769,6 +856,8 @@ def decide_next_action(
 
     if authz_urls:
         return AuthzDiffAction(urls=authz_urls)
+    if _pending_idor_scan(state, config):
+        return IDORScanAction()
     if write_endpoints:
         return WriteAuthzAction(endpoints=write_endpoints)
     if object_ids:
@@ -1543,6 +1632,7 @@ def _execute_auto_register(
         findings = auto_register_peer(state, config, pacer=pacer)
     except Exception as exc:  # noqa: BLE001 - fail closed
         errors.append(f"auto-register: {type(exc).__name__}: {exc}")
+    _sync_peer_session_from_config(state, config)
     findings_added = _merge_findings(state, findings)
     out: dict[str, Any] = {
         "pages_crawled": 0,
@@ -1560,7 +1650,7 @@ def _execute_login(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
-    from shroodler.login_executor import LoginExecutor, apply_session
+    from shroodler.login_executor import LoginExecutor, apply_peer_session, apply_session
 
     config._login_done = True
     recipe_path = str(config.login_recipe or "")
@@ -1585,6 +1675,21 @@ def _execute_login(
             )
         if int(getattr(config, "reauth_max_retries", 0) or 0) > 0:
             state.reauth_callback = _make_reauth_callback(state, config, pacer)
+        peer_path = str(getattr(config, "peer_recipe", None) or "").strip()
+        if peer_path:
+            peer_result = None
+            try:
+                peer_executor = LoginExecutor(pacer=pacer)
+                peer_result = asyncio.run(
+                    peer_executor.run(peer_path, seed=config.target)
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"peer-recipe: {type(exc).__name__}: {exc}")
+            if peer_result is not None and peer_result.success:
+                apply_peer_session(
+                    state, peer_result.inject_headers, peer_result.inject_cookies
+                )
+                _apply_peer_to_config(config, peer_result)
         finding = Finding(
             id="login-recipe-success",
             severity="info",
@@ -1599,12 +1704,15 @@ def _execute_login(
             confidence="confirmed",
         )
         added = _merge_findings(state, [finding])
-        return {
+        out: dict[str, Any] = {
             "pages_crawled": 0,
             "findings_added": added,
             "urls_tested": 1,
             "login": True,
         }
+        if errors:
+            out["errors"] = errors
+        return out
 
     state.login_failed = True
     err = ""
@@ -2038,6 +2146,61 @@ def _execute_report(state: ProgramState) -> dict[str, Any]:
     }
 
 
+def _execute_idor(
+    action: IDORScanAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.idor_engine import IDOREngine
+
+    config._idor_scan_done = True
+    sessions = _resolve_idor_sessions(state, config)
+    findings: list[Any] = []
+    errors: list[str] = []
+    tested = 0
+    if sessions is None:
+        added = 0
+    else:
+        owner_headers, owner_cookies, peer_headers, peer_cookies = sessions
+        engine = IDOREngine(
+            state,
+            config,
+            owner_headers,
+            owner_cookies,
+            peer_headers,
+            peer_cookies,
+            pacer,
+        )
+        try:
+            findings = engine.run_sync()
+        except Exception as exc:  # noqa: BLE001 - fail closed
+            errors.append(f"idor-scan: {type(exc).__name__}: {exc}")
+            findings = []
+        tested = int(getattr(engine, "tested_count", 0) or 0)
+        idor_n = sum(1 for f in findings if getattr(f, "id", None) == "idor-cross-account")
+        findings.append(
+            Finding(
+                id="idor-scan-complete",
+                severity="info",
+                category="scan-note",
+                url=str(config.target or ""),
+                description="Finished cross-account IDOR comparison.",
+                evidence=f"tested {tested} endpoints; found {idor_n} IDOR candidates",
+                confidence="confirmed",
+            )
+        )
+        added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": added,
+        "urls_tested": tested,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def execute_action(
     action: AgentAction,
     state: ProgramState,
@@ -2063,6 +2226,8 @@ def execute_action(
         return _execute_auto_register(action, state, config, clock)
     if isinstance(action, AuthzDiffAction):
         return _execute_authz(action, state, config, clock)
+    if isinstance(action, IDORScanAction):
+        return _execute_idor(action, state, config, clock)
     if isinstance(action, WriteAuthzAction):
         return _execute_write_authz(action, state, config, clock)
     if isinstance(action, PeerWriteAction):
@@ -2099,6 +2264,8 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"auto_register": True}
     if isinstance(action, AuthzDiffAction):
         return {"urls": list(action.urls)}
+    if isinstance(action, IDORScanAction):
+        return {"idor_scan": True}
     if isinstance(action, WriteAuthzAction):
         return {
             "endpoints": [
@@ -2360,6 +2527,7 @@ def run_agent(config: AgentConfig) -> AgentResult:
     config._tls_check_done = False
     config._content_discover_done = False
     config._js_analysis_done = False
+    config._idor_scan_done = False
 
     mutated = False
     if config.reprobe:

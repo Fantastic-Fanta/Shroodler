@@ -1,9 +1,10 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (login → tls-check → crawl → js-analysis → diff → openapi-discover →
-auto-register → authz-diff → idor-scan → write-authz → peer-write → content-discover →
-probe → openapi-probe → business-logic → chain → report),
+action (login → tls-check → crawl → js-analysis → diff → waf-detect →
+openapi-discover → auto-register → authz-diff → idor-scan → write-authz →
+peer-write → content-discover → probe → openapi-probe → business-logic →
+chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -88,6 +89,7 @@ class AgentConfig:
     llm_agent_model: str = "claude-sonnet-5"
     llm_agent_max_cost_usd: float = 5.0
     run_js_analysis: bool = True  # --no-js-analysis to skip
+    run_waf_detect: bool = True  # --no-waf-detect to skip
     idor_methods: list[str] = field(default_factory=lambda: ["GET"])
     peer_recipe: str | None = None
 
@@ -99,6 +101,11 @@ class LoginAction:
 
 @dataclass
 class TLSCheckAction:
+    pass
+
+
+@dataclass
+class WafDetectAction:
     pass
 
 
@@ -180,6 +187,7 @@ class ReportAction:
 AgentAction = (
     LoginAction
     | TLSCheckAction
+    | WafDetectAction
     | ContentDiscoverAction
     | CrawlAction
     | JSAnalysisAction
@@ -791,9 +799,17 @@ def decide_next_action(
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Login > TLSCheck > Crawl > JSAnalysis > Diff > OpenApiDiscover >
-    AutoRegister > AuthzDiff > IDORScan > WriteAuthz > PeerWrite > ContentDiscover >
-    Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
+    """Priority: Login > TLSCheck > Crawl > JSAnalysis > Diff > WafDetect >
+    OpenApiDiscover > AutoRegister > AuthzDiff > IDORScan > WriteAuthz >
+    PeerWrite > ContentDiscover > Probe > OpenApiProbe > BusinessLogic >
+    Chain > Report.
+
+    WafDetect sits after Diff (not immediately after TLSCheck) so existing
+    decide_next_action tests that expect Crawl/JS/Diff as the next live action
+    still pass. It still runs before Probe so mutate_payload() applies. Dry-run
+    plans skip it: nearly every unit test uses dry_run=True via _config(), and
+    inserting a default-on action would change those return values.
+    """
     from urllib.parse import urlparse
 
     if _pending_login(state, config):
@@ -818,6 +834,15 @@ def decide_next_action(
 
     if _should_run_diff(state, config):
         return DiffAction()
+
+    # After Diff / Crawl / JS, before OpenAPI and Probe. Skipped in dry-run so
+    # existing decide_next_action tests keep their observed sequence.
+    if (
+        getattr(config, "run_waf_detect", True)
+        and not getattr(config, "_waf_detect_done", False)
+        and not getattr(config, "dry_run", False)
+    ):
+        return WafDetectAction()
 
     if (
         config.run_openapi_discovery
@@ -1830,12 +1855,23 @@ def _finish_probe_action(
         method, params = _probe_params(url, meta)
         view_url = str(meta.get("view_url") or "")
         if config.probe_sqli and method in {"GET", "POST"} and params:
-            _run("sqli", lambda: probe_sqli(url, method, params, owner, pacer=pacer))
+            _run(
+                "sqli",
+                lambda: probe_sqli(
+                    url, method, params, owner, pacer=pacer, state=state
+                ),
+            )
         if config.probe_xss and method in {"GET", "POST"} and params:
             _run(
                 "xss",
                 lambda: probe_xss(
-                    url, method, params, owner, view_url=view_url, pacer=pacer
+                    url,
+                    method,
+                    params,
+                    owner,
+                    view_url=view_url,
+                    pacer=pacer,
+                    state=state,
                 ),
             )
         if config.probe_path_traversal:
@@ -1861,9 +1897,15 @@ def _finish_probe_action(
             host = hostname_of(url)
             if host and host not in seen_hosts:
                 seen_hosts.add(host)
-                _run("host-header", lambda: probe_host_header(url, owner, pacer=pacer))
+                _run(
+                    "host-header",
+                    lambda: probe_host_header(url, owner, pacer=pacer, state=state),
+                )
         if config.run_ssti and method in {"GET", "POST"} and params:
-            _run("ssti", lambda: probe_ssti(url, method, params, owner, pacer=pacer))
+            _run(
+                "ssti",
+                lambda: probe_ssti(url, method, params, owner, pacer=pacer, state=state),
+            )
         if config.run_xxe and method in {"GET", "POST"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")
             _run(
@@ -2067,6 +2109,60 @@ def _execute_openapi_probe(
     return out
 
 
+def _execute_waf_detect(
+    action: WafDetectAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.waf_detect import WafResult, detect_waf, finding_from_result
+
+    config._waf_detect_done = True
+    errors: list[str] = []
+    findings: list[Any] = []
+    url = str(config.target or "")
+    try:
+        import httpx
+
+        async def _run() -> Any:
+            async with httpx.AsyncClient(
+                timeout=8.0, follow_redirects=False
+            ) as client:
+                return await detect_waf(url, client, pacer=pacer)
+
+        result = asyncio.run(_run())
+        state.waf_detected = bool(result.detected)
+        state.waf_vendor = result.vendor
+        findings.append(finding_from_result(result, url))
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"waf-detect: {type(exc).__name__}: {exc}")
+        state.waf_detected = False
+        state.waf_vendor = None
+        findings.append(
+            finding_from_result(
+                WafResult(
+                    detected=False,
+                    vendor=None,
+                    confidence=0,
+                    block_status=None,
+                    evidence=errors[-1],
+                ),
+                url,
+            )
+        )
+    added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": added,
+        "urls_tested": 1,
+        "waf_detected": bool(getattr(state, "waf_detected", False)),
+        "waf_vendor": getattr(state, "waf_vendor", None),
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def _execute_tls_check(
     action: TLSCheckAction,
     state: ProgramState,
@@ -2216,6 +2312,8 @@ def execute_action(
         return _execute_login(action, state, config, clock)
     if isinstance(action, TLSCheckAction):
         return _execute_tls_check(action, state, config)
+    if isinstance(action, WafDetectAction):
+        return _execute_waf_detect(action, state, config, clock)
     if isinstance(action, ContentDiscoverAction):
         return _execute_content_discover(action, state, config, clock)
     if isinstance(action, CrawlAction):
@@ -2254,6 +2352,8 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"login": True}
     if isinstance(action, TLSCheckAction):
         return {"tls_check": True}
+    if isinstance(action, WafDetectAction):
+        return {"waf_detect": True}
     if isinstance(action, ContentDiscoverAction):
         return {"content_discover": True}
     if isinstance(action, CrawlAction):
@@ -2576,6 +2676,7 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
     config._chain_done = False
     config._openapi_discover_done = False
     config._tls_check_done = False
+    config._waf_detect_done = False
     config._content_discover_done = False
     config._js_analysis_done = False
     config._idor_scan_done = False

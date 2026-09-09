@@ -15,6 +15,7 @@ from shroodler.probes.common import (
     normalize_params,
     request,
 )
+from shroodler.waf_detect import expand_if_waf
 
 # 4-digit primes used as per-request nonces so cached pages cannot fake a hit.
 _FOUR_DIGIT_PRIMES: tuple[int, ...] = tuple(
@@ -76,6 +77,9 @@ def probe_ssti(
     *,
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Inject SSTI math payloads into every string parameter."""
     method_u = (method or "GET").upper()
@@ -99,48 +103,64 @@ def probe_ssti(
         name = item["name"]
         prime = nonce_prime()
         payload, expected = nonce_payload(prime)
-        resp = inject(
-            url,
-            method_u,
-            normalized,
-            name,
-            payload,
-            cookie_header=cookie_header,
-            client=client,
-            pacer=pacer,
-        )
-        body = body_text(resp)
-        if ssti_evaluated(body, expected, baseline=baseline):
-            findings.append(
-                _finding(
-                    url,
-                    f"param={name} payload={payload!r} expected={expected!r} nonce={prime}",
-                )
-            )
-            continue
-
-        for payload, expected in MATH_PAYLOADS:
+        for injected in expand_if_waf(
+            (payload,),
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
+        ):
             resp = inject(
                 url,
                 method_u,
                 normalized,
                 name,
-                payload,
+                injected,
                 cookie_header=cookie_header,
                 client=client,
                 pacer=pacer,
             )
-            if resp is None:
-                continue
             body = body_text(resp)
-            if not ssti_evaluated(body, expected, baseline=baseline):
-                continue
-            findings.append(
-                _finding(
-                    url,
-                    f"param={name} payload={payload!r} expected={expected!r}",
+            if ssti_evaluated(body, expected, baseline=baseline):
+                findings.append(
+                    _finding(
+                        url,
+                        f"param={name} payload={payload!r} expected={expected!r} nonce={prime}",
+                    )
                 )
-            )
-            break
+                break
+        else:
+            hit = False
+            for payload, expected in MATH_PAYLOADS:
+                for injected in expand_if_waf(
+                    (payload,),
+                    state=state,
+                    waf_detected=waf_detected,
+                    waf_vendor=waf_vendor,
+                ):
+                    resp = inject(
+                        url,
+                        method_u,
+                        normalized,
+                        name,
+                        injected,
+                        cookie_header=cookie_header,
+                        client=client,
+                        pacer=pacer,
+                    )
+                    if resp is None:
+                        continue
+                    body = body_text(resp)
+                    if not ssti_evaluated(body, expected, baseline=baseline):
+                        continue
+                    findings.append(
+                        _finding(
+                            url,
+                            f"param={name} payload={payload!r} expected={expected!r}",
+                        )
+                    )
+                    hit = True
+                    break
+                if hit:
+                    break
 
     return dedupe(findings)

@@ -66,6 +66,30 @@ def _origin(url: str) -> str:
         return f"{parsed.scheme}://{parsed.netloc}" if parsed.netloc else url
 
 
+def _hostname(url: str) -> str:
+    parsed = urlparse(url or "")
+    host = (parsed.netloc or parsed.hostname or "").lower()
+    return host or _origin(url)
+
+
+_AFFECTS_PAGES = re.compile(r"Affects\s+(\d+)\s+pages", re.I)
+
+
+def pages_in_evidence(finding: dict[str, Any] | Any) -> int:
+    """Parse 'Affects N pages' from evidence; uncollapsed findings count as 1."""
+    if isinstance(finding, dict):
+        evidence = str(finding.get("evidence") or "")
+    else:
+        evidence = str(getattr(finding, "evidence", None) or "")
+    match = _AFFECTS_PAGES.search(evidence)
+    if match:
+        try:
+            return int(match.group(1))
+        except (TypeError, ValueError):
+            return 1
+    return 1
+
+
 def _is_host_level(finding: dict[str, Any]) -> bool:
     category = str(finding.get("category") or "")
     if category in _HOST_LEVEL_CATEGORIES:
@@ -91,7 +115,7 @@ def _key(finding: dict[str, Any]) -> tuple:
     if _is_operational(finding):
         return ("op", fid)
     if _is_host_level(finding):
-        return ("host", fid, _origin(url))
+        return ("host", fid, _hostname(url))
     return ("param", fid, url, _param_name(finding))
 
 
@@ -107,6 +131,14 @@ def deduplicate(findings: list) -> list[dict[str, Any]]:
             best[key] = item
             order.append(key)
             continue
+        if _is_host_level(item):
+            item_pages = pages_in_evidence(item)
+            exist_pages = pages_in_evidence(existing)
+            if item_pages > exist_pages:
+                best[key] = item
+                continue
+            if item_pages < exist_pages:
+                continue
         if _rank(item) > _rank(existing):
             best[key] = item
     return [best[key] for key in order]

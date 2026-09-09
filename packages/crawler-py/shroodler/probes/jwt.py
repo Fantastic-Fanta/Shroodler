@@ -18,6 +18,8 @@ from shroodler.pacer import Pacer
 from shroodler.probes.common import body_text, dedupe, request
 from shroodler.urls import origin as origin_of
 
+# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+
 _JWT_RE = re.compile(r"[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
 _WEAK_SECRETS = ("secret", "password", "changeit", "webgoat", "", "HS256")
 _DENIED = {401, 403}

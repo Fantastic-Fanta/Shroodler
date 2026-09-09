@@ -536,6 +536,8 @@ disable individual probe classes that otherwise run with
 and
 .B agent \-\-no\-tls\-check
 skip the one-shot content-discovery and TLS legs.
+.B agent \-\-no\-waf\-detect
+skips WAF fingerprinting (enabled by default; when a WAF is found, SQLi/XSS/SSTI/host-header probes send evasion payload variants).
 .B agent \-\-no\-js\-analysis
 skips deep JavaScript bundle analysis (API harvest, secrets, JWT, GraphQL,
 source maps) that otherwise runs after crawl.

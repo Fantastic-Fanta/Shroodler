@@ -13,12 +13,20 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
 
+from shroodler.llm_provider import (
+    LLMConfig,
+    LLMProvider,
+    llm_api_key_env,
+    llm_complete_sync,
+)
 from shroodler.program import (
     _INT_ID_RE,
     _UUID_RE,
     ProgramState,
     url_to_pattern,
 )
+
+TRIAGE_MODEL = "claude-haiku-4-5-20251001"
 
 SYSTEM_PROMPT = (
     "You are a bug bounty triage assistant. Given a list of object IDs and "
@@ -222,6 +230,26 @@ def _build_user_prompt(
     return json.dumps(payload, default=str)
 
 
+def _provider_for(config: Any) -> LLMProvider:
+    raw = str(getattr(config, "llm_provider", "anthropic") or "anthropic")
+    try:
+        return LLMProvider(raw.strip().lower())
+    except ValueError:
+        return LLMProvider.ANTHROPIC
+
+
+def _model_for(config: Any, provider: LLMProvider) -> str:
+    raw = str(getattr(config, "llm_agent_model", "") or "").strip()
+    if provider is LLMProvider.DEEPSEEK:
+        lowered = raw.lower()
+        if not raw or lowered in {"sonnet", "opus", "claude-sonnet-5", "claude-opus-5"}:
+            return ""
+        return raw
+    if not raw or raw.lower() in {"sonnet", "claude-sonnet-5"}:
+        return TRIAGE_MODEL
+    return raw
+
+
 def triage_leads(
     state: ProgramState,
     object_ids: list[str],
@@ -231,24 +259,24 @@ def triage_leads(
     """Rank unconfirmed leads. Never raises; falls back to the input order."""
     fallback = _fallback(object_ids, authz_urls)
     try:
-        if not os.environ.get("ANTHROPIC_API_KEY"):
+        provider = _provider_for(config)
+        if not os.environ.get(llm_api_key_env(provider)):
             return fallback
-        import anthropic
-
         user_prompt = _build_user_prompt(state, object_ids, authz_urls, config)
-        client = anthropic.Anthropic()
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
+        llm_config = LLMConfig(
+            provider=provider,
+            model=_model_for(config, provider),
             max_tokens=512,
             temperature=0,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": user_prompt}],
         )
-        text = ""
-        content = getattr(message, "content", None) or []
-        if content:
-            text = getattr(content[0], "text", "") or ""
-        data = _parse_json_object(text)
+        response = llm_complete_sync(
+            [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_prompt},
+            ],
+            llm_config,
+        )
+        data = _parse_json_object(response.text)
         if data is None:
             return fallback
         ranked_ids = data.get("ranked_ids")

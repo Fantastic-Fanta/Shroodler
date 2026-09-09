@@ -13,22 +13,25 @@ import sys
 from dataclasses import dataclass, field
 from typing import Any
 
+from shroodler.llm_agent.probe_memory import ProbeMemory
 from shroodler.llm_agent.tools import tool_by_name
+from shroodler.llm_provider import (
+    LLMConfig,
+    LLMProvider,
+    llm_api_key_env,
+    llm_complete_sync,
+    tools_to_openai,
+)
+from shroodler.llm_provider import estimate_cost_usd as estimate_cost_usd
 from shroodler.llm_triage import _parse_json_object
 
 DEFAULT_MODEL = "claude-sonnet-5"
 OPUS_MODEL = "claude-opus-5"
 PLANNER_MAX_TOKENS = 512
 PLANNER_TEMPERATURE = 0
-
-# Documented Anthropic list prices (USD per million tokens).
-# Sonnet 4 / 4.5 / 5 class: $3 input / $15 output.
-# Opus 4 / 4.5 / 5 class: $15 input / $75 output.
-# Source: Anthropic API pricing pages (2025–2026).
-SONNET_INPUT_USD_PER_MTOK = 3.0
-SONNET_OUTPUT_USD_PER_MTOK = 15.0
-OPUS_INPUT_USD_PER_MTOK = 15.0
-OPUS_OUTPUT_USD_PER_MTOK = 75.0
+# ~400 tokens at ~4 chars/token; keep the memory hint small.
+_PROBE_MEMORY_MAX_CHARS = 1600
+_CONTEXT_MAX_CHARS = 32000  # ~8000 tokens, same budget as build_context
 
 SYSTEM_PROMPT = """You are an expert penetration tester running an authorized security assessment.
 Your goal is to find confirmed, high-severity vulnerabilities efficiently.
@@ -75,21 +78,6 @@ def resolve_llm_agent_model(name: str | None) -> str:
     return raw
 
 
-def prices_for_model(model: str) -> tuple[float, float]:
-    """Return (input_usd_per_mtok, output_usd_per_mtok) for `model`."""
-    lowered = str(model or "").lower()
-    if "opus" in lowered:
-        return OPUS_INPUT_USD_PER_MTOK, OPUS_OUTPUT_USD_PER_MTOK
-    return SONNET_INPUT_USD_PER_MTOK, SONNET_OUTPUT_USD_PER_MTOK
-
-
-def estimate_cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
-    inp, out = prices_for_model(model)
-    return (max(0, int(input_tokens)) / 1_000_000.0) * inp + (
-        max(0, int(output_tokens)) / 1_000_000.0
-    ) * out
-
-
 def _fallback(reason: str, *, model: str = DEFAULT_MODEL) -> PlannerDecision:
     return PlannerDecision(
         action=None,
@@ -109,29 +97,66 @@ def _log_error(exc: BaseException) -> None:
     )
 
 
-def _usage_tokens(message: Any) -> tuple[int, int]:
-    usage = getattr(message, "usage", None)
-    if usage is None:
-        return 0, 0
-    try:
-        inp = int(getattr(usage, "input_tokens", 0) or 0)
-    except (TypeError, ValueError):
-        inp = 0
-    try:
-        out = int(getattr(usage, "output_tokens", 0) or 0)
-    except (TypeError, ValueError):
-        out = 0
-    return max(0, inp), max(0, out)
+def _truncate_names(names: list[str], limit: int) -> list[str]:
+    if limit <= 0:
+        return []
+    out: list[str] = []
+    used = 0
+    for name in names:
+        extra = len(name) + (2 if out else 0)
+        if used + extra > limit and out:
+            break
+        out.append(name)
+        used += extra
+    return out
 
 
-def _message_text(message: Any) -> str:
-    content = getattr(message, "content", None) or []
-    bits: list[str] = []
-    for block in content:
-        text = getattr(block, "text", None)
-        if text:
-            bits.append(str(text))
-    return "\n".join(bits)
+def _probe_memory_block(memory: ProbeMemory) -> str:
+    """Compact XML hint for Claude. Capped at ~400 tokens."""
+    try:
+        productive = list(memory.get_productive_probes())
+        barren = list(memory.get_barren_probes())
+        summary = memory.summary()
+    except Exception:  # noqa: BLE001 - planner must never raise
+        return ""
+
+    def _render(prod: list[str], barr: list[str]) -> str:
+        body = (
+            f"{summary}\n"
+            f"Productive probes (prioritise these): {prod}\n"
+            f"Barren probes (deprioritise these): {barr}\n"
+        )
+        return "<probe_memory>\n" + body + "</probe_memory>"
+
+    text = _render(productive, barren)
+    while len(text) > _PROBE_MEMORY_MAX_CHARS and (productive or barren):
+        if len(barren) >= len(productive) and barren:
+            barren.pop()
+        elif productive:
+            productive.pop()
+        else:
+            break
+        text = _render(productive, barren)
+    if len(text) > _PROBE_MEMORY_MAX_CHARS:
+        budget = max(80, _PROBE_MEMORY_MAX_CHARS - 80)
+        productive = _truncate_names(productive, budget // 2)
+        barren = _truncate_names(barren, budget // 2)
+        text = _render(productive, barren)
+    if len(text) > _PROBE_MEMORY_MAX_CHARS:
+        text = text[: _PROBE_MEMORY_MAX_CHARS - 16].rstrip() + "\n…[truncated]\n"
+    return text
+
+
+def _with_probe_memory(context: str, memory: ProbeMemory | None) -> str:
+    if memory is None:
+        return context or ""
+    block = _probe_memory_block(memory)
+    if not block:
+        return context or ""
+    text = (context or "").rstrip() + "\n\n" + block + "\n"
+    if len(text) > _CONTEXT_MAX_CHARS:
+        text = text[: _CONTEXT_MAX_CHARS - 16].rstrip() + "\n…[truncated]\n"
+    return text
 
 
 def _user_prompt(context: str, tools: list[dict], history: list[Any]) -> str:
@@ -165,64 +190,113 @@ def _user_prompt(context: str, tools: list[dict], history: list[Any]) -> str:
     )
 
 
+def _provider_for(config: Any) -> LLMProvider:
+    raw = str(getattr(config, "llm_provider", "anthropic") or "anthropic")
+    try:
+        return LLMProvider(raw.strip().lower())
+    except ValueError:
+        return LLMProvider.ANTHROPIC
+
+
+def _model_for(config: Any, provider: LLMProvider) -> str:
+    raw = str(getattr(config, "llm_agent_model", "") or "").strip()
+    if provider is LLMProvider.DEEPSEEK:
+        lowered = raw.lower()
+        if not raw or lowered in {"sonnet", "opus", "claude-sonnet-5", "claude-opus-5"}:
+            return ""
+        return raw
+    return resolve_llm_agent_model(raw)
+
+
+def _decision_from_response(response: Any, *, model: str) -> PlannerDecision:
+    inp = int(getattr(response, "input_tokens", 0) or 0)
+    out = int(getattr(response, "output_tokens", 0) or 0)
+    used_model = str(getattr(response, "model", "") or model)
+    data = _parse_json_object(getattr(response, "text", "") or "")
+    if data is None:
+        calls = getattr(response, "tool_calls", None) or []
+        if calls:
+            first = calls[0] if isinstance(calls[0], dict) else {}
+            args = first.get("arguments")
+            data = {
+                "action": first.get("name"),
+                "params": args if isinstance(args, dict) else {},
+                "reasoning": "",
+            }
+    if data is None:
+        decision = _fallback("invalid JSON", model=used_model)
+        decision.input_tokens = inp
+        decision.output_tokens = out
+        return decision
+    action = data.get("action")
+    if not isinstance(action, str) or not action.strip():
+        decision = _fallback("missing action", model=used_model)
+        decision.input_tokens = inp
+        decision.output_tokens = out
+        return decision
+    action = action.strip()
+    if tool_by_name(action) is None:
+        decision = _fallback(f"unknown tool {action}", model=used_model)
+        decision.input_tokens = inp
+        decision.output_tokens = out
+        return decision
+    params = data.get("params")
+    if params is None:
+        params = {}
+    if not isinstance(params, dict):
+        decision = _fallback("params must be an object", model=used_model)
+        decision.input_tokens = inp
+        decision.output_tokens = out
+        return decision
+    reasoning = " ".join(str(data.get("reasoning") or "").split())
+    return PlannerDecision(
+        action=action,
+        params=dict(params),
+        reasoning=reasoning,
+        fallback=False,
+        input_tokens=inp,
+        output_tokens=out,
+        model=used_model,
+    )
+
+
 def plan_next_action(
     context: str,
     tools: list[dict],
     config: Any,
     history: list[Any],
+    probe_memory: ProbeMemory | None = None,
 ) -> PlannerDecision:
-    """Ask Claude for the next tool. Never raises; falls back on any failure."""
-    model = resolve_llm_agent_model(getattr(config, "llm_agent_model", None))
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        return _fallback("ANTHROPIC_API_KEY missing", model=model)
+    """Ask the configured LLM for the next tool. Never raises; falls back on any failure."""
+    provider = _provider_for(config)
+    model = _model_for(config, provider)
+    if model:
+        display_model = model
+    elif provider is LLMProvider.DEEPSEEK:
+        display_model = "deepseek-chat"
+    else:
+        display_model = DEFAULT_MODEL
+    env_name = llm_api_key_env(provider)
+    if not os.environ.get(env_name):
+        return _fallback(f"{env_name} missing", model=display_model)
+    prompt_context = _with_probe_memory(context, probe_memory)
     try:
-        import anthropic
-
-        client = anthropic.Anthropic()
-        message = client.messages.create(
+        openai_tools = tools_to_openai(tools)
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": _user_prompt(prompt_context, tools, history),
+            },
+        ]
+        llm_config = LLMConfig(
+            provider=provider,
             model=model,
             max_tokens=PLANNER_MAX_TOKENS,
             temperature=PLANNER_TEMPERATURE,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": _user_prompt(context, tools, history)}],
         )
-        inp, out = _usage_tokens(message)
-        data = _parse_json_object(_message_text(message))
-        if data is None:
-            decision = _fallback("invalid JSON", model=model)
-            decision.input_tokens = inp
-            decision.output_tokens = out
-            return decision
-        action = data.get("action")
-        if not isinstance(action, str) or not action.strip():
-            decision = _fallback("missing action", model=model)
-            decision.input_tokens = inp
-            decision.output_tokens = out
-            return decision
-        action = action.strip()
-        if tool_by_name(action) is None:
-            decision = _fallback(f"unknown tool {action}", model=model)
-            decision.input_tokens = inp
-            decision.output_tokens = out
-            return decision
-        params = data.get("params")
-        if params is None:
-            params = {}
-        if not isinstance(params, dict):
-            decision = _fallback("params must be an object", model=model)
-            decision.input_tokens = inp
-            decision.output_tokens = out
-            return decision
-        reasoning = " ".join(str(data.get("reasoning") or "").split())
-        return PlannerDecision(
-            action=action,
-            params=dict(params),
-            reasoning=reasoning,
-            fallback=False,
-            input_tokens=inp,
-            output_tokens=out,
-            model=model,
-        )
+        response = llm_complete_sync(messages, llm_config, tools=openai_tools)
+        return _decision_from_response(response, model=display_model)
     except Exception as exc:  # noqa: BLE001 - planner must never raise
         _log_error(exc)
-        return _fallback(f"{type(exc).__name__}: {exc}", model=model)
+        return _fallback(f"{type(exc).__name__}: {exc}", model=display_model)

@@ -471,18 +471,36 @@ prints counts without writing state.
 .B agent \-\-run\-discovery
 runs the same step before the engagement loop;
 .B agent \-\-llm\-triage
-ranks unconfirmed leads with Claude (requires
-.BR ANTHROPIC_API_KEY ).
+ranks unconfirmed leads with an LLM (requires
+.BR ANTHROPIC_API_KEY ,
+or
+.B DEEPSEEK_API_KEY
+with
+.BR \-\-llm\-provider\ deepseek ).
 .B agent \-\-llm\-agent
-lets Claude pick each action from the probe toolbox (requires
-.BR ANTHROPIC_API_KEY );
+lets an LLM pick each action from the probe toolbox (requires
+.BR ANTHROPIC_API_KEY ,
+or
+.B DEEPSEEK_API_KEY
+with
+.BR \-\-llm\-provider\ deepseek );
+.B agent \-\-llm\-provider
+selects the backend (
+.B anthropic
+or
+.BR deepseek ;
+default
+.BR anthropic ).
 .B agent \-\-llm\-agent\-model
-selects the model (default
+and
+.B agent \-\-llm\-model
+select the model (same field; last flag wins; default
 .BR claude\-sonnet\-5 ;
 .B opus
 or
 .B claude\-opus\-5
-selects Opus);
+selects Opus; DeepSeek defaults to
+.BR deepseek\-chat );
 .B agent \-\-llm\-agent\-max\-cost
 stops the loop if estimated API spend exceeds N USD (default 5.0).
 .B agent \-\-write\-authz\-spec

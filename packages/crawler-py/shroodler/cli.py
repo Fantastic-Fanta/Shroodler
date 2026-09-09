@@ -668,6 +668,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
         allow_external=bool(getattr(args, "allow_external", False)),
         scope_file=getattr(args, "scope_file", None),
         llm_agent=bool(getattr(args, "llm_agent", False)),
+        llm_provider=str(getattr(args, "llm_provider", None) or "anthropic"),
         llm_agent_model=str(
             getattr(args, "llm_agent_model", None) or "claude-sonnet-5"
         ),
@@ -678,9 +679,13 @@ def cmd_agent(args: argparse.Namespace) -> int:
         ),
         run_js_analysis=not bool(getattr(args, "no_js_analysis", False)),
     )
-    if config.llm_agent and not os.environ.get("ANTHROPIC_API_KEY"):
-        print("error: --llm-agent requires ANTHROPIC_API_KEY", file=sys.stderr)
-        return 2
+    if config.llm_agent:
+        from shroodler.llm_provider import llm_api_key_env
+
+        env_name = llm_api_key_env(config.llm_provider)
+        if not os.environ.get(env_name):
+            print(f"error: --llm-agent requires {env_name}", file=sys.stderr)
+            return 2
     result = run_agent(config)
     payload: dict = {
         "iterations": result.iterations,
@@ -2646,18 +2651,41 @@ def build_parser() -> argparse.ArgumentParser:
     agent.add_argument(
         "--llm-triage",
         action="store_true",
-        help="Rank unconfirmed leads with Claude before acting (requires ANTHROPIC_API_KEY)",
+        help=(
+            "Rank unconfirmed leads with an LLM before acting "
+            "(requires ANTHROPIC_API_KEY, or DEEPSEEK_API_KEY with --llm-provider deepseek)"
+        ),
     )
     agent.add_argument(
         "--llm-agent",
         action="store_true",
-        help="Use Claude to decide each action (requires ANTHROPIC_API_KEY)",
+        help=(
+            "Use an LLM to decide each action "
+            "(requires ANTHROPIC_API_KEY, or DEEPSEEK_API_KEY with --llm-provider deepseek)"
+        ),
+    )
+    agent.add_argument(
+        "--llm-provider",
+        choices=["anthropic", "deepseek"],
+        default="anthropic",
+        help="LLM provider (default: anthropic). deepseek uses DEEPSEEK_API_KEY",
     )
     agent.add_argument(
         "--llm-agent-model",
+        dest="llm_agent_model",
         default="claude-sonnet-5",
         metavar="STR",
-        help="Claude model to use (default: claude-sonnet-5; 'opus' selects claude-opus-5)",
+        help=(
+            "Model to use (default: claude-sonnet-5; 'opus' selects claude-opus-5; "
+            "for DeepSeek, deepseek-chat / deepseek-reasoner). "
+            "Same field as --llm-model; last flag wins"
+        ),
+    )
+    agent.add_argument(
+        "--llm-model",
+        dest="llm_agent_model",
+        metavar="STR",
+        help="Alias for --llm-agent-model (last of --llm-model / --llm-agent-model wins)",
     )
     agent.add_argument(
         "--llm-agent-max-cost",
@@ -2815,8 +2843,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--llm-business-logic",
         action="store_true",
         help=(
-            "Infer app domain with Claude and run business-logic probes "
-            "(requires ANTHROPIC_API_KEY; skipped with an error if unset)"
+            "Infer app domain with an LLM and run business-logic probes "
+            "(requires ANTHROPIC_API_KEY, or DEEPSEEK_API_KEY with --llm-provider deepseek; "
+            "skipped with an error if unset)"
         ),
     )
     agent.add_argument(

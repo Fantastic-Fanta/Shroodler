@@ -14,17 +14,14 @@ from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
+from shroodler.llm_agent.probe_memory import normalise_url
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.program import ProgramState, url_to_pattern
 
 _PLACEHOLDER_RE = re.compile(r"\{[^{}]+\}")
 _NUMERIC_SEG_RE = re.compile(r"^\d{3,}$")
-# Compact hex (32+) or hyphenated UUID; also accept uppercase.
-_UUID_SEG_RE = re.compile(
-    r"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
-    r"[0-9a-fA-F]{12}|[0-9a-fA-F-]{32,})$"
-)
+_COMPACT_HEX_RE = re.compile(r"^[0-9a-fA-F]{32,}$")
 _BASE62_SEG_RE = re.compile(r"^[A-Za-z0-9]{8,20}$")
 _DENIED = frozenset({401, 403, 404})
 _ENUM_DELTAS = (1, -1, 2, -2, 3, -3, 4, -4, 5, -5)
@@ -89,10 +86,16 @@ def looks_like_idor_url(url: str) -> bool:
     """True when a path segment looks like a numeric / UUID / base62 object id."""
     if not url or _PLACEHOLDER_RE.search(url):
         return False
+    try:
+        orig_path = urlparse(url).path or ""
+        norm_path = urlparse(normalise_url(url)).path or ""
+    except ValueError:
+        orig_path = ""
+        norm_path = orig_path
+    if orig_path != norm_path:
+        return True
     for seg in _path_segments(url):
-        if _NUMERIC_SEG_RE.fullmatch(seg):
-            return True
-        if _UUID_SEG_RE.fullmatch(seg):
+        if _COMPACT_HEX_RE.fullmatch(seg):
             return True
         if _BASE62_SEG_RE.fullmatch(seg) and sum(ch.isdigit() for ch in seg) >= 2:
             return True

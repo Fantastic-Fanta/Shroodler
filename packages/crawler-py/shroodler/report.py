@@ -22,6 +22,10 @@ def write_report(doc: dict, fmt: str, output: str | None) -> str:
         from shroodler.pentest_report import render_pentest_html
 
         text = render_pentest_html(doc)
+    elif fmt == "submit":
+        from shroodler.pentest_report import render_submit
+
+        text = render_submit(doc)
     else:
         text = render(doc, fmt)
     if output:

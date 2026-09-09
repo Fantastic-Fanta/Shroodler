@@ -665,3 +665,15 @@ def test_agent_peer_recipe_flag():
     assert "--peer-recipe" in agent_help
 
 
+def test_triage_findings_and_submit_format_parse():
+    p = build_parser()
+    args = p.parse_args(
+        ["triage-findings", "state.json", "--min-score", "40", "--format", "json"]
+    )
+    assert args.command == "triage-findings"
+    assert args.min_score == 40
+    assert args.format == "json"
+    args = p.parse_args(["report", "out.json", "--format", "submit"])
+    assert args.format == "submit"
+
+

@@ -59,12 +59,14 @@ Heuristic/best-effort, not a real router analysis.
 .TP
 .B report \fIFINDINGS\fR
 Render a findings JSON document as
-.BR html ", " csv ", " json ", " sarif ", " junit ", " md / markdown ", " pentest ", or " pentest-html
+.BR html ", " csv ", " json ", " sarif ", " junit ", " md / markdown ", " pentest ", " pentest-html ", or " submit
 (\fB\-\-format\fR).
 .B pentest
 writes a professional Markdown report (executive summary, CVSS, reproduction curl);
 .B pentest-html
 wraps that Markdown in a single-file HTML document.
+.B submit
+writes ready-to-paste bug-bounty drafts for findings scored worth submitting.
 .BI \-\-merge\-sarif " FILE"
 folds an external SARIF 2.x file (Semgrep, CodeQL, Slither, any SARIF
 emitter) into the report's findings before rendering; repeatable.
@@ -176,6 +178,32 @@ Local-only by default;
 .B \-\-allow\-external
 is required for remote hosts and for CT discovery (which contacts
 crt.sh, not the target).
+.TP
+.B triage\-findings \fISTATE.json\fR
+Score and rank crawl findings for bug-bounty submission. Loads a crawl
+JSON document or program
+.I state.json
+(anything with a findings list), scores each finding 0–100 for
+exploitability and confidence, deduplicates repeats of the same
+(id family, URL path pattern, parameter), and prints which ones are
+worth submitting. Distinct from
+.B triage
+(host classification before a crawl).
+.B \-\-min\-score
+(default 50) and
+.B \-\-min\-confidence
+(default 65) raise the worth-submitting bar.
+.B \-\-format
+is
+.BR text
+(a table),
+.BR json
+(TriageResult dicts), or
+.B submit
+(the same ready-to-paste Markdown as
+.B report \-\-format submit ).
+.B \-o
+writes to a file.
 .TP
 .B payload \fICRAWL.JSON\fR
 Run the bundled YAML payload packs (SQLi, XSS, SSTI, path-traversal, SSRF,
@@ -945,6 +973,15 @@ Render a professional pentest report:
 .EX
 shroodler report out.json --format pentest -o pentest.md
 shroodler report out.json --format pentest-html -o pentest.html
+shroodler report out.json --format submit -o submit.md
+.EE
+.RE
+.PP
+Rank findings after a scan:
+.RS
+.EX
+shroodler triage-findings out.json
+shroodler triage-findings ~/.shroodler/programs/lab/state.json --format submit -o drafts.md
 .EE
 .RE
 .PP

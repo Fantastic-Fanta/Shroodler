@@ -58,6 +58,10 @@ def test_cli_has_format_flags():
     assert args.format == "md"
     args = p.parse_args(["report", "out.json", "--format", "markdown"])
     assert args.format == "markdown"
+    args = p.parse_args(["report", "out.json", "--format", "pentest"])
+    assert args.format == "pentest"
+    args = p.parse_args(["report", "out.json", "--format", "pentest-html"])
+    assert args.format == "pentest-html"
 
 
 def test_load_rc_missing(tmp_path, monkeypatch):
@@ -432,6 +436,9 @@ def test_agent_flags_parse():
             "--no-ssrf",
             "--no-open-redirect",
             "--no-host-header",
+            "--no-ssti",
+            "--no-xxe",
+            "--no-graphql",
             "--no-auto-register",
         ]
     )
@@ -439,6 +446,9 @@ def test_agent_flags_parse():
     assert args.no_ssrf is True
     assert args.no_open_redirect is True
     assert args.no_host_header is True
+    assert args.no_ssti is True
+    assert args.no_xxe is True
+    assert args.no_graphql is True
     assert args.no_auto_register is True
 
     args = p.parse_args(

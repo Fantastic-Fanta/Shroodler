@@ -644,6 +644,9 @@ def cmd_agent(args: argparse.Namespace) -> int:
         run_ssrf=not bool(getattr(args, "no_ssrf", False)),
         run_open_redirect=not bool(getattr(args, "no_open_redirect", False)),
         run_host_header=not bool(getattr(args, "no_host_header", False)),
+        run_ssti=not bool(getattr(args, "no_ssti", False)),
+        run_xxe=not bool(getattr(args, "no_xxe", False)),
+        run_graphql=not bool(getattr(args, "no_graphql", False)),
         auto_register=not bool(getattr(args, "no_auto_register", False)),
     )
     result = run_agent(config)
@@ -1589,12 +1592,22 @@ def build_parser() -> argparse.ArgumentParser:
     diff.set_defaults(func=cmd_diff)
 
     report = sub.add_parser(
-        "report", help="Render findings JSON as HTML, CSV, SARIF, JUnit, or Markdown"
+        "report", help="Render findings JSON as HTML, CSV, SARIF, JUnit, Markdown, or pentest"
     )
     report.add_argument("findings")
     report.add_argument(
         "--format",
-        choices=["html", "csv", "json", "sarif", "junit", "md", "markdown"],
+        choices=[
+            "html",
+            "csv",
+            "json",
+            "sarif",
+            "junit",
+            "md",
+            "markdown",
+            "pentest",
+            "pentest-html",
+        ],
         default="html",
     )
     report.add_argument("--output", "-o")
@@ -2452,7 +2465,8 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/"
-            "SSRF/open-redirect/host-header) after authz and peer-write legs"
+            "SSRF/open-redirect/host-header/SSTI/XXE/GraphQL) after authz and "
+            "peer-write legs"
         ),
     )
     agent.add_argument(
@@ -2474,6 +2488,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-host-header",
         action="store_true",
         help="Disable host-header injection probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-ssti",
+        action="store_true",
+        help="Disable SSTI probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-xxe",
+        action="store_true",
+        help="Disable XXE probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-graphql",
+        action="store_true",
+        help="Disable GraphQL probes (on by default when --run-probes is set)",
     )
     agent.add_argument(
         "--no-auto-register",

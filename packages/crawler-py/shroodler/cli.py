@@ -636,6 +636,9 @@ def cmd_agent(args: argparse.Namespace) -> int:
         write_authz_spec=getattr(args, "write_authz_spec", None),
         run_probes=bool(getattr(args, "run_probes", False)),
         reprobe=bool(getattr(args, "reprobe", False)),
+        run_diff=bool(getattr(args, "run_diff", False)),
+        run_business_logic=bool(getattr(args, "llm_business_logic", False)),
+        chain_specs=list(getattr(args, "chain_spec", None) or []),
     )
     result = run_agent(config)
     payload: dict = {
@@ -962,6 +965,65 @@ def cmd_suppress_expiring(args: argparse.Namespace) -> int:
             text = "\n".join(lines) + "\n"
     _write(text, args.output)
     return 1 if (args.gate and expiring) else 0
+
+
+def cmd_engagement_suppress(args: argparse.Namespace) -> int:
+    from shroodler.program import load, save, suppress_finding
+
+    slug = str(getattr(args, "program", None) or "")
+    finding_id = str(getattr(args, "finding_id", None) or "")
+    url = str(getattr(args, "url", None) or "*")
+    reason = str(getattr(args, "reason", None) or "")
+    if not slug or not finding_id:
+        print(
+            "error: suppress --program SLUG --id FINDING_ID --url URL --reason TEXT",
+            file=sys.stderr,
+        )
+        return 2
+    state = load(slug)
+    suppress_finding(state, finding_id, url, reason)
+    save(state)
+    print(
+        json.dumps(
+            {
+                "program": slug,
+                "id": finding_id,
+                "url": url,
+                "reason": reason,
+                "suppressed": True,
+            }
+        )
+    )
+    return 0
+
+
+def cmd_suppress(args: argparse.Namespace) -> int:
+    if getattr(args, "program", None) and getattr(args, "finding_id", None):
+        return cmd_engagement_suppress(args)
+    print(
+        "error: shroodler suppress --program SLUG --id FINDING_ID --url URL --reason TEXT",
+        file=sys.stderr,
+    )
+    return 2
+
+
+def cmd_engagement_history(args: argparse.Namespace) -> int:
+    from shroodler.engagement_history import format_run_history
+    from shroodler.program import load
+
+    state = load(str(args.program))
+    print(format_run_history(state), end="")
+    return 0
+
+
+def cmd_engagement_diff(args: argparse.Namespace) -> int:
+    from shroodler.engagement_history import diff_endpoints, format_endpoint_diff
+    from shroodler.program import load
+
+    state = load(str(args.program))
+    diff = diff_endpoints(state.previous_endpoints or {}, state.endpoints)
+    print(format_endpoint_diff(diff), end="")
+    return 0
 
 
 def _ticket_common(args: argparse.Namespace, *, close_resolved: bool) -> int:
@@ -2249,6 +2311,20 @@ def build_parser() -> argparse.ArgumentParser:
     hlist.add_argument("--history-dir")
     hlist.set_defaults(func=cmd_history_list)
 
+    engagement_history = sub.add_parser(
+        "engagement-history",
+        help="Show per-program agent run history (date, iterations, confirmed, new endpoints)",
+    )
+    engagement_history.add_argument("--program", required=True, metavar="SLUG")
+    engagement_history.set_defaults(func=cmd_engagement_history)
+
+    engagement_diff = sub.add_parser(
+        "engagement-diff",
+        help="Show endpoint additions/removals/param changes since the previous agent run",
+    )
+    engagement_diff.add_argument("--program", required=True, metavar="SLUG")
+    engagement_diff.set_defaults(func=cmd_engagement_diff)
+
     program = sub.add_parser(
         "program",
         help="Per-program engagement memory (endpoints, object IDs, coverage)",
@@ -2385,6 +2461,28 @@ def build_parser() -> argparse.ArgumentParser:
             "JSON file of write probes (POST/PATCH/DELETE) replayed as both "
             "principals after authz-diff"
         ),
+    )
+    agent.add_argument(
+        "--run-diff",
+        action="store_true",
+        help=(
+            "Diff endpoints against the previous engagement snapshot after crawl. "
+            "Also auto-runs when run_history is non-empty."
+        ),
+    )
+    agent.add_argument(
+        "--llm-business-logic",
+        action="store_true",
+        help=(
+            "Infer app domain with Claude and run business-logic probes "
+            "(requires ANTHROPIC_API_KEY; skipped with an error if unset)"
+        ),
+    )
+    agent.add_argument(
+        "--chain-spec",
+        action="append",
+        metavar="FILE",
+        help="Operator attack-chain JSON spec (repeatable). Runs regardless of --run-probes.",
     )
     agent.set_defaults(func=cmd_agent)
 
@@ -2754,7 +2852,17 @@ def build_parser() -> argparse.ArgumentParser:
         "suppress",
         help="Work with suppression rules (.shroodlerignore) beyond diff/report/baseline",
     )
-    suppress_sub = suppress.add_subparsers(dest="suppress_command", required=True)
+    suppress.add_argument("--program", metavar="SLUG", help="Program slug (engagement suppress)")
+    suppress.add_argument(
+        "--id",
+        dest="finding_id",
+        metavar="FINDING_ID",
+        help="Finding id to suppress on a program",
+    )
+    suppress.add_argument("--url", help="Finding URL, or * to match every URL for this id")
+    suppress.add_argument("--reason", help="Why this finding is accepted/suppressed")
+    suppress.set_defaults(func=cmd_suppress)
+    suppress_sub = suppress.add_subparsers(dest="suppress_command", required=False)
     suppress_expiring = suppress_sub.add_parser(
         "expiring",
         help="List suppression rules expiring soon, or render a PR body for a scheduled job",

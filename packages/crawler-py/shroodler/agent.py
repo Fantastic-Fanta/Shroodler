@@ -1,8 +1,8 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (crawl coverage gaps → authz-diff → write-authz → peer-write → probe →
-report),
+action (crawl coverage gaps → diff → authz-diff → write-authz → peer-write →
+probe → business-logic → chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -11,7 +11,9 @@ No new dependencies. Single-threaded. Dry-run makes no HTTP requests.
 
 from __future__ import annotations
 
+import copy
 import json
+import os
 import re
 import sys
 from dataclasses import dataclass, field
@@ -55,11 +57,19 @@ class AgentConfig:
     probe_jwt: bool = True
     probe_idor: bool = True
     reprobe: bool = False  # reset tested_payload before the loop
+    run_diff: bool = False  # opt-in; also auto-runs when a previous run exists
+    run_business_logic: bool = False  # --llm-business-logic
+    chain_specs: list[str] = field(default_factory=list)
 
 
 @dataclass
 class CrawlAction:
     urls: list[str]
+
+
+@dataclass
+class DiffAction:
+    pass
 
 
 @dataclass
@@ -83,16 +93,29 @@ class ProbeAction:
 
 
 @dataclass
+class BusinessLogicAction:
+    pass
+
+
+@dataclass
+class ChainAction:
+    pass
+
+
+@dataclass
 class ReportAction:
     pass
 
 
 AgentAction = (
     CrawlAction
+    | DiffAction
     | AuthzDiffAction
     | WriteAuthzAction
     | PeerWriteAction
     | ProbeAction
+    | BusinessLogicAction
+    | ChainAction
     | ReportAction
 )
 
@@ -328,11 +351,18 @@ _TOOL_NOISE_IDS = frozenset({"session-died", "robots-blocked-crawl"})
 
 
 def _confirmed_findings(state: ProgramState) -> list[Finding]:
+    from shroodler.engagement_history import is_suppressed
+
     return [
         f
         for f in state.findings
         if getattr(f, "confidence", None) == "confirmed"
         and getattr(f, "id", None) not in _TOOL_NOISE_IDS
+        and not is_suppressed(
+            state,
+            str(getattr(f, "id", "") or ""),
+            str(getattr(f, "url", "") or ""),
+        )
     ]
 
 
@@ -355,15 +385,50 @@ def _ensure_write_authz_endpoints(config: AgentConfig) -> list[dict]:
     return loaded
 
 
+def _should_run_diff(state: ProgramState, config: AgentConfig) -> bool:
+    if getattr(config, "_diff_done", False):
+        return False
+    if config.run_diff:
+        return True
+    if state.run_history:
+        return True
+    prev = getattr(config, "_prev_endpoints", None)
+    if getattr(config, "_crawled_this_run", False) and prev:
+        return True
+    return False
+
+
+def _pending_business_logic(config: AgentConfig) -> bool:
+    if getattr(config, "_business_logic_done", False):
+        return False
+    return bool(config.run_business_logic)
+
+
+def _pending_chains(state: ProgramState, config: AgentConfig) -> bool:
+    if getattr(config, "_chain_done", False):
+        return False
+    if config.chain_specs:
+        return True
+    if not config.run_probes:
+        return False
+    from shroodler.attack_chain import bind_builtin_chains
+
+    return bool(bind_builtin_chains(state, config))
+
+
 def decide_next_action(
     state: ProgramState,
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Crawl > AuthzDiff > WriteAuthz > PeerWrite > Probe > Report."""
+    """Priority: Crawl > Diff > AuthzDiff > WriteAuthz > PeerWrite >
+    Probe > BusinessLogic > Chain > Report."""
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
         return CrawlAction(urls=crawl_urls)
+
+    if _should_run_diff(state, config):
+        return DiffAction()
 
     authz_urls: list[str] = []
     object_ids: list[str] = []
@@ -401,6 +466,12 @@ def decide_next_action(
         if probe_urls:
             return ProbeAction(urls=probe_urls)
 
+    if _pending_business_logic(config):
+        return BusinessLogicAction()
+
+    if _pending_chains(state, config):
+        return ChainAction()
+
     if _confirmed_findings(state):
         return ReportAction()
     return None
@@ -411,6 +482,8 @@ def emit_log_entry(entry: dict[str, Any], *, stream: Any | None = None) -> None:
 
 
 def _merge_findings(state: ProgramState, findings: list[Any]) -> int:
+    from shroodler.engagement_history import is_suppressed
+
     seen = {(f.id, f.url) for f in state.findings}
     added = 0
     for raw in findings or []:
@@ -422,6 +495,8 @@ def _merge_findings(state: ProgramState, findings: list[Any]) -> int:
         else:
             continue
         if parsed is None:
+            continue
+        if is_suppressed(state, parsed.id, parsed.url):
             continue
         key = (parsed.id, parsed.url)
         if key in seen:
@@ -693,9 +768,13 @@ def _stamp_last_seen(state: ProgramState, url: str) -> None:
     now_str = _now().isoformat()
     meta = state.endpoints.get(url)
     if meta is None:
-        state.endpoints[url] = {"last_seen": now_str, "method": "GET", "params": []}
+        state.endpoints[url] = program._endpoint_meta(url, now_str)
+        state.endpoints[url]["method"] = "GET"
+        state.endpoints[url]["params"] = []
     elif not meta.get("last_seen"):
         meta["last_seen"] = now_str
+        if not meta.get("first_seen"):
+            meta["first_seen"] = now_str
 
 
 def _execute_crawl(
@@ -744,10 +823,163 @@ def _execute_crawl(
         pages_crawled += int(delta.get("pages") or 0) or len(doc.get("pages") or [])
         findings_added += int(delta.get("new_findings") or 0)
         new_endpoints += int(delta.get("new_endpoints") or 0)
+    config._crawled_this_run = True
     out: dict[str, Any] = {
         "pages_crawled": pages_crawled,
         "findings_added": findings_added,
         "new_endpoints": new_endpoints,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
+def _execute_diff(
+    action: DiffAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.engagement_history import diff_endpoints, surface_changes
+
+    old = getattr(config, "_prev_endpoints", None)
+    if old is None:
+        old = state.previous_endpoints or {}
+    diff = diff_endpoints(old, state.endpoints)
+    findings_added = _merge_findings(state, surface_changes(diff))
+    config._diff_done = True
+    return {
+        "pages_crawled": 0,
+        "findings_added": findings_added,
+        "urls_tested": 0,
+        "added": len(diff.added),
+        "removed": len(diff.removed),
+        "param_changed": len(diff.param_changed),
+    }
+
+
+def _financial_urls(state: ProgramState, config: AgentConfig) -> list[str]:
+    cap = max(0, int(config.max_pages_per_crawl))
+    tokens = (
+        "amount",
+        "price",
+        "transfer",
+        "payment",
+        "order",
+        "trade",
+        "checkout",
+        "wallet",
+        "balance",
+        "currency",
+    )
+    out: list[str] = []
+    fallback: list[str] = []
+    for url, meta in state.endpoints.items():
+        if not _in_target_origin(url, config.target):
+            continue
+        meta = meta or {}
+        names = []
+        for item in meta.get("params") or []:
+            if isinstance(item, dict):
+                names.append(str(item.get("name") or ""))
+            else:
+                names.append(str(item))
+        blob = f"{url.lower()} {' '.join(names).lower()}"
+        method = str(meta.get("method") or "GET").upper()
+        if any(token in blob for token in tokens):
+            out.append(url)
+        elif method in {"POST", "PUT", "PATCH"}:
+            fallback.append(url)
+        if len(out) >= cap:
+            break
+    if out:
+        return out[:cap]
+    return fallback[:cap]
+
+
+def _execute_business_logic(
+    action: BusinessLogicAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.business_logic import (
+        financial_probes_for,
+        infer_app_domain,
+        run_business_probe,
+    )
+
+    config._business_logic_done = True
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return {
+            "pages_crawled": 0,
+            "findings_added": 0,
+            "urls_tested": 0,
+            "errors": ["--llm-business-logic requires ANTHROPIC_API_KEY"],
+        }
+    findings: list[Any] = []
+    errors: list[str] = []
+    urls_tested = 0
+    try:
+        model = infer_app_domain(state.js_bundles, state.api_samples)
+        if model.financial:
+            owner, _peer = _probe_auth_headers(config)
+            for url in _financial_urls(state, config):
+                for probe in financial_probes_for(url):
+                    try:
+                        findings.extend(
+                            run_business_probe(
+                                probe, cookie_header=owner, pacer=pacer
+                            )
+                        )
+                        urls_tested += 1
+                    except Exception as exc:  # noqa: BLE001
+                        errors.append(f"{url} {probe.id}: {type(exc).__name__}: {exc}")
+    except Exception as exc:  # noqa: BLE001 - fail closed
+        errors.append(f"business-logic: {type(exc).__name__}: {exc}")
+    findings_added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": findings_added,
+        "urls_tested": urls_tested,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
+def _execute_chain(
+    action: ChainAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.attack_chain import bind_builtin_chains, load_chain_spec, run_chain
+
+    config._chain_done = True
+    findings: list[Any] = []
+    errors: list[str] = []
+    urls_tested = 0
+    chains = []
+    if config.run_probes:
+        chains.extend(bind_builtin_chains(state, config))
+    for spec in config.chain_specs or []:
+        try:
+            chains.append(load_chain_spec(spec))
+        except Exception as exc:  # noqa: BLE001 - fail closed per spec
+            errors.append(f"chain-spec {spec}: {type(exc).__name__}: {exc}")
+    for chain in chains:
+        try:
+            raw = run_chain(chain, config=config, pacer=pacer)
+            findings.extend(raw.get("findings") or [])
+            urls_tested += int(raw.get("urls_tested") or 0)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"chain {chain.name}: {type(exc).__name__}: {exc}")
+    findings_added = _merge_findings(state, findings)
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": findings_added,
+        "urls_tested": urls_tested,
     }
     if errors:
         out["errors"] = errors
@@ -927,6 +1159,8 @@ def execute_action(
     clock = pacer or _new_pacer()
     if isinstance(action, CrawlAction):
         return _execute_crawl(action, state, config, clock)
+    if isinstance(action, DiffAction):
+        return _execute_diff(action, state, config, clock)
     if isinstance(action, AuthzDiffAction):
         return _execute_authz(action, state, config, clock)
     if isinstance(action, WriteAuthzAction):
@@ -935,6 +1169,10 @@ def execute_action(
         return _execute_peer_write(action, state, config, clock)
     if isinstance(action, ProbeAction):
         return _execute_probe(action, state, config, clock)
+    if isinstance(action, BusinessLogicAction):
+        return _execute_business_logic(action, state, config, clock)
+    if isinstance(action, ChainAction):
+        return _execute_chain(action, state, config, clock)
     if isinstance(action, ReportAction):
         return _execute_report(state)
     raise TypeError(f"unknown action {type(action)!r}")
@@ -943,6 +1181,8 @@ def execute_action(
 def _describe_action(action: AgentAction) -> dict[str, Any]:
     if isinstance(action, CrawlAction):
         return {"urls": list(action.urls)}
+    if isinstance(action, DiffAction):
+        return {"diff": True}
     if isinstance(action, AuthzDiffAction):
         return {"urls": list(action.urls)}
     if isinstance(action, WriteAuthzAction):
@@ -955,6 +1195,10 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"object_ids": list(action.object_ids)}
     if isinstance(action, ProbeAction):
         return {"urls": list(action.urls)}
+    if isinstance(action, BusinessLogicAction):
+        return {"business_logic": True}
+    if isinstance(action, ChainAction):
+        return {"chain": True}
     if isinstance(action, ReportAction):
         return {"report": True}
     return {}
@@ -971,6 +1215,14 @@ def run_agent(config: AgentConfig) -> AgentResult:
     pacer = _new_pacer()
     if config.write_authz_spec:
         _ensure_write_authz_endpoints(config)
+
+    config._prev_endpoints = copy.deepcopy(state.endpoints)
+    config._run_started_at = _now().isoformat()
+    config._endpoint_count_at_start = len(state.endpoints)
+    config._crawled_this_run = False
+    config._diff_done = False
+    config._business_logic_done = False
+    config._chain_done = False
 
     mutated = False
     if config.reprobe:
@@ -1010,6 +1262,8 @@ def run_agent(config: AgentConfig) -> AgentResult:
                 program.save(state)
                 entry["result"] = result
                 consecutive_errors = 0
+                for err in result.get("errors") or []:
+                    errors.append(str(err))
                 if isinstance(action, CrawlAction):
                     pages = int(result.get("pages_crawled") or 0)
                     if pages == 0:
@@ -1031,6 +1285,22 @@ def run_agent(config: AgentConfig) -> AgentResult:
             break
 
     confirmed = _confirmed_findings(state)
+    if not config.dry_run:
+        state.previous_endpoints = copy.deepcopy(config._prev_endpoints)
+        program.record_run_summary(
+            state,
+            {
+                "started_at": getattr(config, "_run_started_at", None) or _now().isoformat(),
+                "iterations": len(log),
+                "confirmed": len(confirmed),
+                "new_endpoints": max(
+                    0,
+                    len(state.endpoints)
+                    - int(getattr(config, "_endpoint_count_at_start", 0) or 0),
+                ),
+            },
+        )
+        program.save(state)
     return AgentResult(
         iterations=len(log),
         confirmed=len(confirmed),

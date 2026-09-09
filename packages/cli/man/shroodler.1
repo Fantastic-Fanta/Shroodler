@@ -407,6 +407,27 @@ ranks unconfirmed leads with Claude (requires
 .B agent \-\-write\-authz\-spec
 replays a JSON list of write probes (POST/PATCH/DELETE) as both
 principals after authz-diff.
+.B agent \-\-run\-probes
+fires active injection probes (SQLi, XSS, path-traversal, JWT, IDOR) after
+authz-diff.
+.B agent \-\-run\-diff
+diffs endpoints against the previous engagement snapshot and emits
+new/removed/changed-param findings.
+.B agent \-\-llm\-business\-logic
+infers the app domain with Claude and runs financial/workflow probes.
+.B agent \-\-chain\-spec
+loads an operator attack-chain JSON spec and runs it as a ChainAction.
+.TP
+.B engagement\-history
+Show endpoint and finding history across runs for a program. Reads
+.I ~/.shroodler/programs/<slug>/history/
+and prints a diff of endpoints added, removed, and param-changed since the
+previous snapshot.
+.TP
+.B engagement\-diff
+Diff the current program state against the saved engagement snapshot and
+emit findings for endpoints that were added, removed, or had parameters
+changed since the last run.
 .TP
 .B trend \fIOLDER\fR \fINEWER\fR
 Diff findings between two scans (by history id or file path), reporting

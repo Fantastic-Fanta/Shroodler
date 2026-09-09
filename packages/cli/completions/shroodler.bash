@@ -11,7 +11,7 @@
 # Only flag *names* are completed; most flags take a free-form value
 # (URLs, file paths, etc.) which bash's default filename completion covers.
 
-_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program agent discover version"
+_shroodler_commands="crawl diff report baseline expected ingest-sessions ingest-har tokens cadence triage payload nuclei-ingest slither-ingest authz-diff peer-write session-export js-routes paced-fetch proxy history trend ask mcp-server audit-verify compare-engines ticket sla suppress reverify gen-regression-test attack-path self-scan program agent discover engagement-history engagement-diff version"
 
 _shroodler_flags_for() {
     case "$1" in
@@ -96,6 +96,9 @@ _shroodler_flags_for() {
         suppress-expiring)
             echo "--days --suppressions --format --output --gate"
             ;;
+        suppress)
+            echo "--program --id --url --reason"
+            ;;
         reverify)
             echo "--mode --allow-external --no-payloads --output --require-policy --policy-file --audit-log"
             ;;
@@ -121,7 +124,13 @@ _shroodler_flags_for() {
             echo "--label --expires"
             ;;
         agent)
-            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec"
+            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --run-discovery --write-authz-spec --ignore-robots --run-probes --reprobe --run-diff --llm-business-logic --chain-spec"
+            ;;
+        engagement-history)
+            echo "--program"
+            ;;
+        engagement-diff)
+            echo "--program"
             ;;
         discover)
             echo "--program --target --max-subdomains --probe-workers --skip-crtsh --skip-js-surface --dry-run"

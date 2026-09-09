@@ -296,6 +296,7 @@ _shroodler() {
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \
             '--ignore-robots[Bypass robots.txt during crawl legs]' \
             '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR)]' \
+            '--no-openapi[Disable OpenAPI spec discovery and spec-driven probes]' \
             '--reprobe[Reset tested_payload on all endpoints before the agent loop]' \
             '--run-diff[Diff endpoints against the previous engagement snapshot after crawl]' \
             '--llm-business-logic[Infer app domain and run business-logic probes]' \

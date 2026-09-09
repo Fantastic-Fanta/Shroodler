@@ -14,6 +14,11 @@ PROBE_PATHS = (
     "/api-docs",
     "/openapi.yaml",
     "/swagger.yaml",
+    "/api-docs/v1",
+    "/v1/api-docs",
+    "/v2/api-docs",
+    "/swagger/v1/swagger.json",
+    "/swagger/index.html",
 )
 
 _POSTMAN_VAR = re.compile(r"\{\{[^}]+\}\}")

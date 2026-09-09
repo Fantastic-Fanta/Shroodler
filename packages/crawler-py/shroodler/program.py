@@ -86,6 +86,9 @@ class ProgramState:
     previous_endpoints: dict[str, dict[str, Any]] = field(default_factory=dict)
     js_bundles: list[Any] = field(default_factory=list)
     api_samples: dict[str, str] = field(default_factory=dict)
+    openapi_spec_url: str | None = None
+    openapi_endpoints: list[dict[str, Any]] = field(default_factory=list)
+    bearer_token: str = ""
 
 
 def _finding_to_dict(finding: Finding | dict) -> dict[str, Any]:
@@ -156,6 +159,11 @@ def load(slug: str) -> ProgramState:
     samples = data.get("api_samples") or {}
     if not isinstance(samples, dict):
         samples = {}
+    spec_url = data.get("openapi_spec_url")
+    openapi_spec_url = str(spec_url).strip() if spec_url else None
+    raw_oa = data.get("openapi_endpoints") or []
+    openapi_endpoints = [dict(row) for row in raw_oa if isinstance(row, dict)]
+    bearer_token = str(data.get("bearer_token") or "")
     return ProgramState(
         slug=str(data.get("slug") or slug),
         scope_urls=[str(u) for u in (data.get("scope_urls") or []) if str(u)],
@@ -172,6 +180,9 @@ def load(slug: str) -> ProgramState:
         },
         js_bundles=js_bundles,
         api_samples={str(k): str(v)[:_API_SAMPLE_BYTES] for k, v in samples.items()},
+        openapi_spec_url=openapi_spec_url or None,
+        openapi_endpoints=openapi_endpoints,
+        bearer_token=bearer_token,
     )
 
 
@@ -193,6 +204,9 @@ def save(state: ProgramState) -> Path:
         "previous_endpoints": dict(state.previous_endpoints),
         "js_bundles": list(state.js_bundles),
         "api_samples": dict(state.api_samples),
+        "openapi_spec_url": state.openapi_spec_url,
+        "openapi_endpoints": list(state.openapi_endpoints),
+        "bearer_token": state.bearer_token,
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -300,13 +314,16 @@ def _normalize_param_list(raw: Any) -> list[dict[str, str]]:
         if not name or name in seen:
             continue
         seen.add(name)
-        out.append(
-            {
-                "name": name,
-                "value": str(item.get("value") or ""),
-                "in": str(item.get("in") or "query"),
-            }
-        )
+        row: dict[str, str] = {
+            "name": name,
+            "value": str(item.get("value") or item.get("example") or ""),
+            "in": str(item.get("in") or "query"),
+        }
+        if item.get("type"):
+            row["type"] = str(item["type"])
+        if item.get("example") is not None:
+            row["example"] = str(item["example"])
+        out.append(row)
     return out
 
 
@@ -338,6 +355,7 @@ def _upsert_endpoint(
     *,
     method: str | None = None,
     params: Any = None,
+    source: str | None = None,
 ) -> str:
     """Insert or update an endpoint. Returns 'new', 'updated', or ''."""
     key = _endpoint_key(url)
@@ -371,6 +389,8 @@ def _upsert_endpoint(
             seen.add(item["name"])
         meta["params"] = merged
     after_names = _param_name_set(meta.get("params") or [])
+    if source and not meta.get("source"):
+        meta["source"] = str(source)
     if created:
         if after_names:
             _append_param_history(meta, last_seen, after_names)

@@ -1,8 +1,8 @@
 """Autonomous engagement loop over per-program state.
 
 Reads ~/.shroodler/programs/<slug>/state.json, picks the next highest-value
-action (crawl coverage gaps → diff → authz-diff → write-authz → peer-write →
-probe → business-logic → chain → report),
+action (crawl → diff → openapi-discover → authz-diff → write-authz →
+peer-write → probe → openapi-probe → business-logic → chain → report),
 executes it through existing Shroodler APIs, merges results, and repeats until
 the iteration budget is exhausted or there is nothing left to do.
 
@@ -60,6 +60,8 @@ class AgentConfig:
     run_diff: bool = False  # opt-in; also auto-runs when a previous run exists
     run_business_logic: bool = False  # --llm-business-logic
     chain_specs: list[str] = field(default_factory=list)
+    run_openapi_discovery: bool = True  # on by default; mapping, not probing
+    run_openapi_probes: bool = True
 
 
 @dataclass
@@ -69,6 +71,11 @@ class CrawlAction:
 
 @dataclass
 class DiffAction:
+    pass
+
+
+@dataclass
+class OpenApiDiscoverAction:
     pass
 
 
@@ -93,6 +100,11 @@ class ProbeAction:
 
 
 @dataclass
+class OpenApiProbeAction:
+    endpoints: list[dict]
+
+
+@dataclass
 class BusinessLogicAction:
     pass
 
@@ -110,10 +122,12 @@ class ReportAction:
 AgentAction = (
     CrawlAction
     | DiffAction
+    | OpenApiDiscoverAction
     | AuthzDiffAction
     | WriteAuthzAction
     | PeerWriteAction
     | ProbeAction
+    | OpenApiProbeAction
     | BusinessLogicAction
     | ChainAction
     | ReportAction
@@ -209,6 +223,8 @@ def crawl_coverage_gaps(state: ProgramState, config: AgentConfig) -> list[str]:
     for url, meta in state.endpoints.items():
         if not _in_target_origin(url, config.target):
             continue
+        if _has_unresolved_placeholder(url):
+            continue
         last_seen = str((meta or {}).get("last_seen") or "")
         ts = _parse_ts(last_seen)
         if ts is None or (now - ts) > _STALE_AFTER:
@@ -279,11 +295,33 @@ def _untested_probe_urls(state: ProgramState, config: AgentConfig) -> list[str]:
         if not _in_target_origin(url, config.target):
             continue
         meta = meta or {}
+        if _has_unresolved_placeholder(url):
+            continue
         if bool(meta.get("tested_payload")) and not _stale_payload(meta):
             continue
         ranked.append((_probe_rank(url, meta), index, url))
     ranked.sort()
     return [url for _, _, url in ranked[:cap]]
+
+
+def _untested_openapi_endpoints(state: ProgramState, config: AgentConfig) -> list[dict]:
+    cap = max(0, int(config.max_pages_per_crawl))
+    out: list[dict] = []
+    for row in state.openapi_endpoints or []:
+        if not isinstance(row, dict):
+            continue
+        url = str(row.get("url") or "")
+        if not url:
+            continue
+        if not _in_target_origin(url, config.target):
+            continue
+        meta = state.endpoints.get(url) or {}
+        if bool(meta.get("tested_payload")) or bool(row.get("tested_payload")):
+            continue
+        out.append(row)
+        if len(out) >= cap:
+            break
+    return out
 
 
 def _reset_tested_payload(state: ProgramState) -> int:
@@ -421,14 +459,21 @@ def decide_next_action(
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Crawl > Diff > AuthzDiff > WriteAuthz > PeerWrite >
-    Probe > BusinessLogic > Chain > Report."""
+    """Priority: Crawl > Diff > OpenApiDiscover > AuthzDiff > WriteAuthz >
+    PeerWrite > Probe > OpenApiProbe > BusinessLogic > Chain > Report."""
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
         return CrawlAction(urls=crawl_urls)
 
     if _should_run_diff(state, config):
         return DiffAction()
+
+    if (
+        config.run_openapi_discovery
+        and not getattr(config, "_openapi_discover_done", False)
+        and not state.openapi_spec_url
+    ):
+        return OpenApiDiscoverAction()
 
     authz_urls: list[str] = []
     object_ids: list[str] = []
@@ -465,6 +510,11 @@ def decide_next_action(
         probe_urls = _untested_probe_urls(state, config)
         if probe_urls:
             return ProbeAction(urls=probe_urls)
+
+    if config.run_openapi_probes:
+        oa_endpoints = _untested_openapi_endpoints(state, config)
+        if oa_endpoints:
+            return OpenApiProbeAction(endpoints=oa_endpoints)
 
     if _pending_business_logic(config):
         return BusinessLogicAction()
@@ -1132,6 +1182,94 @@ def _execute_probe(
     return out
 
 
+def _openapi_auth_header(state: ProgramState, config: AgentConfig) -> tuple[str, str]:
+    owner, peer = _probe_auth_headers(config)
+    token = (state.bearer_token or "").strip()
+    if token and not owner.lower().startswith("authorization:"):
+        owner = f"Authorization: Bearer {token}"
+    return owner, peer
+
+
+def _execute_openapi_discover(
+    action: OpenApiDiscoverAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.openapi import discover_specs, merge_openapi_into_state, parse_spec
+
+    config._openapi_discover_done = True
+    cookie, _peer = _openapi_auth_header(state, config)
+    errors: list[str] = []
+    new_endpoints = 0
+    spec_urls: list[str] = []
+    try:
+        found = discover_specs(
+            config.target,
+            cookie_header=cookie,
+            pacer=pacer,
+        )
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"openapi-discover: {type(exc).__name__}: {exc}")
+        found = []
+    for spec_url, spec in found:
+        try:
+            endpoints = parse_spec(spec, config.target)
+            new_endpoints += merge_openapi_into_state(state, endpoints, spec_url)
+            spec_urls.append(spec_url)
+        except Exception as exc:  # noqa: BLE001
+            errors.append(f"{spec_url}: {type(exc).__name__}: {exc}")
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": sum(1 for f in state.findings if f.id == "openapi-spec-found"),
+        "new_endpoints": new_endpoints,
+        "specs": spec_urls,
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
+def _execute_openapi_probe(
+    action: OpenApiProbeAction,
+    state: ProgramState,
+    config: AgentConfig,
+    pacer: Pacer,
+) -> dict[str, Any]:
+    from shroodler.probes.openapi_probe import probe_openapi_endpoints
+
+    owner, peer = _openapi_auth_header(state, config)
+    findings: list[Any] = []
+    errors: list[str] = []
+    tested: list[str] = []
+    for row in action.endpoints:
+        url = str(row.get("url") or "")
+        try:
+            findings.extend(
+                probe_openapi_endpoints(
+                    [row],
+                    cookie_header=owner,
+                    peer_cookie=peer,
+                    pacer=pacer,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 - per-endpoint, loop must continue
+            errors.append(f"{url} openapi-probe: {type(exc).__name__}: {exc}")
+        if url:
+            tested.append(url)
+            row["tested_payload"] = True
+    findings_added = _merge_findings(state, findings)
+    program.mark_tested(state, tested, "tested_payload")
+    out: dict[str, Any] = {
+        "pages_crawled": 0,
+        "findings_added": findings_added,
+        "urls_tested": len(tested),
+    }
+    if errors:
+        out["errors"] = errors
+    return out
+
+
 def _execute_report(state: ProgramState) -> dict[str, Any]:
     confirmed = _confirmed_findings(state)
     return {
@@ -1161,6 +1299,8 @@ def execute_action(
         return _execute_crawl(action, state, config, clock)
     if isinstance(action, DiffAction):
         return _execute_diff(action, state, config, clock)
+    if isinstance(action, OpenApiDiscoverAction):
+        return _execute_openapi_discover(action, state, config, clock)
     if isinstance(action, AuthzDiffAction):
         return _execute_authz(action, state, config, clock)
     if isinstance(action, WriteAuthzAction):
@@ -1169,6 +1309,8 @@ def execute_action(
         return _execute_peer_write(action, state, config, clock)
     if isinstance(action, ProbeAction):
         return _execute_probe(action, state, config, clock)
+    if isinstance(action, OpenApiProbeAction):
+        return _execute_openapi_probe(action, state, config, clock)
     if isinstance(action, BusinessLogicAction):
         return _execute_business_logic(action, state, config, clock)
     if isinstance(action, ChainAction):
@@ -1183,6 +1325,8 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"urls": list(action.urls)}
     if isinstance(action, DiffAction):
         return {"diff": True}
+    if isinstance(action, OpenApiDiscoverAction):
+        return {"openapi_discover": True}
     if isinstance(action, AuthzDiffAction):
         return {"urls": list(action.urls)}
     if isinstance(action, WriteAuthzAction):
@@ -1195,6 +1339,12 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"object_ids": list(action.object_ids)}
     if isinstance(action, ProbeAction):
         return {"urls": list(action.urls)}
+    if isinstance(action, OpenApiProbeAction):
+        return {
+            "endpoints": [
+                {"method": p.get("method"), "url": p.get("url")} for p in action.endpoints
+            ]
+        }
     if isinstance(action, BusinessLogicAction):
         return {"business_logic": True}
     if isinstance(action, ChainAction):
@@ -1223,6 +1373,7 @@ def run_agent(config: AgentConfig) -> AgentResult:
     config._diff_done = False
     config._business_logic_done = False
     config._chain_done = False
+    config._openapi_discover_done = False
 
     mutated = False
     if config.reprobe:

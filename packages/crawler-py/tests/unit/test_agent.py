@@ -10,6 +10,8 @@ from shroodler.agent import (
     AgentConfig,
     AuthzDiffAction,
     CrawlAction,
+    OpenApiDiscoverAction,
+    OpenApiProbeAction,
     PeerWriteAction,
     ProbeAction,
     ReportAction,
@@ -42,6 +44,8 @@ def _config(**kwargs) -> AgentConfig:
         "max_iterations": 3,
         "max_pages_per_crawl": 10,
         "dry_run": True,
+        "run_openapi_discovery": False,
+        "run_openapi_probes": False,
     }
     defaults.update(kwargs)
     return AgentConfig(**defaults)
@@ -525,6 +529,40 @@ def test_cmd_agent_dry_run_stdout(tmp_path, monkeypatch, capsys):
     assert payload["confirmed"] == 0
 
 
+def test_cmd_agent_no_openapi_disables_both_flags(tmp_path, monkeypatch, capsys):
+    import argparse
+
+    from shroodler.cli import cmd_agent
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    load("lab")
+    captured: list = []
+
+    def fake_run(config):
+        captured.append(config)
+        from shroodler.agent import AgentResult
+
+        return AgentResult(iterations=0, confirmed=0, log=[], state_path="")
+
+    monkeypatch.setattr("shroodler.agent.run_agent", fake_run)
+    ns = argparse.Namespace(
+        program="lab",
+        target="http://127.0.0.1/",
+        max_iterations=1,
+        max_pages_per_crawl=5,
+        login_recipe=None,
+        higher_priv_jar=None,
+        lower_priv_jar=None,
+        owner_cookie=None,
+        peer_cookie=None,
+        dry_run=True,
+        no_openapi=True,
+    )
+    assert cmd_agent(ns) == 0
+    assert captured[0].run_openapi_discovery is False
+    assert captured[0].run_openapi_probes is False
+
+
 def test_run_agent_stops_immediately_when_nothing_left(tmp_path, monkeypatch):
     monkeypatch.setenv("HOME", str(tmp_path))
     state = load("lab")
@@ -877,6 +915,12 @@ def test_agent_config_run_probes_defaults_off():
     assert cfg.chain_specs == []
 
 
+def test_agent_config_openapi_defaults_on():
+    cfg = AgentConfig(program="lab", target="http://127.0.0.1/")
+    assert cfg.run_openapi_discovery is True
+    assert cfg.run_openapi_probes is True
+
+
 def test_authz_broken_access_control_is_not_tool_noise():
     assert "authz-broken-access-control" not in _TOOL_NOISE_IDS
 
@@ -1133,4 +1177,213 @@ def test_backfill_confirms_existing_authz_findings(tmp_path, monkeypatch):
     assert result.confirmed >= 1
     reloaded = load("lab")
     assert reloaded.findings[0].confidence == "confirmed"
+
+
+def test_decide_openapi_discover_after_crawl_before_authz():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(last_seen=_now_iso(), tested_authz=False),
+        },
+    )
+    action = decide_next_action(
+        state,
+        _config(
+            run_openapi_discovery=True,
+            higher_priv_jar="/tmp/higher.json",
+            lower_priv_jar="/tmp/lower.json",
+        ),
+    )
+    assert isinstance(action, OpenApiDiscoverAction)
+
+
+def test_decide_skips_openapi_discover_when_spec_url_set():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+        openapi_spec_url="http://127.0.0.1/openapi.json",
+    )
+    action = decide_next_action(state, _config(run_openapi_discovery=True))
+    assert action is None
+
+
+def test_decide_openapi_discover_even_when_run_probes_false():
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/api/a": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+    )
+    action = decide_next_action(
+        state, _config(run_openapi_discovery=True, run_probes=False)
+    )
+    assert isinstance(action, OpenApiDiscoverAction)
+
+
+def test_decide_openapi_probe_after_probe_when_untested_spec():
+    spec_url = "http://127.0.0.1/api/account/{accountId}"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/search?q=1": {
+                **_endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True),
+                "tested_payload": True,
+            },
+            spec_url: _endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True),
+        },
+        openapi_spec_url="http://127.0.0.1/openapi.json",
+        openapi_endpoints=[
+            {
+                "url": spec_url,
+                "method": "GET",
+                "params": [
+                    {"name": "accountId", "in": "path", "type": "integer", "example": 800002}
+                ],
+                "auth_required": True,
+            }
+        ],
+    )
+    action = decide_next_action(
+        state, _config(run_probes=True, run_openapi_probes=True)
+    )
+    assert isinstance(action, OpenApiProbeAction)
+    assert action.endpoints[0]["url"] == spec_url
+
+
+def test_decide_openapi_probe_without_run_probes():
+    spec_url = "http://127.0.0.1/api/account/{accountId}"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            spec_url: _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+        openapi_spec_url="http://127.0.0.1/openapi.json",
+        openapi_endpoints=[
+            {"url": spec_url, "method": "GET", "params": [], "auth_required": False}
+        ],
+    )
+    action = decide_next_action(
+        state, _config(run_probes=False, run_openapi_probes=True)
+    )
+    assert isinstance(action, OpenApiProbeAction)
+
+
+def test_decide_skips_openapi_probe_when_disabled():
+    spec_url = "http://127.0.0.1/api/x"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            spec_url: _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            ),
+        },
+        openapi_spec_url="http://127.0.0.1/openapi.json",
+        openapi_endpoints=[{"url": spec_url, "method": "GET", "params": []}],
+    )
+    assert decide_next_action(state, _config(run_openapi_probes=False)) is None
+
+
+def test_execute_openapi_discover_merges(monkeypatch):
+    from shroodler.openapi import OpenApiEndpoint
+    from shroodler.pacer import Pacer
+
+    monkeypatch.setattr(
+        "shroodler.openapi.discover_specs",
+        lambda *a, **k: [("http://127.0.0.1/openapi.json", {"openapi": "3.0.0"})],
+    )
+    monkeypatch.setattr(
+        "shroodler.openapi.parse_spec",
+        lambda spec, base: [
+            OpenApiEndpoint(
+                url="http://127.0.0.1/users",
+                method="GET",
+                params=[{"name": "q", "in": "query", "type": "string"}],
+                auth_required=False,
+            )
+        ],
+    )
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            "http://127.0.0.1/": _endpoint(last_seen=_now_iso()),
+        },
+    )
+    result = execute_action(
+        OpenApiDiscoverAction(),
+        state,
+        _config(dry_run=False, run_openapi_discovery=True),
+        pacer=Pacer(0),
+    )
+    assert result["new_endpoints"] >= 1
+    assert state.openapi_spec_url == "http://127.0.0.1/openapi.json"
+    assert state.endpoints["http://127.0.0.1/users"]["source"] == "openapi"
+    assert any(f.id == "openapi-spec-found" for f in state.findings)
+
+
+def test_execute_openapi_probe_marks_tested(monkeypatch):
+    from shroodler.models import Finding as F
+    from shroodler.pacer import Pacer
+
+    monkeypatch.setattr(
+        "shroodler.probes.openapi_probe.probe_openapi_endpoints",
+        lambda endpoints, **kw: [
+            F(
+                id="openapi-unauthenticated",
+                severity="high",
+                category="auth",
+                url="http://127.0.0.1/api/secret",
+                description="open",
+                confidence="confirmed",
+            )
+        ],
+    )
+    url = "http://127.0.0.1/api/secret"
+    row = {"url": url, "method": "GET", "params": [], "auth_required": True}
+    state = ProgramState(
+        slug="lab",
+        endpoints={url: _endpoint(last_seen=_now_iso())},
+        openapi_spec_url="http://127.0.0.1/openapi.json",
+        openapi_endpoints=[row],
+    )
+    result = execute_action(
+        OpenApiProbeAction(endpoints=[row]),
+        state,
+        _config(dry_run=False, run_openapi_probes=True),
+        pacer=Pacer(0),
+    )
+    assert result["findings_added"] == 1
+    assert state.findings[0].id == "openapi-unauthenticated"
+    assert state.endpoints[url]["tested_payload"] is True
+    assert row["tested_payload"] is True
+
+
+def test_dry_run_describes_openapi_discover(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    state = load("lab")
+    state.endpoints = {
+        "http://127.0.0.1/api/a": _endpoint(
+            last_seen=_now_iso(), tested_authz=True, tested_peer=True
+        )
+    }
+    save(state)
+    result = run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1/",
+            dry_run=True,
+            run_openapi_discovery=True,
+            max_iterations=1,
+        )
+    )
+    assert result.log[0]["action"] == "OpenApiDiscoverAction"
+    assert result.log[0].get("openapi_discover") is True
+    assert result.log[0]["dry_run"] is True
 

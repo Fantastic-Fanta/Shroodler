@@ -639,6 +639,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         run_diff=bool(getattr(args, "run_diff", False)),
         run_business_logic=bool(getattr(args, "llm_business_logic", False)),
         chain_specs=list(getattr(args, "chain_spec", None) or []),
+        run_openapi_discovery=not bool(getattr(args, "no_openapi", False)),
+        run_openapi_probes=not bool(getattr(args, "no_openapi", False)),
     )
     result = run_agent(config)
     payload: dict = {
@@ -2448,6 +2450,11 @@ def build_parser() -> argparse.ArgumentParser:
             "Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR) "
             "after authz and peer-write legs"
         ),
+    )
+    agent.add_argument(
+        "--no-openapi",
+        action="store_true",
+        help="Disable OpenAPI spec discovery and spec-driven probes",
     )
     agent.add_argument(
         "--reprobe",

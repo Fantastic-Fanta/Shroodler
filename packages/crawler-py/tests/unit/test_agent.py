@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from shroodler.agent import (
+    _TOOL_NOISE_IDS,
     AgentConfig,
     AuthzDiffAction,
     CrawlAction,
@@ -13,8 +14,8 @@ from shroodler.agent import (
     ProbeAction,
     ReportAction,
     WriteAuthzAction,
-    _TOOL_NOISE_IDS,
     _auth_header_for_diff,
+    _confirmed_findings,
     _untested_probe_urls,
     decide_next_action,
     execute_action,
@@ -194,7 +195,7 @@ def test_state_saved_after_each_action(tmp_path, monkeypatch):
         _config(program="lab", target="http://127.0.0.1/", dry_run=False, max_iterations=4)
     )
     assert result.iterations == 4
-    assert len(saves) == 4
+    assert len(saves) == 5
 
 
 def test_decide_skips_out_of_origin_crawl_urls():
@@ -438,6 +439,28 @@ def test_execute_report_summarizes_confirmed():
     result = execute_action(ReportAction(), state, _config(), pacer=Pacer(0))
     assert result["confirmed"] == 1
     assert result["summary"][0]["id"] == "authz-broken-access-control"
+
+
+def test_confirmed_findings_skip_suppressed():
+    from shroodler.engagement_history import record_suppression
+
+    state = ProgramState(
+        slug="lab",
+        findings=[
+            Finding(
+                id="authz-broken-access-control",
+                severity="high",
+                category="auth",
+                url="http://127.0.0.1/x",
+                description="ok",
+                confidence="confirmed",
+            )
+        ],
+    )
+    record_suppression(state, "authz-broken-access-control", "*", "accepted")
+    assert _confirmed_findings(state) == []
+    result = execute_action(ReportAction(), state, _config(), pacer=Pacer(0))
+    assert result["confirmed"] == 0
 
 
 def test_loop_stops_after_consecutive_errors(tmp_path, monkeypatch):
@@ -849,6 +872,9 @@ def test_agent_config_run_probes_defaults_off():
     assert cfg.probe_path_traversal is True
     assert cfg.probe_jwt is True
     assert cfg.probe_idor is True
+    assert cfg.run_diff is False
+    assert cfg.run_business_logic is False
+    assert cfg.chain_specs == []
 
 
 def test_authz_broken_access_control_is_not_tool_noise():

@@ -408,6 +408,25 @@ def test_agent_flags_parse():
     assert args.run_probes is True
     assert args.reprobe is True
 
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--run-diff",
+            "--llm-business-logic",
+            "--chain-spec",
+            "a.json",
+            "--chain-spec",
+            "b.json",
+        ]
+    )
+    assert args.run_diff is True
+    assert args.llm_business_logic is True
+    assert args.chain_spec == ["a.json", "b.json"]
+
 
 def test_discover_flags_parse():
     p = build_parser()
@@ -436,3 +455,21 @@ def test_discover_flags_parse():
     assert args.skip_js_surface is True
     assert args.dry_run is True
     assert "discover" in p.format_help()
+
+
+def test_engagement_and_suppress_flags_parse():
+    p = build_parser()
+    args = p.parse_args(
+        ["suppress", "--program", "lab", "--id", "sqli", "--url", "*", "--reason", "fp"]
+    )
+    assert args.func.__name__ == "cmd_suppress"
+    assert args.finding_id == "sqli"
+    args = p.parse_args(["engagement-history", "--program", "lab"])
+    assert args.func.__name__ == "cmd_engagement_history"
+    args = p.parse_args(["engagement-diff", "--program", "lab"])
+    assert args.func.__name__ == "cmd_engagement_diff"
+    # Existing history and suppress subcommands still parse.
+    args = p.parse_args(["history", "list"])
+    assert args.func.__name__ == "cmd_history_list"
+    args = p.parse_args(["suppress", "expiring"])
+    assert args.func.__name__ == "cmd_suppress_expiring"

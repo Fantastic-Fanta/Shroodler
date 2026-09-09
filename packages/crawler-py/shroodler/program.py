@@ -24,6 +24,11 @@ _UUID_RE = re.compile(
 _INT_ID_RE = re.compile(r"^[0-9]{1,18}$")
 _ID_KEY_RE = re.compile(r"^(id|.+_id|.+Id)$")
 _STALE_AFTER = timedelta(hours=24)
+_JS_BUNDLE_CAP = 3
+_JS_BUNDLE_BYTES = 50 * 1024
+_API_SAMPLE_BYTES = 200
+_API_SAMPLE_CAP = 40
+_RUN_HISTORY_CAP = 50
 
 
 def programs_root() -> Path:
@@ -76,6 +81,11 @@ class ProgramState:
     findings: list[Finding] = field(default_factory=list)
     sessions: list[dict[str, Any]] = field(default_factory=list)
     scans: list[dict[str, Any]] = field(default_factory=list)
+    suppressed_findings: list[dict[str, Any]] = field(default_factory=list)
+    run_history: list[dict[str, Any]] = field(default_factory=list)
+    previous_endpoints: dict[str, dict[str, Any]] = field(default_factory=dict)
+    js_bundles: list[Any] = field(default_factory=list)
+    api_samples: dict[str, str] = field(default_factory=dict)
 
 
 def _finding_to_dict(finding: Finding | dict) -> dict[str, Any]:
@@ -131,6 +141,21 @@ def load(slug: str) -> ProgramState:
     for key, vals in object_ids.items():
         if isinstance(vals, list):
             cleaned_ids[str(key)] = [str(v) for v in vals if str(v)]
+    suppressed = [
+        dict(row)
+        for row in (data.get("suppressed_findings") or [])
+        if isinstance(row, dict)
+    ]
+    history = [
+        dict(row) for row in (data.get("run_history") or []) if isinstance(row, dict)
+    ]
+    previous = data.get("previous_endpoints") or {}
+    if not isinstance(previous, dict):
+        previous = {}
+    js_bundles = list(data.get("js_bundles") or [])
+    samples = data.get("api_samples") or {}
+    if not isinstance(samples, dict):
+        samples = {}
     return ProgramState(
         slug=str(data.get("slug") or slug),
         scope_urls=[str(u) for u in (data.get("scope_urls") or []) if str(u)],
@@ -140,6 +165,13 @@ def load(slug: str) -> ProgramState:
         findings=findings,
         sessions=[dict(s) for s in (data.get("sessions") or []) if isinstance(s, dict)],
         scans=[dict(s) for s in (data.get("scans") or []) if isinstance(s, dict)],
+        suppressed_findings=suppressed,
+        run_history=history,
+        previous_endpoints={
+            str(k): dict(v) if isinstance(v, dict) else {} for k, v in previous.items()
+        },
+        js_bundles=js_bundles,
+        api_samples={str(k): str(v)[:_API_SAMPLE_BYTES] for k, v in samples.items()},
     )
 
 
@@ -156,6 +188,11 @@ def save(state: ProgramState) -> Path:
         "findings": [_finding_to_dict(f) for f in state.findings],
         "sessions": list(state.sessions),
         "scans": list(state.scans),
+        "suppressed_findings": list(state.suppressed_findings),
+        "run_history": list(state.run_history),
+        "previous_endpoints": dict(state.previous_endpoints),
+        "js_bundles": list(state.js_bundles),
+        "api_samples": dict(state.api_samples),
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -168,7 +205,9 @@ def _endpoint_meta(url: str, last_seen: str) -> dict[str, Any]:
         "tested_authz": False,
         "tested_peer_write": False,
         "tested_payload": False,
+        "first_seen": last_seen,
         "last_seen": last_seen,
+        "param_history": [],
     }
 
 
@@ -271,6 +310,27 @@ def _normalize_param_list(raw: Any) -> list[dict[str, str]]:
     return out
 
 
+def _param_name_set(params: Any) -> set[str]:
+    names: set[str] = set()
+    for item in _normalize_param_list(params):
+        name = str(item.get("name") or "").strip()
+        if name:
+            names.add(name)
+    return names
+
+
+def _append_param_history(meta: dict[str, Any], last_seen: str, names: set[str]) -> None:
+    history = list(meta.get("param_history") or [])
+    snapshot = {"seen": last_seen, "params": sorted(names)}
+    if history:
+        prev = history[-1]
+        prev_names = set(prev.get("params") or []) if isinstance(prev, dict) else set()
+        if prev_names == names:
+            return
+    history.append(snapshot)
+    meta["param_history"] = history
+
+
 def _upsert_endpoint(
     state: ProgramState,
     url: str,
@@ -290,6 +350,8 @@ def _upsert_endpoint(
         state.endpoints[key] = meta
     else:
         meta["last_seen"] = last_seen
+        if not meta.get("first_seen"):
+            meta["first_seen"] = last_seen
     if method:
         incoming = str(method).upper() or "GET"
         existing = str(meta.get("method") or "GET").upper() or "GET"
@@ -297,6 +359,7 @@ def _upsert_endpoint(
             meta["method"] = incoming
         elif incoming != "GET":
             meta["method"] = incoming
+    before_names = _param_name_set(meta.get("params") or [])
     incoming_params = _normalize_param_list(params)
     if incoming_params:
         merged = _normalize_param_list(meta.get("params") or [])
@@ -307,7 +370,65 @@ def _upsert_endpoint(
             merged.append(item)
             seen.add(item["name"])
         meta["params"] = merged
+    after_names = _param_name_set(meta.get("params") or [])
+    if created:
+        if after_names:
+            _append_param_history(meta, last_seen, after_names)
+    elif after_names != before_names:
+        _append_param_history(meta, last_seen, after_names)
     return "new" if created else "updated"
+
+
+def _looks_like_js(url: str, text: str) -> bool:
+    path = (url or "").lower().split("?", 1)[0]
+    if path.endswith(".js") or path.endswith(".mjs"):
+        return True
+    stripped = (text or "").lstrip()
+    if stripped.startswith("function ") or stripped.startswith("!function"):
+        return True
+    return "=>{" in stripped[:200]
+
+
+def _store_js_bundle(state: ProgramState, url: str, text: str) -> None:
+    if not text or not text.strip():
+        return
+    if len(state.js_bundles) >= _JS_BUNDLE_CAP:
+        return
+    for existing in state.js_bundles:
+        if isinstance(existing, dict) and existing.get("url") == url:
+            return
+        if existing == text:
+            return
+    state.js_bundles.append({"url": url, "text": text[:_JS_BUNDLE_BYTES]})
+
+
+def _store_api_sample(state: ProgramState, url: str, text: str) -> None:
+    if not url or not text:
+        return
+    if url in state.api_samples:
+        return
+    if len(state.api_samples) >= _API_SAMPLE_CAP:
+        return
+    state.api_samples[url] = text[:_API_SAMPLE_BYTES]
+
+
+def _ingest_page_samples(state: ProgramState, page: dict) -> None:
+    url = str(page.get("url") or "")
+    for body in _page_bodies(page):
+        if _looks_like_js(url, body):
+            _store_js_bundle(state, url, body)
+        _store_api_sample(state, url, body)
+    for js_url in page.get("js_files") or []:
+        if not js_url:
+            continue
+        # URLs only — infer_app_domain accepts empty bundle text.
+        if len(state.js_bundles) < _JS_BUNDLE_CAP:
+            already = any(
+                isinstance(item, dict) and item.get("url") == str(js_url)
+                for item in state.js_bundles
+            )
+            if not already:
+                state.js_bundles.append({"url": str(js_url), "text": ""})
 
 
 def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
@@ -332,6 +453,7 @@ def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
             continue
         urls.append(url)
         _count(_upsert_endpoint(state, url, last_seen, params=page.get("params") or []))
+        _ingest_page_samples(state, page)
         for form in page.get("forms") or []:
             if not isinstance(form, dict):
                 continue
@@ -377,6 +499,11 @@ def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
         _count(status)
         if status == "new":
             urls.append(endpoint)
+        for key in ("body", "text", "response_body"):
+            val = ep.get(key)
+            if isinstance(val, str) and val.strip():
+                _store_api_sample(state, endpoint, val)
+                break
     for ep in doc.get("js_endpoints") or []:
         if not isinstance(ep, dict):
             continue
@@ -442,6 +569,41 @@ def merge_crawl(state: ProgramState, crawl_json_path: str | Path) -> dict[str, i
     if not isinstance(doc, dict):
         raise ValueError("crawl JSON must be an object")
     return merge_crawl_doc(state, doc)
+
+
+def suppress_finding(
+    state: ProgramState,
+    finding_id: str,
+    url: str,
+    reason: str,
+) -> None:
+    from shroodler.engagement_history import record_suppression
+
+    record_suppression(state, finding_id, url, reason)
+
+
+def load_suppressions(state: ProgramState) -> set[tuple[str, str]]:
+    out: set[tuple[str, str]] = set()
+    for row in state.suppressed_findings or []:
+        if not isinstance(row, dict):
+            continue
+        fid = str(row.get("id") or "")
+        url = str(row.get("url") or "*")
+        if fid:
+            out.add((fid, url))
+    return out
+
+
+def record_run_summary(state: ProgramState, summary_dict: dict[str, Any]) -> None:
+    row = {
+        "started_at": str(summary_dict.get("started_at") or _now()),
+        "iterations": int(summary_dict.get("iterations") or 0),
+        "confirmed": int(summary_dict.get("confirmed") or 0),
+        "new_endpoints": int(summary_dict.get("new_endpoints") or 0),
+    }
+    history = list(state.run_history or [])
+    history.append(row)
+    state.run_history = history[-_RUN_HISTORY_CAP:]
 
 
 def coverage_gaps(state: ProgramState) -> list[dict[str, Any]]:

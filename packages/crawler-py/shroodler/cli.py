@@ -674,6 +674,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
             if getattr(args, "llm_agent_max_cost", None) is None
             else float(args.llm_agent_max_cost)
         ),
+        run_js_analysis=not bool(getattr(args, "no_js_analysis", False)),
     )
     if config.llm_agent and not os.environ.get("ANTHROPIC_API_KEY"):
         print("error: --llm-agent requires ANTHROPIC_API_KEY", file=sys.stderr)
@@ -2679,6 +2680,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-websocket",
         action="store_true",
         help="Disable WebSocket discovery/probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--no-js-analysis",
+        action="store_true",
+        help="Skip deep JavaScript bundle analysis after crawl (on by default)",
     )
     agent.add_argument(
         "--allow-external",

@@ -621,3 +621,22 @@ def test_dedup_and_ci_template_and_program_scope_parse():
     args = p.parse_args(["report", "out.json"])
     assert args.dedup is True
 
+
+def test_agent_no_js_analysis_flag():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--no-js-analysis",
+        ]
+    )
+    assert args.no_js_analysis is True
+    args = p.parse_args(
+        ["agent", "--program", "lab", "--target", "http://127.0.0.1/"]
+    )
+    assert args.no_js_analysis is False
+

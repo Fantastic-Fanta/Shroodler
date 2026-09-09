@@ -14,6 +14,8 @@ from shroodler.probes.common import (
     normalize_params,
 )
 
+# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+
 OPEN_REDIRECT_NAME_HINTS = (
     "redirect",
     "return",

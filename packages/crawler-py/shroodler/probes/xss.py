@@ -15,6 +15,7 @@ from shroodler.probes.common import (
     normalize_params,
     request,
 )
+from shroodler.waf_detect import expand_if_waf
 
 
 def _payload(nonce: str) -> str:
@@ -30,6 +31,9 @@ def probe_xss(
     view_url: str = "",
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Inject a nonce-tagged script payload per param; check reflect and store."""
     method_u = (method or "GET").upper()
@@ -46,39 +50,48 @@ def probe_xss(
         name = item["name"]
         nonce = secrets.token_hex(3)
         marker = _payload(nonce)
-        resp = inject(
-            url,
-            method_u,
-            normalized,
-            name,
-            marker,
-            cookie_header=cookie_header,
-            client=client,
-            pacer=pacer,
+        variants = expand_if_waf(
+            (marker,),
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
         )
-        body = body_text(resp)
-        if marker in body:
-            findings.append(
-                Finding(
-                    id="xss-reflected",
-                    severity="high",
-                    category="payload",
-                    url=url,
-                    description=(
-                        f"{method_u} parameter {name!r} reflected the XSS payload "
-                        "verbatim in the response body."
-                    ),
-                    evidence=f"param={name} nonce={nonce}",
-                    confidence="confirmed",
-                )
+        reflected = False
+        for injected in variants:
+            resp = inject(
+                url,
+                method_u,
+                normalized,
+                name,
+                injected,
+                cookie_header=cookie_header,
+                client=client,
+                pacer=pacer,
             )
+            body = body_text(resp)
+            if marker in body or injected in body:
+                findings.append(
+                    Finding(
+                        id="xss-reflected",
+                        severity="high",
+                        category="payload",
+                        url=url,
+                        description=(
+                            f"{method_u} parameter {name!r} reflected the XSS payload "
+                            "verbatim in the response body."
+                        ),
+                        evidence=f"param={name} nonce={nonce}",
+                        confidence="confirmed",
+                    )
+                )
+                break
 
         stored_resp = inject(
             url,
             "POST",
             normalized,
             name,
-            marker,
+            variants[0],
             cookie_header=cookie_header,
             client=client,
             pacer=pacer,

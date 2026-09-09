@@ -17,6 +17,7 @@ from shroodler.probes.common import (
     request,
     response_elapsed,
 )
+from shroodler.waf_detect import expand_if_waf
 
 _ERROR_PAYLOADS = (
     "'",
@@ -155,6 +156,9 @@ def probe_sqli(
     *,
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Replay GET/POST params with classic SQLi payloads, one param at a time.
 
@@ -169,10 +173,28 @@ def probe_sqli(
         return []
 
     findings: list[Finding] = []
+    error_payloads = expand_if_waf(
+        _ERROR_PAYLOADS,
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
+    time_payloads = expand_if_waf(
+        _TIME_PAYLOADS_4S,
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
+    time_legacy = expand_if_waf(
+        (_TIME_PAYLOAD,),
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
 
     for item in normalized:
         name = item["name"]
-        for payload in _ERROR_PAYLOADS:
+        for payload in error_payloads:
             resp = inject(
                 url,
                 method_u,
@@ -213,7 +235,7 @@ def probe_sqli(
         for item in normalized:
             name = item["name"]
             hit_4s = False
-            for payload in _TIME_PAYLOADS_4S:
+            for payload in time_payloads:
                 resp = inject(
                     url,
                     method_u,
@@ -251,48 +273,63 @@ def probe_sqli(
                 break
             # Keep the legacy 2s WAITFOR heuristic only when the 4s path
             # did not already confirm this param (avoid double-emitting).
-            resp = inject(
-                url,
-                method_u,
-                normalized,
-                name,
-                _TIME_PAYLOAD,
-                cookie_header=cookie_header,
-                client=client,
-                pacer=pacer,
-            )
-            if resp is None:
-                continue
-            elapsed = response_elapsed(resp, 0.0)
-            if elapsed > baseline + _TIME_THRESHOLD:
-                findings.append(
-                    _finding(
-                        finding_id="sqli-blind",
-                        url=url,
-                        description=(
-                            f"{method_u} parameter {name!r} delayed the response by more "
-                            "than 2s after a WAITFOR DELAY payload (blind SQLi)."
-                        ),
-                        evidence=(
-                            f"param={name} elapsed={elapsed:.2f}s "
-                            f"baseline={baseline:.2f}s"
-                        ),
-                        confidence="heuristic",
-                    )
+            for payload in time_legacy:
+                resp = inject(
+                    url,
+                    method_u,
+                    normalized,
+                    name,
+                    payload,
+                    cookie_header=cookie_header,
+                    client=client,
+                    pacer=pacer,
                 )
-                saw_time = True
+                if resp is None:
+                    continue
+                elapsed = response_elapsed(resp, 0.0)
+                if elapsed > baseline + _TIME_THRESHOLD:
+                    findings.append(
+                        _finding(
+                            finding_id="sqli-blind",
+                            url=url,
+                            description=(
+                                f"{method_u} parameter {name!r} delayed the response by more "
+                                "than 2s after a WAITFOR DELAY payload (blind SQLi)."
+                            ),
+                            evidence=(
+                                f"param={name} elapsed={elapsed:.2f}s "
+                                f"baseline={baseline:.2f}s"
+                            ),
+                            confidence="heuristic",
+                        )
+                    )
+                    saw_time = True
+                    break
+            if saw_time:
                 break
         if saw_time:
             return dedupe(findings)
 
     for item in normalized:
         name = item["name"]
+        true_payloads = expand_if_waf(
+            (_BOOLEAN_TRUE,),
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
+        )
+        false_payloads = expand_if_waf(
+            (_BOOLEAN_FALSE,),
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
+        )
         true_resp = inject(
             url,
             method_u,
             normalized,
             name,
-            _BOOLEAN_TRUE,
+            true_payloads[0],
             cookie_header=cookie_header,
             client=client,
             pacer=pacer,
@@ -302,7 +339,7 @@ def probe_sqli(
             method_u,
             normalized,
             name,
-            _BOOLEAN_FALSE,
+            false_payloads[0],
             cookie_header=cookie_header,
             client=client,
             pacer=pacer,

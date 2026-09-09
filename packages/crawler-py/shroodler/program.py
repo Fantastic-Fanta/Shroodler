@@ -103,6 +103,8 @@ class ProgramState:
     login_failed: bool = False
     reauth_attempts: int = 0
     reauth_callback: Any | None = field(default=None, repr=False, compare=False)
+    waf_vendor: str | None = None
+    waf_detected: bool = False
 
 
 def _unique_str_list(raw: Any) -> list[str]:
@@ -229,6 +231,12 @@ def load(slug: str) -> ProgramState:
         js_urls=_unique_str_list(data.get("js_urls")),
         extra_graphql_operations=_unique_str_list(data.get("extra_graphql_operations")),
         source_map_urls=_unique_str_list(data.get("source_map_urls")),
+        waf_vendor=(
+            str(data.get("waf_vendor")).strip() or None
+            if data.get("waf_vendor")
+            else None
+        ),
+        waf_detected=bool(data.get("waf_detected") or False),
     )
 
 
@@ -262,6 +270,8 @@ def save(state: ProgramState) -> Path:
             getattr(state, "extra_graphql_operations", None) or []
         ),
         "source_map_urls": list(getattr(state, "source_map_urls", None) or []),
+        "waf_vendor": getattr(state, "waf_vendor", None),
+        "waf_detected": bool(getattr(state, "waf_detected", False)),
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

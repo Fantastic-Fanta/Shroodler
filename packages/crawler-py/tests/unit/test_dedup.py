@@ -118,6 +118,44 @@ def test_operational_keep_first():
     assert out[0]["description"] == "first"
 
 
+def test_duplicate_header_findings_per_host_keep_most_pages():
+    findings = [
+        {
+            "id": "missing-csp",
+            "severity": "medium",
+            "category": "header",
+            "url": "https://example.com/a",
+            "description": "few",
+            "evidence": "Affects 3 pages; sample: https://example.com/a",
+            "confidence": "confirmed",
+        },
+        {
+            "id": "missing-csp",
+            "severity": "medium",
+            "category": "header",
+            "url": "http://example.com/b",
+            "description": "many",
+            "evidence": "Affects 14 pages; sample: http://example.com/b",
+            "confidence": "heuristic",
+        },
+        {
+            "id": "missing-hsts",
+            "severity": "medium",
+            "category": "header",
+            "url": "https://example.com/",
+            "description": "hsts",
+            "evidence": "Affects 2 pages; sample: https://example.com/",
+            "confidence": "confirmed",
+        },
+    ]
+    out = deduplicate(findings)
+    csp = [f for f in out if f["id"] == "missing-csp"]
+    assert len(csp) == 1
+    assert "Affects 14 pages" in (csp[0]["evidence"] or "")
+    assert csp[0]["description"] == "many"
+    assert sum(1 for f in out if f["id"] == "missing-hsts") == 1
+
+
 def test_accepts_finding_models():
     findings = [
         Finding(
@@ -142,3 +180,47 @@ def test_accepts_finding_models():
     out = deduplicate(findings)
     assert len(out) == 1
     assert out[0]["confidence"] == "confirmed"
+
+
+def test_crawler_header_dedupe_keeps_most_pages():
+    from shroodler.crawler import _dedupe_findings
+
+    findings = [
+        Finding(
+            id="missing-csp",
+            severity="medium",
+            category="header",
+            url="https://example.com/a",
+            description="few",
+            evidence="Affects 3 pages; sample: https://example.com/a",
+        ),
+        Finding(
+            id="missing-csp",
+            severity="medium",
+            category="header",
+            url="http://example.com/b",
+            description="many",
+            evidence="Affects 14 pages; sample: http://example.com/b",
+        ),
+        Finding(
+            id="missing-x-frame-options",
+            severity="medium",
+            category="header",
+            url="https://example.com/a",
+            description="xfo a",
+        ),
+        Finding(
+            id="missing-x-frame-options",
+            severity="medium",
+            category="header",
+            url="https://example.com/b",
+            description="xfo b",
+        ),
+    ]
+    out = _dedupe_findings(findings)
+    csp = [f for f in out if f.id == "missing-csp"]
+    assert len(csp) == 1
+    assert "Affects 14 pages" in (csp[0].evidence or "")
+    xfo = [f for f in out if f.id == "missing-x-frame-options"]
+    assert len(xfo) == 1
+    assert "Affects 2 pages" in (xfo[0].evidence or "")

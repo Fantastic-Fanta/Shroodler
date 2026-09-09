@@ -18,6 +18,8 @@ from shroodler.probes.common import (
 )
 from shroodler.probes.ssrf import _default_listen
 
+# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+
 ListenFn = Callable[[float], tuple[int, Callable[[], bool]]]
 
 _XML_REJECTED = {400, 415}

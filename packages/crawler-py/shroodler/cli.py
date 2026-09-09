@@ -678,6 +678,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
             else float(args.llm_agent_max_cost)
         ),
         run_js_analysis=not bool(getattr(args, "no_js_analysis", False)),
+        run_waf_detect=not bool(getattr(args, "no_waf_detect", False)),
     )
     if config.llm_agent:
         from shroodler.llm_provider import llm_api_key_env
@@ -2772,6 +2773,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-tls-check",
         action="store_true",
         help="Skip the one-shot TLS certificate check",
+    )
+    agent.add_argument(
+        "--no-waf-detect",
+        action="store_true",
+        help="Skip WAF fingerprinting (on by default; evasion variants apply when a WAF is found)",
     )
     agent.add_argument(
         "--no-rate-limit-check",

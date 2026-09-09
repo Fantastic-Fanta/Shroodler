@@ -20,6 +20,8 @@ from shroodler.probes.common import (
     response_elapsed,
 )
 
+# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+
 SSRF_NAME_HINTS = (
     "url",
     "uri",

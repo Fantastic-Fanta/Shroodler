@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from collections import defaultdict, deque
 from collections.abc import Callable
 from datetime import datetime, timezone
@@ -1149,6 +1150,34 @@ def _collapsed_evidence(group: list[Finding], sample: str) -> str:
 _SEV_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 
 
+_HEADER_HOST_IDS = frozenset(
+    {
+        "missing-csp",
+        "missing-hsts",
+        "missing-x-frame-options",
+        "missing-x-content-type-options",
+        "missing-referrer-policy",
+    }
+)
+_AFFECTS_PAGES = re.compile(r"Affects\s+(\d+)\s+pages", re.I)
+
+
+def _finding_host(url: str) -> str:
+    parsed = urlparse(url or "")
+    return (parsed.netloc or parsed.hostname or url or "").lower()
+
+
+def _pages_in_evidence(finding: Finding) -> int:
+    evidence = finding.evidence or ""
+    match = _AFFECTS_PAGES.search(evidence)
+    if match:
+        try:
+            return int(match.group(1))
+        except (TypeError, ValueError):
+            return 1
+    return 1
+
+
 def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
     # Header-category findings that are sitewide (same rule fires on many pages)
     # get collapsed to one finding per origin with a count in evidence. This
@@ -1168,7 +1197,8 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
             # Cookie findings: include evidence (cookie name) in the key so
             # distinct cookies are separate rows even with the same finding id.
             ev = f.evidence if f.category == "cookie" else ""
-            key = (f.id, origin_of(f.url), ev)
+            host = _finding_host(f.url) if f.id in _HEADER_HOST_IDS else origin_of(f.url)
+            key = (f.id, host, ev)
             header_by_key.setdefault(key, []).append(f)
         else:
             rest.append(f)
@@ -1176,9 +1206,12 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
     collapsed: list[Finding] = []
     for (fid, orig, _ev), group in header_by_key.items():
         first = min(group, key=lambda f: _SEV_RANK.get(f.severity, 9))
-        n = len(group)
+        richest = max(group, key=_pages_in_evidence)
+        n = max(len(group), _pages_in_evidence(richest))
         if n == 1:
             collapsed.append(first)
+        elif _pages_in_evidence(richest) >= len(group) and _pages_in_evidence(richest) > 1:
+            collapsed.append(richest)
         else:
             sample = first.url
             collapsed.append(
@@ -1186,7 +1219,7 @@ def _dedupe_findings(findings: list[Finding]) -> list[Finding]:
                     id=fid,
                     severity=first.severity,
                     category=first.category,
-                    url=orig,
+                    url=origin_of(first.url) if orig and "://" not in orig else orig or first.url,
                     description=first.description,
                     evidence=_collapsed_evidence(group, sample),
                     confidence=first.confidence,

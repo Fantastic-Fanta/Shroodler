@@ -15,6 +15,8 @@ from shroodler.probes.sqli import _has_sql_error
 from shroodler.probes.ssti import nonce_payload, nonce_prime, ssti_evaluated
 from shroodler.urls import origin as origin_of
 
+# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+
 GQL_PATHS = ("/graphql", "/api/graphql", "/gql", "/query")
 TYPENAME_QUERY = "{__typename}"
 _BATCH_SIZE = 10

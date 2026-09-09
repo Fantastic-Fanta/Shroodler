@@ -147,3 +147,44 @@ def test_skips_finding_when_endpoint_already_known():
     }
     findings = JSAnalyzer().analyze('fetch("/api/v1/accounts");', SOURCE, state)
     assert not any(f.id == "js-api-endpoint-found" for f in findings)
+
+
+def test_short_secret_value_downgraded_to_heuristic():
+    from shroodler.js_analyzer import shannon_entropy
+
+    js = 'const apiKey = "shortsecret12";'
+    findings = JSAnalyzer().analyze(js, SOURCE, _state())
+    secrets = [f for f in findings if f.id == "js-hardcoded-secret"]
+    assert len(secrets) == 1
+    assert secrets[0].severity == "medium"
+    assert secrets[0].confidence == "heuristic"
+    assert (secrets[0].evidence or "").startswith("[entropy-check-failed]")
+    assert shannon_entropy("shortsecret12") >= 0
+
+
+def test_low_entropy_secret_value_downgraded():
+    js = 'const api_key = "abababababababab";'
+    findings = JSAnalyzer().analyze(js, SOURCE, _state())
+    secrets = [f for f in findings if f.id == "js-hardcoded-secret"]
+    assert len(secrets) == 1
+    assert secrets[0].severity == "medium"
+    assert secrets[0].confidence == "heuristic"
+    assert "entropy-check-failed" in (secrets[0].evidence or "")
+
+
+def test_construction_secret_value_dropped_as_blocklist():
+    js = 'const secret = "construction";'
+    findings = JSAnalyzer().analyze(js, SOURCE, _state())
+    assert not any(f.id == "js-hardcoded-secret" for f in findings)
+
+
+def test_akia_pattern_flagged_without_entropy_downgrade():
+    aws = "AKIAIOSFODNN7EXAMPLE"
+    js = f'const k = "{aws}";'
+    findings = JSAnalyzer().analyze(js, SOURCE, _state())
+    secrets = [f for f in findings if f.id == "js-hardcoded-secret"]
+    assert len(secrets) == 1
+    assert secrets[0].severity == "high"
+    assert secrets[0].confidence == "confirmed"
+    assert "entropy-check-failed" not in (secrets[0].evidence or "")
+    assert aws not in (secrets[0].evidence or "")

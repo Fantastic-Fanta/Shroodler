@@ -334,6 +334,7 @@ _shroodler() {
             '--no-prototype-pollution[Disable prototype-pollution probes]' \
             '--no-content-discovery[Skip the one-shot content-discovery pass]' \
             '--no-tls-check[Skip the one-shot TLS certificate check]' \
+            '--no-waf-detect[Skip WAF fingerprinting (enabled by default)]' \
             '--no-rate-limit-check[Disable missing-rate-limit probes]' \
             '--no-mass-assignment[Disable mass-assignment probes]' \
             '--smuggling[Enable HTTP request-smuggling probes]' \

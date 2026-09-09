@@ -8,6 +8,7 @@ returns findings for the agent to merge. Never stores full secret values.
 
 from __future__ import annotations
 
+import math
 import re
 from urllib.parse import urljoin
 
@@ -61,6 +62,98 @@ _SECRET_ASSIGN = re.compile(
     re.I,
 )
 _AWS_KEY = re.compile(r"AKIA[0-9A-Z]{16}")
+
+_SECRET_BLOCKLIST = {
+    "construction",
+    "unstable",
+    "undefined",
+    "development",
+    "production",
+    "application",
+    "description",
+    "information",
+    "localhost",
+    "placeholder",
+    "changeme",
+    "example",
+    "test",
+    "default",
+    "replace",
+    "string",
+    "secret123",
+    "password123",
+    "your-secret",
+    "your-key",
+    "your-token",
+    "insert",
+    "enter",
+    "password",
+    "secret",
+    "token",
+    "null",
+    "none",
+    "true",
+    "false",
+    "admin",
+    "root",
+    "user",
+    "username",
+    "passwd",
+    "bearer",
+    "sample",
+    "demo",
+    "dummy",
+    "fake",
+    "temp",
+    "staging",
+    "todo",
+    "fixme",
+    "xxx",
+    "your_secret",
+    "your_key",
+    "your_token",
+    "notasecret",
+    "changeme123",
+    "letmein",
+    "qwerty",
+}
+_HEX_COLOR = re.compile(r"^#[0-9a-fA-F]{3,8}$")
+_ALL_HEX = re.compile(r"^[0-9a-fA-F]+$")
+
+
+def shannon_entropy(value: str) -> float:
+    """Shannon entropy in bits/char: -sum(p * log2(p)) over character frequencies."""
+    if not value:
+        return 0.0
+    n = len(value)
+    freq: dict[str, int] = {}
+    for ch in value:
+        freq[ch] = freq.get(ch, 0) + 1
+    return -sum((count / n) * math.log2(count / n) for count in freq.values())
+
+
+def secret_value_verdict(value: str) -> str:
+    """Classify a candidate secret value: 'ok', 'weak', or 'drop'."""
+    if not value:
+        return "drop"
+    lowered = value.lower()
+    if lowered in _SECRET_BLOCKLIST:
+        return "drop"
+    if len(set(value)) == 1:
+        return "drop"
+    if "://" in value:
+        return "drop"
+    if value.startswith("/") or value.startswith("./"):
+        return "drop"
+    if _HEX_COLOR.match(value):
+        return "drop"
+    if _ALL_HEX.match(value) and len(value) in {32, 40}:
+        return "drop"
+    if len(value) < 16:
+        return "weak"
+    if shannon_entropy(value) < 3.5:
+        return "weak"
+    return "ok"
 
 _ATOB_SPLIT = re.compile(r"atob.{0,80}\.split\(\s*['\"][.]['\"]", re.I | re.S)
 _JWT_CALL = re.compile(
@@ -229,28 +322,38 @@ class JSAnalyzer:
         findings: list[Finding] = []
         seen: set[str] = set()
 
-        def emit(key_name: str, value: str) -> None:
+        def emit(key_name: str, value: str, *, aws: bool = False) -> None:
             redacted = _redact_secret(value)
             evidence = f"{key_name}={redacted}"
+            severity: str = "high"
+            confidence: str = "confirmed"
+            if not aws:
+                verdict = secret_value_verdict(value)
+                if verdict == "drop":
+                    return
+                if verdict == "weak":
+                    severity = "medium"
+                    confidence = "heuristic"
+                    evidence = f"[entropy-check-failed] {evidence}"
             if evidence in seen:
                 return
             seen.add(evidence)
             findings.append(
                 Finding(
                     id="js-hardcoded-secret",
-                    severity="high",
+                    severity=severity,  # type: ignore[arg-type]
                     category="secret",
                     url=source_url,
                     description=f"Hardcoded secret assigned to {key_name}",
                     evidence=evidence,
-                    confidence="confirmed",
+                    confidence=confidence,  # type: ignore[arg-type]
                 )
             )
 
         for match in _SECRET_ASSIGN.finditer(js_text):
             emit(match.group(1), match.group(2))
         for match in _AWS_KEY.finditer(js_text):
-            emit("aws_access_key", match.group(0))
+            emit("aws_access_key", match.group(0), aws=True)
         return findings
 
     def _find_jwt(self, js_text: str, source_url: str) -> list[Finding]:

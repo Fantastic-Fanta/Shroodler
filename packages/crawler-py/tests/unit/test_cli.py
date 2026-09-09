@@ -625,6 +625,27 @@ def test_dedup_and_ci_template_and_program_scope_parse():
     assert args.dedup is True
 
 
+def test_agent_no_waf_detect_flag():
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--no-waf-detect",
+        ]
+    )
+    assert args.no_waf_detect is True
+    args = p.parse_args(
+        ["agent", "--program", "lab", "--target", "http://127.0.0.1/"]
+    )
+    assert args.no_waf_detect is False
+    agent_help = p._subparsers._group_actions[0].choices["agent"].format_help()
+    assert "--no-waf-detect" in agent_help
+
+
 def test_agent_no_js_analysis_flag():
     p = build_parser()
     args = p.parse_args(

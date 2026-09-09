@@ -9,6 +9,7 @@ import httpx
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import body_text, dedupe, request
+from shroodler.waf_detect import expand_if_waf
 
 _EVIL_HOST = "evil.example.com"
 _HEADER_NAMES = ("Host", "X-Forwarded-Host", "X-Host")
@@ -37,44 +38,54 @@ def probe_host_header(
     *,
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Replay the URL with Host / forwarded-host headers pointing at an evil host."""
     if not hostname_of(url):
         return []
 
     findings: list[Finding] = []
+    hosts = expand_if_waf(
+        (_EVIL_HOST,),
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
     for header in _HEADER_NAMES:
-        resp = request(
-            "GET",
-            url,
-            cookie_header=cookie_header,
-            extra_headers={header: _EVIL_HOST},
-            client=client,
-            pacer=pacer,
-        )
-        if resp is None:
-            continue
-        body = body_text(resp)
-        loc = _location(resp)
-        blob = f"{body}\n{loc}"
-        if _EVIL_HOST not in blob.lower():
-            continue
-        findings.append(
-            Finding(
-                id="host-header-injection",
-                severity="high",
-                category="payload",
-                url=url,
-                description=(
-                    f"Response body or Location reflected {_EVIL_HOST} after a "
-                    f"{header} header injection."
-                ),
-                evidence=(
-                    f"header={header}: {_EVIL_HOST} "
-                    f"status={int(resp.status_code)} location={loc!r}"
-                ),
-                confidence="confirmed",
+        for host_value in hosts:
+            resp = request(
+                "GET",
+                url,
+                cookie_header=cookie_header,
+                extra_headers={header: host_value},
+                client=client,
+                pacer=pacer,
             )
-        )
-        return dedupe(findings)
+            if resp is None:
+                continue
+            body = body_text(resp)
+            loc = _location(resp)
+            blob = f"{body}\n{loc}"
+            if _EVIL_HOST not in blob.lower() and host_value.lower() not in blob.lower():
+                continue
+            findings.append(
+                Finding(
+                    id="host-header-injection",
+                    severity="high",
+                    category="payload",
+                    url=url,
+                    description=(
+                        f"Response body or Location reflected {_EVIL_HOST} after a "
+                        f"{header} header injection."
+                    ),
+                    evidence=(
+                        f"header={header}: {host_value} "
+                        f"status={int(resp.status_code)} location={loc!r}"
+                    ),
+                    confidence="confirmed",
+                )
+            )
+            return dedupe(findings)
     return dedupe(findings)

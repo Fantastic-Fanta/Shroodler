@@ -415,6 +415,19 @@ def test_agent_flags_parse():
             "lab",
             "--target",
             "http://127.0.0.1/",
+            "--no-openapi",
+        ]
+    )
+    assert args.no_openapi is True
+    assert args.run_probes is False
+
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
             "--run-diff",
             "--llm-business-logic",
             "--chain-spec",

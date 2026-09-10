@@ -335,6 +335,9 @@ _shroodler() {
             '--no-content-discovery[Skip the one-shot content-discovery pass]' \
             '--no-tls-check[Skip the one-shot TLS certificate check]' \
             '--no-waf-detect[Skip WAF fingerprinting (enabled by default)]' \
+            '--oob[Enable OOB collaborator (local HTTP callback listener)]' \
+            '--oob-listen[Bind address (default 127.0.0.1:8765)]:addr' \
+            '--oob-public-url[URL the target should fetch]:url' \
             '--no-rate-limit-check[Disable missing-rate-limit probes]' \
             '--no-mass-assignment[Disable mass-assignment probes]' \
             '--smuggling[Enable HTTP request-smuggling probes]' \

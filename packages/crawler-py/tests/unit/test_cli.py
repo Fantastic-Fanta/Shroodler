@@ -766,3 +766,51 @@ def test_cmd_agent_deepseek_requires_deepseek_key(monkeypatch, capsys):
     assert "ANTHROPIC_API_KEY" not in err
 
 
+def test_agent_oob_flags_parse(monkeypatch):
+    from types import SimpleNamespace
+
+    from shroodler.cli import cmd_agent
+
+    p = build_parser()
+    args = p.parse_args(
+        [
+            "agent",
+            "--program",
+            "lab",
+            "--target",
+            "http://127.0.0.1/",
+            "--oob",
+            "--oob-listen",
+            "127.0.0.1:0",
+            "--oob-public-url",
+            "http://example.invalid",
+        ]
+    )
+    assert args.func.__name__ == "cmd_agent"
+    assert args.oob is True
+    assert args.oob_listen == "127.0.0.1:0"
+    assert args.oob_public_url == "http://example.invalid"
+    agent_help = p._subparsers._group_actions[0].choices["agent"].format_help()
+    assert "--oob" in agent_help
+    assert "--oob-listen" in agent_help
+    assert "--oob-public-url" in agent_help
+
+    captured: dict = {}
+
+    def fake_run(config):
+        captured["config"] = config
+        return SimpleNamespace(iterations=0, confirmed=0, state_path="", errors=[])
+
+    monkeypatch.setattr("shroodler.agent.run_agent", fake_run)
+    assert cmd_agent(args) == 0
+    config = captured["config"]
+    assert config.oob is True
+    assert config.oob_listen == "127.0.0.1:0"
+    assert config.oob_public_url == "http://example.invalid"
+
+    default_args = p.parse_args(
+        ["agent", "--program", "lab", "--target", "http://127.0.0.1/"]
+    )
+    assert default_args.oob is False
+
+

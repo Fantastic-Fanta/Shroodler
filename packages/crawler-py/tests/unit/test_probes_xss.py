@@ -26,11 +26,14 @@ class FakeClient:
 def _injected(kw) -> str:
     params = kw.get("params") or {}
     data = kw.get("data") or {}
+    json_body = kw.get("json") or {}
     blobs = []
     if isinstance(params, dict):
         blobs.extend(str(v) for v in params.values())
     if isinstance(data, dict):
         blobs.extend(str(v) for v in data.values())
+    if isinstance(json_body, dict):
+        blobs.extend(str(v) for v in json_body.values())
     return " ".join(blobs)
 
 
@@ -80,6 +83,38 @@ def test_xss_stored_confirmed_on_follow_get():
     hit = next(f for f in findings if f.id == "xss-stored")
     assert hit.severity == "critical"
     assert hit.confidence == "confirmed"
+
+
+def test_xss_stored_put_json_reads_view_url():
+    stored = {"nonce": ""}
+
+    def handler(method, url, kw):
+        injected = _injected(kw)
+        if "shroodler-xss-" in injected:
+            start = injected.find("shroodler-xss-") + len("shroodler-xss-")
+            stored["nonce"] = injected[start : start + 6]
+            return FakeResp(200, '{"status":"success"}')
+        if method == "GET" and "reviews" in url and stored["nonce"]:
+            return FakeResp(
+                200,
+                f"<script>alert('shroodler-xss-{stored['nonce']}')</script>",
+            )
+        return FakeResp(200, "clean")
+
+    findings = probe_xss(
+        "http://127.0.0.1/rest/products/1/reviews",
+        "PUT",
+        [{"name": "message", "in": "json"}],
+        "session=owner",
+        view_url="http://127.0.0.1/rest/products/1/reviews",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    hit = next(f for f in findings if f.id == "xss-stored")
+    assert hit.severity == "critical"
+    assert hit.confidence == "confirmed"
+    assert hit.category == "payload"
+    assert "param=message" in (hit.evidence or "")
 
 
 def test_xss_skips_when_no_params():

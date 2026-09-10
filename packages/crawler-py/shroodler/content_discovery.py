@@ -74,6 +74,9 @@ MISC_PATHS = (
     "/humans.txt",
     "/security.txt",
     "/.well-known/security.txt",
+    "/ftp",
+    "/ftp/",
+    "/metrics",
 )
 SWAGGER_PATHS = (
     "/api/swagger.json",
@@ -515,6 +518,31 @@ def classify_path(
         )
     if path in CONFIG_PATHS:
         return classify_config_file(body, url, content_type, path=path)
+    if path in {"/ftp", "/ftp/"} or lowered.rstrip("/").endswith("/ftp"):
+        listing = "listing directory" in body.lower() or (
+            "<title>" in body.lower() and "ftp" in body.lower() and "<a" in body.lower()
+        )
+        if listing or (".pdf" in body.lower() and "<a" in body.lower()):
+            return _finding(
+                "directory-listing",
+                "medium",
+                url,
+                "A public directory listing is reachable.",
+                f"path={path} snippet={body[:160]!r}",
+                category="exposed-file",
+            )
+        return None
+    if path == "/metrics" or lowered.endswith("/metrics"):
+        if "# HELP" in body or "# TYPE" in body:
+            return _finding(
+                "metrics-endpoint-exposed",
+                "low",
+                url,
+                "A Prometheus metrics endpoint is unauthenticated.",
+                f"path={path}",
+                category="scan-note",
+            )
+        return None
     return None
 
 

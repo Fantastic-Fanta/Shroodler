@@ -1179,6 +1179,28 @@ def _probe_params(url: str, meta: dict | None) -> tuple[str, list[dict]]:
     return method, params
 
 
+def _looks_like_search_probe(url: str, params: list[dict]) -> bool:
+    """True when the path looks like search or a param is named q."""
+    from urllib.parse import urlparse
+
+    parsed = urlparse(url or "")
+    path = (parsed.path or "").lower()
+    fragment = (parsed.fragment or "").lower()
+    if "/search" in path or "/search" in fragment:
+        return True
+    for item in params or []:
+        if str(item.get("name") or "").lower() == "q":
+            return True
+    return False
+
+
+def _ensure_q_param(params: list[dict]) -> list[dict]:
+    out = [dict(item) for item in (params or [])]
+    if not any(str(item.get("name") or "").lower() == "q" for item in out):
+        out.append({"name": "q", "in": "query"})
+    return out
+
+
 def run_authz_diff(
     urls: list[str],
     *,
@@ -2007,7 +2029,7 @@ def _finish_probe_action(
     cookie_header: str,
 ) -> dict[str, Any]:
     from shroodler.probes.crlf import probe_crlf
-    from shroodler.probes.dom_xss import probe_dom_xss
+    from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
     from shroodler.probes.graphql import probe_graphql
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
@@ -2072,7 +2094,7 @@ def _finish_probe_action(
                     oob=getattr(config, "_oob", None),
                 ),
             )
-        if config.probe_xss and method in {"GET", "POST"} and params:
+        if config.probe_xss and method in {"GET", "POST", "PUT", "PATCH"} and params:
             _run(
                 "xss",
                 lambda: probe_xss(
@@ -2170,11 +2192,27 @@ def _finish_probe_action(
                     content_type=content_type,
                 ),
             )
-        if config.run_dom_xss and method in {"GET", "POST"} and params:
-            _run(
-                "dom-xss",
-                lambda: probe_dom_xss(url, method, params, hdr, pacer=pacer),
-            )
+        if method in {"GET", "POST"}:
+            searchish = _looks_like_search_probe(url, params)
+            auto_search = bool(config.probe_xss) and searchish
+            if config.run_dom_xss or auto_search:
+                probe_params = _ensure_q_param(params) if searchish else list(params)
+                if probe_params:
+                    _run(
+                        "dom-xss",
+                        lambda u=url, m=method, p=probe_params, h=hdr: probe_dom_xss(
+                            u, m, p, h, pacer=pacer
+                        ),
+                    )
+                    spa_url = spa_search_view_url(url)
+                    if spa_url:
+                        spa_params = _ensure_q_param(probe_params)
+                        _run(
+                            "dom-xss",
+                            lambda su=spa_url, sp=spa_params, m=method, h=hdr: (
+                                probe_dom_xss(su, m, sp, h, pacer=pacer)
+                            ),
+                        )
         if config.run_rate_limit and url not in seen_rl:
             seen_rl.add(url)
             _run(

@@ -46,6 +46,7 @@ def test_looks_like_idor_numeric_uuid_base62():
     assert looks_like_idor_url("http://127.0.0.1/api/obj/Ab12Cd34")
     assert not looks_like_idor_url("http://127.0.0.1/api/users/12")
     assert not looks_like_idor_url("http://127.0.0.1/api/users/1")
+    assert looks_like_idor_url("http://127.0.0.1/rest/basket/1")
     assert not looks_like_idor_url("http://127.0.0.1/api/obj/abcdefgh")
     assert not looks_like_idor_url("http://127.0.0.1/api/users/{id}")
 

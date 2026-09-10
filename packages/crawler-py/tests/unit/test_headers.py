@@ -19,6 +19,7 @@ def test_csp_strict_weak_absent():
     analysis, f_abs = extract_headers({}, "https://127.0.0.1/")
     assert "Content-Security-Policy" in analysis.missing
     assert any(x.id == "missing-csp" for x in f_abs)
+    assert all(x.severity == "info" for x in f_abs if x.id == "missing-csp")
 
 
 def test_csp_wildcard_script():
@@ -27,6 +28,7 @@ def test_csp_wildcard_script():
         "https://127.0.0.1/",
     )
     assert any(x.id == "csp-wildcard-script" for x in pos)
+    assert all(x.severity == "info" for x in pos if x.id == "csp-wildcard-script")
 
     _, via_default = extract_headers(
         {"Content-Security-Policy": "default-src *", "X-Frame-Options": "DENY"},
@@ -71,6 +73,7 @@ def test_csp_missing_frame_ancestors():
         "https://127.0.0.1/",
     )
     assert any(x.id == "csp-missing-frame-ancestors" for x in pos)
+    assert all(x.severity == "info" for x in pos if x.id == "csp-missing-frame-ancestors")
 
     _, fa = extract_headers(
         {"Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'"},
@@ -118,6 +121,7 @@ def test_x_frame_options_states():
     assert all(x.id != "missing-x-frame-options" for x in f_so)
     _, f_abs = extract_headers({}, "https://127.0.0.1/")
     assert any(x.id == "missing-x-frame-options" for x in f_abs)
+    assert all(x.severity == "info" for x in f_abs if x.id == "missing-x-frame-options")
 
 
 def test_hsts_present_absent_short():
@@ -133,6 +137,7 @@ def test_hsts_present_absent_short():
     assert any(x.id == "short-hsts" for x in f_short)
     _, f_abs = extract_headers({}, "https://127.0.0.1/")
     assert any(x.id == "missing-hsts" for x in f_abs)
+    assert all(x.severity == "info" for x in f_abs if x.id == "missing-hsts")
     _, f_http = extract_headers({}, "http://127.0.0.1/")
     assert all(x.id != "missing-hsts" for x in f_http)
 

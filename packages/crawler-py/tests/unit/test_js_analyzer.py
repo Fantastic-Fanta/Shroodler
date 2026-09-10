@@ -120,7 +120,7 @@ def test_relative_source_map_emits_finding():
     findings = JSAnalyzer().analyze(js, SOURCE, state)
     hits = [f for f in findings if f.id == "js-source-map-found"]
     assert len(hits) == 1
-    assert hits[0].severity == "medium"
+    assert hits[0].severity == "info"
     assert "app.js.map" in (hits[0].evidence or "")
     assert any("app.js.map" in u for u in state.source_map_urls)
 
@@ -188,3 +188,70 @@ def test_akia_pattern_flagged_without_entropy_downgrade():
     assert secrets[0].confidence == "confirmed"
     assert "entropy-check-failed" not in (secrets[0].evidence or "")
     assert aws not in (secrets[0].evidence or "")
+
+
+def test_angular_httpclient_rest_and_login_extracted():
+    js = """
+    this.http.get(`${this.hostServer}/rest/basket/${e}`).pipe();
+    this.http.get(`${this.hostServer}/rest/products/search?q=${e}`).pipe();
+    this.http.post(this.hostServer+`/rest/user/login`, e).pipe();
+    this.http.get(this.hostServer+`/api/Users`).pipe();
+    """
+    state = _state()
+    findings = JSAnalyzer().analyze(js, SOURCE, state)
+    blob = " ".join(_paths(state))
+    assert "/rest/basket/{param}" in blob or "/rest/basket/1" in blob
+    assert "/rest/products/search" in blob
+    search_meta = next(
+        m for u, m in state.endpoints.items() if "/rest/products/search" in u
+    )
+    search_names = {
+        p.get("name")
+        for p in (search_meta.get("params") or [])
+        if isinstance(p, dict)
+    }
+    assert "q" in search_names
+    assert "/rest/user/login" in blob
+    assert "/api/Users" in blob
+    login_meta = next(
+        m for u, m in state.endpoints.items() if "/rest/user/login" in u
+    )
+    assert str(login_meta.get("method") or "").upper() == "POST"
+    names = {
+        p.get("name")
+        for p in (login_meta.get("params") or [])
+        if isinstance(p, dict)
+    }
+    assert "email" in names
+    assert any("basket/1" in u for u in state.endpoints)
+    assert any(f.id == "js-api-endpoint-found" for f in findings)
+
+
+def test_angular_product_reviews_put_extracted():
+    js = """
+    this.http.get(`${this.hostServer}/rest/products/search?q=${e}`).pipe();
+    this.http.put(`${this.host}/${e}/reviews`, {message: review});
+    """
+    state = _state()
+    JSAnalyzer().analyze(js, SOURCE, state)
+    reviews = [
+        (url, meta)
+        for url, meta in state.endpoints.items()
+        if "/rest/products/" in url and url.rstrip("/").endswith("/reviews")
+    ]
+    assert reviews
+    assert any("/rest/products/{param}/reviews" in url for url, _ in reviews)
+    for _url, meta in reviews:
+        assert str(meta.get("method") or "").upper() == "PUT"
+        names = {
+            p.get("name")
+            for p in (meta.get("params") or [])
+            if isinstance(p, dict)
+        }
+        assert "message" in names
+        locations = {
+            str(p.get("in") or "")
+            for p in (meta.get("params") or [])
+            if isinstance(p, dict) and p.get("name") == "message"
+        }
+        assert "json" in locations

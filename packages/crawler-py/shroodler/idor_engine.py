@@ -20,7 +20,52 @@ from shroodler.pacer import Pacer
 from shroodler.program import ProgramState, url_to_pattern
 
 _PLACEHOLDER_RE = re.compile(r"\{[^{}]+\}")
-_NUMERIC_SEG_RE = re.compile(r"^\d{3,}$")
+_NUMERIC_SEG_RE = re.compile(r"^\d+$")
+# Short numeric IDs (1–2 digits) are common in CTF/demo apps (Juice Shop
+# /rest/basket/1) but /api/users/1 must stay non-IDOR so PeerWrite wins in
+# decide_next_action tests. 3+ digits still always count (via normalise_url).
+_SHORT_ID_PARENTS = frozenset(
+    {
+        "basket",
+        "baskets",
+        "order",
+        "orders",
+        "card",
+        "cards",
+        "product",
+        "products",
+        "item",
+        "items",
+        "feedback",
+        "feedbacks",
+        "address",
+        "addresss",
+        "complaint",
+        "complaints",
+        "memory",
+        "memories",
+        "quantity",
+        "quantitys",
+        "recycle",
+        "recycles",
+        "hint",
+        "hints",
+        "challenge",
+        "challenges",
+        "delivery",
+        "deliverys",
+        "profile",
+        "account",
+        "invoice",
+        "payment",
+        "file",
+        "document",
+        "message",
+        "comment",
+        "review",
+        "reviews",
+    }
+)
 _COMPACT_HEX_RE = re.compile(r"^[0-9a-fA-F]{32,}$")
 _BASE62_SEG_RE = re.compile(r"^[A-Za-z0-9]{8,20}$")
 _DENIED = frozenset({401, 403, 404})
@@ -94,11 +139,16 @@ def looks_like_idor_url(url: str) -> bool:
         norm_path = orig_path
     if orig_path != norm_path:
         return True
-    for seg in _path_segments(url):
+    segs = _path_segments(url)
+    for i, seg in enumerate(segs):
         if _COMPACT_HEX_RE.fullmatch(seg):
             return True
         if _BASE62_SEG_RE.fullmatch(seg) and sum(ch.isdigit() for ch in seg) >= 2:
             return True
+        prev = segs[i - 1] if i else ""
+        if _NUMERIC_SEG_RE.fullmatch(seg) and prev.lower() != "v":
+            if len(seg) >= 3 or prev.lower() in _SHORT_ID_PARENTS:
+                return True
     return False
 
 

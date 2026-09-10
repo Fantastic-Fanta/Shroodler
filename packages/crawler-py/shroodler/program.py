@@ -105,6 +105,7 @@ class ProgramState:
     reauth_callback: Any | None = field(default=None, repr=False, compare=False)
     waf_vendor: str | None = None
     waf_detected: bool = False
+    oob: Any | None = field(default=None, repr=False, compare=False)
 
 
 def _unique_str_list(raw: Any) -> list[str]:

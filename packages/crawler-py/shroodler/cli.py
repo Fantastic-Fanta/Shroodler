@@ -679,6 +679,9 @@ def cmd_agent(args: argparse.Namespace) -> int:
         ),
         run_js_analysis=not bool(getattr(args, "no_js_analysis", False)),
         run_waf_detect=not bool(getattr(args, "no_waf_detect", False)),
+        oob=bool(getattr(args, "oob", False)),
+        oob_listen=str(getattr(args, "oob_listen", None) or "127.0.0.1:8765"),
+        oob_public_url=str(getattr(args, "oob_public_url", None) or ""),
     )
     if config.llm_agent:
         from shroodler.llm_provider import llm_api_key_env
@@ -687,7 +690,15 @@ def cmd_agent(args: argparse.Namespace) -> int:
         if not os.environ.get(env_name):
             print(f"error: --llm-agent requires {env_name}", file=sys.stderr)
             return 2
-    result = run_agent(config)
+    try:
+        result = run_agent(config)
+    except Exception as exc:
+        from shroodler.oob import OOBError
+
+        if isinstance(exc, OOBError):
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        raise
     payload: dict = {
         "iterations": result.iterations,
         "confirmed": result.confirmed,
@@ -2778,6 +2789,26 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-waf-detect",
         action="store_true",
         help="Skip WAF fingerprinting (on by default; evasion variants apply when a WAF is found)",
+    )
+    agent.add_argument(
+        "--oob",
+        action="store_true",
+        help="Enable OOB collaborator (local HTTP callback listener)",
+    )
+    agent.add_argument(
+        "--oob-listen",
+        default="127.0.0.1:8765",
+        metavar="HOST:PORT",
+        help="Bind address (default 127.0.0.1:8765)",
+    )
+    agent.add_argument(
+        "--oob-public-url",
+        default="",
+        metavar="URL",
+        help=(
+            "URL the target should fetch (ngrok/interactsh/etc). "
+            "Default: http://listen"
+        ),
     )
     agent.add_argument(
         "--no-rate-limit-check",

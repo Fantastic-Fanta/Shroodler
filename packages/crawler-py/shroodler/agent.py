@@ -92,6 +92,9 @@ class AgentConfig:
     run_waf_detect: bool = True  # --no-waf-detect to skip
     idor_methods: list[str] = field(default_factory=lambda: ["GET"])
     peer_recipe: str | None = None
+    oob: bool = False  # --oob; local HTTP callback collaborator
+    oob_listen: str = "127.0.0.1:8765"
+    oob_public_url: str = ""
 
 
 @dataclass
@@ -2060,7 +2063,13 @@ def _finish_probe_action(
             _run(
                 "sqli",
                 lambda: probe_sqli(
-                    url, method, params, hdr, pacer=pacer, state=state
+                    url,
+                    method,
+                    params,
+                    hdr,
+                    pacer=pacer,
+                    state=state,
+                    oob=getattr(config, "_oob", None),
                 ),
             )
         if config.probe_xss and method in {"GET", "POST"} and params:
@@ -2084,16 +2093,31 @@ def _finish_probe_action(
         if config.probe_jwt and (jwt_cookie or jwt_auth):
             _run(
                 "jwt",
-                lambda: probe_jwt(url, jwt_cookie, jwt_auth, pacer=pacer),
+                lambda: probe_jwt(
+                    url, jwt_cookie, jwt_auth, pacer=pacer, state=state
+                ),
             )
         if config.probe_idor and peer:
             _run("idor", lambda: probe_idor(url, hdr, peer, pacer=pacer))
         if config.run_ssrf and method in {"GET", "POST"} and params:
-            _run("ssrf", lambda: probe_ssrf(url, method, params, hdr, pacer=pacer))
+            _run(
+                "ssrf",
+                lambda: probe_ssrf(
+                    url,
+                    method,
+                    params,
+                    hdr,
+                    pacer=pacer,
+                    state=state,
+                    oob=getattr(config, "_oob", None),
+                ),
+            )
         if config.run_open_redirect and method in {"GET", "POST"} and params:
             _run(
                 "open-redirect",
-                lambda: probe_open_redirect(url, method, params, hdr, pacer=pacer),
+                lambda: probe_open_redirect(
+                    url, method, params, hdr, pacer=pacer, state=state
+                ),
             )
         if config.run_host_header:
             host = hostname_of(url)
@@ -2119,13 +2143,18 @@ def _finish_probe_action(
                     hdr,
                     pacer=pacer,
                     content_type=content_type,
+                    state=state,
+                    oob=getattr(config, "_oob", None),
                 ),
             )
         if config.run_graphql:
             origin = origin_of(url)
             if origin and origin not in seen_graphql:
                 seen_graphql.add(origin)
-                _run("graphql", lambda: probe_graphql(url, hdr, pacer=pacer))
+                _run(
+                    "graphql",
+                    lambda: probe_graphql(url, hdr, pacer=pacer, state=state),
+                )
         if config.run_crlf and method in {"GET", "POST", "PUT", "PATCH"}:
             _run("crlf", lambda: probe_crlf(url, method, params, hdr, pacer=pacer))
         if config.run_prototype_pollution:
@@ -2843,13 +2872,29 @@ def run_agent(config: AgentConfig) -> AgentResult:
                 errors=[f"--llm-agent requires {env_name}"],
             )
     probe_memory = None
+    collab = None
     if config.llm_agent:
         from shroodler.llm_agent.probe_memory import ProbeMemory
 
         probe_memory = ProbeMemory(_probe_memory_db_path(config))
     try:
+        if getattr(config, "oob", False):
+            from shroodler.oob import set_active, start_from_config
+
+            collab = start_from_config(config)
+            config._oob = collab
+            set_active(collab)
         return _run_agent_body(config, probe_memory)
     finally:
+        if collab is not None:
+            try:
+                from shroodler.oob import set_active as _clear_oob
+
+                _clear_oob(None)
+                collab.stop()
+            except Exception:  # noqa: BLE001
+                pass
+            config._oob = None
         if probe_memory is not None:
             probe_memory.close()
 
@@ -2857,6 +2902,7 @@ def run_agent(config: AgentConfig) -> AgentResult:
 def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResult:
     state = program.load(config.program)
     assert_target_in_scope(state, config.target)
+    state.oob = getattr(config, "_oob", None)
     path = str(program.state_path(state.slug))
     log: list[dict[str, Any]] = []
     errors: list[str] = []

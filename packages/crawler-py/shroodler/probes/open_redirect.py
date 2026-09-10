@@ -13,8 +13,7 @@ from shroodler.probes.common import (
     inject,
     normalize_params,
 )
-
-# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+from shroodler.waf_detect import expand_if_waf
 
 OPEN_REDIRECT_NAME_HINTS = (
     "redirect",
@@ -80,6 +79,9 @@ def probe_open_redirect(
     *,
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Replay redirect-like params (or all params on login-like URLs)."""
     method_u = (method or "GET").upper()
@@ -101,7 +103,12 @@ def probe_open_redirect(
     for item in candidates:
         name = item["name"]
         nonce = secrets.token_hex(6)
-        for payload in _payloads(nonce):
+        for payload in expand_if_waf(
+            _payloads(nonce),
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
+        ):
             resp = inject(
                 url,
                 method_u,

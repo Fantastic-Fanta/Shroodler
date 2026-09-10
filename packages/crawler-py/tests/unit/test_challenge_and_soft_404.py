@@ -9,6 +9,7 @@ def test_detect_challenge_from_body_marker():
     assert finding is not None
     assert finding.category == "waf-challenge"
     assert finding.id == "waf-challenge-detected"
+    assert finding.severity == "info"
 
 
 def test_detect_challenge_ignores_plain_cf_ray_on_normal_page():

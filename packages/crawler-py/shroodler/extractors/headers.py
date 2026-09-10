@@ -56,7 +56,7 @@ def extract_headers(headers: dict[str, str], page_url: str) -> tuple[HeaderAnaly
         findings.append(
             Finding(
                 id="missing-csp",
-                severity="medium",
+                severity="info",
                 category="header",
                 url=page_url,
                 description="Content-Security-Policy header not set",
@@ -80,7 +80,7 @@ def extract_headers(headers: dict[str, str], page_url: str) -> tuple[HeaderAnaly
             findings.append(
                 Finding(
                     id="csp-wildcard-script",
-                    severity="medium",
+                    severity="info",
                     category="header",
                     url=page_url,
                     description=(
@@ -94,7 +94,7 @@ def extract_headers(headers: dict[str, str], page_url: str) -> tuple[HeaderAnaly
             findings.append(
                 Finding(
                     id="csp-missing-frame-ancestors",
-                    severity="medium",
+                    severity="info",
                     category="header",
                     url=page_url,
                     description=(
@@ -123,7 +123,7 @@ def extract_headers(headers: dict[str, str], page_url: str) -> tuple[HeaderAnaly
         findings.append(
             Finding(
                 id="missing-x-frame-options",
-                severity="medium",
+                severity="info",
                 category="header",
                 url=page_url,
                 description="X-Frame-Options header not set",
@@ -138,7 +138,7 @@ def extract_headers(headers: dict[str, str], page_url: str) -> tuple[HeaderAnaly
             findings.append(
                 Finding(
                     id="missing-hsts",
-                    severity="medium",
+                    severity="info",
                     category="header",
                     url=page_url,
                     description="Strict-Transport-Security header not set",

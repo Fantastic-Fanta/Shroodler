@@ -146,7 +146,9 @@ def test_url_embedded_benign_params_are_not_generic_api_keys():
     # A high-signal param name in a URL is still a finding -- a leaked key
     # that happens to live in a query string must not be silenced.
     leaked = f'<a href="/hook?api_key={ENTROPY}">k</a>'
-    assert "generic-api-key" in _ids(scan_text(leaked, "http://127.0.0.1/"))
+    hits = [f for f in scan_text(leaked, "http://127.0.0.1/") if f.id == "generic-api-key"]
+    assert hits
+    assert all(f.severity == "info" for f in hits)
     # Same token also sitting outside the query string still fires.
     both = f'<a href="/map?bookmark={ENTROPY}"></a><script>const k="{ENTROPY}"</script>'
     assert "generic-api-key" in _ids(scan_text(both, "http://127.0.0.1/"))

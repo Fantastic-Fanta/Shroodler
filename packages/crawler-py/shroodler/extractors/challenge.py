@@ -146,7 +146,7 @@ def detect_challenge(
 def _make_finding(vendor: str, status_code: int) -> Finding:
     return Finding(
         id="waf-challenge-detected",
-        severity="medium",
+        severity="info",
         category="waf-challenge",
         url="",
         description=(

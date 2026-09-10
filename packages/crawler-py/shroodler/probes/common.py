@@ -339,6 +339,11 @@ def inject(
         key: val for key, val in values.items() if key not in substituted
     }
     method_u = (method or "GET").upper()
+    json_names = {
+        str(item.get("name") or "")
+        for item in params
+        if str(item.get("in") or "").lower() in {"json", "body"}
+    }
     if method_u == "GET":
         return request(
             "GET",
@@ -350,6 +355,23 @@ def inject(
             pacer=pacer,
             reauth=reauth,
             params=query_values,
+        )
+    if json_names:
+        body = {
+            key: val for key, val in query_values.items() if key in json_names
+        }
+        if name in query_values:
+            body[name] = query_values[name]
+        return request(
+            method_u,
+            path,
+            cookie_header=cookie_header,
+            extra_headers=extra_headers,
+            extra_cookies=extra_cookies,
+            client=client,
+            pacer=pacer,
+            reauth=reauth,
+            json=body,
         )
     return request(
         method_u,

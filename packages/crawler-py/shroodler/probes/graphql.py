@@ -14,8 +14,7 @@ from shroodler.probes.common import body_text, dedupe, request
 from shroodler.probes.sqli import _has_sql_error
 from shroodler.probes.ssti import nonce_payload, nonce_prime, ssti_evaluated
 from shroodler.urls import origin as origin_of
-
-# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+from shroodler.waf_detect import expand_if_waf
 
 GQL_PATHS = ("/graphql", "/api/graphql", "/gql", "/query")
 TYPENAME_QUERY = "{__typename}"
@@ -172,6 +171,9 @@ def probe_graphql(
     *,
     client: httpx.Client | None = None,
     pacer: Pacer | None = None,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
 ) -> list[Finding]:
     """Probe GraphQL endpoints on the URL's origin (once per caller origin)."""
     findings: list[Finding] = []
@@ -243,9 +245,15 @@ def probe_graphql(
         )
         sqli_hit = False
         ssti_hit = False
+        sqli_payloads = expand_if_waf(
+            _SQLI_PAYLOADS,
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
+        )
         for field, arg in targets:
             if not sqli_hit:
-                for payload in _SQLI_PAYLOADS:
+                for payload in sqli_payloads:
                     resp = _post(
                         endpoint,
                         {"query": _gql_field(field, arg, payload)},
@@ -276,28 +284,36 @@ def probe_graphql(
                 nonce_tpl, expected = nonce_payload(prime)
                 attempts = ((nonce_tpl, expected), _SSTI_FIXED)
                 for payload, expect in attempts:
-                    resp = _post(
-                        endpoint,
-                        {"query": _gql_field(field, arg, payload)},
-                        cookie_header,
-                        client=client,
-                        pacer=pacer,
-                    )
-                    if ssti_evaluated(body_text(resp), expect, baseline=baseline):
-                        findings.append(
-                            _finding(
-                                finding_id="graphql-ssti",
-                                severity="critical",
-                                category="payload",
-                                url=endpoint,
-                                description=(
-                                    f"GraphQL field {field}.{arg} evaluated a "
-                                    "template-injection payload."
-                                ),
-                                evidence=f"field={field} arg={arg} payload={payload!r}",
-                            )
+                    for injected in expand_if_waf(
+                        (payload,),
+                        state=state,
+                        waf_detected=waf_detected,
+                        waf_vendor=waf_vendor,
+                    ):
+                        resp = _post(
+                            endpoint,
+                            {"query": _gql_field(field, arg, injected)},
+                            cookie_header,
+                            client=client,
+                            pacer=pacer,
                         )
-                        ssti_hit = True
+                        if ssti_evaluated(body_text(resp), expect, baseline=baseline):
+                            findings.append(
+                                _finding(
+                                    finding_id="graphql-ssti",
+                                    severity="critical",
+                                    category="payload",
+                                    url=endpoint,
+                                    description=(
+                                        f"GraphQL field {field}.{arg} evaluated a "
+                                        "template-injection payload."
+                                    ),
+                                    evidence=f"field={field} arg={arg} payload={payload!r}",
+                                )
+                            )
+                            ssti_hit = True
+                            break
+                    if ssti_hit:
                         break
             if sqli_hit and ssti_hit:
                 break

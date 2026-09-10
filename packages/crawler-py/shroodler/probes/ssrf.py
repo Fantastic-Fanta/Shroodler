@@ -10,6 +10,7 @@ from collections.abc import Callable
 import httpx
 
 from shroodler.models import Finding
+from shroodler.oob import collaborator_of, confirm_oob
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
@@ -19,8 +20,7 @@ from shroodler.probes.common import (
     request,
     response_elapsed,
 )
-
-# TODO: apply shroodler.waf_detect.mutate_payload when state.waf_detected.
+from shroodler.waf_detect import expand_if_waf
 
 SSRF_NAME_HINTS = (
     "url",
@@ -50,6 +50,7 @@ _METADATA_PAYLOAD = "http://169.254.169.254/latest/meta-data/"
 _LOCALHOST_PAYLOAD = "http://localhost/"
 _METADATA_MARKERS = ("instance-id", "ami-id", "root:")
 _TIMING_THRESHOLD = 2.0
+_COLLAB_WAIT = 3.0
 ListenFn = Callable[[float], tuple[int, Callable[[], bool]]]
 
 
@@ -134,6 +135,10 @@ def probe_ssrf(
     pacer: Pacer | None = None,
     listen_fn: ListenFn | None = None,
     oob_timeout: float = 5.0,
+    state=None,
+    waf_detected: bool = False,
+    waf_vendor: str | None = None,
+    oob=None,
 ) -> list[Finding]:
     """Inject loopback/metadata URLs into URL-like params and watch for SSRF."""
     method_u = (method or "GET").upper()
@@ -146,6 +151,13 @@ def probe_ssrf(
     findings: list[Finding] = []
     listen = listen_fn or _default_listen
     normalized = normalize_params(params)
+    collab = collaborator_of(oob, state)
+    metadata_payloads = expand_if_waf(
+        (_METADATA_PAYLOAD, _LOCALHOST_PAYLOAD),
+        state=state,
+        waf_detected=waf_detected,
+        waf_vendor=waf_vendor,
+    )
 
     baseline_resp = request(
         method_u,
@@ -194,8 +206,50 @@ def probe_ssrf(
             )
             continue
 
+        if collab is not None:
+            try:
+                minted = collab.mint("ssrf")
+                collab_payloads = expand_if_waf(
+                    (minted.url,),
+                    state=state,
+                    waf_detected=waf_detected,
+                    waf_vendor=waf_vendor,
+                )
+                for payload in collab_payloads:
+                    inject(
+                        url,
+                        method_u,
+                        normalized,
+                        name,
+                        payload,
+                        cookie_header=cookie_header,
+                        client=client,
+                        pacer=pacer,
+                    )
+                hit = confirm_oob(collab, minted.token, timeout=min(_COLLAB_WAIT, oob_timeout or _COLLAB_WAIT))
+            except Exception:  # noqa: BLE001 - fail closed
+                hit = None
+            if hit is not None:
+                findings.append(
+                    _finding(
+                        finding_id="ssrf-oob-callback",
+                        url=url,
+                        description=(
+                            f"{method_u} parameter {name!r} fetched an OOB "
+                            "callback URL (confirmed SSRF)."
+                        ),
+                        evidence=(
+                            f"param={name} token={minted.token} url={minted.url} "
+                            f"remote={hit.remote} method={hit.method} path={hit.path}"
+                        ),
+                        confidence="confirmed",
+                        severity="high",
+                    )
+                )
+                continue
+
         metadata_hit = False
-        for payload in (_METADATA_PAYLOAD, _LOCALHOST_PAYLOAD):
+        for payload in metadata_payloads:
             resp = inject(
                 url,
                 method_u,

@@ -537,7 +537,13 @@ and
 .B agent \-\-no\-tls\-check
 skip the one-shot content-discovery and TLS legs.
 .B agent \-\-no\-waf\-detect
-skips WAF fingerprinting (enabled by default; when a WAF is found, SQLi/XSS/SSTI/host-header probes send evasion payload variants).
+skips WAF fingerprinting (enabled by default; when a WAF is found, SQLi/XSS/SSTI/host-header/SSRF/open-redirect/XXE/GraphQL/JWT probes send evasion payload variants).
+.B agent \-\-oob
+enables a local HTTP callback collaborator so SSRF, XXE, and blind SQLi can confirm via a callback hit.
+.B agent \-\-oob\-listen
+sets the bind address (default 127.0.0.1:8765).
+.B agent \-\-oob\-public\-url
+is the URL the target should fetch (ngrok/interactsh/etc); default is http://listen.
 .B agent \-\-no\-js\-analysis
 skips deep JavaScript bundle analysis (API harvest, secrets, JWT, GraphQL,
 source maps) that otherwise runs after crawl.

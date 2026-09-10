@@ -28,12 +28,48 @@ _SESSION_COOKIE_HINTS = (
 )
 
 
+def spa_search_view_url(api_url: str) -> str | None:
+    """Map `/rest/.../search` APIs to the SPA hash search view."""
+    parsed = urlparse(api_url or "")
+    if "/search" not in (parsed.path or "").lower():
+        return None
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    return f"{parsed.scheme}://{parsed.netloc}/#/search"
+
+
+def _cookie_origin(url: str) -> str:
+    parsed = urlparse(url or "http://127.0.0.1/")
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}/"
+    return "http://127.0.0.1/"
+
+
 def _payload(nonce: str) -> str:
     return f"<img src=x onerror=window.__shroodler_{nonce}=1>"
 
 
 def _with_param(url: str, name: str, value: str) -> str:
     parsed = urlparse(url)
+    fragment = parsed.fragment or ""
+    if fragment and ("?" in fragment or fragment.startswith("/")):
+        if "?" in fragment:
+            frag_path, _, frag_query = fragment.partition("?")
+        else:
+            frag_path, frag_query = fragment, ""
+        pairs = list(parse_qsl(frag_query, keep_blank_values=True))
+        replaced = False
+        out: list[tuple[str, str]] = []
+        for key, existing in pairs:
+            if key == name and not replaced:
+                out.append((key, value))
+                replaced = True
+            else:
+                out.append((key, existing))
+        if not replaced:
+            out.append((name, value))
+        new_frag = frag_path + "?" + urlencode(out, safe="")
+        return urlunparse(parsed._replace(fragment=new_frag))
     pairs = list(parse_qsl(parsed.query, keep_blank_values=True))
     replaced = False
     out: list[tuple[str, str]] = []
@@ -73,7 +109,7 @@ def _cookie_blob(page: Any) -> str:
     return str(value or "")
 
 
-def _launch_page(cookie_header: str) -> tuple[Any, Any] | None:
+def _launch_page(cookie_header: str, url: str = "") -> tuple[Any, Any] | None:
     """Return (page, closer) or None if Playwright is unavailable."""
     try:
         from playwright.sync_api import sync_playwright
@@ -87,6 +123,7 @@ def _launch_page(cookie_header: str) -> tuple[Any, Any] | None:
         if header.lower().startswith("cookie:"):
             header = header.split(":", 1)[1].strip()
         cookies = []
+        origin = _cookie_origin(url)
         for part in header.split(";"):
             item = part.strip()
             if "=" not in item:
@@ -96,7 +133,7 @@ def _launch_page(cookie_header: str) -> tuple[Any, Any] | None:
                 {
                     "name": name.strip(),
                     "value": value.strip(),
-                    "url": "http://127.0.0.1/",
+                    "url": origin,
                 }
             )
         if cookies:
@@ -145,7 +182,7 @@ def probe_dom_xss(
     own_page = page is None
     closer = None
     if page is None:
-        launched = _launch_page(cookie_header)
+        launched = _launch_page(cookie_header, url)
         if launched is None:
             return []
         page, closer = launched
@@ -162,6 +199,12 @@ def probe_dom_xss(
                 page.goto(target, wait_until="load", timeout=8000)
             except Exception:  # noqa: BLE001 - fail closed
                 continue
+            waiter = getattr(page, "wait_for_timeout", None)
+            if callable(waiter):
+                try:
+                    waiter(1500)
+                except Exception:  # noqa: BLE001
+                    pass
             if not _payload_executed(page, nonce):
                 continue
             findings.append(

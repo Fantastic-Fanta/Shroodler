@@ -37,7 +37,7 @@ def probe_xss(
 ) -> list[Finding]:
     """Inject a nonce-tagged script payload per param; check reflect and store."""
     method_u = (method or "GET").upper()
-    if method_u not in {"GET", "POST"}:
+    if method_u not in {"GET", "POST", "PUT", "PATCH"}:
         return []
     normalized = normalize_params(params)
     if not normalized:
@@ -86,9 +86,10 @@ def probe_xss(
                 )
                 break
 
+        write_method = method_u if method_u in {"POST", "PUT", "PATCH"} else "POST"
         stored_resp = inject(
             url,
-            "POST",
+            write_method,
             normalized,
             name,
             variants[0],
@@ -96,7 +97,18 @@ def probe_xss(
             client=client,
             pacer=pacer,
         )
-        if stored_resp is None and method_u != "POST":
+        if stored_resp is None and write_method != "POST":
+            stored_resp = inject(
+                url,
+                "POST",
+                normalized,
+                name,
+                variants[0],
+                cookie_header=cookie_header,
+                client=client,
+                pacer=pacer,
+            )
+        if stored_resp is None and method_u not in {"POST", "PUT", "PATCH"}:
             continue
         view = request(
             "GET",

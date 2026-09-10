@@ -181,6 +181,22 @@ _CALL_PATTERNS = (
     _XHR_OPEN_URL,
 )
 
+# Angular HttpClient: this.http.get(`${this.hostServer}/rest/basket/${id}`)
+_NG_HTTP_TEMPLATE = re.compile(
+    r"""\.(get|post|put|patch|delete|head)\s*\(\s*`([^`]+)`""",
+    re.I,
+)
+# this.http.post(this.hostServer+`/rest/user/login`, body)
+_NG_HOSTSERVER_TEMPLATE = re.compile(
+    r"""\.(get|post|put|patch|delete|head)\s*\(\s*(?:this\.)?hostServer\s*\+\s*`([^`]+)`""",
+    re.I,
+)
+_NG_HOSTSERVER_QUOTE = re.compile(
+    r"""\.(get|post|put|patch|delete|head)\s*\(\s*(?:this\.)?hostServer\s*\+\s*['"]([^'"]+)['"]""",
+    re.I,
+)
+_HOSTSERVER_INTERP = re.compile(r"^\$\{[^}]*hostServer[^}]*\}")
+
 
 def _quoted_url(match: re.Match[str]) -> tuple[str, bool]:
     if match.group(3) is not None:
@@ -194,9 +210,43 @@ def _quoted_url(match: re.Match[str]) -> tuple[str, bool]:
 
 def _normalize_url_arg(raw: str, *, is_template: bool) -> str:
     text = (raw or "").strip()
-    if is_template:
+    text = _HOSTSERVER_INTERP.sub("", text)
+    if is_template or "${" in text:
         text = _TEMPLATE_INTERP.sub("{param}", text)
     return text.strip()
+
+
+def _login_search_params(path: str) -> list[dict[str, str]]:
+    from urllib.parse import parse_qsl, urlparse
+
+    lowered = (path or "").lower()
+    last = lowered.split("?")[0].rstrip("/").split("/")[-1]
+    params: list[dict[str, str]] = []
+    seen: set[str] = set()
+    parsed = urlparse(path)
+    for key, value in parse_qsl(parsed.query, keep_blank_values=True):
+        if key and key not in seen:
+            seen.add(key)
+            params.append(
+                {
+                    "name": key,
+                    "value": value.replace("{param}", "").replace("{id}", ""),
+                    "in": "query",
+                    "type": "string",
+                }
+            )
+    if last in {"login", "signin", "sign-in"}:
+        for name in ("email", "password"):
+            if name not in seen:
+                seen.add(name)
+                params.append({"name": name, "in": "json", "type": "string"})
+    if last == "reviews" or lowered.rstrip("/").endswith("/reviews"):
+        if "message" not in seen:
+            seen.add("message")
+            params.append({"name": "message", "in": "json", "type": "string"})
+    if "/search" in lowered and "q" not in seen:
+        params.append({"name": "q", "in": "query", "type": "string"})
+    return params
 
 
 def _is_capture_path(path: str) -> bool:
@@ -283,17 +333,40 @@ class JSAnalyzer:
         findings: list[Finding] = []
         seen: set[str] = set()
 
-        def add(raw: str, *, is_template: bool = False) -> None:
+        def add(
+            raw: str, *, is_template: bool = False, method: str | None = None
+        ) -> None:
             path = _normalize_url_arg(raw, is_template=is_template)
-            if not _is_capture_path(path) or path in seen:
+            if not _is_capture_path(path):
                 return
-            seen.add(path)
             resolved = _resolve_url(source_url, path)
-            if _endpoint_known(state, path, resolved):
-                return
+            extra_params = _login_search_params(path)
+            verb = (method or "").upper() or None
+            if extra_params and any(p.get("in") == "json" for p in extra_params):
+                verb = verb or "POST"
+            already_seen = path in seen
+            seen.add(path)
+            already = _endpoint_known(state, path, resolved)
             program._upsert_endpoint(
-                state, resolved, program._now(), source="js-analysis"
+                state,
+                resolved,
+                program._now(),
+                source="js-analysis",
+                method=verb,
+                params=extra_params or None,
             )
+            if "{param}" in resolved or "{id}" in resolved:
+                concrete = resolved.replace("{param}", "1").replace("{id}", "1")
+                program._upsert_endpoint(
+                    state,
+                    concrete,
+                    program._now(),
+                    source="js-analysis",
+                    method=verb,
+                    params=extra_params or None,
+                )
+            if already_seen or already:
+                return
             findings.append(
                 Finding(
                     id="js-api-endpoint-found",
@@ -315,6 +388,18 @@ class JSAnalyzer:
         for match in _CONCAT.finditer(js_text):
             flattened = _flatten_concat(match.group(2), match.group(3) or "")
             add(flattened, is_template=False)
+
+        for match in _NG_HTTP_TEMPLATE.finditer(js_text):
+            add(match.group(2), is_template=True, method=match.group(1))
+        for match in _NG_HOSTSERVER_TEMPLATE.finditer(js_text):
+            add(match.group(2), is_template=True, method=match.group(1))
+        for match in _NG_HOSTSERVER_QUOTE.finditer(js_text):
+            add(match.group(2), is_template=False, method=match.group(1))
+
+        if "/rest/products" in js_text and re.search(
+            r"\$\{this\.host\}/\$\{[^}]+\}/reviews", js_text
+        ):
+            add("/rest/products/{param}/reviews", is_template=True, method="PUT")
 
         return findings
 
@@ -427,7 +512,7 @@ class JSAnalyzer:
         findings = [
             Finding(
                 id="js-source-map-found",
-                severity="medium",
+                severity="info",
                 category="js-endpoint",
                 url=source_url,
                 description=f"JS bundle references source map {spec}",

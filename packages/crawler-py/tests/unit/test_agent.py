@@ -1106,6 +1106,7 @@ def test_execute_probe_merges_findings_and_marks_tested(monkeypatch):
     monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", lambda *a, **k: [])
     monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", lambda *a, **k: [])
     monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.dom_xss.probe_dom_xss", lambda *a, **k: [])
 
     url = "http://127.0.0.1/search?q=1"
     state = ProgramState(
@@ -1150,6 +1151,7 @@ def test_execute_probe_records_per_probe_errors(monkeypatch):
     monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", lambda *a, **k: [])
     monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", lambda *a, **k: [])
     monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", lambda *a, **k: [])
+    monkeypatch.setattr("shroodler.probes.dom_xss.probe_dom_xss", lambda *a, **k: [])
 
     url = "http://127.0.0.1/search?q=1"
     state = ProgramState(
@@ -1171,6 +1173,127 @@ def test_execute_probe_records_per_probe_errors(monkeypatch):
     assert result["findings_added"] == 0
     assert result["errors"]
     assert state.endpoints[url]["tested_payload"] is True
+
+
+def _stub_probes(monkeypatch, *, dom_xss=None) -> None:
+    def empty(*a, **k):
+        return []
+
+    monkeypatch.setattr("shroodler.probes.sqli.probe_sqli", empty)
+    monkeypatch.setattr("shroodler.probes.xss.probe_xss", empty)
+    monkeypatch.setattr("shroodler.probes.path_traversal.probe_path_traversal", empty)
+    monkeypatch.setattr("shroodler.probes.jwt.probe_jwt", empty)
+    monkeypatch.setattr("shroodler.probes.idor.probe_idor", empty)
+    monkeypatch.setattr("shroodler.probes.ssrf.probe_ssrf", empty)
+    monkeypatch.setattr("shroodler.probes.open_redirect.probe_open_redirect", empty)
+    monkeypatch.setattr("shroodler.probes.host_header.probe_host_header", empty)
+    monkeypatch.setattr("shroodler.probes.ssti.probe_ssti", empty)
+    monkeypatch.setattr("shroodler.probes.xxe.probe_xxe", empty)
+    monkeypatch.setattr("shroodler.probes.graphql.probe_graphql", empty)
+    monkeypatch.setattr("shroodler.probes.crlf.probe_crlf", empty)
+    monkeypatch.setattr(
+        "shroodler.probes.prototype_pollution.probe_prototype_pollution", empty
+    )
+    monkeypatch.setattr("shroodler.probes.rate_limit.probe_rate_limit", empty)
+    monkeypatch.setattr(
+        "shroodler.probes.mass_assignment.probe_mass_assignment", empty
+    )
+    monkeypatch.setattr("shroodler.probes.smuggling.probe_smuggling", empty)
+    monkeypatch.setattr(
+        "shroodler.probes.websocket.probe_websocket", lambda *a, **k: ([], [])
+    )
+    monkeypatch.setattr(
+        "shroodler.probes.dom_xss.probe_dom_xss",
+        dom_xss if dom_xss is not None else empty,
+    )
+
+
+def test_execute_probe_auto_runs_dom_xss_on_rest_search_spa(monkeypatch):
+    seen: list[str] = []
+
+    def capture_dom(url, method, params, hdr, **kw):
+        seen.append(url)
+        names = {str(p.get("name") or "") for p in (params or [])}
+        assert "q" in names
+        return []
+
+    _stub_probes(monkeypatch, dom_xss=capture_dom)
+    url = "http://127.0.0.1/rest/products/search"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "q", "in": "query"}],
+            }
+        },
+    )
+    execute_action(
+        ProbeAction(urls=[url]),
+        state,
+        _config(dry_run=False, owner_cookie="session=owner", run_dom_xss=False),
+        pacer=Pacer(0),
+    )
+    assert url in seen
+    assert "http://127.0.0.1/#/search" in seen
+
+
+def test_execute_probe_skips_dom_xss_on_non_search_without_flag(monkeypatch):
+    seen: list[str] = []
+
+    def capture_dom(url, method, params, hdr, **kw):
+        seen.append(url)
+        return []
+
+    _stub_probes(monkeypatch, dom_xss=capture_dom)
+    url = "http://127.0.0.1/api/users/1"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "id"}],
+            }
+        },
+    )
+    execute_action(
+        ProbeAction(urls=[url]),
+        state,
+        _config(dry_run=False, owner_cookie="session=owner", run_dom_xss=False),
+        pacer=Pacer(0),
+    )
+    assert seen == []
+
+
+def test_execute_probe_dom_xss_flag_runs_on_non_search(monkeypatch):
+    seen: list[str] = []
+
+    def capture_dom(url, method, params, hdr, **kw):
+        seen.append(url)
+        return []
+
+    _stub_probes(monkeypatch, dom_xss=capture_dom)
+    url = "http://127.0.0.1/page?id=1"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            url: {
+                **_endpoint(last_seen=_now_iso()),
+                "method": "GET",
+                "params": [{"name": "id"}],
+            }
+        },
+    )
+    execute_action(
+        ProbeAction(urls=[url]),
+        state,
+        _config(dry_run=False, owner_cookie="session=owner", run_dom_xss=True),
+        pacer=Pacer(0),
+    )
+    assert url in seen
+    assert all("#/search" not in item for item in seen)
 
 
 def test_dry_run_describes_probe_action(tmp_path, monkeypatch):

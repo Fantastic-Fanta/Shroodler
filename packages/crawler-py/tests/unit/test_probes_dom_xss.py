@@ -3,7 +3,11 @@ from __future__ import annotations
 from urllib.parse import unquote_plus
 
 from shroodler.pacer import Pacer
-from shroodler.probes.dom_xss import probe_dom_xss
+from shroodler.probes.dom_xss import (
+    _cookie_origin,
+    probe_dom_xss,
+    spa_search_view_url,
+)
 
 
 class FakePage:
@@ -78,7 +82,7 @@ def test_dom_xss_no_finding_when_payload_does_not_execute():
 def test_dom_xss_skips_when_playwright_missing(monkeypatch):
     import shroodler.probes.dom_xss as mod
 
-    monkeypatch.setattr(mod, "_launch_page", lambda cookie_header: None)
+    monkeypatch.setattr(mod, "_launch_page", lambda cookie_header, url="": None)
     findings = probe_dom_xss(
         "http://127.0.0.1/search",
         "GET",
@@ -87,3 +91,37 @@ def test_dom_xss_skips_when_playwright_missing(monkeypatch):
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_dom_xss_hash_route_search_goto():
+    page = FakePage(flag=1, cookies="")
+    findings = probe_dom_xss(
+        "http://127.0.0.1/#/search",
+        "GET",
+        [{"name": "q"}],
+        "",
+        page=page,
+        pacer=Pacer(0),
+    )
+    assert any(f.id == "dom-xss" for f in findings)
+    assert page.gotos
+    decoded = unquote_plus(page.gotos[0])
+    assert "#/search?q=" in decoded
+    assert "<img src=x onerror=window.__shroodler_" in decoded
+
+
+def test_spa_search_view_url_maps_rest_search():
+    assert (
+        spa_search_view_url("http://localhost:3000/rest/products/search")
+        == "http://localhost:3000/#/search"
+    )
+    assert spa_search_view_url("http://localhost:3000/rest/products/1") is None
+    assert spa_search_view_url("/rest/products/search") is None
+
+
+def test_cookie_origin_uses_localhost_port():
+    assert (
+        _cookie_origin("http://localhost:3000/rest/products/search")
+        == "http://localhost:3000/"
+    )
+    assert _cookie_origin("") == "http://127.0.0.1/"

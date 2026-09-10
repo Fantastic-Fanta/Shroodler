@@ -288,3 +288,20 @@ def test_admin_plain_html_without_admin_content_dropped():
     body = "<html><body><p>Welcome to the site</p></body></html>" + ("x" * 40)
     finding = classify_path("/admin/", body, "http://127.0.0.1/admin/")
     assert finding is None
+
+
+def test_ftp_directory_listing_emits():
+    body = (
+        "<html><head><title>listing directory /ftp</title></head>"
+        "<body><a href='coupons.pdf'>coupons.pdf</a></body></html>"
+    )
+    finding = classify_path("/ftp", body, "http://127.0.0.1/ftp")
+    assert finding is not None
+    assert finding.id == "directory-listing"
+
+
+def test_metrics_prometheus_emits():
+    body = "# HELP juiceshop_up 1\n# TYPE juiceshop_up gauge\njuiceshop_up 1\n"
+    finding = classify_path("/metrics", body, "http://127.0.0.1/metrics")
+    assert finding is not None
+    assert finding.id == "metrics-endpoint-exposed"

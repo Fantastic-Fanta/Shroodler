@@ -2457,3 +2457,36 @@ def test_agent_config_idor_defaults():
 
 
 
+
+
+def test_run_llm_verify_runs_when_key_present(monkeypatch):
+    import shroodler.agent as ag
+    import shroodler.llm_agent.payloads as payloads_mod
+
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-x")
+    tally = {"verified": 2, "confirmed": 1, "removed": 1, "downgraded": 0, "skipped": 0}
+    monkeypatch.setattr(payloads_mod, "auto_verify_pending", lambda *a, **k: tally)
+    state = ProgramState(slug="lab")
+    config = AgentConfig(program="lab", target="http://127.0.0.1/", llm_verify=True)
+    log: list = []
+    ag._run_llm_verify(state, config, Pacer(0), log)
+    entries = [e for e in log if e.get("action") == "llm-verify"]
+    assert entries and entries[0]["result"] == tally
+
+
+def test_run_llm_verify_skipped_without_key(monkeypatch):
+    import shroodler.agent as ag
+    import shroodler.llm_agent.payloads as payloads_mod
+
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+    def boom(*a, **k):
+        raise AssertionError("must not verify without a key")
+
+    monkeypatch.setattr(payloads_mod, "auto_verify_pending", boom)
+    state = ProgramState(slug="lab")
+    config = AgentConfig(program="lab", target="http://127.0.0.1/", llm_verify=True)
+    log: list = []
+    ag._run_llm_verify(state, config, Pacer(0), log)
+    assert not any(e.get("action") == "llm-verify" for e in log)

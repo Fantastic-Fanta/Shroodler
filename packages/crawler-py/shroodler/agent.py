@@ -97,6 +97,10 @@ class AgentConfig:
     llm_agent_max_cost_usd: float = 5.0
     # Auto-verify tentative findings against fresh evidence before reporting.
     llm_auto_verify: bool = True
+    # --llm-verify: run the LLM verifier over findings after a deterministic
+    # scan (the deterministic loop never calls report(), so report-time
+    # auto-verify doesn't fire). Requires a provider key.
+    llm_verify: bool = False
     run_js_analysis: bool = True  # --no-js-analysis to skip
     run_waf_detect: bool = True  # --no-waf-detect to skip
     idor_methods: list[str] = field(default_factory=lambda: ["GET"])
@@ -2569,6 +2573,29 @@ def _execute_content_discover(
     return out
 
 
+def _run_llm_verify(
+    state: ProgramState, config: AgentConfig, pacer: Pacer, log: list[dict[str, Any]]
+) -> None:
+    """LLM autoconfirm: re-check tentative findings against fresh evidence,
+    confirming, downgrading, or dropping false positives. Never raises."""
+    from shroodler.llm_provider import llm_api_key_env
+
+    env_name = llm_api_key_env(getattr(config, "llm_provider", "deepseek"))
+    if not os.environ.get(env_name):
+        emit_log_entry({"warning": "llm-verify-skipped", "reason": f"{env_name} missing"})
+        return
+    try:
+        from shroodler.llm_agent.payloads import auto_verify_pending
+
+        tally = auto_verify_pending(state, config, pacer, None)
+    except Exception as exc:  # noqa: BLE001 - verification must never break the run
+        emit_log_entry({"warning": "llm-verify-error", "reason": f"{type(exc).__name__}: {exc}"})
+        return
+    entry = {"action": "llm-verify", "result": tally}
+    log.append(entry)
+    emit_log_entry(entry)
+
+
 def _execute_report(state: ProgramState) -> dict[str, Any]:
     from shroodler.dedup import deduplicate
     from shroodler.program import _finding_from_dict, _finding_to_dict
@@ -3168,6 +3195,9 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
         emit_log_entry(entry)
         if isinstance(action, ReportAction):
             break
+
+    if getattr(config, "llm_verify", False):
+        _run_llm_verify(state, config, pacer, log)
 
     confirmed = _confirmed_findings(state)
     if not config.dry_run:

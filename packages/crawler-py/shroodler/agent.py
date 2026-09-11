@@ -56,6 +56,7 @@ class AgentConfig:
     llm_triage: bool = False  # opt-in; requires the provider API key in env
     run_discovery: bool = False  # run discover() before the first iteration
     ignore_robots: bool = False  # bypass robots.txt (use for API-first targets)
+    harvest_robots: bool = False  # aggressive: seed + surface robots Disallow leads
     write_authz_spec: str | None = None
     write_authz_endpoints: list[dict] | None = None
     run_probes: bool = False  # opt-in; default off
@@ -1662,6 +1663,7 @@ def _execute_crawl(
                 storage_state=(config.higher_priv_jar or "").strip() or None,
                 allow_external=allow_external,
                 ignore_robots=config.ignore_robots,
+                harvest_robots=config.harvest_robots,
                 mode=mode,
             )
         except Exception as exc:  # noqa: BLE001 - per-URL, loop must continue

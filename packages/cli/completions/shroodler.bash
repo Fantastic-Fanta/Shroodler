@@ -16,7 +16,7 @@ _shroodler_commands="crawl diff report eval baseline expected ingest-sessions in
 _shroodler_flags_for() {
     case "$1" in
         crawl)
-            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --reauth-max-retries --program --proxy --seed --spec --seed-from --from-capture --cookies-from --gql-schema --gql-wordlist --plugin --exclude-path"
+            echo "--profile --mode --depth --max-pages --max-time --output --format --ignore-robots --robots --no-sitemap --allow-external --check-rate-limit --no-check-rate-limit --check-idor --header --user-agent --cookie --cookie-jar --storage-state --login-recipe --reauth-max-retries --program --proxy --seed --spec --seed-from --from-capture --cookies-from --gql-schema --gql-wordlist --plugin --exclude-path"
             ;;
         diff)
             echo "--pages-only --gate --suppressions --format --output --source-root"
@@ -133,7 +133,7 @@ _shroodler_flags_for() {
             echo "--program --include --exclude"
             ;;
         agent)
-            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --peer-recipe --reauth-max-retries --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --llm-agent --llm-provider --llm-agent-model --llm-model --llm-reasoning-model --no-auto-verify --llm-verify --llm-agent-max-cost --run-discovery --write-authz-spec --ignore-robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec --dom-xss --no-crlf --no-prototype-pollution --no-content-discovery --no-tls-check --no-waf-detect --oob --oob-listen --oob-public-url --no-rate-limit-check --no-mass-assignment --aggressive --smuggling --no-smuggling --no-time-sqli --no-auto-verify --no-websocket --no-js-analysis --allow-external --scope-file"
+            echo "--program --target --max-iterations --max-pages-per-crawl --login-recipe --peer-recipe --reauth-max-retries --higher-priv-jar --lower-priv-jar --owner-cookie --peer-cookie --dry-run --llm-triage --llm-agent --llm-provider --llm-agent-model --llm-model --llm-reasoning-model --no-auto-verify --llm-verify --llm-agent-max-cost --run-discovery --write-authz-spec --ignore-robots --robots --run-probes --no-openapi --no-ssrf --no-open-redirect --no-host-header --no-ssti --no-xxe --no-graphql --no-auto-register --reprobe --run-diff --llm-business-logic --chain-spec --dom-xss --no-crlf --no-prototype-pollution --no-content-discovery --no-tls-check --no-waf-detect --oob --oob-listen --oob-public-url --no-rate-limit-check --no-mass-assignment --aggressive --smuggling --no-smuggling --no-time-sqli --no-auto-verify --no-websocket --no-js-analysis --allow-external --scope-file"
             ;;
         dedup)
             echo "--output"

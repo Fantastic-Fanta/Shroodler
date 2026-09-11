@@ -818,3 +818,37 @@ def test_agent_oob_flags_parse(monkeypatch):
     assert default_args.oob is False
 
 
+
+
+def test_robots_flags_resolution():
+    import argparse
+
+    from shroodler.cli import _robots_flags
+
+    def ns(**kw):
+        n = argparse.Namespace()
+        for k, v in kw.items():
+            setattr(n, k, v)
+        return n
+
+    assert _robots_flags(ns(robots="respect", ignore_robots=False)) == (False, False)
+    assert _robots_flags(ns(robots="ignore", ignore_robots=False)) == (True, False)
+    assert _robots_flags(ns(robots="harvest", ignore_robots=False)) == (True, True)
+    # Legacy --ignore-robots with no --robots still bypasses.
+    assert _robots_flags(ns(robots=None, ignore_robots=True)) == (True, False)
+    # Nothing set: honor robots.
+    assert _robots_flags(ns(robots=None, ignore_robots=False)) == (False, False)
+
+
+def test_profile_sets_robots_default():
+    from shroodler.cli import _apply_profile, build_parser
+
+    parser = build_parser()
+    _apply_profile(parser, "aggressive")
+    args = parser.parse_args(["crawl", "http://127.0.0.1/"])
+    assert args.robots == "harvest"
+
+    parser2 = build_parser()
+    _apply_profile(parser2, "safe")
+    args2 = parser2.parse_args(["crawl", "http://127.0.0.1/"])
+    assert args2.robots == "respect"

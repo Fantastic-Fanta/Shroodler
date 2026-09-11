@@ -80,6 +80,7 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--format[Output format]:(json html csv sarif junit)' \
             '--ignore-robots[Ignore robots.txt]' \
+            '--robots[robots.txt handling: respect|ignore|harvest]:mode:(respect ignore harvest)' \
             '--no-sitemap[Skip sitemap discovery]' \
             '--allow-external[Allow crawling a non-local target]' \
             '--check-rate-limit[Probe login forms for missing rate limiting]' \
@@ -326,6 +327,7 @@ _shroodler() {
             '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \
             '--ignore-robots[Bypass robots.txt during crawl legs]' \
+            '--robots[robots.txt handling: respect|ignore|harvest]:mode:(respect ignore harvest)' \
             '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/SSRF/open-redirect/host-header/SSTI/XXE/GraphQL)]' \
             '--no-openapi[Disable OpenAPI spec discovery and spec-driven probes]' \
             '--no-ssrf[Disable SSRF probes]' \

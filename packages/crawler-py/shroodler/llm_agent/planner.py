@@ -51,6 +51,20 @@ Read results, then reason further:
 - Concrete loop per endpoint: fetch_and_read it ONCE to see its shape, then
   immediately craft_payloads (or probe_sqli/probe_xss/etc.) against its params.
   Never read the same URL twice.
+
+MATCH THE PROBE TO THE ENDPOINT — do not test one bug class everywhere. Pick the
+class the parameter's shape implies:
+- id / numeric / *_id param → probe_idor AND probe_sqli
+- a value reflected into the page / search / q / message → probe_xss
+- url / redirect / next / return / callback param → probe_open_redirect, probe_ssrf
+- file / path / filename / template param → probe_path_traversal, probe_ssti
+- a URL the server fetches → probe_ssrf
+A class that was productive on one endpoint does NOT mean test it on every
+endpoint — that is tunnel vision and misses other classes. COVER BREADTH FIRST:
+give each untested endpoint the ONE probe its shape implies before going deep.
+Only after an endpoint's likely class is confirmed do you escalate it with
+craft_payloads. Prefer an untested (endpoint, class) pair over re-testing a
+class you've already run.
 - Use craft_payloads once you've observed a stack detail (a DB error, a template
   engine, a framework) to generate payloads tailored to THAT, not generic ones.
 - Use compare_responses for tampering (normal vs altered price/param) and
@@ -158,8 +172,10 @@ def _probe_memory_block(memory: ProbeMemory) -> str:
     def _render(prod: list[str], barr: list[str]) -> str:
         body = (
             f"{summary}\n"
-            f"Productive probes (prioritise these): {prod}\n"
-            f"Barren probes (deprioritise these): {barr}\n"
+            f"Classes that have found bugs here: {prod} (a good sign the app is "
+            f"weak, but still match the probe to each endpoint — do not run these "
+            f"on endpoints their shape doesn't fit).\n"
+            f"Classes tried widely with no result: {barr} (deprioritise).\n"
         )
         return "<probe_memory>\n" + body + "</probe_memory>"
 

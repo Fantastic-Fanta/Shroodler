@@ -64,6 +64,12 @@ def extract_js_endpoints(source_url: str, js_text: str) -> tuple[list[JsEndpoint
         raw = (raw or "").strip()
         if not raw:
             return
+        # A real endpoint literal has no raw whitespace or code-comment markers;
+        # skip JS comment fragments that patterns occasionally capture.
+        if any(ch.isspace() for ch in raw) or any(
+            marker in raw for marker in ("/*", "*/", "<", ">")
+        ):
+            return
         url = normalize_url(source_url, raw) or raw
         if url in seen:
             return

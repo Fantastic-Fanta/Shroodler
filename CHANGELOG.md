@@ -7,6 +7,7 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Wider OpenAPI probe coverage.** Spec-discovered endpoints now also get open-redirect and CRLF probes (previously only SQLi/XSS/traversal/IDOR/unauth), so a redirect param reached only via the spec is no longer missed. Found by the eval harness: planted-bug recall on a local lab went 75% → 100%.
 - **LLM autoconfirm (`--llm-verify`).** After a deterministic `shroodler agent`
   scan, the LLM verifier re-checks each tentative (heuristic/probable) finding
   against fresh evidence and confirms, downgrades, or drops it as a false

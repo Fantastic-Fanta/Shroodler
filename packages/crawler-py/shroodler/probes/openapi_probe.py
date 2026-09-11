@@ -10,7 +10,9 @@ import httpx
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import dedupe, request
+from shroodler.probes.crlf import probe_crlf
 from shroodler.probes.idor import probe_idor
+from shroodler.probes.open_redirect import probe_open_redirect
 from shroodler.probes.path_traversal import probe_path_traversal
 from shroodler.probes.rate_limit import probe_rate_limit_bypass
 from shroodler.probes.sqli import probe_sqli
@@ -143,6 +145,14 @@ def _probe_one(
         )
         findings.extend(
             probe_path_traversal(filled, injectable, cookie_header, client=client, pacer=pacer)
+        )
+        findings.extend(
+            probe_open_redirect(
+                filled, method, injectable, cookie_header, client=client, pacer=pacer
+            )
+        )
+        findings.extend(
+            probe_crlf(filled, method, injectable, cookie_header, client=client, pacer=pacer)
         )
     if peer_cookie and _has_numeric_path_param(params, filled):
         findings.extend(

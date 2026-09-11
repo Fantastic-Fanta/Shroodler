@@ -701,7 +701,11 @@ def cmd_agent(args: argparse.Namespace) -> int:
         run_tls_check=not bool(getattr(args, "no_tls_check", False)),
         run_rate_limit=not bool(getattr(args, "no_rate_limit_check", False)),
         run_mass_assignment=not bool(getattr(args, "no_mass_assignment", False)),
-        run_smuggling=bool(getattr(args, "smuggling", False))
+        aggressive=bool(getattr(args, "aggressive", False)),
+        run_smuggling=(
+            bool(getattr(args, "smuggling", False))
+            or bool(getattr(args, "aggressive", False))
+        )
         and not bool(getattr(args, "no_smuggling", False)),
         run_websocket=not bool(getattr(args, "no_websocket", False)),
         allow_external=bool(getattr(args, "allow_external", False)),
@@ -2918,6 +2922,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--no-mass-assignment",
         action="store_true",
         help="Disable mass-assignment probes (on by default when --run-probes is set)",
+    )
+    agent.add_argument(
+        "--aggressive",
+        action="store_true",
+        help=(
+            "Aggressive mode: no request pacing, probe endpoints concurrently, "
+            "and enable smuggling probes. Faster but hammers the target; use only "
+            "on hosts you are authorized to stress"
+        ),
     )
     agent.add_argument(
         "--smuggling",

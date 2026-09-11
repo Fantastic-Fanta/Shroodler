@@ -7,6 +7,31 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Content-type-aware XSS.** The reflected/stored XSS probes now confirm
+  High/Critical only when the response actually renders as HTML (text/html,
+  xhtml, svg, or an undeclared type a browser may sniff). A payload reflected
+  verbatim in a JSON API response is not executable, so it now reports as
+  `xss-reflected-nonhtml` / `xss-stored-nonhtml` (Low, heuristic) with a note to
+  check for second-order HTML rendering, instead of a false High. Cuts a real
+  false positive seen against a FastAPI JSON endpoint.
+
+- **SPA API discovery.** Both JS extractors (`js_analyzer.py` agent path,
+  `extractors/js_endpoints.py` crawl path) now pull bare API-path string
+  literals (`/api/…`, `/rest/…`, `/graphql`, `/v1/…`) out of minified bundles,
+  not just paths inside a recognized `fetch()`/`axios` call. Modern SPAs store
+  the path as a constant and call it through a variable, which defeated the
+  old call-syntax matchers. Restricted to API-ish prefixes to avoid pulling in
+  static assets. On a real Vite SPA this took endpoint discovery from 0 to 26.
+- **Two new detection probes.** `rate-limit-bypass-forwarded-for`: after a
+  fixed-client burst throttles, a second burst rotating `X-Forwarded-For`
+  per request that never throttles proves the limiter keys on the spoofable
+  header (auth brute-force bypass); High. `unauthenticated-data-exposure`: a
+  user-scoped/sensitive API path (`/me`, `/messages`, `/guild`, `/admin`, …)
+  that returns 200 structured data with no credentials is flagged as broken
+  access control; High, confidence probable. Both run in the agent's probe loop
+  (`--no-…` via config); the second one caught a real live unauthenticated
+  `/api/guilds` leak in testing.
+
 - **Measuring "smarter": evaluation harness.** `shroodler eval <scan> <expected>`
   scores a run against curated ground truth — precision, recall, F1, plus LLM
   cost and iteration count when present — matching on `(id, url-path)` like

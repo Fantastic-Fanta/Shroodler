@@ -82,6 +82,7 @@ class AgentConfig:
     run_content_discovery: bool = True
     run_tls_check: bool = True
     run_rate_limit: bool = True
+    run_unauth_exposure: bool = True  # anon read of sensitive API endpoints
     run_mass_assignment: bool = True
     run_smuggling: bool = False  # opt-in; aggressive
     run_websocket: bool = True
@@ -2093,12 +2094,13 @@ def _finish_probe_action(
     from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.prototype_pollution import probe_prototype_pollution
-    from shroodler.probes.rate_limit import probe_rate_limit
+    from shroodler.probes.rate_limit import probe_rate_limit, probe_rate_limit_bypass
     from shroodler.probes.smuggling import hostname_of as smuggle_host
     from shroodler.probes.smuggling import probe_smuggling
     from shroodler.probes.sqli import probe_sqli
     from shroodler.probes.ssrf import probe_ssrf
     from shroodler.probes.ssti import probe_ssti
+    from shroodler.probes.unauth_exposure import probe_unauth_exposure
     from shroodler.probes.websocket import probe_websocket
     from shroodler.probes.xss import probe_xss
     from shroodler.probes.xxe import probe_xxe
@@ -2109,6 +2111,7 @@ def _finish_probe_action(
     seen_graphql: set[str] = set()
     seen_smuggle: set[str] = set()
     seen_rl: set[str] = set()
+    seen_unauth: set[str] = set()
 
     def _run(label: str, fn) -> None:
         try:
@@ -2282,6 +2285,20 @@ def _finish_probe_action(
             _run(
                 "rate-limit",
                 lambda: probe_rate_limit(url, method, hdr, pacer=pacer),
+            )
+            _run(
+                "rate-limit-bypass",
+                lambda: probe_rate_limit_bypass(url, method, hdr, pacer=pacer),
+            )
+        if (
+            getattr(config, "run_unauth_exposure", True)
+            and method == "GET"
+            and url not in seen_unauth
+        ):
+            seen_unauth.add(url)
+            _run(
+                "unauth-exposure",
+                lambda: probe_unauth_exposure(url, method, pacer=pacer),
             )
         if config.run_mass_assignment and method in {"POST", "PUT", "PATCH"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")

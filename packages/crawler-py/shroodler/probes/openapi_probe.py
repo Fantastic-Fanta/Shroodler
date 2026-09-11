@@ -12,7 +12,9 @@ from shroodler.pacer import Pacer
 from shroodler.probes.common import dedupe, request
 from shroodler.probes.idor import probe_idor
 from shroodler.probes.path_traversal import probe_path_traversal
+from shroodler.probes.rate_limit import probe_rate_limit_bypass
 from shroodler.probes.sqli import probe_sqli
+from shroodler.probes.unauth_exposure import probe_unauth_exposure
 from shroodler.probes.xss import probe_xss
 
 _PATH_PARAM = re.compile(r"\{([^}]+)\}")
@@ -152,6 +154,15 @@ def _probe_one(
         )
         if hit is not None:
             findings.append(hit)
+    # Path-heuristic checks (self-gating), independent of whether the spec
+    # declares a security scheme — most FastAPI apps enforce auth via a
+    # dependency and never emit `security`, so `auth_required` stays false.
+    findings.extend(
+        probe_unauth_exposure(filled, method, client=client, pacer=pacer)
+    )
+    findings.extend(
+        probe_rate_limit_bypass(filled, method, cookie_header, client=client, pacer=pacer)
+    )
     return findings
 
 

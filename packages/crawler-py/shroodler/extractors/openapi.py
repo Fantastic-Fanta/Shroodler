@@ -17,6 +17,9 @@ PROBE_PATHS = (
     "/api-docs/v1",
     "/v1/api-docs",
     "/v2/api-docs",
+    "/v1/swagger.json",
+    "/api/swagger.json",
+    "/api/v1/swagger.json",
     "/swagger/v1/swagger.json",
     "/swagger/index.html",
 )

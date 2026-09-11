@@ -22,6 +22,7 @@ def _config(**kwargs) -> AgentConfig:
         "program": "lab",
         "target": "http://127.0.0.1/",
         "llm_agent": True,
+        "llm_provider": "anthropic",
         "llm_agent_model": "claude-sonnet-5",
     }
     defaults.update(kwargs)

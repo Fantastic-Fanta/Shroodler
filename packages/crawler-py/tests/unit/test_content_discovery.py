@@ -284,6 +284,51 @@ def test_admin_spa_shell_dropped():
     assert finding is None
 
 
+def test_swagger_and_graphql_spa_shell_dropped():
+    swagger = classify_path(
+        "/v1/swagger.json",
+        _SPA_SHELL,
+        "http://127.0.0.1/v1/swagger.json",
+        content_type="text/html; charset=utf-8",
+    )
+    graphql = classify_path(
+        "/graphql",
+        _SPA_SHELL,
+        "http://127.0.0.1/graphql",
+        content_type="text/html; charset=utf-8",
+    )
+    assert swagger is None
+    assert graphql is None
+    findings = discover_content(
+        "http://127.0.0.1/",
+        client=FakeClient(
+            {
+                "/v1/swagger.json": FakeResp(
+                    200, _SPA_SHELL, headers={"Content-Type": "text/html"}
+                ),
+                "/graphql": FakeResp(
+                    200, _SPA_SHELL, headers={"Content-Type": "text/html"}
+                ),
+            }
+        ),
+        pacer=Pacer(0),
+        paths=("/v1/swagger.json", "/graphql"),
+    )
+    assert findings == []
+
+
+def test_real_swagger_json_still_emits():
+    body = '{"swagger":"2.0","info":{"title":"demo","version":"1"},"paths":{}}'
+    finding = classify_path(
+        "/v1/swagger.json",
+        body,
+        "http://127.0.0.1/v1/swagger.json",
+        content_type="application/json",
+    )
+    assert finding is not None
+    assert finding.id == "openapi-spec-found"
+
+
 def test_admin_plain_html_without_admin_content_dropped():
     body = "<html><body><p>Welcome to the site</p></body></html>" + ("x" * 40)
     finding = classify_path("/admin/", body, "http://127.0.0.1/admin/")

@@ -92,6 +92,86 @@ TOOLS: list[dict[str, Any]] = [
         },
     },
     {
+        "name": "send_request",
+        "description": (
+            "Craft and send ANY HTTP request, then read the result: status, "
+            "timing, where your input reflected, and a body snippet. Use this "
+            "to write your own payloads and reason about the response instead "
+            "of relying on the fixed probes."
+        ),
+        "params": {
+            "url": "str",
+            "method": "GET|POST|PUT|DELETE|... (default GET)",
+            "headers": "dict | null",
+            "params": "dict | null — query (GET) or form fields (else)",
+            "body": "str | dict | null — raw or JSON body",
+            "include_auth": "bool — send the owner session (default true)",
+        },
+    },
+    {
+        "name": "compare_responses",
+        "description": (
+            "Send two requests (a and b) and diff them. Use to test tampering: "
+            "e.g. a=normal price, b=altered price; or a param present vs removed."
+        ),
+        "params": {
+            "a": "dict — {url, method, params, body, headers, include_auth}",
+            "b": "dict — same shape as a",
+        },
+    },
+    {
+        "name": "replay_as_user",
+        "description": (
+            "Send the same request as the owner, a lower-privilege peer, and "
+            "anonymously; compare the three. Use for broken access control: if "
+            "peer or anon get the owner's data, that's a lead."
+        ),
+        "params": {"url": "str", "method": "GET|POST", "params": "dict | null"},
+    },
+    {
+        "name": "decode_token",
+        "description": (
+            "Decode a JWT (header+payload, no verification) or base64 blob and "
+            "flag weak signals like alg:none or HMAC. No network request."
+        ),
+        "params": {"token": "str"},
+    },
+    {
+        "name": "craft_payloads",
+        "description": (
+            "Ask the model to write payloads tailored to what you've already "
+            "observed (DB, template engine, framework, reflection context), fire "
+            "them at a parameter, and report which produced a signal. Pass the "
+            "evidence you saw so the payloads are specific, not generic."
+        ),
+        "params": {
+            "url": "str",
+            "param": "str — parameter to inject (empty targets the URL/body)",
+            "vuln_class": "str — e.g. sqli, xss, ssti, path_traversal",
+            "method": "GET|POST",
+            "evidence": "str — response text/errors/stack you already observed",
+        },
+    },
+    {
+        "name": "verify_finding",
+        "description": (
+            "Re-fetch a finding's URL and judge, from fresh evidence, whether it "
+            "is real. Confirms it, adjusts its confidence, or removes it as a "
+            "false positive. Call this on tentative findings before reporting."
+        ),
+        "params": {"finding_id": "str", "url": "str | null"},
+    },
+    {
+        "name": "analyze_logic",
+        "description": (
+            "Reason about business-logic and authorization abuse from the "
+            "crawled workflow (price tampering, coupon reuse, step-skipping, "
+            "negative quantities, IDOR chains) and queue hypotheses to test. "
+            "Use when signature probes are exhausted or the app has a clear flow."
+        ),
+        "params": {},
+    },
+    {
         "name": "hypothesise",
         "description": (
             "Record a hypothesis about a potential vulnerability to investigate. "

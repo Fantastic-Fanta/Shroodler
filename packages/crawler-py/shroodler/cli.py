@@ -642,6 +642,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
         ignore_robots=bool(getattr(args, "ignore_robots", False)),
         write_authz_spec=getattr(args, "write_authz_spec", None),
         run_probes=bool(getattr(args, "run_probes", False)),
+        probe_time_sqli=not bool(getattr(args, "no_time_sqli", False)),
         reprobe=bool(getattr(args, "reprobe", False)),
         run_diff=bool(getattr(args, "run_diff", False)),
         run_business_logic=bool(getattr(args, "llm_business_logic", False)),
@@ -668,9 +669,12 @@ def cmd_agent(args: argparse.Namespace) -> int:
         allow_external=bool(getattr(args, "allow_external", False)),
         scope_file=getattr(args, "scope_file", None),
         llm_agent=bool(getattr(args, "llm_agent", False)),
-        llm_provider=str(getattr(args, "llm_provider", None) or "anthropic"),
+        llm_provider=str(getattr(args, "llm_provider", None) or "deepseek"),
         llm_agent_model=str(
-            getattr(args, "llm_agent_model", None) or "claude-sonnet-5"
+            getattr(args, "llm_agent_model", None) or "deepseek-chat"
+        ),
+        llm_agent_reasoning_model=str(
+            getattr(args, "llm_agent_reasoning_model", None) or "deepseek-reasoner"
         ),
         llm_agent_max_cost_usd=(
             5.0
@@ -2673,24 +2677,24 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help=(
             "Use an LLM to decide each action "
-            "(requires ANTHROPIC_API_KEY, or DEEPSEEK_API_KEY with --llm-provider deepseek)"
+            "(requires DEEPSEEK_API_KEY, or ANTHROPIC_API_KEY with --llm-provider anthropic)"
         ),
     )
     agent.add_argument(
         "--llm-provider",
         choices=["anthropic", "deepseek"],
-        default="anthropic",
-        help="LLM provider (default: anthropic). deepseek uses DEEPSEEK_API_KEY",
+        default="deepseek",
+        help="LLM provider (default: deepseek, the cheapest). deepseek uses DEEPSEEK_API_KEY",
     )
     agent.add_argument(
         "--llm-agent-model",
         dest="llm_agent_model",
-        default="claude-sonnet-5",
+        default="deepseek-chat",
         metavar="STR",
         help=(
-            "Model to use (default: claude-sonnet-5; 'opus' selects claude-opus-5; "
-            "for DeepSeek, deepseek-chat / deepseek-reasoner). "
-            "Same field as --llm-model; last flag wins"
+            "Cheap high-volume planner model (default: deepseek-chat; for "
+            "Anthropic, claude-sonnet-5 / 'opus'). Same field as --llm-model; "
+            "last flag wins"
         ),
     )
     agent.add_argument(
@@ -2698,6 +2702,17 @@ def build_parser() -> argparse.ArgumentParser:
         dest="llm_agent_model",
         metavar="STR",
         help="Alias for --llm-agent-model (last of --llm-model / --llm-agent-model wins)",
+    )
+    agent.add_argument(
+        "--llm-reasoning-model",
+        dest="llm_agent_reasoning_model",
+        default="deepseek-reasoner",
+        metavar="STR",
+        help=(
+            "Stronger model for hard reasoning only (analyze_logic, "
+            "verify_finding); default: deepseek-reasoner. Bulk work stays on "
+            "the cheap planner model"
+        ),
     )
     agent.add_argument(
         "--llm-agent-max-cost",
@@ -2724,6 +2739,11 @@ def build_parser() -> argparse.ArgumentParser:
             "SSRF/open-redirect/host-header/SSTI/XXE/GraphQL) after authz and "
             "peer-write legs"
         ),
+    )
+    agent.add_argument(
+        "--no-time-sqli",
+        action="store_true",
+        help="Skip time-based SQLi (SLEEP/WAITFOR). Error-based and boolean still run.",
     )
     agent.add_argument(
         "--no-openapi",

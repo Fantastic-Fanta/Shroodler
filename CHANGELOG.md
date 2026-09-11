@@ -7,6 +7,30 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Smarter LLM agent: reads results and reasons on evidence.** The agent loop
+  now feeds a structured `LAST OBSERVATION` (status, timing, where input
+  reflected, a body snippet) back to the planner each turn, so decisions follow
+  the evidence instead of a one-line summary. New planner tools:
+  `send_request` (craft and send any HTTP request, then read the result),
+  `compare_responses` (diff two requests, e.g. price tampering),
+  `replay_as_user` (owner vs peer vs anonymous, for broken access control),
+  `decode_token` (inspect a JWT/base64, flag `alg:none`/HMAC),
+  `craft_payloads` (the model writes payloads tailored to observed stack
+  details and this layer fires and scores them), `verify_finding` (re-fetch a
+  finding and have the model confirm it, adjust its confidence, or drop it as a
+  false positive), and `analyze_logic` (reason about business-logic abuse —
+  price/param tampering, coupon reuse, step-skipping, IDOR chains — and queue
+  hypotheses). All target-controlled text is wrapped in `<untrusted_data>` and
+  the planner is told never to follow instructions inside it; the scope
+  guardrail (now covering nested request specs) remains the hard backstop.
+- **DeepSeek is the default provider.** `shroodler agent --llm-agent` defaults
+  to `deepseek` / `deepseek-chat` (the cheapest option); high-volume planning
+  and triage run on the cheap model, while `verify_finding` and `analyze_logic`
+  escalate to a stronger reasoning model, configurable via
+  `--llm-reasoning-model` (default `deepseek-reasoner`). Pass
+  `--llm-provider anthropic` to use Claude. Auxiliary LLM calls count toward the
+  existing `--llm-agent-max-cost` cap.
+
 - **REST-aware agent authz.** `shroodler agent` sends `Authorization: Bearer`
   from `--owner-cookie` / `--peer-cookie` on authz-diff instead of only jar
   cookies. `--write-authz-spec` replays POST/PATCH/DELETE probes as both

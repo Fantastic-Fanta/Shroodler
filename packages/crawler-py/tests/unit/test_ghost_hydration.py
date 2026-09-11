@@ -116,8 +116,8 @@ def test_hydrate_without_openapi_spec_url():
     assert "id" in names
 
 
-def test_untested_probe_urls_includes_hydrated_ghost():
-    ghost = "http://127.0.0.1/api/guilds/123"
+def test_untested_probe_urls_skips_js_ghost():
+    ghost = "http://127.0.0.1/dashboard/settings"
     crawled = "http://127.0.0.1/about"
     state = ProgramState(
         slug="lab",
@@ -129,8 +129,39 @@ def test_untested_probe_urls_includes_hydrated_ghost():
     cfg = _config(run_probes=True)
     _hydrate_ghost_routes(state, cfg)
     queued = _untested_probe_urls(state, cfg)
+    assert ghost not in queued
+    assert crawled in queued
+
+
+def test_untested_probe_urls_includes_js_api_without_session():
+    ghost = "http://127.0.0.1/api/client/permissions"
+    crawled = "http://127.0.0.1/about"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            crawled: _meta(),
+            ghost: _meta(source="js-analysis"),
+        },
+    )
+    queued = _untested_probe_urls(state, _config(run_probes=True))
     assert ghost in queued
-    assert queued[0] == ghost
+    assert crawled in queued
+
+
+def test_untested_probe_urls_includes_js_ghost_when_authenticated():
+    ghost = "http://127.0.0.1/api/guilds/123"
+    crawled = "http://127.0.0.1/about"
+    state = ProgramState(
+        slug="lab",
+        endpoints={
+            crawled: _meta(),
+            ghost: _meta(source="js-analysis"),
+        },
+    )
+    cfg = _config(run_probes=True, higher_priv_jar="/tmp/owner.json")
+    queued = _untested_probe_urls(state, cfg)
+    assert ghost in queued
+    assert crawled in queued
 
 
 def test_probe_rank_boosts_js_analysis():

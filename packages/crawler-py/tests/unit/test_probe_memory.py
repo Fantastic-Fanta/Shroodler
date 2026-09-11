@@ -253,8 +253,8 @@ def test_probe_memory_block_includes_summary():
         assert "</probe_memory>" in block
         assert "tried" in block
         assert "sqli" in block
-        assert "Productive probes" in block
-        assert "Barren probes" in block
+        assert "found bugs here" in block
+        assert "no result" in block
     finally:
         mem.close()
 

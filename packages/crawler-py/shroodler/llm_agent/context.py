@@ -223,6 +223,8 @@ _OBS_KEYS = (
     "verdict",
     "confidence",
     "access_control_lead",
+    "redirect_to",
+    "final_url",
     "alg",
     "weak_signals",
 )

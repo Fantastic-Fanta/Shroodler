@@ -31,6 +31,7 @@ _BY_ID: dict[str, str] = {
     "authz-broken-access-control": "probable",
     "rate-limit-bypass-forwarded-for": "confirmed",
     "unauthenticated-data-exposure": "probable",
+    "guessable-capability-id": "heuristic",
     "peer-write-idor": "probable",
     "csrf-state-change-unprotected": "probable",
     "chain-xss-cookie-theft": "probable",

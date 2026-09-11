@@ -30,6 +30,7 @@ work that produced them rather than tags.
   check for second-order HTML rendering, instead of a false High. Cuts a real
   false positive seen against a FastAPI JSON endpoint.
 
+- **Guessable capability-identifier detection (logic bug, no LLM).** Flags a resource reached by a short opaque capability code (share/invite/export/preview) whose keyspace is small enough to enumerate — e.g. a 6-hex `token_hex(3)` code, a 24-bit space. Reads the identifier from the URL, estimates entropy from length and charset, and reports only when the endpoint returns data; numeric ids (IDOR's job) and word slugs are ignored. Runs autonomously in the ProbeAction and OpenAPI probe paths.
 - **SPA API discovery.** Both JS extractors (`js_analyzer.py` agent path,
   `extractors/js_endpoints.py` crawl path) now pull bare API-path string
   literals (`/api/…`, `/rest/…`, `/graphql`, `/v1/…`) out of minified bundles,

@@ -21,6 +21,7 @@ from shroodler.agent import (
     ReportAction,
     TLSCheckAction,
     WriteAuthzAction,
+    _attach_live_details,
     _auth_header_for_diff,
     _confirmed_findings,
     _untested_probe_urls,
@@ -396,6 +397,46 @@ def test_execute_authz_merges_findings_and_marks_tested(monkeypatch):
     assert result["findings_added"] == 1
     assert state.endpoints["http://127.0.0.1/api/a"]["tested_authz"] is True
     assert state.findings[0].confidence == "confirmed"
+
+
+def test_attach_live_details_lists_new_findings_and_urls():
+    state = ProgramState(
+        slug="lab",
+        endpoints={"http://127.0.0.1/about": {}},
+        findings=[
+            Finding(
+                id="missing-csp",
+                severity="info",
+                category="header",
+                url="http://127.0.0.1/",
+                description="No CSP",
+                evidence="header",
+                confidence="confirmed",
+            )
+        ],
+    )
+    result: dict = {"findings_added": 1, "pages_crawled": 1}
+    _attach_live_details(
+        result,
+        state,
+        before_findings=set(),
+        before_endpoints=set(),
+    )
+    assert result["findings"] == [
+        {
+            "id": "missing-csp",
+            "severity": "info",
+            "url": "http://127.0.0.1/",
+        }
+    ]
+    assert result["urls"] == ["http://127.0.0.1/about"]
+    _attach_live_details(
+        result,
+        state,
+        before_findings=set(),
+        before_endpoints=set(),
+    )
+    assert len(result["findings"]) == 1
 
 
 def test_execute_peer_write_marks_owning_endpoints(monkeypatch):
@@ -1940,7 +1981,7 @@ def test_execute_report_deduplicates_findings():
 def test_agent_config_llm_agent_defaults_off():
     cfg = _config()
     assert cfg.llm_agent is False
-    assert cfg.llm_agent_model == "claude-sonnet-5"
+    assert cfg.llm_agent_model == "deepseek-chat"
     assert cfg.llm_agent_max_cost_usd == 5.0
 
 
@@ -1987,6 +2028,7 @@ def test_llm_agent_uses_planner_and_logs_reasoning(tmp_path, monkeypatch, capsys
             dry_run=True,
             max_iterations=1,
             llm_agent=True,
+            llm_provider="anthropic",
             run_tls_check=False,
             run_content_discovery=False,
         )
@@ -2015,6 +2057,7 @@ def test_llm_agent_falls_back_to_decide_next_action(tmp_path, monkeypatch):
             dry_run=True,
             max_iterations=1,
             llm_agent=True,
+            llm_provider="anthropic",
             run_tls_check=False,
             run_content_discovery=False,
         )
@@ -2049,6 +2092,7 @@ def test_llm_agent_cost_cap_emits_finding_and_stops(tmp_path, monkeypatch):
             dry_run=False,
             max_iterations=3,
             llm_agent=True,
+            llm_provider="anthropic",
             llm_agent_max_cost_usd=5.0,
             run_tls_check=False,
             run_content_discovery=False,
@@ -2080,6 +2124,7 @@ def test_cmd_agent_llm_agent_requires_api_key(tmp_path, monkeypatch, capsys):
         program="lab",
         target="http://127.0.0.1/",
         llm_agent=True,
+        llm_provider="anthropic",
     )
     assert cmd_agent(ns) == 2
     assert called["n"] == 0

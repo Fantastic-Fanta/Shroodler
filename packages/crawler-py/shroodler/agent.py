@@ -23,6 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 from shroodler import program
 from shroodler.models import Finding
@@ -56,6 +57,7 @@ class AgentConfig:
     write_authz_endpoints: list[dict] | None = None
     run_probes: bool = False  # opt-in; default off
     probe_sqli: bool = True
+    probe_time_sqli: bool = True
     probe_xss: bool = True
     probe_path_traversal: bool = True
     probe_jwt: bool = True
@@ -85,8 +87,11 @@ class AgentConfig:
     allow_external: bool = False
     scope_file: str | None = None
     llm_agent: bool = False  # --llm-agent; requires the provider API key
-    llm_provider: str = "anthropic"  # "anthropic" | "deepseek"
-    llm_agent_model: str = "claude-sonnet-5"
+    llm_provider: str = "deepseek"  # "deepseek" | "anthropic"
+    llm_agent_model: str = "deepseek-chat"  # cheap, high-volume planner model
+    # Stronger model reserved for hard reasoning (analyze_logic, verify_finding).
+    # Blank resolves to the provider default reasoner (deepseek-reasoner / opus).
+    llm_agent_reasoning_model: str = "deepseek-reasoner"
     llm_agent_max_cost_usd: float = 5.0
     run_js_analysis: bool = True  # --no-js-analysis to skip
     run_waf_detect: bool = True  # --no-waf-detect to skip
@@ -405,6 +410,12 @@ def _untested_probe_urls(state: ProgramState, config: AgentConfig) -> list[str]:
         if not _url_in_program_scope(url, state, config):
             continue
         meta = meta or {}
+        if (
+            str(meta.get("source") or "") == "js-analysis"
+            and not _has_owner_session(config)
+            and not _looks_like_api_route(url)
+        ):
+            continue
         if _has_unresolved_placeholder(url):
             continue
         if bool(meta.get("tested_payload")) and not _stale_payload(meta):
@@ -567,6 +578,14 @@ def _pending_chains(state: ProgramState, config: AgentConfig) -> bool:
 def _has_owner_session(config: AgentConfig) -> bool:
     return bool(
         (config.higher_priv_jar or "").strip() or (config.owner_cookie or "").strip()
+    )
+
+
+def _looks_like_api_route(url: str) -> bool:
+    path = (urlparse(url).path or "").lower()
+    return any(
+        token in path
+        for token in ("/api/", "/graphql", "/auth/", "/oauth", "/.well-known/")
     )
 
 
@@ -1110,6 +1129,38 @@ def emit_log_entry(entry: dict[str, Any], *, stream: Any | None = None) -> None:
     print(json.dumps(entry, default=str), file=stream or sys.stderr, flush=True)
 
 
+def _finding_key(item: Any) -> tuple[str, str]:
+    return (str(getattr(item, "id", "") or ""), str(getattr(item, "url", "") or ""))
+
+
+def _attach_live_details(
+    result: dict[str, Any],
+    state: ProgramState,
+    *,
+    before_findings: set[tuple[str, str]],
+    before_endpoints: set[str],
+) -> None:
+    """Add finding id/url and new endpoint URLs so Discord live logs are useful."""
+    if "findings" not in result:
+        briefs: list[dict[str, str]] = []
+        for item in state.findings:
+            if _finding_key(item) in before_findings:
+                continue
+            briefs.append(
+                {
+                    "id": str(getattr(item, "id", "") or "unknown"),
+                    "severity": str(getattr(item, "severity", "") or "info"),
+                    "url": str(getattr(item, "url", "") or ""),
+                }
+            )
+        if briefs:
+            result["findings"] = briefs
+    if "urls" not in result:
+        new_urls = [url for url in state.endpoints if url not in before_endpoints]
+        if new_urls:
+            result["urls"] = new_urls
+
+
 def _merge_findings(state: ProgramState, findings: list[Any]) -> int:
     from shroodler.engagement_history import is_suppressed
 
@@ -1590,6 +1641,7 @@ def _execute_crawl(
                 depth=1,
                 max_pages=config.max_pages_per_crawl,
                 login_recipe=config.login_recipe,
+                storage_state=(config.higher_priv_jar or "").strip() or None,
                 allow_external=allow_external,
                 ignore_robots=config.ignore_robots,
                 mode=mode,
@@ -2061,11 +2113,19 @@ def _finish_probe_action(
         except Exception as exc:  # noqa: BLE001 - per-probe, loop must continue
             errors.append(f"{url} {label}: {type(exc).__name__}: {exc}")
 
-    for url in action.urls:
+    for index, url in enumerate(action.urls, start=1):
         if not _in_target_origin(url, config.target):
             continue
         if not _url_in_program_scope(url, state, config):
             continue
+        emit_log_entry(
+            {
+                "iteration": int(getattr(config, "_iteration", 0) or 0),
+                "action": "ProbeAction",
+                "progress": f"{index}/{len(action.urls)}",
+                "url": url,
+            }
+        )
         meta = state.endpoints.get(url) or {}
         method, params = _probe_params(url, meta)
         view_url = str(meta.get("view_url") or "")
@@ -2092,6 +2152,7 @@ def _finish_probe_action(
                     pacer=pacer,
                     state=state,
                     oob=getattr(config, "_oob", None),
+                    time_based=bool(getattr(config, "probe_time_sqli", True)),
                 ),
             )
         if config.probe_xss and method in {"GET", "POST", "PUT", "PATCH"} and params:
@@ -2871,6 +2932,8 @@ def _llm_agent_step(
         "result": result.raw_output,
         "summary": result.summary,
     }
+    from shroodler.llm_agent.context import trim_observation
+
     history.append(
         HistoryEntry(
             iteration=iteration,
@@ -2879,6 +2942,7 @@ def _llm_agent_step(
             reasoning=decision.reasoning,
             findings_added=added,
             summary=result.summary,
+            observation=trim_observation(result.raw_output),
         )
     )
     kept = trim_history(list(history), 10)
@@ -3027,7 +3091,16 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
             consecutive_errors = 0
         else:
             try:
+                before_findings = {_finding_key(item) for item in state.findings}
+                before_endpoints = set(state.endpoints)
                 result = execute_action(action, state, config, pacer=pacer)
+                if isinstance(result, dict):
+                    _attach_live_details(
+                        result,
+                        state,
+                        before_findings=before_findings,
+                        before_endpoints=before_endpoints,
+                    )
                 program.save(state)
                 entry["result"] = result
                 consecutive_errors = 0

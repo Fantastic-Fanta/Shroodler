@@ -490,6 +490,8 @@ def classify_path(
             )
         return None
     if path in GRAPHQL_PATHS:
+        if looks_like_html(body, content_type) or is_spa_shell(body):
+            return None
         return _finding(
             "graphql-endpoint-found",
             "info",
@@ -499,6 +501,8 @@ def classify_path(
             category="scan-note",
         )
     if path in SWAGGER_PATHS or "swagger" in lowered or "openapi" in lowered:
+        if looks_like_html(body, content_type) or is_spa_shell(body):
+            return None
         return _finding(
             "openapi-spec-found",
             "info",

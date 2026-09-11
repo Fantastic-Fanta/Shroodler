@@ -27,15 +27,12 @@ _ERROR_PAYLOADS = (
     "1 AND 1=2",
 )
 _TIME_PAYLOAD = "'; WAITFOR DELAY '0:0:2'--"
+# One payload per common engine. Path-ID injection is skipped for these;
+# eight delay payloads on /guilds/1/... is what burned 30-minute scans.
 _TIME_PAYLOADS_4S = (
     "' AND SLEEP(4)--",
-    "1 AND SLEEP(4)--",
     "'; WAITFOR DELAY '0:0:4'--",
-    "1; WAITFOR DELAY '0:0:4'--",
     "'; SELECT pg_sleep(4)--",
-    "1; SELECT pg_sleep(4)--",
-    "' AND 1=LIKE('ABCDEFG',UPPER(HEX(RANDOMBLOB(300000000/2))))--",
-    "' OR SLEEP(4)--",
 )
 _BOOLEAN_TRUE = "' AND '1'='1"
 _BOOLEAN_FALSE = "' AND '1'='2"
@@ -108,6 +105,10 @@ def _finding(
         evidence=evidence,
         confidence=confidence,  # type: ignore[arg-type]
     )
+
+
+def _is_path_param(item: dict) -> bool:
+    return str(item.get("in") or "").lower() == "path"
 
 
 def _median_baseline(
@@ -227,6 +228,7 @@ def probe_sqli(
     waf_detected: bool = False,
     waf_vendor: str | None = None,
     oob=None,
+    time_based: bool = True,
 ) -> list[Finding]:
     """Replay GET/POST params with classic SQLi payloads, one param at a time.
 
@@ -239,6 +241,7 @@ def probe_sqli(
     normalized = normalize_params(params)
     if not normalized:
         return []
+    time_params = [item for item in normalized if not _is_path_param(item)]
 
     findings: list[Finding] = []
     collab = collaborator_of(oob, state)
@@ -292,16 +295,23 @@ def probe_sqli(
                 )
                 return dedupe(findings)
 
-    baseline = _median_baseline(
-        method_u,
-        url,
-        cookie_header,
-        client=client,
-        pacer=pacer,
-    )
+    baseline = None
+    if time_based and time_params:
+        baseline = _median_baseline(
+            method_u,
+            url,
+            cookie_header,
+            client=client,
+            pacer=pacer,
+        )
     saw_time = False
-    if baseline is not None and baseline <= _BASELINE_SKIP:
-        for item in normalized:
+    if (
+        time_based
+        and time_params
+        and baseline is not None
+        and baseline <= _BASELINE_SKIP
+    ):
+        for item in time_params:
             name = item["name"]
             hit_4s = False
             for payload in time_payloads:

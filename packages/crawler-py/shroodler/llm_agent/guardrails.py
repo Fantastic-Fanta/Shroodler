@@ -49,6 +49,23 @@ def _decision_url(decision: PlannerDecision) -> str:
     return str(params.get("url") or params.get("target_url") or "")
 
 
+def _all_urls(decision: PlannerDecision) -> list[str]:
+    """Every target URL a decision would hit, including nested request specs
+    (compare_responses a/b), so scope can be enforced on all of them."""
+    params = decision.params or {}
+    urls: list[str] = []
+    top = str(params.get("url") or params.get("target_url") or "")
+    if top:
+        urls.append(top)
+    for key in ("a", "b"):
+        spec = params.get(key)
+        if isinstance(spec, dict):
+            nested = str(spec.get("url") or "")
+            if nested:
+                urls.append(nested)
+    return urls
+
+
 def check_guardrails(
     decision: PlannerDecision,
     history: list[HistoryEntry],
@@ -95,11 +112,13 @@ def check_guardrails(
                 f"repeat (action,url,param) in last 5: {combo[0]} {combo[1]} {combo[2]}",
             )
 
-    if url:
+    candidate_urls = _all_urls(decision)
+    if candidate_urls:
         slug = str(getattr(state, "slug", "") or getattr(config, "program", "") or "")
         scope_file = getattr(config, "scope_file", None)
         scope = load_scope(slug, path=scope_file) if slug else {}
-        if not in_scope(url, scope):
-            return GuardrailResult(False, f"out of scope: {url}")
+        for candidate in candidate_urls:
+            if not in_scope(candidate, scope):
+                return GuardrailResult(False, f"out of scope: {candidate}")
 
     return GuardrailResult(True, "")

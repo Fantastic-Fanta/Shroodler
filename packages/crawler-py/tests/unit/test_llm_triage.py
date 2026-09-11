@@ -39,6 +39,7 @@ def _config(**kwargs) -> AgentConfig:
         "owner_cookie": "session=owner",
         "peer_cookie": "session=peer",
         "llm_triage": True,
+        "llm_provider": "anthropic",
         "run_openapi_discovery": False,
         "run_openapi_probes": False,
     }

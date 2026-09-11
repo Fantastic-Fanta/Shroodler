@@ -176,7 +176,11 @@ def test_supplied_field_names_skip_introspection(fx):
             if "session=user" in inc.cookies:
                 return 200, {"Content-Type": "application/json"}, b'{"data":{"wallet":{"id":1}}}'
             return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no"}]}'
-        return 200, {"Content-Type": "application/json"}, b'{"errors":[{"message":"no introspection"}]}'
+        return (
+            200,
+            {"Content-Type": "application/json"},
+            b'{"errors":[{"message":"no introspection"}]}',
+        )
 
     fx.on("POST", "/graphql", handle)
     with httpx.Client() as http:

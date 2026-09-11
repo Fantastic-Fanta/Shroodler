@@ -212,8 +212,9 @@ def test_graphql_waf_mutation_does_not_crash():
 
 
 def test_jwt_waf_mutation_does_not_crash():
-    import jwt as pyjwt
     import warnings
+
+    import jwt as pyjwt
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")

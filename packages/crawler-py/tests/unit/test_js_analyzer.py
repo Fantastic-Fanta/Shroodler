@@ -6,7 +6,6 @@ import json
 from shroodler.js_analyzer import JSAnalyzer
 from shroodler.program import ProgramState
 
-
 SOURCE = "https://example.com/static/app.js"
 
 

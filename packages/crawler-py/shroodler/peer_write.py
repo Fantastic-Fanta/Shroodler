@@ -33,7 +33,8 @@ from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer, compose_user_agent
 from shroodler.sessions import _body_text
-from shroodler.urls import is_loopback_or_local, origin as origin_of, same_origin
+from shroodler.urls import is_loopback_or_local, same_origin
+from shroodler.urls import origin as origin_of
 
 WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 MAX_WRITES = 50
@@ -486,7 +487,10 @@ def run(
                         _checked(
                             write,
                             verdict="csrf-missing",
-                            note="captured write required a CSRF token and harvest failed; not sent",
+                            note=(
+                                "captured write required a CSRF token and "
+                                "harvest failed; not sent"
+                            ),
                         )
                     )
                     continue

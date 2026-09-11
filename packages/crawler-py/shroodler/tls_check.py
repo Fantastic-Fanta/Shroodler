@@ -233,7 +233,10 @@ def check_target_tls(target_url: str) -> list[Finding]:
 
     algo = _sig_algorithm(cert or {}, der if isinstance(der, bytes) else None)
     lowered = algo.lower().replace("-", "").replace("_", "")
-    if any(weak.lower().replace("-", "") in lowered for weak in _WEAK_SIGNATURES) or algo in _WEAK_SIGNATURES:
+    if (
+        any(weak.lower().replace("-", "") in lowered for weak in _WEAK_SIGNATURES)
+        or algo in _WEAK_SIGNATURES
+    ):
         findings.append(
             _finding(
                 "tls-weak-signature",

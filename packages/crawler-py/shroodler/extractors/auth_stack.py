@@ -17,7 +17,8 @@ from urllib.parse import parse_qs, urlencode, urljoin, urlparse, urlunparse
 
 from shroodler.extractors.oauth import is_authorization_request
 from shroodler.models import Finding
-from shroodler.urls import is_loopback_or_local, origin as origin_of, same_origin
+from shroodler.urls import is_loopback_or_local, same_origin
+from shroodler.urls import origin as origin_of
 
 CALLBACK_MARKER = "https://shroodler.invalid/next-auth-callback"
 OAUTH_REDIRECT_MARKER = "https://shroodler.invalid/oauth-callback"

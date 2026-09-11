@@ -83,7 +83,9 @@ def _cookies_to_dict(cookies: dict[str, str] | list | None) -> dict[str, str]:
     return out
 
 
-def _lookup_var(name: str, credentials: dict[str, str], environ: dict[str, str] | None) -> str | None:
+def _lookup_var(
+    name: str, credentials: dict[str, str], environ: dict[str, str] | None
+) -> str | None:
     if name in credentials:
         return str(credentials[name])
     env = environ if environ is not None else os.environ
@@ -106,7 +108,9 @@ def substitute_templates(
     return _VAR_RE.sub(repl, text or "")
 
 
-def _sub_map(values: dict[str, str], credentials: dict[str, str], environ: dict[str, str] | None) -> dict[str, str]:
+def _sub_map(
+    values: dict[str, str], credentials: dict[str, str], environ: dict[str, str] | None
+) -> dict[str, str]:
     return {
         substitute_templates(str(k), credentials, environ): substitute_templates(
             str(v), credentials, environ
@@ -145,7 +149,9 @@ def _header_value(resp: httpx.Response, name: str) -> str | None:
     return None
 
 
-def _cookie_value(resp: httpx.Response, client: httpx.AsyncClient | httpx.Client, name: str) -> str | None:
+def _cookie_value(
+    resp: httpx.Response, client: httpx.AsyncClient | httpx.Client, name: str
+) -> str | None:
     if not name:
         return None
     try:
@@ -226,16 +232,27 @@ def _extract_all(
             value = _regex_value(body, str(spec.get("regex") or ""))
         if value is None:
             continue
-        name = str(spec.get("as") or spec.get("name") or spec.get("json") or spec.get("cookie") or spec.get("header") or "value")
+        name = str(
+            spec.get("as")
+            or spec.get("name")
+            or spec.get("json")
+            or spec.get("cookie")
+            or spec.get("header")
+            or "value"
+        )
         extracted[name] = value
         dest_header = spec.get("inject_header")
         if dest_header:
             prefix = str(spec.get("inject_prefix") or "")
             inject_headers[str(dest_header)] = f"{prefix}{value}"
-        dest_cookie = spec.get("inject_cookie") or (str(spec.get("cookie") or "") if spec.get("cookie") else "")
+        dest_cookie = spec.get("inject_cookie") or (
+            str(spec.get("cookie") or "") if spec.get("cookie") else ""
+        )
         if dest_cookie:
             inject_cookies[str(dest_cookie)] = value
-        if name.lower() in _TOKEN_NAMES or str(spec.get("json") or "").lower().endswith("access_token"):
+        if name.lower() in _TOKEN_NAMES or str(
+            spec.get("json") or ""
+        ).lower().endswith("access_token"):
             inject_headers.setdefault("Authorization", f"Bearer {value}")
 
     for key, val in extracted.items():
@@ -248,7 +265,9 @@ def _extract_all(
     return extracted, inject_headers, inject_cookies
 
 
-def _apply_substituted(recipe: LoginRecipe, credentials: dict[str, str], environ: dict[str, str] | None) -> LoginRecipe:
+def _apply_substituted(
+    recipe: LoginRecipe, credentials: dict[str, str], environ: dict[str, str] | None
+) -> LoginRecipe:
     creds = {**dict(recipe.credentials), **dict(credentials)}
     creds = _sub_map(creds, creds, environ)
     return LoginRecipe(

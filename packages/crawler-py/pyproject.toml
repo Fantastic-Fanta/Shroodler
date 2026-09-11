@@ -66,3 +66,8 @@ target-version = "py311"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
 ignore = ["UP017"]
+
+[tool.ruff.lint.per-file-ignores]
+# ci_templates.py embeds full CI YAML as string literals; those lines are
+# generated output and must not be wrapped to satisfy the line-length rule.
+"shroodler/ci_templates.py" = ["E501"]

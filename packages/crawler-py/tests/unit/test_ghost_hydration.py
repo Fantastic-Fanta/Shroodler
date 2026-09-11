@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from shroodler.agent import (
+    _JS_ANALYSIS_PROBE_RANK,
     AgentConfig,
     ProbeAction,
-    _JS_ANALYSIS_PROBE_RANK,
     _hydrate_ghost_routes,
     _probe_params,
     _probe_rank,

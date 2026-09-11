@@ -6,11 +6,20 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / "packages" / "report-generator"))
 
-from reportgen import findings_from_sarif  # noqa: E402
-from reportgen import merge_findings  # noqa: E402
-from reportgen import render  # noqa: E402
-from reportgen import render_diff_junit as _diff_junit  # noqa: E402
-from reportgen import render_diff_sarif as _diff_sarif  # noqa: E402
+# findings_from_sarif / merge_findings are re-exported for cli.py; kept despite
+# being unused in this module (noqa: F401). E402 is expected everywhere here:
+# the reportgen path is inserted above, so these imports cannot sit at the top.
+from reportgen import (  # noqa: E402
+    findings_from_sarif,  # noqa: F401
+    merge_findings,  # noqa: F401
+    render,
+)
+from reportgen import (  # noqa: E402
+    render_diff_junit as _diff_junit,
+)
+from reportgen import (  # noqa: E402
+    render_diff_sarif as _diff_sarif,
+)
 
 
 def write_report(doc: dict, fmt: str, output: str | None) -> str:

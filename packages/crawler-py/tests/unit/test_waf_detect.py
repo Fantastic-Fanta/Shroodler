@@ -309,5 +309,7 @@ def test_sqli_mutates_when_waf_detected(monkeypatch):
         state=state,
     )
     assert injected
-    assert "<svg/onload=alert(1)>" in injected or any("%253C" in p or "SeLeCt" in p for p in injected)
+    assert "<svg/onload=alert(1)>" in injected or any(
+        "%253C" in p or "SeLeCt" in p for p in injected
+    )
     assert len(injected) > 4

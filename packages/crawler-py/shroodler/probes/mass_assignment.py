@@ -117,7 +117,11 @@ def probe_mass_assignment(
     hits = _contains_injected(polluted_parsed if polluted_parsed is not None else polluted_text)
     if not hits:
         # Fallback: injected keys echoed as text
-        hits = [key for key in EXTRA_FIELDS if key in polluted_text and str(EXTRA_FIELDS[key]) in polluted_text]
+        hits = [
+            key
+            for key in EXTRA_FIELDS
+            if key in polluted_text and str(EXTRA_FIELDS[key]) in polluted_text
+        ]
         clean_hits = [
             key
             for key in EXTRA_FIELDS

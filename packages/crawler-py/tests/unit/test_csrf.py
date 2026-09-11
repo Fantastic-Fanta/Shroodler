@@ -106,7 +106,6 @@ def test_apply_csrf_replaces_nested_json_and_rejects_crlf():
 def test_refresh_csrf_refuses_off_origin_and_non_local(fx):
     import httpx
 
-    from shroodler.csrf import refresh_csrf
 
     fx.html("/", '<input type="hidden" name="csrf_token" value="live-tok-12345678">')
     with httpx.Client(follow_redirects=False) as http:

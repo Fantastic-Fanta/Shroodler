@@ -6,8 +6,7 @@ from shroodler import idor_engine
 from shroodler.agent import AgentConfig
 from shroodler.idor_engine import looks_like_idor_url
 from shroodler.llm_agent.executor import execute_tool
-from shroodler.llm_agent.planner import _probe_memory_block
-from shroodler.llm_agent.planner import PlannerDecision
+from shroodler.llm_agent.planner import PlannerDecision, _probe_memory_block
 from shroodler.llm_agent.probe_memory import (
     ProbeMemory,
     ProbeRecord,

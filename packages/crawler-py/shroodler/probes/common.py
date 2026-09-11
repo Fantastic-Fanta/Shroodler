@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import timedelta
-from typing import Any, Iterator
+from typing import Any
 from urllib.parse import parse_qsl, urlparse
 
 import httpx

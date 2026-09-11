@@ -266,6 +266,21 @@ def probe_sqli(
 
     for item in normalized:
         name = item["name"]
+        # Baseline (context awareness): a clean request with a benign value. If
+        # it already surfaces a SQL error, the error is not payload-induced (a
+        # persistent error page, or a param that always errors), so treating a
+        # post-payload error as SQLi would be a false positive.
+        base_resp = inject(
+            url,
+            method_u,
+            normalized,
+            name,
+            "shroodler_baseline_probe",
+            cookie_header=cookie_header,
+            client=client,
+            pacer=pacer,
+        )
+        baseline_errored = base_resp is not None and _has_sql_error(body_text(base_resp))
         for payload in error_payloads:
             resp = inject(
                 url,
@@ -280,14 +295,16 @@ def probe_sqli(
             if resp is None:
                 continue
             body = body_text(resp)
-            if _has_sql_error(body) or _webgoat_lesson_output(resp, body):
+            error_induced = _has_sql_error(body) and not baseline_errored
+            if error_induced or _webgoat_lesson_output(resp, body):
                 findings.append(
                     _finding(
                         finding_id="sqli",
                         url=url,
                         description=(
                             f"{method_u} parameter {name!r} reflected a database "
-                            "error after a SQL injection payload."
+                            "error after a SQL injection payload (absent from a "
+                            "clean baseline request)."
                         ),
                         evidence=f"param={name} payload={payload!r}",
                         confidence="confirmed",

@@ -715,6 +715,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
             getattr(args, "llm_agent_reasoning_model", None) or "deepseek-reasoner"
         ),
         llm_auto_verify=not bool(getattr(args, "no_auto_verify", False)),
+        llm_verify=bool(getattr(args, "llm_verify", False)),
         llm_agent_max_cost_usd=(
             5.0
             if getattr(args, "llm_agent_max_cost", None) is None
@@ -726,12 +727,13 @@ def cmd_agent(args: argparse.Namespace) -> int:
         oob_listen=str(getattr(args, "oob_listen", None) or "127.0.0.1:8765"),
         oob_public_url=str(getattr(args, "oob_public_url", None) or ""),
     )
-    if config.llm_agent:
+    if config.llm_agent or config.llm_verify:
         from shroodler.llm_provider import llm_api_key_env
 
         env_name = llm_api_key_env(config.llm_provider)
         if not os.environ.get(env_name):
-            print(f"error: --llm-agent requires {env_name}", file=sys.stderr)
+            flag = "--llm-agent" if config.llm_agent else "--llm-verify"
+            print(f"error: {flag} requires {env_name}", file=sys.stderr)
             return 2
     try:
         result = run_agent(config)
@@ -2780,6 +2782,15 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Skip the automatic evidence-based verification of tentative "
             "findings before the LLM agent reports (on by default)"
+        ),
+    )
+    agent.add_argument(
+        "--llm-verify",
+        action="store_true",
+        help=(
+            "After the scan, run the LLM verifier over tentative findings to "
+            "confirm, downgrade, or drop false positives (requires a provider "
+            "key; uses --llm-provider / --llm-reasoning-model)"
         ),
     )
     agent.add_argument(

@@ -355,6 +355,7 @@ _shroodler() {
             '--no-time-sqli[Skip slow time-based SQLi payloads]' \
             '--no-websocket[Disable WebSocket discovery/probes]' \
             '--no-auto-verify[Skip auto-verifying tentative LLM findings before report]' \
+            '--llm-verify[Run the LLM verifier over findings after the scan]' \
             '--no-js-analysis[Skip deep JavaScript bundle analysis after crawl]' \
             '--allow-external[Allow smuggling probes against non-localhost targets]' \
             '--scope-file[Load include/exclude host patterns from FILE]:file:_files'

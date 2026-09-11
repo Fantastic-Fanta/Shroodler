@@ -386,3 +386,20 @@ def test_sqli_time_based_runs_on_query_when_path_ids_present():
         pacer=Pacer(0),
     )
     assert any(f.id == "sqli-time-based" for f in findings)
+
+
+def test_sqli_persistent_error_is_not_flagged():
+    # The page ALWAYS shows a SQL error string (persistent), even for a clean
+    # baseline request -> the error is not payload-induced -> no finding.
+    def handler(method, url, kw):
+        return FakeResp(200, "You have an error in your SQL syntax")
+
+    findings = probe_sqli(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q", "value": "test"}],
+        "session=owner",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert not any(f.id == "sqli" for f in findings)

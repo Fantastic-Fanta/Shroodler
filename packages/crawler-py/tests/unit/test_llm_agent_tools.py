@@ -23,6 +23,7 @@ _EXPECTED = (
     "craft_payloads",
     "verify_finding",
     "analyze_logic",
+    "test_hypothesis",
     "hypothesise",
     "report",
 )

@@ -7,6 +7,27 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Measuring "smarter": evaluation harness.** `shroodler eval <scan> <expected>`
+  scores a run against curated ground truth — precision, recall, F1, plus LLM
+  cost and iteration count when present — matching on `(id, url-path)` like
+  `diff --gate`. `--baseline` A/Bs two runs (LLM tools off vs on) and prints the
+  delta. Scoring lives in `shroodler/eval_harness.py`; `make eval-agent` and
+  `packages/crawler-py/eval/README.md` drive it against the local target apps.
+- **Auto-verify before reporting.** The LLM agent now runs evidence-based
+  verification on every tentative finding before `report()`, confirming,
+  re-scoring, or dropping false positives without depending on the planner to
+  ask. Bounded by the run's cost cap; disable with `--no-auto-verify`.
+- **Hypothesis chaining.** `test_hypothesis` pops the top pending hypothesis
+  (from `analyze_logic` / `hypothesise`), translates it into one concrete
+  in-scope test, runs it under the scope guardrail, and records the outcome
+  (validated / inconclusive) so the planner stops re-suggesting it. Only an
+  allowlist of concrete tools can be planned, and the target must pass scope.
+- **Cross-engagement memory.** Fingerprint facts learned during a run (WAF
+  vendor, ID scheme, JWT algorithm, GraphQL presence) persist on program state
+  and surface to the planner on the next run as a KNOWN FACTS block, so a repeat
+  engagement starts already knowing the target's shape. Facts are non-secret and
+  reinforced across runs.
+
 - **Smarter LLM agent: reads results and reasons on evidence.** The agent loop
   now feeds a structured `LAST OBSERVATION` (status, timing, where input
   reflected, a body snippet) back to the planner each turn, so decisions follow

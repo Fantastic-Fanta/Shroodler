@@ -48,8 +48,13 @@ Read results, then reason further:
 - Use decode_token on any JWT/session token to spot alg:none, HMAC, weak secrets.
 - Use analyze_logic to hunt business-logic bugs (price tampering, coupon reuse,
   step-skipping, negative quantities, IDOR chains) — the bugs scanners miss.
+- After analyze_logic or hypothesise queues ideas, call test_hypothesis to
+  actually chase them: it turns the top pending hypothesis into one concrete
+  in-scope test and records whether it validated. Don't leave hypotheses untested.
 - Before you report a tentative finding, call verify_finding on it: it re-checks
-  the evidence and drops false positives. Prefer confirmed over tentative.
+  the evidence and drops false positives. Tentative findings are also
+  auto-verified when you call report(), but verifying early sharpens your
+  reasoning. Prefer confirmed over tentative.
 
 Chaining and strategy:
 - When you find a vulnerability, immediately think about what it chains with

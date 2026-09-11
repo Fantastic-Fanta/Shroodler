@@ -93,6 +93,7 @@ class ProgramState:
     peer_session: dict[str, str] | str | None = None
     websocket_endpoints: list[str] = field(default_factory=list)
     hypotheses: list[dict[str, Any]] = field(default_factory=list)
+    engagement_memory: dict[str, Any] = field(default_factory=dict)
     js_urls: list[str] = field(default_factory=list)
     extra_graphql_operations: list[str] = field(default_factory=list)
     source_map_urls: list[str] = field(default_factory=list)
@@ -229,6 +230,11 @@ def load(slug: str) -> ProgramState:
         hypotheses=[
             dict(row) for row in (data.get("hypotheses") or []) if isinstance(row, dict)
         ],
+        engagement_memory=(
+            dict(data.get("engagement_memory"))
+            if isinstance(data.get("engagement_memory"), dict)
+            else {}
+        ),
         js_urls=_unique_str_list(data.get("js_urls")),
         extra_graphql_operations=_unique_str_list(data.get("extra_graphql_operations")),
         source_map_urls=_unique_str_list(data.get("source_map_urls")),
@@ -266,6 +272,7 @@ def save(state: ProgramState) -> Path:
         "peer_session": state.peer_session,
         "websocket_endpoints": list(getattr(state, "websocket_endpoints", None) or []),
         "hypotheses": list(getattr(state, "hypotheses", None) or []),
+        "engagement_memory": dict(getattr(state, "engagement_memory", None) or {}),
         "js_urls": list(getattr(state, "js_urls", None) or []),
         "extra_graphql_operations": list(
             getattr(state, "extra_graphql_operations", None) or []

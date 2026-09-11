@@ -136,7 +136,6 @@ def _endpoint_rows(state: Any) -> tuple[list[str], list[str], int]:
         line = f"- {method} {_path_of(str(url))} — params: [{', '.join(names)}]"
         if flags:
             line += f" (tested: {','.join(flags)})"
-        rank = 0 if not payload_done else 1
         bucket = untested if not payload_done else tested
         bucket.append((index, line))
     ordered = untested + tested
@@ -236,7 +235,11 @@ def trim_observation(raw: Any) -> dict[str, Any]:
     # craft_payloads returns per-payload rows; keep the ones with a signal.
     results = raw.get("results")
     if isinstance(results, list) and results:
-        hits = [r for r in results if isinstance(r, dict) and r.get("signal") not in (None, "no-signal")]
+        hits = [
+            r
+            for r in results
+            if isinstance(r, dict) and r.get("signal") not in (None, "no-signal")
+        ]
         out["payload_hits"] = (hits or results)[:6]
     return out
 

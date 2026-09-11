@@ -337,8 +337,8 @@ def _check_authz(
     config: Any,
     pacer: Pacer,
 ) -> ToolResult:
-    from shroodler.agent import _allow_external, run_authz_diff
     from shroodler import program
+    from shroodler.agent import _allow_external, run_authz_diff
 
     url = str(_params_of(decision).get("url") or "")
     if not url:

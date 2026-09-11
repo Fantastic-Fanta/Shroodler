@@ -95,7 +95,10 @@ def _is_host_level(finding: dict[str, Any]) -> bool:
     if category in _HOST_LEVEL_CATEGORIES:
         return True
     fid = str(finding.get("id") or "")
-    return any(fid.startswith(prefix) or fid == prefix.rstrip("-") for prefix in _HOST_LEVEL_PREFIXES)
+    return any(
+        fid.startswith(prefix) or fid == prefix.rstrip("-")
+        for prefix in _HOST_LEVEL_PREFIXES
+    )
 
 
 def _is_operational(finding: dict[str, Any]) -> bool:

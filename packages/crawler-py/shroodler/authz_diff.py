@@ -353,7 +353,11 @@ def _graphql_urls(doc: dict) -> list[str]:
     for ep in doc.get("js_endpoints") or []:
         source = str(ep.get("source") or "")
         marker = str(ep.get("endpoint") or "")
-        if "graphql" in (source + marker).lower() and source.startswith("http") and source not in out:
+        if (
+            "graphql" in (source + marker).lower()
+            and source.startswith("http")
+            and source not in out
+        ):
             out.append(source)
     return out
 

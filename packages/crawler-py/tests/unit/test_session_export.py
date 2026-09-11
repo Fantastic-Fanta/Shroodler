@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 
-from shroodler.session_export import export_from_path, export_session, specs_to_storage_state
 from shroodler.auth import CookieSpec
+from shroodler.session_export import export_from_path, export_session, specs_to_storage_state
 
 
 def test_specs_to_storage_state_filters_origin():

@@ -29,7 +29,8 @@ from shroodler import program
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.program import ProgramState, object_ids_flat, url_to_pattern
-from shroodler.urls import is_loopback_or_local, origin as origin_of, same_origin
+from shroodler.urls import is_loopback_or_local, same_origin
+from shroodler.urls import origin as origin_of
 
 _STALE_AFTER = timedelta(hours=24)
 _DEFAULT_RATE_CEILING = 0.1  # 100 ms between HTTP requests if no guardrail

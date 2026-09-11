@@ -226,7 +226,11 @@ def probe_ssrf(
                         client=client,
                         pacer=pacer,
                     )
-                hit = confirm_oob(collab, minted.token, timeout=min(_COLLAB_WAIT, oob_timeout or _COLLAB_WAIT))
+                hit = confirm_oob(
+                    collab,
+                    minted.token,
+                    timeout=min(_COLLAB_WAIT, oob_timeout or _COLLAB_WAIT),
+                )
             except Exception:  # noqa: BLE001 - fail closed
                 hit = None
             if hit is not None:

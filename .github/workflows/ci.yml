@@ -11,8 +11,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Fast feedback: lint + the Python unit suite. No Docker, no Chromium
-  # download, no Go build — so this stays a few minutes even on cold cache.
+  # Ruff lint. Its own job so a style failure never hides the test result.
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            packages/crawler-py/pyproject.toml
+            packages/cli/pyproject.toml
+      - name: Install ruff
+        run: pip install -e "packages/crawler-py[dev]"
+      - name: Ruff
+        run: ruff check packages/crawler-py/shroodler packages/crawler-py/tests packages/cli
+
+  # Fast feedback: the Python unit suite. No Docker, no Chromium download, no
+  # Go build — so this stays a few minutes even on a cold cache.
   python-unit:
     runs-on: ubuntu-latest
     steps:
@@ -34,8 +51,6 @@ jobs:
             -e packages/cli \
             -e packages/guardrails \
             -e packages/mcp-server
-      - name: Lint (ruff)
-        run: ruff check packages/crawler-py/shroodler packages/crawler-py/tests packages/cli
       - name: Unit tests
         run: |
           pytest packages/crawler-py/tests/unit -q
@@ -43,7 +58,7 @@ jobs:
           pytest packages/report-generator/tests -q
           PYTHONPATH=packages/payload-tester pytest packages/payload-tester/tests -q
 
-  # Go build + unit tests + gofmt. Fast and independent of the Python job.
+  # Go build + unit tests + gofmt. Independent of the Python jobs.
   go-unit:
     runs-on: ubuntu-latest
     steps:
@@ -65,28 +80,11 @@ jobs:
           cd packages/crawler-go && go test ./...
           cd ../proxy-go && go test ./...
 
-  # Heavier: Docker services + Playwright browser + Go binaries. Slower and
-  # more likely to be flaky, so it runs as its own job — a failure here does
-  # not hide the fast unit signal above.
-  integration:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            packages/crawler-py/pyproject.toml
-            packages/cli/pyproject.toml
-            packages/guardrails/pyproject.toml
-            packages/mcp-server/pyproject.toml
-      - uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-      - name: Bootstrap (deps, Chromium, Go binaries)
-        run: make bootstrap bins
-      - name: Integration tests
-        run: make test-integration
+  # Integration tests (make test-integration) are intentionally NOT run here.
+  # They need Docker services and the private `packages/target-apps` submodule
+  # (github.com/Fantastic-Fanta/Shroodler-Tests), which a default runner cannot
+  # clone. To enable: add a repo secret with a PAT/deploy key that can read that
+  # repo, then add a job that checks out with
+  #   - uses: actions/checkout@v4
+  #     with: { submodules: recursive, token: ${{ secrets.SUBMODULE_TOKEN }} }
+  # and runs `make bootstrap bins test-integration`.

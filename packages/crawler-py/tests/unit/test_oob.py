@@ -20,10 +20,10 @@ from shroodler.oob import (
     parse_listen,
 )
 from shroodler.pacer import Pacer
-from shroodler.program import ProgramState, save
 from shroodler.probes.sqli import probe_sqli
 from shroodler.probes.ssrf import probe_ssrf
 from shroodler.probes.xxe import probe_xxe
+from shroodler.program import ProgramState, save
 
 
 class FakeResp:

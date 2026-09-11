@@ -56,7 +56,6 @@ def probe_xss(
             waf_detected=waf_detected,
             waf_vendor=waf_vendor,
         )
-        reflected = False
         for injected in variants:
             resp = inject(
                 url,

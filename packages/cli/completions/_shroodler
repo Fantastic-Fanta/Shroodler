@@ -350,7 +350,8 @@ _shroodler() {
             '--oob-public-url[URL the target should fetch]:url' \
             '--no-rate-limit-check[Disable missing-rate-limit probes]' \
             '--no-mass-assignment[Disable mass-assignment probes]' \
-            '--smuggling[Enable HTTP request-smuggling probes]' \
+                        '--aggressive[No pacing, parallel probing, all probes]' \
+'--smuggling[Enable HTTP request-smuggling probes]' \
             '--no-smuggling[Force HTTP request-smuggling probes off]' \
             '--no-time-sqli[Skip slow time-based SQLi payloads]' \
             '--no-websocket[Disable WebSocket discovery/probes]' \

@@ -21,6 +21,22 @@ _probe_http_ctx: ContextVar[dict[str, Any] | None] = ContextVar(
     "shroodler_probe_http", default=None
 )
 
+# A pooled keep-alive/HTTP2 client for the current worker (aggressive mode).
+# When set, request() reuses it instead of opening a fresh connection per call.
+_aggressive_http_client: ContextVar[Any | None] = ContextVar(
+    "shroodler_aggressive_client", default=None
+)
+
+
+@contextmanager
+def use_aggressive_client(client: Any) -> Iterator[None]:
+    """Bind a pooled client for all request() calls in this context (thread)."""
+    token = _aggressive_http_client.set(client)
+    try:
+        yield
+    finally:
+        _aggressive_http_client.reset(token)
+
 
 @contextmanager
 def probe_http_session(
@@ -110,8 +126,9 @@ def request(
             existing = headers.get("Cookie") or ""
             headers["Cookie"] = f"{existing}; {extra}" if existing else extra
 
-    own = client is None
-    http = client or httpx.Client(timeout=8.0, follow_redirects=False)
+    pooled = _aggressive_http_client.get() if client is None else None
+    own = client is None and pooled is None
+    http = client or pooled or httpx.Client(timeout=8.0, follow_redirects=False)
     try:
         resp = http.request(method.upper(), url, headers=headers, **kwargs)
     except Exception:  # noqa: BLE001 - fail closed; probe must not crash the loop
@@ -397,3 +414,26 @@ def dedupe(findings: list[Finding]) -> list[Finding]:
         seen.add(key)
         out.append(finding)
     return out
+
+
+def _http2_available() -> bool:
+    try:
+        import h2  # noqa: F401
+
+        return True
+    except ImportError:
+        return False
+
+
+def aggressive_client(timeout: float = 4.0) -> httpx.Client:
+    """A keep-alive (and HTTP/2 when h2 is installed) client for aggressive
+    scans: reuses one connection across a worker's many probe requests and
+    times out sooner than the default 8s, instead of a fresh connection per
+    request."""
+    limits = httpx.Limits(max_keepalive_connections=20, max_connections=40)
+    return httpx.Client(
+        timeout=timeout,
+        follow_redirects=False,
+        http2=_http2_available(),
+        limits=limits,
+    )

@@ -30,6 +30,7 @@ work that produced them rather than tags.
   check for second-order HTML rendering, instead of a false High. Cuts a real
   false positive seen against a FastAPI JSON endpoint.
 
+- **Aggressive mode (`--aggressive`).** Faster scanning with identical findings, opt-in and for authorized hosts only (ShroodleBot passes it for the aggressive profile). It: drops request pacing; probes both the OpenAPI and ProbeAction endpoint loops concurrently (bounded worker pool, login session carried into workers via copy_context); reuses one keep-alive HTTP/2 client per worker instead of a fresh connection per request (via a context var, so all probes benefit without call-site changes); lowers the per-request timeout to 4s; and enables smuggling probes. ~4.3x faster on a local lab; the connection-reuse win is larger on remote HTTPS targets. Adds h2 as a dependency for HTTP/2.
 - **Guessable capability-identifier detection (logic bug, no LLM).** Flags a resource reached by a short opaque capability code (share/invite/export/preview) whose keyspace is small enough to enumerate — e.g. a 6-hex `token_hex(3)` code, a 24-bit space. Reads the identifier from the URL, estimates entropy from length and charset, and reports only when the endpoint returns data; numeric ids (IDOR's job) and word slugs are ignored. Runs autonomously in the ProbeAction and OpenAPI probe paths.
 - **SPA API discovery.** Both JS extractors (`js_analyzer.py` agent path,
   `extractors/js_endpoints.py` crawl path) now pull bare API-path string

@@ -2490,3 +2490,36 @@ def test_run_llm_verify_skipped_without_key(monkeypatch):
     log: list = []
     ag._run_llm_verify(state, config, Pacer(0), log)
     assert not any(e.get("action") == "llm-verify" for e in log)
+
+
+def test_openapi_probe_aggressive_parallel_covers_all(monkeypatch):
+    import shroodler.agent as ag
+    import shroodler.probes.openapi_probe as oap
+    from shroodler.models import Finding
+
+    calls = []
+
+    def fake_probe(endpoints, **kw):
+        row = endpoints[0]
+        calls.append(row["url"])
+        return [
+            Finding(id="x", severity="low", category="payload", url=row["url"], description="d")
+        ]
+
+    monkeypatch.setattr(oap, "probe_openapi_endpoints", fake_probe)
+    monkeypatch.setattr(ag, "_openapi_auth_header", lambda s, c: ("", ""))
+
+    import contextlib
+
+    monkeypatch.setattr(ag, "_bind_probe_session", lambda s, c, p: contextlib.nullcontext())
+
+    endpoints = [{"url": f"http://127.0.0.1/api/e{i}"} for i in range(12)]
+    state = ProgramState(slug="lab")
+    for e in endpoints:
+        state.endpoints[e["url"]] = {}
+    config = AgentConfig(program="lab", target="http://127.0.0.1/", aggressive=True)
+    action = ag.OpenApiProbeAction(endpoints=endpoints)
+    out = ag._execute_openapi_probe(action, state, config, Pacer(0))
+    assert out["urls_tested"] == 12
+    assert out["findings_added"] == 12
+    assert set(calls) == {e["url"] for e in endpoints}  # every endpoint probed

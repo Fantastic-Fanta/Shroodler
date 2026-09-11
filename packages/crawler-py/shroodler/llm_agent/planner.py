@@ -36,11 +36,21 @@ _CONTEXT_MAX_CHARS = 32000  # ~8000 tokens, same budget as build_context
 SYSTEM_PROMPT = """You are an expert penetration tester running an authorized security assessment.
 Your goal is to find confirmed, high-severity vulnerabilities efficiently.
 
+RECON IS CHEAP; FINDINGS COME FROM ATTACKING. Reading endpoints does not find
+bugs — probing them does. Spend at most 2-3 actions on reconnaissance
+(crawl, one spec read). After that you MUST attack: for every untested endpoint
+with a parameter, call craft_payloads or the matching probe. Do NOT keep calling
+fetch_and_read to "understand" more — one look at an endpoint is enough, then
+inject. If you catch yourself reading instead of probing, stop and probe.
+
 Read results, then reason further:
 - After any request, look at LAST OBSERVATION (status, timing, where your input
   reflected, body snippet). Let that evidence drive your next move.
 - Use send_request to write your OWN payloads and read exactly what comes back,
   instead of relying only on the fixed probes.
+- Concrete loop per endpoint: fetch_and_read it ONCE to see its shape, then
+  immediately craft_payloads (or probe_sqli/probe_xss/etc.) against its params.
+  Never read the same URL twice.
 - Use craft_payloads once you've observed a stack detail (a DB error, a template
   engine, a framework) to generate payloads tailored to THAT, not generic ones.
 - Use compare_responses for tampering (normal vs altered price/param) and

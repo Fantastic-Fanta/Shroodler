@@ -22,6 +22,24 @@ def _payload(nonce: str) -> str:
     return f"<script>alert('shroodler-xss-{nonce}')</script>"
 
 
+# Content types that a browser will parse as HTML (so a reflected <script>
+# actually executes). Anything else — application/json, text/plain, an API
+# payload — reflects the marker without running it, so a verbatim reflection
+# there is not executable XSS on its own.
+def _renders_html(resp: httpx.Response | None) -> bool:
+    if resp is None:
+        return False
+    try:
+        ctype = str((resp.headers or {}).get("content-type") or "").lower()
+    except Exception:  # noqa: BLE001
+        ctype = ""
+    if not ctype:
+        # No declared type: a browser may content-sniff to HTML, so stay
+        # conservative and treat it as renderable.
+        return True
+    return "text/html" in ctype or "application/xhtml" in ctype or "image/svg" in ctype
+
+
 def probe_xss(
     url: str,
     method: str,
@@ -69,20 +87,41 @@ def probe_xss(
             )
             body = body_text(resp)
             if marker in body or injected in body:
-                findings.append(
-                    Finding(
-                        id="xss-reflected",
-                        severity="high",
-                        category="payload",
-                        url=url,
-                        description=(
-                            f"{method_u} parameter {name!r} reflected the XSS payload "
-                            "verbatim in the response body."
-                        ),
-                        evidence=f"param={name} nonce={nonce}",
-                        confidence="confirmed",
+                if _renders_html(resp):
+                    findings.append(
+                        Finding(
+                            id="xss-reflected",
+                            severity="high",
+                            category="payload",
+                            url=url,
+                            description=(
+                                f"{method_u} parameter {name!r} reflected the XSS "
+                                "payload verbatim in an HTML response body."
+                            ),
+                            evidence=f"param={name} nonce={nonce}",
+                            confidence="confirmed",
+                        )
                     )
-                )
+                else:
+                    # Reflected, but in a non-HTML response (e.g. a JSON API):
+                    # not directly executable. Worth noting in case the value
+                    # is later rendered as HTML elsewhere (second-order/DOM).
+                    findings.append(
+                        Finding(
+                            id="xss-reflected-nonhtml",
+                            severity="low",
+                            category="payload",
+                            url=url,
+                            description=(
+                                f"{method_u} parameter {name!r} reflected the XSS "
+                                "payload verbatim in a non-HTML response; not "
+                                "directly executable, but check whether this value "
+                                "is rendered as HTML elsewhere."
+                            ),
+                            evidence=f"param={name} nonce={nonce}",
+                            confidence="heuristic",
+                        )
+                    )
                 break
 
         write_method = method_u if method_u in {"POST", "PUT", "PATCH"} else "POST"
@@ -118,19 +157,37 @@ def probe_xss(
         )
         view_body = body_text(view)
         if nonce in view_body:
-            findings.append(
-                Finding(
-                    id="xss-stored",
-                    severity="critical",
-                    category="payload",
-                    url=url,
-                    description=(
-                        f"Parameter {name!r} stored an XSS payload that later "
-                        f"appeared on {follow_url}."
-                    ),
-                    evidence=f"param={name} nonce={nonce} view={follow_url}",
-                    confidence="confirmed",
+            if _renders_html(view):
+                findings.append(
+                    Finding(
+                        id="xss-stored",
+                        severity="critical",
+                        category="payload",
+                        url=url,
+                        description=(
+                            f"Parameter {name!r} stored an XSS payload that later "
+                            f"appeared in the HTML at {follow_url}."
+                        ),
+                        evidence=f"param={name} nonce={nonce} view={follow_url}",
+                        confidence="confirmed",
+                    )
                 )
-            )
+            else:
+                findings.append(
+                    Finding(
+                        id="xss-stored-nonhtml",
+                        severity="low",
+                        category="payload",
+                        url=url,
+                        description=(
+                            f"Parameter {name!r} persisted a payload that later "
+                            f"appeared in a non-HTML response at {follow_url}; not "
+                            "directly executable, but check for HTML rendering "
+                            "elsewhere."
+                        ),
+                        evidence=f"param={name} nonce={nonce} view={follow_url}",
+                        confidence="heuristic",
+                    )
+                )
 
     return dedupe(findings)

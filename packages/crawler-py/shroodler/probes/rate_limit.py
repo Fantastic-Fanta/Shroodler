@@ -128,3 +128,89 @@ def probe_rate_limit(
             confidence="confirmed",
         )
     ]
+
+
+_BYPASS_ATTEMPTS = 20
+# Fixed, documentation-range source used for the control burst (RFC 5737).
+_FIXED_XFF = "203.0.113.7"
+
+
+def _rotating_xff() -> dict[str, str]:
+    """A unique, public-looking X-Forwarded-For per call."""
+    a = 1 + secrets.randbelow(223)
+    b, c = secrets.randbelow(256), secrets.randbelow(256)
+    d = 1 + secrets.randbelow(254)
+    return {"X-Forwarded-For": f"{a}.{b}.{c}.{d}"}
+
+
+def probe_rate_limit_bypass(
+    url: str,
+    method: str,
+    cookie_header: str,
+    *,
+    client: httpx.Client | None = None,
+    pacer: Pacer | None = None,
+    attempts: int = _BYPASS_ATTEMPTS,
+) -> list[Finding]:
+    """Flag rate limiters that key on the spoofable X-Forwarded-For header.
+
+    Two bursts: one with a fixed X-Forwarded-For (must throttle, proving a
+    limiter exists), then one rotating X-Forwarded-For per request. If the
+    second burst never throttles, the limiter is keyed on the client-supplied
+    header and an attacker defeats it by rotating that header — e.g. to brute
+    force an auth endpoint. Bounded, so it only catches low-threshold limits
+    (which is where bypass matters most); high-ceiling limits are left alone.
+    """
+    if not looks_auth_url(url):
+        return []
+    method_u = (method or "POST").upper()
+    if method_u not in {"GET", "POST", "PUT", "PATCH"}:
+        return []
+    pace(pacer)
+    nonce = secrets.token_hex(4)
+    n = max(1, int(attempts))
+
+    tripped = False
+    fixed = {"X-Shroodler-RLB": nonce, "X-Forwarded-For": _FIXED_XFF}
+    for _ in range(n):
+        resp = request(
+            method_u, url, cookie_header=cookie_header,
+            extra_headers=fixed, client=client, pacer=Pacer(0),
+        )
+        if resp is None:
+            return []
+        if _has_rate_signal(resp):
+            tripped = True
+            break
+    if not tripped:
+        # No limiter tripped within the budget — nothing to bypass here
+        # (missing-rate-limit is a separate probe's job).
+        return []
+
+    for _ in range(n):
+        headers = {"X-Shroodler-RLB": nonce, **_rotating_xff()}
+        resp = request(
+            method_u, url, cookie_header=cookie_header,
+            extra_headers=headers, client=client, pacer=Pacer(0),
+        )
+        if resp is None:
+            return []
+        if _has_rate_signal(resp):
+            return []  # rotating XFF still throttled — limiter keys on real IP
+
+    return [
+        Finding(
+            id="rate-limit-bypass-forwarded-for",
+            severity="high",
+            category="auth",
+            url=url,
+            description=(
+                "Endpoint throttles a fixed client but not when X-Forwarded-For "
+                "is rotated per request: the rate limiter trusts the "
+                "client-supplied header, so an attacker bypasses it (e.g. to "
+                "brute force credentials)."
+            ),
+            evidence=f"fixed_burst_tripped rotating_xff_bypassed attempts={n} nonce={nonce}",
+            confidence="confirmed",
+        )
+    ]

@@ -28,6 +28,16 @@ _ES_NEW_TPL = re.compile(r"new\s+EventSource\(\s*`([^`$]+)`")
 _WS_LIT_STR = re.compile(r"""['"]((?:ws|wss)://[^'"]+)['"]""")
 _WS_LIT_TPL = re.compile(r"`((?:ws|wss)://[^`$]+)`")
 
+# Bare API-path string literals. Minified SPA bundles store the path as a
+# constant and call it through a variable (fetch(u), axios.get(cfg.url)), so
+# the call-syntax patterns above miss it even though the path is a literal.
+# Restricted to API-ish leading segments to avoid pulling in static asset
+# paths; stops before ${ so a template literal yields its static prefix.
+_BARE_API_PATH = re.compile(
+    r"""(['"`])((?:https?://[^'"`\s$]+)?/(?:api|rest|graphql|gql|oauth|rpc|internal|v[0-9]+)(?:/[^'"`\s$]*)?)\1""",
+    re.I,
+)
+
 _PATTERNS = (
     _FETCH_STR,
     _FETCH_TPL,
@@ -75,6 +85,8 @@ def extract_js_endpoints(source_url: str, js_text: str) -> tuple[list[JsEndpoint
     for pat in _PATTERNS:
         for m in pat.finditer(js_text):
             add(m.group(1))
+    for m in _BARE_API_PATH.finditer(js_text):
+        add(m.group(2))
     return endpoints, findings
 
 

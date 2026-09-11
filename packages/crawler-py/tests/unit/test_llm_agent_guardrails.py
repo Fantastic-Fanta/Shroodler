@@ -78,13 +78,23 @@ def test_empty_scope_allows_url():
     assert result.allowed is True
 
 
-def test_blocks_fetch_and_read_third_consecutive():
+def test_blocks_re_read_of_same_url_with_probe_directive():
     url = "http://127.0.0.1/page"
-    history = [_hist("fetch_and_read", url), _hist("fetch_and_read", url)]
+    history = [_hist("fetch_and_read", url)]
     decision = PlannerDecision(action="fetch_and_read", params={"url": url})
     result = check_guardrails(decision, history, ProgramState(slug="lab"), _config())
     assert result.allowed is False
-    assert "fetch_and_read" in result.reason
+    # One look is enough; the block steers the planner to probe instead.
+    assert "already read" in result.reason and "probe" in result.reason
+
+
+def test_blocks_fetch_and_read_after_recon_budget():
+    # Four reads of distinct URLs spends the recon budget; a fifth is blocked.
+    history = [_hist("fetch_and_read", f"http://127.0.0.1/p{i}") for i in range(4)]
+    decision = PlannerDecision(action="fetch_and_read", params={"url": "http://127.0.0.1/new"})
+    result = check_guardrails(decision, history, ProgramState(slug="lab"), _config())
+    assert result.allowed is False
+    assert "recon budget" in result.reason
 
 
 def test_allows_fetch_and_read_of_a_different_url():

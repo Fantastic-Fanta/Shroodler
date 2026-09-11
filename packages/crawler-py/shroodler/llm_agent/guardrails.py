@@ -12,6 +12,9 @@ from shroodler.llm_agent.history import HistoryEntry
 from shroodler.llm_agent.planner import PlannerDecision
 from shroodler.scope import in_scope, load_scope
 
+# Max fetch_and_read actions per run before the planner is forced to probe.
+_MAX_READS = 4
+
 
 @dataclass
 class GuardrailResult:
@@ -87,20 +90,24 @@ def check_guardrails(
     params = decision.params or {}
     url = _decision_url(decision)
 
-    if decision.action == "fetch_and_read" and url:
-        streak = 0
-        for item in reversed(list(history or [])):
-            if (
-                _entry_action(item) == "fetch_and_read"
-                and str(_entry_params(item).get("url") or "") == url
-            ):
-                streak += 1
-            else:
-                break
-        if streak >= 2:
+    if decision.action == "fetch_and_read":
+        reads = [
+            item for item in (history or [])
+            if _entry_action(item) == "fetch_and_read"
+        ]
+        # Never re-read a URL already read this run: one look is enough.
+        if url and any(str(_entry_params(i).get("url") or "") == url for i in reads):
             return GuardrailResult(
                 False,
-                f"fetch_and_read {url} repeated {streak}+ consecutive times",
+                f"already read {url} — probe it now (craft_payloads or a probe_ tool), "
+                "do not read it again",
+            )
+        # Hard recon budget: after a few reads, force a transition to attacking.
+        if len(reads) >= _MAX_READS:
+            return GuardrailResult(
+                False,
+                f"recon budget spent ({len(reads)} reads) — stop reading and probe an "
+                "untested endpoint with craft_payloads or a probe_ tool",
             )
 
     combo = _combo(decision.action, params)

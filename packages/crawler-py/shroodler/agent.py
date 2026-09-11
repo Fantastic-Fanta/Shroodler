@@ -34,6 +34,8 @@ from shroodler.urls import origin as origin_of
 
 _STALE_AFTER = timedelta(hours=24)
 _DEFAULT_RATE_CEILING = 0.1  # 100 ms between HTTP requests if no guardrail
+_AGG_WORKERS = 8  # concurrent endpoint probes in --aggressive mode
+_AGG_TIMEOUT = 4.0  # per-request timeout (s) in --aggressive mode (default 8)
 _CRAWL_STALL_LIMIT = 3
 _PLACEHOLDER_RE = re.compile(r"\{[^{}]+\}")
 
@@ -85,6 +87,7 @@ class AgentConfig:
     run_unauth_exposure: bool = True  # anon read of sensitive API endpoints
     run_mass_assignment: bool = True
     run_smuggling: bool = False  # opt-in; aggressive
+    aggressive: bool = False  # --aggressive: no pacing, parallel probing, all probes
     run_websocket: bool = True
     allow_external: bool = False
     scope_file: str | None = None
@@ -2118,17 +2121,17 @@ def _finish_probe_action(
     seen_rl: set[str] = set()
     seen_unauth: set[str] = set()
 
-    def _run(label: str, fn) -> None:
-        try:
-            findings.extend(fn())
-        except Exception as exc:  # noqa: BLE001 - per-probe, loop must continue
-            errors.append(f"{url} {label}: {type(exc).__name__}: {exc}")
+    def _probe_url(index: int, url: str) -> None:
+        def _run(label: str, fn) -> None:
+            try:
+                findings.extend(fn())
+            except Exception as exc:  # noqa: BLE001 - per-probe, must continue
+                errors.append(f"{url} {label}: {type(exc).__name__}: {exc}")
 
-    for index, url in enumerate(action.urls, start=1):
         if not _in_target_origin(url, config.target):
-            continue
+            return
         if not _url_in_program_scope(url, state, config):
-            continue
+            return
         emit_log_entry(
             {
                 "iteration": int(getattr(config, "_iteration", 0) or 0),
@@ -2356,6 +2359,31 @@ def _finish_probe_action(
                 return hits
 
             _run("websocket", _ws_probe)
+
+    urls = list(action.urls)
+    if bool(getattr(config, "aggressive", False)) and len(urls) > 1:
+        # Aggressive: probe URLs concurrently, each with its own keep-alive
+        # client. copy_context carries the bound login session into workers.
+        import concurrent.futures
+        from contextvars import copy_context
+
+        from shroodler.probes.common import aggressive_client, use_aggressive_client
+
+        def _worker(pair: tuple[int, str]) -> None:
+            client = aggressive_client(timeout=_AGG_TIMEOUT)
+            try:
+                with use_aggressive_client(client):
+                    _probe_url(pair[0], pair[1])
+            finally:
+                client.close()
+
+        pairs = list(enumerate(urls, start=1))
+        with concurrent.futures.ThreadPoolExecutor(max_workers=_AGG_WORKERS) as ex:
+            list(ex.map(lambda pr: copy_context().run(_worker, pr), pairs))
+    else:
+        for index, url in enumerate(urls, start=1):
+            _probe_url(index, url)
+
     findings_added = _merge_findings(state, findings)
     program.mark_tested(state, action.urls, "tested_payload")
     out: dict[str, Any] = {
@@ -2437,23 +2465,62 @@ def _execute_openapi_probe(
     tested: list[str] = []
     _session_cm = _bind_probe_session(state, config, pacer)
     _session_cm.__enter__()
+
+    def _probe_row(row: dict, probe_pacer: Pacer) -> list[Any]:
+        return probe_openapi_endpoints(
+            [row], cookie_header=owner, peer_cookie=peer, pacer=probe_pacer
+        )
+
+    def _probe_row_pooled(row: dict) -> list[Any]:
+        # One keep-alive HTTP/2 client reused across this endpoint's probes,
+        # timing out sooner than the default 8s.
+        from shroodler.probes.common import aggressive_client
+
+        client = aggressive_client(timeout=_AGG_TIMEOUT)
+        try:
+            return probe_openapi_endpoints(
+                [row],
+                cookie_header=owner,
+                peer_cookie=peer,
+                pacer=Pacer(0.0),
+                client=client,
+            )
+        finally:
+            client.close()
+
     try:
-        for row in action.endpoints:
-            url = str(row.get("url") or "")
-            try:
-                findings.extend(
-                    probe_openapi_endpoints(
-                        [row],
-                        cookie_header=owner,
-                        peer_cookie=peer,
-                        pacer=pacer,
-                    )
-                )
-            except Exception as exc:  # noqa: BLE001 - per-endpoint, loop must continue
-                errors.append(f"{url} openapi-probe: {type(exc).__name__}: {exc}")
-            if url:
-                tested.append(url)
-                row["tested_payload"] = True
+        rows = list(action.endpoints or [])
+        if bool(getattr(config, "aggressive", False)) and len(rows) > 1:
+            # Aggressive: probe endpoints concurrently, each unpaced. copy_context
+            # carries the bound login session (a ContextVar) into the workers.
+            import concurrent.futures
+            from contextvars import copy_context
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=_AGG_WORKERS) as ex:
+                fut_to_row = {
+                    ex.submit(copy_context().run, _probe_row_pooled, row): row
+                    for row in rows
+                }
+                for fut in concurrent.futures.as_completed(fut_to_row):
+                    row = fut_to_row[fut]
+                    url = str(row.get("url") or "")
+                    try:
+                        findings.extend(fut.result())
+                    except Exception as exc:  # noqa: BLE001 - one endpoint must not stop the rest
+                        errors.append(f"{url} openapi-probe: {type(exc).__name__}: {exc}")
+                    if url:
+                        tested.append(url)
+                        row["tested_payload"] = True
+        else:
+            for row in rows:
+                url = str(row.get("url") or "")
+                try:
+                    findings.extend(_probe_row(row, pacer))
+                except Exception as exc:  # noqa: BLE001 - per-endpoint, loop must continue
+                    errors.append(f"{url} openapi-probe: {type(exc).__name__}: {exc}")
+                if url:
+                    tested.append(url)
+                    row["tested_payload"] = True
     finally:
         _session_cm.__exit__(None, None, None)
     findings_added = _merge_findings(state, findings)
@@ -3062,7 +3129,7 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
     errors: list[str] = []
     consecutive_errors = 0
     _crawl_stall_count = 0
-    pacer = _new_pacer()
+    pacer = Pacer(0.0) if getattr(config, "aggressive", False) else _new_pacer()
     llm_history: list[Any] = []
     config._llm_cost_usd = 0.0
     config._llm_last_guardrail = ""

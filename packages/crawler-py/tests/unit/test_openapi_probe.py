@@ -195,3 +195,27 @@ def test_probe_openapi_collects_per_endpoint_errors(monkeypatch):
     )
     assert not any(f.id == "sqli" for f in findings)
     assert not any(f.id == "openapi-unauthenticated" for f in findings)
+
+
+def test_openapi_path_runs_open_redirect():
+    # An endpoint with a redirect-shaped param that echoes it into Location:
+    # the OpenAPI probe path must now catch the open redirect.
+    def handler(method, url, kw):
+        params = kw.get("params") or {}
+        target = str(params.get("url", ""))
+        if "evil.example.com" in target:
+            r = FakeResp(302, "")
+            r.headers = {"location": target}
+            return r
+        return FakeResp(200, "ok")
+
+    ep = OpenApiEndpoint(
+        url="http://127.0.0.1/api/go",
+        method="GET",
+        params=[{"name": "url", "in": "query", "type": "string"}],
+    )
+    client = FakeClient(handler)
+    findings = probe_openapi_endpoints(
+        [ep], cookie_header="", peer_cookie="", client=client, pacer=Pacer(0)
+    )
+    assert any(f.id == "open-redirect" for f in findings)

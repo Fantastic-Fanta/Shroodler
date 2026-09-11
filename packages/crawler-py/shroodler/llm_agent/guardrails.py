@@ -12,8 +12,11 @@ from shroodler.llm_agent.history import HistoryEntry
 from shroodler.llm_agent.planner import PlannerDecision
 from shroodler.scope import in_scope, load_scope
 
-# Max fetch_and_read actions per run before the planner is forced to probe.
-_MAX_READS = 4
+# Recon actions counted against the budget. Both count, so the planner cannot
+# dodge the limit by alternating crawl and fetch_and_read.
+_RECON_ACTIONS = {"fetch_and_read", "crawl"}
+# Max recon actions per run before the planner is forced to probe.
+_MAX_READS = 6
 
 
 @dataclass
@@ -90,24 +93,25 @@ def check_guardrails(
     params = decision.params or {}
     url = _decision_url(decision)
 
-    if decision.action == "fetch_and_read":
-        reads = [
-            item for item in (history or [])
-            if _entry_action(item) == "fetch_and_read"
-        ]
+    if decision.action in _RECON_ACTIONS:
+        recon = [item for item in (history or []) if _entry_action(item) in _RECON_ACTIONS]
         # Never re-read a URL already read this run: one look is enough.
-        if url and any(str(_entry_params(i).get("url") or "") == url for i in reads):
+        if decision.action == "fetch_and_read" and url and any(
+            _entry_action(i) == "fetch_and_read" and str(_entry_params(i).get("url") or "") == url
+            for i in recon
+        ):
             return GuardrailResult(
                 False,
                 f"already read {url} — probe it now (craft_payloads or a probe_ tool), "
                 "do not read it again",
             )
-        # Hard recon budget: after a few reads, force a transition to attacking.
-        if len(reads) >= _MAX_READS:
+        # Hard recon budget across crawl + reads: force a transition to attacking.
+        if len(recon) >= _MAX_READS:
             return GuardrailResult(
                 False,
-                f"recon budget spent ({len(reads)} reads) — stop reading and probe an "
-                "untested endpoint with craft_payloads or a probe_ tool",
+                f"recon budget spent ({len(recon)} crawl/read actions) — stop "
+                "reconnaissance and probe an untested endpoint with craft_payloads "
+                "or a probe_ tool",
             )
 
     combo = _combo(decision.action, params)

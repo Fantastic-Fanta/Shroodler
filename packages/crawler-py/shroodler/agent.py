@@ -2091,6 +2091,7 @@ def _finish_probe_action(
     auth_header: str,
     cookie_header: str,
 ) -> dict[str, Any]:
+    from shroodler.probes.auth_bypass import probe_auth_bypass
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
     from shroodler.probes.enum_id import probe_enumerable_id
@@ -2168,6 +2169,11 @@ def _finish_probe_action(
                     oob=getattr(config, "_oob", None),
                     time_based=bool(getattr(config, "probe_time_sqli", True)),
                 ),
+            )
+        if config.probe_sqli and method in {"POST", "PUT"} and params:
+            _run(
+                "auth-bypass",
+                lambda: probe_auth_bypass(url, method, params, hdr, pacer=pacer),
             )
         if config.probe_xss and method in {"GET", "POST", "PUT", "PATCH"} and params:
             _run(

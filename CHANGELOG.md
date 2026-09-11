@@ -7,6 +7,10 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Auth-bypass SQL injection detection.** A differential login probe: it submits wrong credentials, then a tautology in the username field, and flags `sqli-auth-bypass` (critical) when the payload produces a logged-in response the wrong credentials did not (a new session/data cookie, a redirect away from login, or success-vs-failure body markers). Catches the class the error/time/boolean SQLi probes miss. Verified on demo.testfire.net.
+- **Recon budget counts crawl and reads together.** The LLM agent could dodge the read budget by alternating `crawl` and `fetch_and_read`; both now count, so it transitions from reconnaissance to probing sooner.
+- **Recon tools follow / surface redirects.** `fetch_and_read` follows redirects and reports the final URL; `send_request` observations include `redirect_to` on a 3xx. Stops the agent stalling on a redirecting base like `/api`. On stingray this cut recon from 7 actions to 3 and got it probing.
+
 - **Wider OpenAPI probe coverage.** Spec-discovered endpoints now also get open-redirect and CRLF probes (previously only SQLi/XSS/traversal/IDOR/unauth), so a redirect param reached only via the spec is no longer missed. Found by the eval harness: planted-bug recall on a local lab went 75% → 100%.
 - **LLM autoconfirm (`--llm-verify`).** After a deterministic `shroodler agent`
   scan, the LLM verifier re-checks each tentative (heuristic/probable) finding

@@ -397,6 +397,7 @@ def _fetch_and_read(
         cookie_header=owner,
         client=owner_client,
         pacer=pacer,
+        follow_redirects=True,  # recon: resolve the real page, don't stall on a 3xx
         **kwargs,
     )
     if resp is None:
@@ -406,11 +407,17 @@ def _fetch_and_read(
         )
     body = body_text(resp)[:_FETCH_BODY_CAP]
     status = int(getattr(resp, "status_code", 0) or 0)
+    final_url = str(getattr(resp, "url", "") or "")
+    redirected = final_url and final_url != target
+    summary = f"fetch_and_read {method} {url} status={status} bytes={len(body)}"
+    if redirected:
+        summary += f" (followed redirect to {final_url})"
     return ToolResult(
         findings_added=0,
-        summary=f"fetch_and_read {method} {url} status={status} bytes={len(body)}",
+        summary=summary,
         raw_output={
             "url": url,
+            "final_url": final_url,
             "method": method,
             "status_code": status,
             "body": body,

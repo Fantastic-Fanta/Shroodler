@@ -92,18 +92,26 @@ def _observe(resp: httpx.Response | None, needles: list[str]) -> dict[str, Any]:
         if ctx != "none":
             reflected[n] = ctx
     ctype = ""
+    location = ""
     try:
         ctype = str(resp.headers.get("content-type") or "")
+        location = str(resp.headers.get("location") or "")
     except Exception:  # noqa: BLE001
         ctype = ""
-    return {
-        "status_code": int(getattr(resp, "status_code", 0) or 0),
+    status = int(getattr(resp, "status_code", 0) or 0)
+    out = {
+        "status_code": status,
         "elapsed_s": round(response_elapsed(resp), 3),
         "bytes": len(body),
         "content_type": ctype,
         "reflected": reflected,
         "body": snippet,
     }
+    # On a redirect, surface where it points so the planner can follow it
+    # instead of stalling on a bare 3xx.
+    if 300 <= status < 400 and location:
+        out["redirect_to"] = location
+    return out
 
 
 def _send(

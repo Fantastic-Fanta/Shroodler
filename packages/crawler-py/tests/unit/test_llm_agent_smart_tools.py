@@ -396,3 +396,17 @@ def test_reasoning_model_resolution():
     # Blank reasoning model falls back to the provider default reasoner.
     cfg.llm_agent_reasoning_model = ""
     assert llm_call.reasoning_model_for(cfg) == "deepseek-reasoner"
+
+
+def test_observe_reports_redirect_target():
+    from shroodler.llm_agent.http_tools import _observe
+
+    class R:
+        status_code = 301
+        text = ""
+        content = b""
+        headers = {"location": "/api/", "content-type": "text/html"}
+        elapsed = 0.0
+
+    obs = _observe(R(), [])
+    assert obs["redirect_to"] == "/api/"

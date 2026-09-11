@@ -79,6 +79,74 @@ def test_skips_get(monkeypatch):
     assert ab.probe_auth_bypass("http://t/doLogin", "GET", LOGIN_PARAMS, "") == []
 
 
+def test_json_api_login_bypass_status_flip(monkeypatch):
+    # A JSON API login with no discovered params: fields are synthesized, the
+    # body is sent as JSON, and a 401 -> 200 flip is the bypass signal.
+    def req(method, url, *, data=None, json=None, **k):
+        body = json if json is not None else (data or {})
+        if _is_bypass(body):
+            return Resp(200, body='{"authentication":{"token":"eyJhbGci"}}')
+        return Resp(401, body='{"error":"Invalid email or password"}')
+
+    monkeypatch.setattr(ab, "request", req)
+    findings = ab.probe_auth_bypass(
+        "https://t/rest/user/login", "POST", [], "", pacer=Pacer(0)
+    )
+    assert findings and findings[0].id == "sqli-auth-bypass"
+    assert "status flipped" in findings[0].description
+
+
+def test_json_api_login_bypass_token_marker(monkeypatch):
+    # Both responses are 200; the bearer token appears only after the payload.
+    def req(method, url, *, data=None, json=None, **k):
+        body = json if json is not None else (data or {})
+        if _is_bypass(body):
+            return Resp(200, body='{"authentication":{"token":"eyJhbGci"}}')
+        return Resp(200, body='{"user":null}')
+
+    monkeypatch.setattr(ab, "request", req)
+    findings = ab.probe_auth_bypass(
+        "https://t/rest/user/login", "POST", [], "", pacer=Pacer(0)
+    )
+    assert findings and findings[0].id == "sqli-auth-bypass"
+    assert "token" in findings[0].description
+
+
+def test_form_fallback_when_json_rejected(monkeypatch):
+    # API path tries JSON first; a 415 makes it fall back to urlencoded form.
+    seen: list[str] = []
+
+    def req(method, url, *, data=None, json=None, **k):
+        enc = "json" if json is not None else "form"
+        seen.append(enc)
+        if enc == "json":
+            return Resp(415, body="Unsupported Media Type")
+        body = data or {}
+        if _is_bypass(body):
+            return Resp(302, cookies=["sid", "auth"], location="/home")
+        return Resp(200, body="invalid credentials")
+
+    monkeypatch.setattr(ab, "request", req)
+    findings = ab.probe_auth_bypass(
+        "https://t/rest/user/login", "POST", LOGIN_PARAMS, "", pacer=Pacer(0)
+    )
+    assert findings and findings[0].id == "sqli-auth-bypass"
+    assert "json" in seen and "form" in seen
+
+
+def test_no_synthesis_for_non_login_json_path(monkeypatch):
+    # A non-login API path with no params must not be probed via synthesis.
+    called = {"n": 0}
+
+    def req(*a, **k):
+        called["n"] += 1
+        return Resp(200)
+
+    monkeypatch.setattr(ab, "request", req)
+    assert ab.probe_auth_bypass("https://t/rest/products/search", "POST", [], "") == []
+    assert called["n"] == 0
+
+
 def test_login_path_with_identity_field_no_password(monkeypatch):
     # A login-ish path with a username field but no password field still probes.
     def req(method, url, *, data=None, **k):

@@ -2523,3 +2523,14 @@ def test_openapi_probe_aggressive_parallel_covers_all(monkeypatch):
     assert out["urls_tested"] == 12
     assert out["findings_added"] == 12
     assert set(calls) == {e["url"] for e in endpoints}  # every endpoint probed
+
+
+def test_looks_like_api_route_recognizes_rest_prefix():
+    from shroodler.agent import _looks_like_api_route
+
+    assert _looks_like_api_route("https://t/rest/user/login")
+    assert _looks_like_api_route("https://t/api/Users")
+    assert _looks_like_api_route("https://t/graphql")
+    # SPA view routes are not server API surface.
+    assert not _looks_like_api_route("https://t/search")
+    assert not _looks_like_api_route("https://t/about")

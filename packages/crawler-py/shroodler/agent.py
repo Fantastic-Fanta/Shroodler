@@ -596,7 +596,14 @@ def _looks_like_api_route(url: str) -> bool:
     path = (urlparse(url).path or "").lower()
     return any(
         token in path
-        for token in ("/api/", "/graphql", "/auth/", "/oauth", "/.well-known/")
+        for token in (
+            "/api/",
+            "/rest/",
+            "/graphql",
+            "/auth/",
+            "/oauth",
+            "/.well-known/",
+        )
     )
 
 

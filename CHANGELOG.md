@@ -7,6 +7,20 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **LLM autoconfirm (`--llm-verify`).** After a deterministic `shroodler agent`
+  scan, the LLM verifier re-checks each tentative (heuristic/probable) finding
+  against fresh evidence and confirms, downgrades, or drops it as a false
+  positive — the same verification the `--llm-agent` loop runs at report time,
+  now available without the full agent. Opt-in; requires a provider key and
+  uses `--llm-provider` / `--llm-reasoning-model`.
+- **Baseline-differential SQLi.** Error-based SQL injection now confirms only
+  when the database error is absent from a clean baseline request, so a
+  persistent error page (or a param that always errors) no longer produces a
+  false positive. The other injection probes were already context-aware:
+  SSTI confirms only on evaluated math, path traversal on a real file marker,
+  open-redirect/CRLF on the actual response header, SSRF on an OOB callback
+  (reflection stays heuristic).
+
 - **Content-type-aware XSS.** The reflected/stored XSS probes now confirm
   High/Critical only when the response actually renders as HTML (text/html,
   xhtml, svg, or an undeclared type a browser may sniff). A payload reflected

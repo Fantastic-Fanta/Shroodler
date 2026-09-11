@@ -89,8 +89,8 @@ def test_blocks_re_read_of_same_url_with_probe_directive():
 
 
 def test_blocks_fetch_and_read_after_recon_budget():
-    # Four reads of distinct URLs spends the recon budget; a fifth is blocked.
-    history = [_hist("fetch_and_read", f"http://127.0.0.1/p{i}") for i in range(4)]
+    # Distinct-URL reads spend the recon budget; the next one is blocked.
+    history = [_hist("fetch_and_read", f"http://127.0.0.1/p{i}") for i in range(6)]
     decision = PlannerDecision(action="fetch_and_read", params={"url": "http://127.0.0.1/new"})
     result = check_guardrails(decision, history, ProgramState(slug="lab"), _config())
     assert result.allowed is False
@@ -124,3 +124,19 @@ def test_report_with_no_url_is_allowed():
         _config(),
     )
     assert result.allowed is True
+
+
+def test_recon_budget_counts_crawl_and_reads_together():
+    # The planner cannot dodge the budget by alternating crawl and fetch_and_read.
+    history = [
+        _hist("crawl", "http://127.0.0.1/a"),
+        _hist("fetch_and_read", "http://127.0.0.1/b"),
+        _hist("crawl", "http://127.0.0.1/c"),
+        _hist("fetch_and_read", "http://127.0.0.1/d"),
+        _hist("crawl", "http://127.0.0.1/e"),
+        _hist("fetch_and_read", "http://127.0.0.1/f"),
+    ]
+    decision = PlannerDecision(action="crawl", params={"url": "http://127.0.0.1/g"})
+    result = check_guardrails(decision, history, ProgramState(slug="lab"), _config())
+    assert result.allowed is False
+    assert "recon budget" in result.reason

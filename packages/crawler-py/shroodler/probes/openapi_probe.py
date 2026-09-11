@@ -9,6 +9,7 @@ import httpx
 
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
+from shroodler.probes.auth_bypass import probe_auth_bypass
 from shroodler.probes.common import dedupe, request
 from shroodler.probes.crlf import probe_crlf
 from shroodler.probes.enum_id import probe_enumerable_id
@@ -154,6 +155,10 @@ def _probe_one(
         )
         findings.extend(
             probe_crlf(filled, method, injectable, cookie_header, client=client, pacer=pacer)
+        )
+    if method in {"POST", "PUT"} and injectable:
+        findings.extend(
+            probe_auth_bypass(filled, method, injectable, cookie_header, client=client, pacer=pacer)
         )
     if peer_cookie and _has_numeric_path_param(params, filled):
         findings.extend(

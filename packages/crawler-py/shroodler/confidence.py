@@ -37,6 +37,7 @@ _BY_ID: dict[str, str] = {
     "chain-xss-cookie-theft": "probable",
     "chain-cors-credentialed": "probable",
     "payload-xss-stored": "confirmed",
+    "sqli-auth-bypass": "confirmed",
     "xss-reflected-nonhtml": "heuristic",
     "xss-stored-nonhtml": "heuristic",
     "graphql-field-authz": "probable",

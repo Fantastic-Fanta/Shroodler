@@ -94,6 +94,8 @@ class AgentConfig:
     # Blank resolves to the provider default reasoner (deepseek-reasoner / opus).
     llm_agent_reasoning_model: str = "deepseek-reasoner"
     llm_agent_max_cost_usd: float = 5.0
+    # Auto-verify tentative findings against fresh evidence before reporting.
+    llm_auto_verify: bool = True
     run_js_analysis: bool = True  # --no-js-analysis to skip
     run_waf_detect: bool = True  # --no-waf-detect to skip
     idor_methods: list[str] = field(default_factory=lambda: ["GET"])

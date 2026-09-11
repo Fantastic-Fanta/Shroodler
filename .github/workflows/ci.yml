@@ -57,6 +57,9 @@ jobs:
           pytest packages/secret-patterns/tests -q
           pytest packages/report-generator/tests -q
           PYTHONPATH=packages/payload-tester pytest packages/payload-tester/tests -q
+          pytest packages/cli/tests -q
+          pytest packages/guardrails/tests -q
+          pytest packages/mcp-server/tests -q
 
   # Go build + unit tests + gofmt. Independent of the Python jobs.
   go-unit:

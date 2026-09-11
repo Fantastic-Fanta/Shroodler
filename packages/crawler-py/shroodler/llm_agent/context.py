@@ -165,23 +165,31 @@ def _tested_combos(history: list[Any]) -> list[str]:
     return lines[-40:]
 
 
+_TESTED_STATUSES = {"validated", "refuted", "inconclusive"}
+
+
 def _hypotheses(state: Any) -> list[str]:
+    """Pending hypotheses first (untested), then a short tail of tested ones."""
     rows = getattr(state, "hypotheses", None) or []
-    lines: list[str] = []
-    for item in rows[-15:]:
+    pending: list[str] = []
+    tested: list[str] = []
+    for item in rows[-25:]:
         if isinstance(item, dict):
             text = str(item.get("hypothesis") or item.get("text") or "").strip()
             url = str(item.get("target_url") or item.get("url") or "").strip()
+            status = str(item.get("status") or "").strip().lower()
         else:
             text = str(item).strip()
             url = ""
+            status = ""
         if not text:
             continue
-        if url:
-            lines.append(f"- {text} ({_path_of(url)})")
+        line = f"- {text}" + (f" ({_path_of(url)})" if url else "")
+        if status in _TESTED_STATUSES:
+            tested.append(f"{line} [{status}]")
         else:
-            lines.append(f"- {text}")
-    return lines
+            pending.append(f"{line} [pending]")
+    return pending[:15] + tested[-5:]
 
 
 def _last_action(history: list[Any]) -> str:
@@ -281,9 +289,18 @@ def build_context(
     blocks: list[str] = [
         f"TARGET: {target} (program: {slug})",
         f"ITERATION: {iteration}/{max_iter}",
-        "",
-        f"CONFIRMED FINDINGS ({len(confirmed)}):",
     ]
+    try:
+        from shroodler.llm_agent.engagement_memory import summarize_facts
+
+        facts_block = summarize_facts(state)
+    except Exception:  # noqa: BLE001
+        facts_block = ""
+    if facts_block:
+        blocks.append("")
+        blocks.append(facts_block)
+    blocks.append("")
+    blocks.append(f"CONFIRMED FINDINGS ({len(confirmed)}):")
     if confirmed:
         for row in confirmed:
             sev = str(row.get("severity") or "info").upper()

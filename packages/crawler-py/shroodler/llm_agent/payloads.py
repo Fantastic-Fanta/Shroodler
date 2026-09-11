@@ -189,26 +189,19 @@ def _find_finding(state: Any, finding_id: str, url: str = "") -> Any:
     return None
 
 
-def verify_finding(
-    decision: PlannerDecision,
+def _verify_one(
+    finding: Any,
     state: Any,
     config: Any,
     pacer: Pacer,
     client: Any | None,
-) -> ToolResult:
-    params = _params_of(decision)
-    finding_id = str(params.get("finding_id") or params.get("id") or "").strip()
-    if not finding_id:
-        return ToolResult(
-            summary="verify_finding missing finding_id",
-            raw_output={"error": "missing id"},
-        )
-    finding = _find_finding(state, finding_id, str(params.get("url") or ""))
-    if finding is None:
-        return ToolResult(
-            summary=f"verify_finding: no finding {finding_id} in state",
-            raw_output={"error": "not found", "finding_id": finding_id},
-        )
+) -> dict[str, Any]:
+    """Judge one finding against fresh evidence and apply the verdict.
+
+    Returns {verdict, confidence, reasoning, removed} or {error}. Mutates
+    the finding's confidence, or drops it from state on false_positive.
+    """
+    finding_id = str(getattr(finding, "id", "") or "")
     url = str(getattr(finding, "url", "") or "")
     cookie_header, _peer = _auth(config)
     resp = (
@@ -230,10 +223,7 @@ def verify_finding(
     )
     call = complete_json(_VERIFY_SYSTEM, user, config, use_reasoning=True, max_tokens=400)
     if call.data is None:
-        return ToolResult(
-            summary=f"verify_finding llm unavailable: {call.error}",
-            raw_output={"error": call.error, "finding_id": finding_id},
-        )
+        return {"error": call.error, "finding_id": finding_id}
     verdict = str(call.data.get("verdict") or "").lower().strip()
     reasoning = " ".join(str(call.data.get("reasoning") or "").split())[:200]
     if verdict == "false_positive":
@@ -243,16 +233,12 @@ def verify_finding(
             ]
         except Exception:  # noqa: BLE001
             pass
-        return ToolResult(
-            findings_added=0,
-            summary=f"verify_finding {finding_id}: FALSE POSITIVE removed — {reasoning}",
-            raw_output={
-                "finding_id": finding_id,
-                "verdict": "false_positive",
-                "removed": True,
-                "reasoning": reasoning,
-            },
-        )
+        return {
+            "finding_id": finding_id,
+            "verdict": "false_positive",
+            "removed": True,
+            "reasoning": reasoning,
+        }
     new_conf = str(call.data.get("confidence") or "").lower().strip()
     if new_conf not in _VALID_CONFIDENCE:
         new_conf = "confirmed" if verdict == "confirmed" else "probable"
@@ -260,19 +246,92 @@ def verify_finding(
         finding.confidence = new_conf
     except Exception:  # noqa: BLE001
         pass
-    return ToolResult(
-        findings_added=0,
-        summary=(
-            f"verify_finding {finding_id}: {verdict or 'kept'} "
-            f"→ confidence={new_conf} — {reasoning}"
-        ),
-        raw_output={
-            "finding_id": finding_id,
-            "verdict": verdict or "kept",
-            "confidence": new_conf,
-            "reasoning": reasoning,
-        },
-    )
+    return {
+        "finding_id": finding_id,
+        "verdict": verdict or "kept",
+        "confidence": new_conf,
+        "removed": False,
+        "reasoning": reasoning,
+    }
+
+
+def verify_finding(
+    decision: PlannerDecision,
+    state: Any,
+    config: Any,
+    pacer: Pacer,
+    client: Any | None,
+) -> ToolResult:
+    params = _params_of(decision)
+    finding_id = str(params.get("finding_id") or params.get("id") or "").strip()
+    if not finding_id:
+        return ToolResult(
+            summary="verify_finding missing finding_id",
+            raw_output={"error": "missing id"},
+        )
+    finding = _find_finding(state, finding_id, str(params.get("url") or ""))
+    if finding is None:
+        return ToolResult(
+            summary=f"verify_finding: no finding {finding_id} in state",
+            raw_output={"error": "not found", "finding_id": finding_id},
+        )
+    out = _verify_one(finding, state, config, pacer, client)
+    if out.get("error"):
+        return ToolResult(
+            summary=f"verify_finding llm unavailable: {out['error']}",
+            raw_output=out,
+        )
+    if out.get("removed"):
+        summary = f"verify_finding {finding_id}: FALSE POSITIVE removed — {out['reasoning']}"
+    else:
+        summary = (
+            f"verify_finding {finding_id}: {out['verdict']} "
+            f"→ confidence={out['confidence']} — {out['reasoning']}"
+        )
+    return ToolResult(findings_added=0, summary=summary, raw_output=out)
+
+
+# Confidences that warrant an automatic verification pass before reporting.
+_UNVERIFIED = {"", "heuristic", "probable", None}
+
+
+def auto_verify_pending(
+    state: Any,
+    config: Any,
+    pacer: Pacer,
+    client: Any | None,
+    *,
+    limit: int = 12,
+) -> dict[str, Any]:
+    """Verify every non-confirmed finding before the report is generated.
+
+    Bounded by ``limit`` and the run's cost cap so it cannot run away.
+    Returns a tally: {verified, confirmed, downgraded, removed, skipped}.
+    """
+    cap = float(getattr(config, "llm_agent_max_cost_usd", 0.0) or 0.0)
+    tally = {"verified": 0, "confirmed": 0, "downgraded": 0, "removed": 0, "skipped": 0}
+    pending = [
+        f
+        for f in list(getattr(state, "findings", None) or [])
+        if str(getattr(f, "confidence", "") or "") in {"heuristic", "probable"}
+    ]
+    for finding in pending[: max(0, int(limit))]:
+        if cap and float(getattr(config, "_llm_cost_usd", 0.0) or 0.0) > cap:
+            tally["skipped"] += 1
+            continue
+        out = _verify_one(finding, state, config, pacer, client)
+        if out.get("error"):
+            tally["skipped"] += 1
+            continue
+        tally["verified"] += 1
+        if out.get("removed"):
+            tally["removed"] += 1
+        elif out.get("verdict") == "confirmed":
+            tally["confirmed"] += 1
+        else:
+            tally["downgraded"] += 1
+    tally["skipped"] += max(0, len(pending) - int(limit))
+    return tally
 
 
 def _workflow_digest(state: Any, limit: int = 60) -> str:

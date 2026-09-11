@@ -308,6 +308,44 @@ def cmd_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_eval(args: argparse.Namespace) -> int:
+    import json as _json
+
+    from shroodler import eval_harness as ev
+
+    try:
+        actual = ev.load_json(args.actual)
+        expected = ev.load_json(args.expected)
+    except (OSError, ValueError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    card = ev.score(actual, expected, label=str(getattr(args, "label", "") or "run"))
+    result: dict = {"scorecard": card.to_dict()}
+    if getattr(args, "baseline", None):
+        try:
+            baseline_doc = ev.load_json(args.baseline)
+        except (OSError, ValueError) as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        base_card = ev.score(baseline_doc, expected, label="baseline")
+        result["baseline"] = base_card.to_dict()
+        result["comparison"] = ev.compare(base_card, card)
+    if getattr(args, "json", False):
+        print(_json.dumps(result, indent=2))
+        return 0
+    print(ev.format_scorecard(card))
+    if "comparison" in result:
+        comp = result["comparison"]
+        print("\nA/B vs baseline:")
+        print(f"  Δ true positives : {comp['delta_true_positives']:+d}")
+        print(f"  Δ false positives: {comp['delta_false_positives']:+d}")
+        print(f"  Δ recall         : {comp['delta_recall']:+.2%}")
+        print(f"  Δ precision      : {comp['delta_precision']:+.2%}")
+        if comp["newly_found"]:
+            print(f"  newly found      : {', '.join(comp['newly_found'][:10])}")
+    return 0
+
+
 def cmd_report(args: argparse.Namespace) -> int:
     from shroodler.report import write_report
 
@@ -676,6 +714,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
         llm_agent_reasoning_model=str(
             getattr(args, "llm_agent_reasoning_model", None) or "deepseek-reasoner"
         ),
+        llm_auto_verify=not bool(getattr(args, "no_auto_verify", False)),
         llm_agent_max_cost_usd=(
             5.0
             if getattr(args, "llm_agent_max_cost", None) is None
@@ -708,6 +747,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         "confirmed": result.confirmed,
         "state_path": result.state_path,
     }
+    if config.llm_agent:
+        payload["cost_usd"] = round(float(getattr(config, "_llm_cost_usd", 0.0) or 0.0), 6)
     if result.errors:
         payload["errors"] = result.errors
     print(json.dumps(payload))
@@ -1727,6 +1768,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     diff.set_defaults(func=cmd_diff)
 
+    ev = sub.add_parser(
+        "eval",
+        help="Score a scan/agent result against expected findings (precision/recall)",
+    )
+    ev.add_argument("actual", help="Scan or agent result JSON (or a bare findings list)")
+    ev.add_argument("expected", help="Expected-findings JSON (the curated ground truth)")
+    ev.add_argument(
+        "--baseline",
+        default=None,
+        metavar="JSON",
+        help="A second run to A/B against `actual` (e.g. LLM tools off vs on); prints the delta",
+    )
+    ev.add_argument("--label", default="", help="Label for the scorecard")
+    ev.add_argument("--json", action="store_true", help="Emit the scorecard as JSON")
+    ev.set_defaults(func=cmd_eval)
+
     report = sub.add_parser(
         "report",
         help="Render findings JSON as HTML, CSV, SARIF, JUnit, Markdown, pentest, or submit",
@@ -2715,6 +2772,14 @@ def build_parser() -> argparse.ArgumentParser:
             "Stronger model for hard reasoning only (analyze_logic, "
             "verify_finding); default: deepseek-reasoner. Bulk work stays on "
             "the cheap planner model"
+        ),
+    )
+    agent.add_argument(
+        "--no-auto-verify",
+        action="store_true",
+        help=(
+            "Skip the automatic evidence-based verification of tentative "
+            "findings before the LLM agent reports (on by default)"
         ),
     )
     agent.add_argument(

@@ -13,6 +13,7 @@ _shroodler_commands=(
   'crawl:Crawl a target URL'
   'diff:Compare crawl JSON to expected_findings.json'
   'report:Render findings JSON as HTML, CSV, SARIF, JUnit, or Markdown'
+  'eval:Score a scan against expected findings (precision/recall)'
   'baseline:Write expected_findings.json from a scan'
   'expected:Write expected_findings.json from a scan (alias of baseline)'
   'ingest-sessions:Turn captured proxy JSONL into findings'
@@ -113,6 +114,14 @@ _shroodler() {
             '(--output -o)'{--output,-o}'[Output file]:file:_files' \
             '--source-root[Attribute new findings to source file/line under this dir]:dir:_files -/' \
             '1:findings json:_files' \
+            '2:expected json:_files'
+          ;;
+        eval)
+          _arguments \
+            '--baseline[A second run to A/B against actual]:file:_files' \
+            '--label[Scorecard label]:label:' \
+            '--json[Emit the scorecard as JSON]' \
+            '1:actual json:_files' \
             '2:expected json:_files'
           ;;
         report)
@@ -345,6 +354,7 @@ _shroodler() {
             '--no-smuggling[Force HTTP request-smuggling probes off]' \
             '--no-time-sqli[Skip slow time-based SQLi payloads]' \
             '--no-websocket[Disable WebSocket discovery/probes]' \
+            '--no-auto-verify[Skip auto-verifying tentative LLM findings before report]' \
             '--no-js-analysis[Skip deep JavaScript bundle analysis after crawl]' \
             '--allow-external[Allow smuggling probes against non-localhost targets]' \
             '--scope-file[Load include/exclude host patterns from FILE]:file:_files'

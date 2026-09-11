@@ -271,3 +271,17 @@ def test_analyzer_bare_pass_skips_static_assets():
     findings = JSAnalyzer().analyze(js, SOURCE, state)
     eps = [f for f in findings if f.category == "js-endpoint"]
     assert eps == []
+
+
+def test_is_capture_path_rejects_comment_fragments():
+    from shroodler.js_analyzer import _is_capture_path
+
+    # JS comment fragments that patterns occasionally capture (seen on
+    # ginandjuice.shop) must not be recorded as endpoints.
+    assert _is_capture_path("/* assert on the output */\n\n") is False
+    assert _is_capture_path("/api/ with space") is False
+    assert _is_capture_path("/api/<tag>") is False
+    # Real paths still pass.
+    assert _is_capture_path("/api/users") is True
+    assert _is_capture_path("/rest/user/login") is True
+    assert _is_capture_path("https://x/api/v1") is True

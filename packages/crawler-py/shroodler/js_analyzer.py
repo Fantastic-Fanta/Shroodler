@@ -263,6 +263,13 @@ def _login_search_params(path: str) -> list[dict[str, str]]:
 def _is_capture_path(path: str) -> bool:
     if not path or len(path) > 400:
         return False
+    # Real URL paths carry no raw whitespace, control chars, or code-comment
+    # markers. Reject those so JS comment fragments (e.g. "/* assert ... */")
+    # are not mistaken for endpoints.
+    if any(ch.isspace() for ch in path):
+        return False
+    if any(marker in path for marker in ("/*", "*/", "//*", "<", ">", "`")):
+        return False
     if path.startswith(("http://", "https://")):
         return True
     if path.startswith("/") and not path.startswith("//"):

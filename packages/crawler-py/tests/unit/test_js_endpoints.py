@@ -274,3 +274,13 @@ def test_bare_path_pass_ignores_static_assets():
     js = 'x="/assets/index-abc.js";y="/static/logo.png";z="/favicon.svg";w="/home/about"'
     eps, _ = extract_js_endpoints("https://x.test/assets/app.js", js)
     assert eps == []
+
+
+def test_extract_skips_comment_fragments():
+    from shroodler.extractors.js_endpoints import extract_js_endpoints
+
+    js = 'x("/* assert on the output */\\n\\n"); fetch("/api/real")'
+    endpoints, _ = extract_js_endpoints("https://t/app.js", js)
+    paths = [e.endpoint for e in endpoints]
+    assert "/api/real" in paths
+    assert not any("assert" in p for p in paths)

@@ -534,7 +534,7 @@ def test_agent_flags_parse():
         ]
     )
     assert args.llm_agent is False
-    assert args.llm_agent_model == "claude-sonnet-5"
+    assert args.llm_agent_model == "deepseek-chat"
     assert args.llm_agent_max_cost == 5.0
 
 

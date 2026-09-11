@@ -14,6 +14,9 @@ class HistoryEntry:
     reasoning: str = ""
     findings_added: int = 0
     summary: str = ""
+    # Trimmed structured result of the last tool (status, timing, reflection,
+    # diff, body snippet) so the planner reasons on evidence, not a one-liner.
+    observation: dict[str, Any] = field(default_factory=dict)
 
 
 def trim_history(

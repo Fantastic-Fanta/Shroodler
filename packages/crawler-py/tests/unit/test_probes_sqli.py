@@ -340,3 +340,49 @@ def test_sqli_boolean_same_response_is_not_a_finding():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_sqli_time_based_skips_path_params():
+    calls: list[tuple[str, dict]] = []
+
+    def handler(method, url, kw):
+        calls.append((url, kw))
+        return FakeResp(200, "ok", elapsed=0.05)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/guilds/1/events/1",
+        "GET",
+        [
+            {"name": "id", "value": "1", "in": "path", "type": "integer"},
+            {"name": "id2", "value": "1", "in": "path", "type": "integer"},
+        ],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    blob = " ".join(url for url, _ in calls)
+    blob += " " + " ".join(v for _, kw in calls for v in _values(kw))
+    assert "SLEEP" not in blob
+    assert "WAITFOR" not in blob
+    assert "pg_sleep" not in blob
+    assert not any(f.id in {"sqli-time-based", "sqli-blind"} for f in findings)
+
+
+def test_sqli_time_based_runs_on_query_when_path_ids_present():
+    def handler(method, url, kw):
+        if _is_4s_payload(_values(kw)):
+            return FakeResp(200, "ok", elapsed=4.2)
+        return FakeResp(200, "ok", elapsed=0.1)
+
+    findings = probe_sqli(
+        "http://127.0.0.1/guilds/1/search",
+        "GET",
+        [
+            {"name": "id", "value": "1", "in": "path", "type": "integer"},
+            {"name": "q", "value": "test", "in": "query"},
+        ],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert any(f.id == "sqli-time-based" for f in findings)

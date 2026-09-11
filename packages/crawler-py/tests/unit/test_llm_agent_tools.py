@@ -16,6 +16,13 @@ _EXPECTED = (
     "probe_graphql",
     "check_authz",
     "fetch_and_read",
+    "send_request",
+    "compare_responses",
+    "replay_as_user",
+    "decode_token",
+    "craft_payloads",
+    "verify_finding",
+    "analyze_logic",
     "hypothesise",
     "report",
 )

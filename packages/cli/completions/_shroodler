@@ -309,9 +309,10 @@ _shroodler() {
             '--dry-run[Print the plan without making requests]' \
             '--llm-triage[Rank leads with an LLM (requires ANTHROPIC_API_KEY or DEEPSEEK_API_KEY)]' \
             '--llm-agent[Use an LLM to decide each action (requires ANTHROPIC_API_KEY or DEEPSEEK_API_KEY)]' \
-            '--llm-provider[LLM provider (default anthropic)]:(anthropic deepseek)' \
-            '--llm-agent-model[Model name (default claude-sonnet-5; opus selects claude-opus-5)]:model' \
+            '--llm-provider[LLM provider (default deepseek)]:(anthropic deepseek)' \
+            '--llm-agent-model[Cheap planner model (default deepseek-chat)]:model' \
             '--llm-model[Alias for --llm-agent-model]:model' \
+            '--llm-reasoning-model[Stronger model for hard reasoning (default deepseek-reasoner)]:model' \
             '--llm-agent-max-cost[Stop if estimated API cost exceeds N USD]:usd' \
             '--run-discovery[Run subdomain/JS discovery before the first iteration]' \
             '--write-authz-spec[JSON file of write-authz probes]:file:_files' \
@@ -342,6 +343,7 @@ _shroodler() {
             '--no-mass-assignment[Disable mass-assignment probes]' \
             '--smuggling[Enable HTTP request-smuggling probes]' \
             '--no-smuggling[Force HTTP request-smuggling probes off]' \
+            '--no-time-sqli[Skip slow time-based SQLi payloads]' \
             '--no-websocket[Disable WebSocket discovery/probes]' \
             '--no-js-analysis[Skip deep JavaScript bundle analysis after crawl]' \
             '--allow-external[Allow smuggling probes against non-localhost targets]' \

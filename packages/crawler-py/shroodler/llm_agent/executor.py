@@ -487,6 +487,24 @@ def execute_tool(
             return _check_authz(decision, state, config, pacer)
         if name == "fetch_and_read":
             return _fetch_and_read(decision, config, pacer, owner_client)
+        if name in {"send_request", "compare_responses", "replay_as_user", "decode_token"}:
+            from shroodler.llm_agent import http_tools
+
+            if name == "send_request":
+                return http_tools.send_request(decision, config, pacer, owner_client)
+            if name == "compare_responses":
+                return http_tools.compare_responses(decision, config, pacer, owner_client)
+            if name == "replay_as_user":
+                return http_tools.replay_as_user(decision, config, pacer, owner_client)
+            return http_tools.decode_token(decision)
+        if name in {"craft_payloads", "verify_finding", "analyze_logic"}:
+            from shroodler.llm_agent import payloads
+
+            if name == "craft_payloads":
+                return payloads.craft_payloads(decision, state, config, pacer, owner_client)
+            if name == "verify_finding":
+                return payloads.verify_finding(decision, state, config, pacer, owner_client)
+            return payloads.analyze_logic(decision, state, config)
         if name == "hypothesise":
             return _hypothesise(decision, state)
         if name == "report":

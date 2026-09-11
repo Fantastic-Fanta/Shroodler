@@ -178,6 +178,14 @@ class ProbeMemory:
             ).fetchall()
         return [str(row[0]) for row in rows]
 
+    def endpoint_patterns(self) -> list[str]:
+        """Distinct normalised endpoint patterns seen so far."""
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT DISTINCT endpoint_pattern FROM probe_records"
+            ).fetchall()
+        return [str(row[0]) for row in rows]
+
     def get_barren_probes(self) -> list[str]:
         """Probe types tried on >= 5 distinct endpoints with zero findings."""
         with self._lock:

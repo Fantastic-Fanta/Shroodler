@@ -57,6 +57,23 @@ annotations with
 .B \-\-format github\-annotations .
 Heuristic/best-effort, not a real router analysis.
 .TP
+.B eval \fIACTUAL\fR \fIEXPECTED\fR
+Score a scan or agent result against a curated
+.I expected-findings
+file and print precision, recall, F1, and (when present) LLM cost and
+iteration count. Matching is by (id, url-path), the same key
+.B diff \-\-gate
+uses.
+.BI \-\-baseline " JSON"
+A/B's a second run against
+.I ACTUAL
+(for example the LLM tools off vs on) and prints the delta in true
+positives, recall, and precision.
+.B \-\-json
+emits the scorecard as JSON. See
+.I packages/crawler-py/eval/README.md
+for the workflow against the local target apps.
+.TP
 .B report \fIFINDINGS\fR
 Render a findings JSON document as
 .BR html ", " csv ", " json ", " sarif ", " junit ", " md / markdown ", " pentest ", " pentest-html ", or " submit

@@ -438,6 +438,45 @@ def _hypothesise(decision: PlannerDecision, state: Any) -> ToolResult:
     )
 
 
+def _remember_jwt_fact(state: Any, result: ToolResult) -> None:
+    """Record the JWT algorithm as a cross-engagement fact. Never raises."""
+    raw = result.raw_output if isinstance(result.raw_output, dict) else {}
+    if raw.get("kind") != "jwt":
+        return
+    alg = str(raw.get("alg") or "").strip()
+    if not alg:
+        return
+    try:
+        from shroodler.llm_agent.engagement_memory import record_fact
+
+        record_fact(state, "jwt_alg", alg, source="decode_token")
+    except Exception:  # noqa: BLE001 - memory must not break the loop
+        return
+
+
+def _snapshot_engagement_memory(state: Any, config: Any, probe_memory: Any) -> None:
+    try:
+        from shroodler.llm_agent.engagement_memory import snapshot
+
+        snapshot(state, config, probe_memory)
+    except Exception:  # noqa: BLE001
+        return
+
+
+def _auto_verify_before_report(
+    state: Any, config: Any, pacer: Pacer, owner_client: httpx.Client | None
+) -> None:
+    """Verify tentative findings before the report unless disabled. Never raises."""
+    if not bool(getattr(config, "llm_auto_verify", True)):
+        return
+    try:
+        from shroodler.llm_agent.payloads import auto_verify_pending
+
+        auto_verify_pending(state, config, pacer, owner_client)
+    except Exception:  # noqa: BLE001 - report must still generate
+        return
+
+
 def _report(state: Any) -> ToolResult:
     from shroodler.agent import _execute_report
 
@@ -496,7 +535,9 @@ def execute_tool(
                 return http_tools.compare_responses(decision, config, pacer, owner_client)
             if name == "replay_as_user":
                 return http_tools.replay_as_user(decision, config, pacer, owner_client)
-            return http_tools.decode_token(decision)
+            result = http_tools.decode_token(decision)
+            _remember_jwt_fact(state, result)
+            return result
         if name in {"craft_payloads", "verify_finding", "analyze_logic"}:
             from shroodler.llm_agent import payloads
 
@@ -505,9 +546,17 @@ def execute_tool(
             if name == "verify_finding":
                 return payloads.verify_finding(decision, state, config, pacer, owner_client)
             return payloads.analyze_logic(decision, state, config)
+        if name == "test_hypothesis":
+            from shroodler.llm_agent import hypotheses
+
+            return hypotheses.test_hypothesis(
+                decision, state, config, pacer, owner_client, probe_memory=probe_memory
+            )
         if name == "hypothesise":
             return _hypothesise(decision, state)
         if name == "report":
+            _auto_verify_before_report(state, config, pacer, owner_client)
+            _snapshot_engagement_memory(state, config, probe_memory)
             return _report(state)
     except Exception as exc:  # noqa: BLE001
         result = ToolResult(

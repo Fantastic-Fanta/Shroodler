@@ -1,0 +1,8 @@
+{
+  "_comment": "EXAMPLE ONLY. Copy to app1.json and replace with the real bugs you confirm against app1 (id + url). Matching is by (id, url-path).",
+  "findings": [
+    {"id": "sqli-error", "url": "http://127.0.0.1:8081/api/items?id=1"},
+    {"id": "xss-reflected", "url": "http://127.0.0.1:8081/search?q=x"},
+    {"id": "idor-neighbor", "url": "http://127.0.0.1:8081/api/users/5"}
+  ]
+}

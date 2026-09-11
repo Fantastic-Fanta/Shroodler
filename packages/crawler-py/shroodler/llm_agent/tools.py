@@ -172,10 +172,21 @@ TOOLS: list[dict[str, Any]] = [
         "params": {},
     },
     {
+        "name": "test_hypothesis",
+        "description": (
+            "Pop the top pending hypothesis (from hypothesise/analyze_logic), "
+            "translate it into one concrete in-scope test, run it, and record "
+            "whether it validated. Use this to actually chase the ideas in the "
+            "PENDING HYPOTHESES list instead of leaving them untested."
+        ),
+        "params": {"index": "int | null — specific hypothesis, or null for the next pending"},
+    },
+    {
         "name": "hypothesise",
         "description": (
             "Record a hypothesis about a potential vulnerability to investigate. "
-            "Does not make any requests — just notes what to try next."
+            "Does not make any requests — just notes what to try next. Use "
+            "test_hypothesis later to actually check it."
         ),
         "params": {"hypothesis": "str", "target_url": "str", "reasoning": "str"},
     },

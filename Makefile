@@ -1,4 +1,4 @@
-.PHONY: verify up down lint test test-unit test-integration bootstrap bins cover cli install-cli
+.PHONY: verify up down lint test test-unit test-integration eval-agent bootstrap bins cover cli install-cli
 
 ROOT := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 VENV := $(ROOT).venv
@@ -57,6 +57,21 @@ test-integration: bootstrap up
 	cd packages/crawler-go && go test ./tests -count=1
 
 test: test-unit test-integration
+
+# LLM agent evaluation against the local target apps (needs docker + a provider
+# key + curated eval/expected/*.json). Scores precision/recall/cost per app.
+# See packages/crawler-py/eval/README.md.
+EVAL_APPS := app1:8081 app2:8082 app3:8083 app4:8084
+eval-agent: bootstrap up
+	@for pair in $(EVAL_APPS); do \
+	  app=$${pair%%:*}; port=$${pair##*:}; \
+	  exp="packages/crawler-py/eval/expected/$${app}.json"; \
+	  if [ ! -f "$$exp" ]; then echo "skip $$app: no $$exp (curate it first)"; continue; fi; \
+	  echo "== $$app =="; \
+	  "$(ROOT).venv/bin/shroodler" agent --program eval-$$app --target http://127.0.0.1:$$port/ \
+	    --allow-external --llm-agent > /tmp/eval-$$app.json || true; \
+	  "$(ROOT).venv/bin/shroodler" eval "$$(jq -r .state_path /tmp/eval-$$app.json)" "$$exp" --label $$app; \
+	done
 
 verify: lint test-unit
 	$(MAKE) down

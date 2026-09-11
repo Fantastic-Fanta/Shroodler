@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from shroodler.probes.crlf import probe_crlf
 from shroodler.probes.dom_xss import probe_dom_xss
+from shroodler.probes.enum_id import probe_enumerable_id
 from shroodler.probes.graphql import probe_graphql
 from shroodler.probes.host_header import probe_host_header
 from shroodler.probes.idor import probe_idor
@@ -40,6 +41,7 @@ __all__ = [
     "probe_rate_limit",
     "probe_rate_limit_bypass",
     "probe_unauth_exposure",
+    "probe_enumerable_id",
     "probe_smuggling",
     "probe_sqli",
     "probe_ssrf",

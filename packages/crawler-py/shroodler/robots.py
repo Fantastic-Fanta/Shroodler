@@ -21,6 +21,36 @@ def allowed(rp: RobotFileParser | None, url: str, ua: str = DEFAULT_UA) -> bool:
     return rp.can_fetch(ua, url)
 
 
+def disallow_paths(robots_body: str) -> list[str]:
+    """Disallow entries that apply to a generic crawler (``User-agent: *`` or
+    rules stated before any agent line).
+
+    robots.txt Disallow paths are a courtesy directive for search engines, but
+    for an authorized security scan they are recon leads: owners list exactly
+    the paths they want hidden (admin panels, backups, reset buttons). Returned
+    in file order, de-duplicated. ``Disallow:`` (empty) and ``Disallow: /``
+    (block-everything, not a specific lead) are skipped.
+    """
+    paths: list[str] = []
+    seen: set[str] = set()
+    applies = True  # rules before the first User-agent line apply broadly
+    for raw in (robots_body or "").splitlines():
+        line = raw.split("#", 1)[0].strip()
+        if not line or ":" not in line:
+            continue
+        field, _, value = line.partition(":")
+        field = field.strip().lower()
+        value = value.strip()
+        if field == "user-agent":
+            applies = value == "*"
+            continue
+        if field == "disallow" and applies and value and value != "/":
+            if value not in seen:
+                seen.add(value)
+                paths.append(value)
+    return paths
+
+
 _PAGE_PATH = re.compile(r"^(.*)/page/(\d+)/?$", re.I)
 _PAGE_QUERY = re.compile(r"(?:^|&)page=\d+", re.I)
 

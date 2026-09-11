@@ -74,6 +74,7 @@ from shroodler.modes.static import FetchResult, StaticFetcher
 from shroodler.robots import (
     DEFAULT_UA,
     allowed,
+    disallow_paths,
     is_pagination_trap,
     load_robots,
     pagination_family,
@@ -117,6 +118,7 @@ class Crawler:
         mode: str = "static",
         depth: int | None = 5,
         ignore_robots: bool = False,
+        harvest_robots: bool = False,
         allow_external: bool = False,
         max_pages: int = 400,
         max_time: float | None = None,
@@ -145,6 +147,11 @@ class Crawler:
         self.mode = mode
         self.depth = depth
         self.ignore_robots = ignore_robots
+        # Harvesting implies not honouring Disallow (you cannot lead-follow a
+        # path you also refuse to fetch).
+        self.harvest_robots = harvest_robots
+        if harvest_robots:
+            self.ignore_robots = True
         self.allow_external = allow_external
         self.max_pages = 400 if max_pages <= 0 else max_pages
         self.max_time = max_time if max_time and max_time > 0 else None
@@ -221,7 +228,9 @@ class Crawler:
         robots_body = ""
         # --from-capture is WAF-fusion: do not live-hit robots/sitemap just
         # to discover URLs the capture already recorded.
-        if not self.from_capture and (not self.ignore_robots or not self.no_sitemap):
+        if not self.from_capture and (
+            not self.ignore_robots or not self.no_sitemap or self.harvest_robots
+        ):
             robots_url = urljoin(seed, "/robots.txt")
             robots_res = self.http.fetch(robots_url)
             if robots_res.status_code == 200 and robots_res.text:
@@ -292,6 +301,10 @@ class Crawler:
             self._enqueue_sitemap_seeds(seed, origin_url, robots_body, queue, seen, queued)
         pages: list[Page] = list(capture_pages)
         findings: list[Finding] = list(capture_findings)
+        if self.harvest_robots and robots_body and not self.from_capture:
+            self._enqueue_robots_harvest(
+                seed, origin_url, robots_body, queue, seen, queued, findings
+            )
         js_endpoints: list = list(js_endpoints_from_capture)
         cors_candidates: list[str] = []
         family_counts: dict[str, int] = defaultdict(int)
@@ -636,6 +649,50 @@ class Crawler:
                     if pg_key not in q_set:
                         q_set.add(pg_key)
                         queue.append((page, 0))
+
+    def _enqueue_robots_harvest(
+        self,
+        seed: str,
+        origin_url: str,
+        robots_body: str,
+        queue: deque[tuple[str, int]],
+        seen: set[str],
+        queued: set[str],
+        findings: list[Finding],
+    ) -> None:
+        """Aggressive robots handling: treat Disallow paths as recon leads.
+
+        Owners list in robots.txt exactly the paths they want kept out of search
+        indexes (admin panels, backups, reset endpoints). For an authorized scan
+        those are high-signal leads: seed each as a crawl target and surface it
+        as a finding so the operator and the LLM planner see what was hidden.
+        """
+        harvested = 0
+        for path in disallow_paths(robots_body):
+            resolved = normalize_url(seed, path)
+            if not resolved or not same_origin(resolved, origin_url):
+                continue
+            key = canonical_key(resolved)
+            if key not in queued and key not in seen:
+                queued.add(key)
+                queue.append((resolved, 0))
+            findings.append(
+                Finding(
+                    id="robots-hidden-path",
+                    severity="info",
+                    category="scan-note",
+                    url=resolved,
+                    description=(
+                        "Path hidden from crawlers via robots.txt Disallow; "
+                        "surfaced as a lead because owners often list sensitive "
+                        "areas here."
+                    ),
+                    evidence=f"Disallow: {path}",
+                )
+            )
+            harvested += 1
+            if harvested >= 50:
+                break
 
     def _prime_auth(self, seed: str) -> None:
         specs: list[CookieSpec] = []

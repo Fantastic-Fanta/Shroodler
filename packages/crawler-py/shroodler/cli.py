@@ -28,20 +28,39 @@ PROFILES: dict[str, dict[str, object]] = {
         "max_pages": 100,
         "max_time": 60.0,
         "check_rate_limit": False,
+        "robots": "respect",
     },
     "balanced": {
         "depth": 5,
         "max_pages": 400,
         "max_time": 0.0,
         "check_rate_limit": False,
+        "robots": "ignore",
     },
     "aggressive": {
         "depth": -1,
         "max_pages": 2000,
         "max_time": 0.0,
         "check_rate_limit": True,
+        "robots": "harvest",
     },
 }
+
+
+def _robots_flags(args: argparse.Namespace) -> tuple[bool, bool]:
+    """Resolve (ignore_robots, harvest_robots) from --robots / --profile / the
+    legacy --ignore-robots flag.
+
+    safe=respect (honor Disallow), balanced=ignore (crawl through it),
+    aggressive=harvest (seed and surface Disallow paths as recon leads).
+    """
+    mode = getattr(args, "robots", None)
+    legacy_ignore = bool(getattr(args, "ignore_robots", False))
+    if mode is None:
+        return legacy_ignore, False
+    mode = str(mode).lower()
+    ignore = mode in ("ignore", "harvest") or legacy_ignore
+    return ignore, mode == "harvest"
 
 
 def _as_str_list(value: object) -> list[str]:
@@ -110,11 +129,13 @@ def cmd_crawl(args: argparse.Namespace) -> int:
             cookies.extend(p.strip() for p in hdr.split(";") if p.strip())
         if seed_from:
             extra_seeds.extend(seed_urls(load_captured_sessions(seed_from), args.url))
+    ignore_robots, harvest_robots = _robots_flags(args)
     result = crawl_url(
         args.url,
         mode=args.mode,
         depth=depth,
-        ignore_robots=args.ignore_robots,
+        ignore_robots=ignore_robots,
+        harvest_robots=harvest_robots,
         allow_external=args.allow_external,
         max_pages=max_pages,
         max_time=max_time,
@@ -677,7 +698,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         dry_run=bool(getattr(args, "dry_run", False)),
         llm_triage=bool(getattr(args, "llm_triage", False)),
         run_discovery=bool(getattr(args, "run_discovery", False)),
-        ignore_robots=bool(getattr(args, "ignore_robots", False)),
+        ignore_robots=_robots_flags(args)[0],
+        harvest_robots=_robots_flags(args)[1],
         write_authz_spec=getattr(args, "write_authz_spec", None),
         run_probes=bool(getattr(args, "run_probes", False)),
         probe_time_sqli=not bool(getattr(args, "no_time_sqli", False)),
@@ -1578,6 +1600,17 @@ def build_parser() -> argparse.ArgumentParser:
         default="json",
     )
     crawl.add_argument("--ignore-robots", action="store_true")
+    crawl.add_argument(
+        "--robots",
+        choices=("respect", "ignore", "harvest"),
+        default=None,
+        help=(
+            "robots.txt handling: respect (honor Disallow), ignore (crawl "
+            "through it), or harvest (also seed and surface Disallow paths as "
+            "recon leads). Defaults per --profile: safe=respect, "
+            "balanced=ignore, aggressive=harvest."
+        ),
+    )
     crawl.add_argument(
         "--no-sitemap",
         action="store_true",
@@ -2813,6 +2846,17 @@ def build_parser() -> argparse.ArgumentParser:
         "--ignore-robots",
         action="store_true",
         help="Bypass robots.txt during crawl legs (use for API-first targets)",
+    )
+    agent.add_argument(
+        "--robots",
+        choices=("respect", "ignore", "harvest"),
+        default=None,
+        help=(
+            "robots.txt handling: respect (honor Disallow), ignore (crawl "
+            "through it), or harvest (also seed and surface Disallow paths as "
+            "recon leads). Maps to the scan profile: safe=respect, "
+            "balanced=ignore, aggressive=harvest."
+        ),
     )
     agent.add_argument(
         "--run-probes",

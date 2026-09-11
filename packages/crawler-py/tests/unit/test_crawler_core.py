@@ -358,3 +358,29 @@ def test_refuses_external_without_flag():
         raise AssertionError("should have refused")
     except ValueError as exc:
         assert "non-local" in str(exc)
+
+
+def _robots(body: str):
+    payload = body.encode()
+
+    def handle(_req: str):
+        return 200, {"Content-Type": "text/plain"}, payload
+
+    return handle
+
+
+def test_harvest_robots_seeds_and_surfaces_disallowed_paths(fx):
+    fx.route("/robots.txt", _robots("User-agent: *\nDisallow: /secret-admin\n"))
+    fx.html("/", "home with no links")
+    fx.html("/secret-admin", "hidden admin panel")
+
+    # Default (respect): nothing links to the disallowed path, so it is not
+    # reached and no lead is surfaced.
+    safe = crawl_url(fx.origin + "/", depth=2)
+    assert "/secret-admin" not in _paths(safe)
+    assert not any(f.id == "robots-hidden-path" for f in safe.findings)
+
+    # Harvest: the disallowed path is seeded (crawled) and surfaced as a lead.
+    harvested = crawl_url(fx.origin + "/", depth=2, harvest_robots=True)
+    assert "/secret-admin" in _paths(harvested)
+    assert any(f.id == "robots-hidden-path" for f in harvested.findings)

@@ -254,3 +254,20 @@ def test_angular_product_reviews_put_extracted():
             if isinstance(p, dict) and p.get("name") == "message"
         }
         assert "json" in locations
+
+
+def test_analyzer_extracts_bare_api_paths_from_minified_bundle():
+    state = ProgramState(slug="lab")
+    js = 'const u="/api/community",v=`/api/me/saves/${a}/${b}/build`;call(u);call(v)'
+    findings = JSAnalyzer().analyze(js, SOURCE, state)
+    eps = {f.evidence for f in findings if f.category == "js-endpoint"}
+    assert "/api/community" in eps
+    assert any("/api/me/saves" in e for e in eps)
+
+
+def test_analyzer_bare_pass_skips_static_assets():
+    state = ProgramState(slug="lab")
+    js = 'a="/assets/x.js";b="/static/y.png";c="/favicon.svg"'
+    findings = JSAnalyzer().analyze(js, SOURCE, state)
+    eps = [f for f in findings if f.category == "js-endpoint"]
+    assert eps == []

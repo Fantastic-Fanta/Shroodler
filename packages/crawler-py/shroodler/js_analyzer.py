@@ -51,6 +51,17 @@ _XHR_OPEN_URL = re.compile(
     r"""\.open\s*\(\s*['"]\w+['"]\s*,\s*(?:'([^']*)'|"([^"]*)"|`([^`]*)`)""",
     re.I,
 )
+# Bare API-path string literals. Minified SPA bundles (Vite/webpack) often
+# store the path as a constant and call it through a variable — fetch(u),
+# axios.get(cfg.url) — so the call-syntax patterns above miss them, even though
+# the path is right there as a quoted literal. Restricted to API-ish leading
+# segments so it does not vacuum up static asset/route paths (which would
+# reintroduce the false-positive avalanche the call-gated extraction avoids).
+_BARE_API_PATH = re.compile(
+    r"""(['"`])((?:https?://[^'"`\s]+)?/(?:api|rest|graphql|gql|oauth|rpc|internal|v[0-9]+)(?:/[^'"`\s]*)?)\1""",
+    re.I,
+)
+
 _CONCAT = re.compile(
     r"""(['"])(https?://[^'"]+|/(?!/)[^'"]*)\1((?:\s*\+\s*(?:['"][^'"]*['"]|[A-Za-z_$][\w$]*))+)"""
 )
@@ -388,6 +399,12 @@ class JSAnalyzer:
         for match in _CONCAT.finditer(js_text):
             flattened = _flatten_concat(match.group(2), match.group(3) or "")
             add(flattened, is_template=False)
+
+        # Bare API-path literals not tied to a recognized call syntax.
+        for match in _BARE_API_PATH.finditer(js_text):
+            quote, literal = match.group(1), match.group(2)
+            is_template = quote == "`" and "${" in literal
+            add(literal, is_template=is_template)
 
         for match in _NG_HTTP_TEMPLATE.finditer(js_text):
             add(match.group(2), is_template=True, method=match.group(1))

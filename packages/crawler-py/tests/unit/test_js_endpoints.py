@@ -256,3 +256,21 @@ def test_parse_and_data_url_helpers():
     assert parse_source_map("not-json") is None
     assert decode_data_url("nope") is None
     assert decode_data_url("data:text/plain,hello") == b"hello"
+
+
+def test_bare_api_path_literals_from_minified_bundle():
+    # Minified SPA: paths stored as constants, called through variables. The
+    # call-syntax patterns miss these, but the bare-path pass must catch them.
+    js = 'const R={a:"/api/community",b:"/api/me/saves",c:`/api/cnd/raw-mesh/`};let f=R.a;h.get(f)'
+    eps, _ = extract_js_endpoints("https://x.test/assets/app.js", js)
+    paths = {e.endpoint for e in eps}
+    assert "/api/community" in paths
+    assert "/api/me/saves" in paths
+    assert "/api/cnd/raw-mesh/" in paths
+
+
+def test_bare_path_pass_ignores_static_assets():
+    # Precision: static/asset/route paths must NOT be pulled in by the bare pass.
+    js = 'x="/assets/index-abc.js";y="/static/logo.png";z="/favicon.svg";w="/home/about"'
+    eps, _ = extract_js_endpoints("https://x.test/assets/app.js", js)
+    assert eps == []

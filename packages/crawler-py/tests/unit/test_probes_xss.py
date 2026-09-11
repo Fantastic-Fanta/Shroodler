@@ -146,3 +146,45 @@ def test_xss_network_error_returns_empty():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def _resp_with_ctype(text, ctype):
+    r = FakeResp(200, text)
+    r.headers = {"content-type": ctype}
+    return r
+
+
+def test_xss_reflected_in_json_is_downgraded():
+    # Payload reflected in a JSON API response is not executable XSS.
+    def handler(method, url, kw):
+        injected = _injected(kw)
+        if "shroodler-xss-" in injected:
+            return _resp_with_ctype(f'{{"echo":"{injected}"}}', "application/json")
+        return _resp_with_ctype("{}", "application/json")
+
+    findings = probe_xss(
+        "http://127.0.0.1/api/items", "GET", [{"name": "q"}], "",
+        client=FakeClient(handler), pacer=Pacer(0),
+    )
+    reflected = [f for f in findings if f.id.startswith("xss-reflected")]
+    assert reflected, "should still report the reflection"
+    assert reflected[0].id == "xss-reflected-nonhtml"
+    assert reflected[0].severity == "low"
+    assert reflected[0].confidence == "heuristic"
+
+
+def test_xss_reflected_in_html_is_confirmed_high():
+    def handler(method, url, kw):
+        injected = _injected(kw)
+        if "shroodler-xss-" in injected:
+            return _resp_with_ctype(f"<div>{injected}</div>", "text/html; charset=utf-8")
+        return _resp_with_ctype("<div>clean</div>", "text/html")
+
+    findings = probe_xss(
+        "http://127.0.0.1/search", "GET", [{"name": "q"}], "",
+        client=FakeClient(handler), pacer=Pacer(0),
+    )
+    reflected = [f for f in findings if f.id.startswith("xss-reflected")]
+    assert reflected and reflected[0].id == "xss-reflected"
+    assert reflected[0].severity == "high"
+    assert reflected[0].confidence == "confirmed"

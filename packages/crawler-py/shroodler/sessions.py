@@ -299,7 +299,10 @@ def followup_urls_from_capture(
     a browser/proxy recording without re-fetching pages the WAF already saw.
     """
     from shroodler.cookie_source import load_captured_sessions
-    from shroodler.extractors.js_api_surface import crawl_seeds_from_endpoint, extract_js_api_surface
+    from shroodler.extractors.js_api_surface import (
+        crawl_seeds_from_endpoint,
+        extract_js_api_surface,
+    )
     from shroodler.extractors.links import extract_links
 
     sessions = load_captured_sessions(path)

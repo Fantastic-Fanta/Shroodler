@@ -88,7 +88,10 @@ def test_ssrf_metadata_body_is_confirmed():
 
 def test_ssrf_localhost_root_marker_is_confirmed():
     def handler(method, url, kw):
-        if any(v.rstrip("/") == "http://localhost" or v == "http://localhost/" for v in _values(kw)):
+        if any(
+            v.rstrip("/") == "http://localhost" or v == "http://localhost/"
+            for v in _values(kw)
+        ):
             return FakeResp(200, "root:x:0:0:root:/root:/bin/bash")
         return FakeResp(200, "ok")
 

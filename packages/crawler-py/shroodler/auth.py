@@ -163,7 +163,10 @@ def _normalize_extract(raw: object) -> list[dict]:
     if not isinstance(raw, dict):
         return []
     keys = {str(k).lower() for k in raw}
-    spec_keys = {"json", "cookie", "header", "regex", "as", "name", "inject_header", "inject_cookie"}
+    spec_keys = {
+        "json", "cookie", "header", "regex", "as", "name",
+        "inject_header", "inject_cookie",
+    }
     if keys & spec_keys:
         return [dict(raw)]
     out: list[dict] = []

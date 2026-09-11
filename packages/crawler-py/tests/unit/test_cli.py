@@ -113,11 +113,15 @@ def test_nuclei_ingest_parses():
 
 def test_ingest_har_and_slither_ingest_parse():
     p = build_parser()
-    args = p.parse_args(["ingest-har", "cap.har", "--target", "http://127.0.0.1/", "-o", "out.json"])
+    args = p.parse_args(
+        ["ingest-har", "cap.har", "--target", "http://127.0.0.1/", "-o", "out.json"]
+    )
     assert args.sessions == "cap.har"
     assert args.target == "http://127.0.0.1/"
     assert args.output == "out.json"
-    args = p.parse_args(["slither-ingest", "slither.json", "--target", "Vault.sol", "-o", "sc.json"])
+    args = p.parse_args(
+        ["slither-ingest", "slither.json", "--target", "Vault.sol", "-o", "sc.json"]
+    )
     assert args.report == "slither.json"
     assert args.target == "Vault.sol"
     help_text = p.format_help()

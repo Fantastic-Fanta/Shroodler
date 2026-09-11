@@ -1653,7 +1653,10 @@ def build_parser() -> argparse.ArgumentParser:
         help="Local OpenAPI/Swagger or Postman collection; enqueue same-origin "
         "paths as extra crawl seeds (repeatable)",
     )
-    crawl.add_argument("--seed-from", help="HAR or proxy session JSONL; enqueue captured same-origin URLs")
+    crawl.add_argument(
+        "--seed-from",
+        help="HAR or proxy session JSONL; enqueue captured same-origin URLs",
+    )
     crawl.add_argument(
         "--from-capture",
         metavar="FILE",

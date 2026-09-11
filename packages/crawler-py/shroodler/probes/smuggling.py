@@ -36,7 +36,11 @@ def _elapsed(resp: httpx.Response | None, start: float, end: float) -> float:
         elapsed = getattr(resp, "elapsed", None)
         if elapsed is not None:
             try:
-                return float(elapsed.total_seconds()) if hasattr(elapsed, "total_seconds") else float(elapsed)
+                return (
+                    float(elapsed.total_seconds())
+                    if hasattr(elapsed, "total_seconds")
+                    else float(elapsed)
+                )
             except (TypeError, ValueError):
                 pass
     return max(0.0, end - start)

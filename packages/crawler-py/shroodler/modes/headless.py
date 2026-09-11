@@ -168,7 +168,10 @@ class HeadlessFetcher:
                     # Fallback: match by input type for common credential fields.
                     nl = name.lower()
                     if any(k in nl for k in ("user", "email", "login", "account")):
-                        fb = page.locator('input[type="email"], input[type="text"][autocomplete="username"]')
+                        fb = page.locator(
+                            'input[type="email"], '
+                            'input[type="text"][autocomplete="username"]'
+                        )
                         if fb.count():
                             fb.first.fill(value)
                     elif "pass" in nl:

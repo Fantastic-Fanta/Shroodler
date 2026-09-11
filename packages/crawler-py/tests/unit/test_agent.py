@@ -2143,7 +2143,9 @@ def test_decide_js_analysis_after_crawl():
     state = ProgramState(
         slug="lab",
         endpoints={
-            "http://127.0.0.1/": _endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True)
+            "http://127.0.0.1/": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            )
         },
         js_urls=["http://127.0.0.1/static/app.js"],
     )
@@ -2158,7 +2160,9 @@ def test_decide_skips_js_analysis_when_disabled():
     state = ProgramState(
         slug="lab",
         endpoints={
-            "http://127.0.0.1/": _endpoint(last_seen=_now_iso(), tested_authz=True, tested_peer=True)
+            "http://127.0.0.1/": _endpoint(
+                last_seen=_now_iso(), tested_authz=True, tested_peer=True
+            )
         },
         js_urls=["http://127.0.0.1/static/app.js"],
     )
@@ -2370,7 +2374,10 @@ def test_execute_idor_scan_merges_findings(monkeypatch):
                     severity="critical",
                     category="auth",
                     url="http://127.0.0.1/api/users/123",
-                    description='curl -X GET \'http://127.0.0.1/api/users/123\' -H "Cookie: <session>"',
+                    description=(
+                        "curl -X GET 'http://127.0.0.1/api/users/123' "
+                        '-H "Cookie: <session>"'
+                    ),
                     evidence="owner=200 peer=200 owner_hash=abcd1234 peer_hash=abcd1234",
                     confidence="confirmed",
                 )

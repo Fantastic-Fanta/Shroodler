@@ -18,7 +18,8 @@ from shroodler.csrf import csrf_harvest_url_ok, is_csrf_field_name
 from shroodler.extractors.cookies import is_session_cookie
 from shroodler.extractors.cors import ATTACKER_ORIGIN, header_get
 from shroodler.models import Finding, Page
-from shroodler.urls import is_loopback_or_local, normalize_url, origin as origin_of, same_origin
+from shroodler.urls import is_loopback_or_local, normalize_url, same_origin
+from shroodler.urls import origin as origin_of
 
 _WRITE = {"POST", "PUT", "PATCH", "DELETE"}
 MAX_ORIGIN_PROBES = 16

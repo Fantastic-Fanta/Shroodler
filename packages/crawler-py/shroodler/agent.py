@@ -1246,6 +1246,22 @@ def _probe_params(url: str, meta: dict | None) -> tuple[str, list[dict]]:
         if item["name"] not in seen:
             params.append(item)
             seen.add(item["name"])
+    # When the endpoint declares a JSON request body, mark body params in="json"
+    # so inject() sends a JSON body instead of urlencoded form data. Gated on
+    # explicit content-type evidence so genuine form endpoints are untouched.
+    # normalize_params defaults `in` to "query", so on a body method a param is
+    # a body field unless it actually appears in the URL query string.
+    content_type = str(meta.get("content_type") or meta.get("content-type") or "").lower()
+    if method in {"POST", "PUT", "PATCH"} and "json" in content_type:
+        from urllib.parse import parse_qsl, urlparse
+
+        query_names = {k for k, _ in parse_qsl(urlparse(url).query, keep_blank_values=True)}
+        for item in params:
+            where = str(item.get("in") or "").lower()
+            if item["name"] in query_names or where == "path":
+                continue
+            if where in {"", "query", "body", "form"}:
+                item["in"] = "json"
     return method, params
 
 

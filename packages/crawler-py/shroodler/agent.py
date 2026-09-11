@@ -2090,6 +2090,7 @@ def _finish_probe_action(
 ) -> dict[str, Any]:
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
+    from shroodler.probes.enum_id import probe_enumerable_id
     from shroodler.probes.graphql import probe_graphql
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
@@ -2303,6 +2304,10 @@ def _finish_probe_action(
             _run(
                 "unauth-exposure",
                 lambda: probe_unauth_exposure(url, method, pacer=pacer),
+            )
+            _run(
+                "enumerable-id",
+                lambda: probe_enumerable_id(url, method, hdr, pacer=pacer),
             )
         if config.run_mass_assignment and method in {"POST", "PUT", "PATCH"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")

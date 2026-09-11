@@ -11,6 +11,7 @@ from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import dedupe, request
 from shroodler.probes.crlf import probe_crlf
+from shroodler.probes.enum_id import probe_enumerable_id
 from shroodler.probes.idor import probe_idor
 from shroodler.probes.open_redirect import probe_open_redirect
 from shroodler.probes.path_traversal import probe_path_traversal
@@ -169,6 +170,9 @@ def _probe_one(
     # dependency and never emit `security`, so `auth_required` stays false.
     findings.extend(
         probe_unauth_exposure(filled, method, client=client, pacer=pacer)
+    )
+    findings.extend(
+        probe_enumerable_id(filled, method, cookie_header, client=client, pacer=pacer)
     )
     findings.extend(
         probe_rate_limit_bypass(filled, method, cookie_header, client=client, pacer=pacer)

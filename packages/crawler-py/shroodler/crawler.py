@@ -365,167 +365,180 @@ class Crawler:
                 t0,
             )
 
+        workers = 1 if self.mode == "headless" or self._resolved_recipe is not None else 4
         while queue:
             hit = self._budget_hit(t0, len(pages))
             if hit:
                 stopped = hit
                 break
-            url, depth = queue.popleft()
-            key = canonical_key(url)
-            if key in seen:
-                continue
-            if not same_origin(url, origin_url):
-                continue
-            if self.exclude_paths:
-                url_path = urlparse(url).path
-                if any(url_path.startswith(ep) for ep in self.exclude_paths):
+            batch: list[tuple[str, int, str]] = []
+            while (
+                queue
+                and len(batch) < workers
+                and not self._budget_hit(t0, len(pages) + len(batch))
+            ):
+                url, depth = queue.popleft()
+                key = canonical_key(url)
+                if key in seen:
                     continue
-            if not self.ignore_robots and not allowed(rp, url, self.user_agent):
-                robots_blocked.append(url)
-                continue
-            if is_pagination_trap(url, family_counts):
-                continue
-            hit = self._budget_hit(t0, len(pages))
-            if hit:
-                stopped = hit
+                if not same_origin(url, origin_url):
+                    continue
+                if self.exclude_paths:
+                    url_path = urlparse(url).path
+                    if any(url_path.startswith(ep) for ep in self.exclude_paths):
+                        continue
+                if not self.ignore_robots and not allowed(rp, url, self.user_agent):
+                    robots_blocked.append(url)
+                    continue
+                if is_pagination_trap(url, family_counts):
+                    continue
+                seen.add(key)
+                fam = pagination_family(url)
+                if fam:
+                    family_counts[fam] += 1
+                batch.append((url, depth, key))
+            if not batch:
+                hit = self._budget_hit(t0, len(pages))
+                if hit:
+                    stopped = hit
                 break
-            seen.add(key)
-            fam = pagination_family(url)
-            if fam:
-                family_counts[fam] += 1
-
-            result = self._fetch_with_retries(url, t0)
-            xhr_endpoints.extend(_captured_from_fetch(result, origin_url))
-            if self._session_looks_expired(result):
-                result = self._reauth_until_ok(result, seed, url, t0)
-                if self._session_died:
-                    stopped = "complete"
-                    break
-            if result.status_code == 200 and not self._session_looks_expired(result):
-                self._last_good_url = result.url or url
-            if result.status_code != 200 and is_probe_url(url):
-                continue
-            # In headless mode, same-origin JS/browser redirects are followed
-            # transparently: the returned `result.url` may differ from `url`.
-            # Mark the final URL in both `seen` and `queued` so it is not
-            # fetched a second time when it is also independently enqueued.
-            if result.url and result.url != url:
-                final_key = canonical_key(result.url)
-                seen.add(final_key)
-                queued.add(final_key)
-            page, page_findings, page_eps, result = self._page_from_result(result, t0)
-            pages.append(page)
-            findings.extend(page_findings)
-            js_endpoints.extend(page_eps)
-            if is_api_ish(result.url, _content_type(result.headers)):
-                cors_candidates.append(result.url)
-            for ep in page_eps:
-                joined = candidate_from_endpoint(result.url, ep.endpoint)
-                if is_api_path(ep.endpoint) or is_api_path(joined):
-                    cors_candidates.append(joined)
-                for seed_url in crawl_seeds_from_endpoint(origin_url, ep.endpoint):
-                    if self.depth is not None and depth >= self.depth:
+            results = self._fetch_batch([item[0] for item in batch], t0)
+            for (url, depth, key), result in zip(batch, results, strict=True):
+                xhr_endpoints.extend(_captured_from_fetch(result, origin_url))
+                if self._session_looks_expired(result):
+                    result = self._reauth_until_ok(result, seed, url, t0)
+                    if self._session_died:
+                        stopped = "complete"
                         break
-                    seed_key = canonical_key(seed_url)
-                    if seed_key in queued:
-                        continue
-                    if not same_origin(seed_url, origin_url):
-                        continue
-                    if is_pagination_trap(seed_url, family_counts):
-                        continue
-                    queued.add(seed_key)
-                    queue.append((seed_url, depth + 1))
-            if self.progress:
-                self.progress(len(pages), result.url)
-
-            if result.redirect_to:
-                loc = urljoin(result.url, result.redirect_to)
-                depth_so_far = redirect_chain_depth.get(key, 0) + 1
-                if depth_so_far > self.max_redirects:
-                    findings.append(
-                        Finding(
-                            id="redirect-chain-truncated",
-                            severity="info",
-                            category="scan-note",
-                            url=result.url,
-                            description=(
-                                f"Redirect chain exceeded {self.max_redirects} hops and was "
-                                "not followed further -- content beyond this point was not "
-                                "crawled. This may be an infinite/looping redirect, or a "
-                                "chain longer than expected."
-                            ),
-                            evidence=f"redirecting to {loc}",
-                        )
-                    )
-                elif not same_origin(loc, origin_url):
-                    findings.append(
-                        Finding(
-                            id="off-origin-redirect-not-followed",
-                            severity="info",
-                            category="scan-note",
-                            url=result.url,
-                            description=(
-                                "This URL redirects to a different origin, which is out "
-                                "of scope and was not followed or fetched."
-                            ),
-                            evidence=f"redirects to {loc}",
-                        )
-                    )
-                else:
-                    loc_key = canonical_key(loc)
-                    _remember_edge(edges, edge_seen, result.url or url, loc, "redirect")
-                    if loc_key not in queued:
-                        redirect_chain_depth[loc_key] = depth_so_far
-                        queued.add(loc_key)
-                        queue.append((loc, depth))
-
-            if result.status_code == 200:
-                for spec_url in urls_from_spec(origin_url, result.text):
-                    spec_key = canonical_key(spec_url)
-                    if spec_key in queued:
-                        continue
-                    if is_pagination_trap(spec_url, family_counts):
-                        continue
-                    queued.add(spec_key)
-                    queue.append((spec_url, depth))
-
-            if self.depth is not None and depth >= self.depth:
-                continue
-
-            ctype = _content_type(result.headers)
-            next_links: list[str] = []
-            if "html" in ctype or result.text.lstrip().startswith("<"):
-                next_links.extend(extract_links(result.url, result.text))
-            if "css" in ctype:
-                next_links.extend(extract_css_urls(result.url, result.text))
-            next_links.extend(result.discovered_urls)
-
-            form_keys = _form_action_keys(result.url or url, page.forms)
-            for link in next_links:
-                # Checked here, BEFORE the same-origin filter below drops
-                # it -- an authorization request overwhelmingly points at
-                # a third-party IdP (accounts.google.com, an Okta/Auth0
-                # tenant, ...), which is off-origin and therefore never
-                # fetched. Since this check is purely passive (URL
-                # inspection only, no request needed), restricting it to
-                # `result.url`/fetched pages would examine zero real
-                # authorization requests on the overwhelming majority of
-                # real engagements against a relying party. Duplicate
-                # off-origin links across multiple pages collapse via
-                # _dedupe_findings below (keyed on id+url).
-                findings.extend(check_oauth_authorize_url(link))
-                if not same_origin(link, origin_url):
+                if result.status_code == 200 and not self._session_looks_expired(result):
+                    self._last_good_url = result.url or url
+                if result.status_code != 200 and is_probe_url(url):
                     continue
-                link_key = canonical_key(link)
-                link_kind = "form" if link_key in form_keys else "html"
-                if link_key in queued:
+                # In headless mode, same-origin JS/browser redirects are followed
+                # transparently: the returned `result.url` may differ from `url`.
+                # Mark the final URL in both `seen` and `queued` so it is not
+                # fetched a second time when it is also independently enqueued.
+                if result.url and result.url != url:
+                    final_key = canonical_key(result.url)
+                    seen.add(final_key)
+                    queued.add(final_key)
+                page, page_findings, page_eps, result = self._page_from_result(result, t0)
+                pages.append(page)
+                findings.extend(page_findings)
+                js_endpoints.extend(page_eps)
+                if is_api_ish(result.url, _content_type(result.headers)):
+                    cors_candidates.append(result.url)
+                for ep in page_eps:
+                    joined = candidate_from_endpoint(result.url, ep.endpoint)
+                    if is_api_path(ep.endpoint) or is_api_path(joined):
+                        cors_candidates.append(joined)
+                    for seed_url in crawl_seeds_from_endpoint(origin_url, ep.endpoint):
+                        if self.depth is not None and depth >= self.depth:
+                            break
+                        seed_key = canonical_key(seed_url)
+                        if seed_key in queued:
+                            continue
+                        if not same_origin(seed_url, origin_url):
+                            continue
+                        if is_pagination_trap(seed_url, family_counts):
+                            continue
+                        queued.add(seed_key)
+                        queue.append((seed_url, depth + 1))
+                if self.progress:
+                    self.progress(len(pages), result.url)
+
+                if result.redirect_to:
+                    loc = urljoin(result.url, result.redirect_to)
+                    depth_so_far = redirect_chain_depth.get(key, 0) + 1
+                    if depth_so_far > self.max_redirects:
+                        findings.append(
+                            Finding(
+                                id="redirect-chain-truncated",
+                                severity="info",
+                                category="scan-note",
+                                url=result.url,
+                                description=(
+                                    f"Redirect chain exceeded {self.max_redirects} hops and was "
+                                    "not followed further -- content beyond this point was not "
+                                    "crawled. This may be an infinite/looping redirect, or a "
+                                    "chain longer than expected."
+                                ),
+                                evidence=f"redirecting to {loc}",
+                            )
+                        )
+                    elif not same_origin(loc, origin_url):
+                        findings.append(
+                            Finding(
+                                id="off-origin-redirect-not-followed",
+                                severity="info",
+                                category="scan-note",
+                                url=result.url,
+                                description=(
+                                    "This URL redirects to a different origin, which is out "
+                                    "of scope and was not followed or fetched."
+                                ),
+                                evidence=f"redirects to {loc}",
+                            )
+                        )
+                    else:
+                        loc_key = canonical_key(loc)
+                        _remember_edge(edges, edge_seen, result.url or url, loc, "redirect")
+                        if loc_key not in queued:
+                            redirect_chain_depth[loc_key] = depth_so_far
+                            queued.add(loc_key)
+                            queue.append((loc, depth))
+
+                if result.status_code == 200:
+                    for spec_url in urls_from_spec(origin_url, result.text):
+                        spec_key = canonical_key(spec_url)
+                        if spec_key in queued:
+                            continue
+                        if is_pagination_trap(spec_url, family_counts):
+                            continue
+                        queued.add(spec_key)
+                        queue.append((spec_url, depth))
+
+                if self.depth is not None and depth >= self.depth:
+                    continue
+
+                ctype = _content_type(result.headers)
+                next_links: list[str] = []
+                if "html" in ctype or result.text.lstrip().startswith("<"):
+                    next_links.extend(extract_links(result.url, result.text))
+                if "css" in ctype:
+                    next_links.extend(extract_css_urls(result.url, result.text))
+                next_links.extend(result.discovered_urls)
+
+                form_keys = _form_action_keys(result.url or url, page.forms)
+                for link in next_links:
+                    # Checked here, BEFORE the same-origin filter below drops
+                    # it -- an authorization request overwhelmingly points at
+                    # a third-party IdP (accounts.google.com, an Okta/Auth0
+                    # tenant, ...), which is off-origin and therefore never
+                    # fetched. Since this check is purely passive (URL
+                    # inspection only, no request needed), restricting it to
+                    # `result.url`/fetched pages would examine zero real
+                    # authorization requests on the overwhelming majority of
+                    # real engagements against a relying party. Duplicate
+                    # off-origin links across multiple pages collapse via
+                    # _dedupe_findings below (keyed on id+url).
+                    findings.extend(check_oauth_authorize_url(link))
+                    if not same_origin(link, origin_url):
+                        continue
+                    link_key = canonical_key(link)
+                    link_kind = "form" if link_key in form_keys else "html"
+                    if link_key in queued:
+                        _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
+                        continue
+                    if is_pagination_trap(link, family_counts):
+                        continue
                     _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
-                    continue
-                if is_pagination_trap(link, family_counts):
-                    continue
-                _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
-                queued.add(link_key)
-                queue.append((link, depth + 1))
+                    queued.add(link_key)
+                    queue.append((link, depth + 1))
+            if self._session_died:
+                stopped = "complete"
+                break
+
 
         # Fingerprinted once and shared by both probe phases below, so a
         # site's "not found" page is judged against a single consistent
@@ -911,6 +924,16 @@ class Crawler:
         if n_pages >= self.max_pages:
             return "max-pages"
         return None
+
+    def _fetch_batch(self, urls: list[str], t0: float) -> list[FetchResult]:
+        """Fetch several URLs at once. Each fetch still uses the 429 retry wait."""
+        if len(urls) <= 1:
+            return [self._fetch_with_retries(urls[0], t0)] if urls else []
+        from concurrent.futures import ThreadPoolExecutor
+
+        with ThreadPoolExecutor(max_workers=len(urls)) as pool:
+            futures = [pool.submit(self._fetch_with_retries, url, t0) for url in urls]
+            return [future.result() for future in futures]
 
     def _fetch_with_retries(self, url: str, t0: float | None = None) -> FetchResult:
         delay = 0.2

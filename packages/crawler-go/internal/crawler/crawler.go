@@ -237,6 +237,47 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	if mode != "headless" && cfg.LoginRecipe == nil {
 		workers = 4
 	}
+	// Click distance from the start URL. URLs with no entry were seeded by
+	// probes or a spec, not by a link the crawl followed. A time limit can
+	// stop the crawl early, so those wait behind pages fewer clicks away.
+	const unlinkedDistance = 1000000
+	clickDist := map[string]int{urls.CanonicalKey(start): 0}
+	closer := func(key string, dist int) {
+		if prev, ok := clickDist[key]; !ok || dist < prev {
+			clickDist[key] = dist
+		}
+	}
+	parentDist := func(key string) int {
+		if d, ok := clickDist[key]; ok {
+			return d
+		}
+		return unlinkedDistance
+	}
+	popNext := func() item {
+		if cfg.MaxTime <= 0 || len(queue) < 2 {
+			it := queue[0]
+			queue = queue[1:]
+			return it
+		}
+		bestI := 0
+		bestD := unlinkedDistance
+		if d, ok := clickDist[urls.CanonicalKey(queue[0].u)]; ok {
+			bestD = d
+		}
+		for i := 1; i < len(queue); i++ {
+			d := unlinkedDistance
+			if v, ok := clickDist[urls.CanonicalKey(queue[i].u)]; ok {
+				d = v
+			}
+			if d < bestD {
+				bestD = d
+				bestI = i
+			}
+		}
+		it := queue[bestI]
+		queue = append(queue[:bestI], queue[bestI+1:]...)
+		return it
+	}
 	for len(queue) > 0 {
 		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
 			stopped = hit
@@ -244,8 +285,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		}
 		var batch []item
 		for len(queue) > 0 && len(batch) < workers && budgetHit(cfg, t0, len(pages)+len(batch)) == "" {
-			it := queue[0]
-			queue = queue[1:]
+			it := popNext()
 			key := urls.CanonicalKey(it.u)
 			if seen[key] || !urls.SameOrigin(it.u, start) {
 				continue
@@ -336,8 +376,10 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 					})
 				} else if urls.SameOrigin(loc, start) {
 					addEdge(&edges, edgeSeen, res.URL, loc, "redirect")
-					if !seen[urls.CanonicalKey(loc)] {
-						redirectChainDepth[urls.CanonicalKey(loc)] = depthSoFar
+					locKey := urls.CanonicalKey(loc)
+					closer(locKey, parentDist(key))
+					if !seen[locKey] {
+						redirectChainDepth[locKey] = depthSoFar
 						queue = append(queue, item{loc, it.depth})
 					}
 				}
@@ -413,6 +455,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 					continue
 				}
 				addEdge(&edges, edgeSeen, res.URL, link, kind)
+				closer(linkKey, parentDist(key)+1)
 				queue = append(queue, item{link, it.depth + 1})
 			}
 		}

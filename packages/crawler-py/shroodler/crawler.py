@@ -63,6 +63,7 @@ from shroodler.extractors.verbose import extract_verbose_errors
 from shroodler.models import (
     CapturedEndpoint,
     CrawlerInfo,
+    CrawlEdge,
     CrawlResult,
     CrawlStats,
     Finding,
@@ -102,6 +103,33 @@ ProgressCb = Callable[[int, str], None]
 
 def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _remember_edge(
+    edges: list[CrawlEdge],
+    seen: set[tuple[str, str, str]],
+    from_url: str,
+    to_url: str,
+    kind: str,
+) -> None:
+    """Record a link the crawl actually followed. Identical triples collapse."""
+    if not from_url or not to_url:
+        return
+    key = (canonical_key(from_url), canonical_key(to_url), kind)
+    if key in seen or key[0] == key[1]:
+        return
+    seen.add(key)
+    edges.append(CrawlEdge.model_validate({"from_url": from_url, "to_url": to_url, "kind": kind}))
+
+
+def _form_action_keys(page_url: str, forms: list) -> set[str]:
+    keys: set[str] = set()
+    for form in forms:
+        raw = getattr(form, "action", None) or page_url
+        norm = normalize_url(page_url, raw)
+        if norm:
+            keys.add(canonical_key(norm))
+    return keys
 
 
 def _content_type(headers: dict[str, str]) -> str:
@@ -316,6 +344,8 @@ class Crawler:
         # time until --max-pages/--max-time happens to run out.
         redirect_chain_depth: dict[str, int] = {}
         robots_blocked: list[str] = []
+        edges: list[CrawlEdge] = []
+        edge_seen: set[tuple[str, str, str]] = set()
         xhr_endpoints: list[CapturedEndpoint] = []
         if (
             self.mode == "headless"
@@ -443,6 +473,7 @@ class Crawler:
                     )
                 else:
                     loc_key = canonical_key(loc)
+                    _remember_edge(edges, edge_seen, result.url or url, loc, "redirect")
                     if loc_key not in queued:
                         redirect_chain_depth[loc_key] = depth_so_far
                         queued.add(loc_key)
@@ -469,6 +500,7 @@ class Crawler:
                 next_links.extend(extract_css_urls(result.url, result.text))
             next_links.extend(result.discovered_urls)
 
+            form_keys = _form_action_keys(result.url or url, page.forms)
             for link in next_links:
                 # Checked here, BEFORE the same-origin filter below drops
                 # it -- an authorization request overwhelmingly points at
@@ -485,10 +517,13 @@ class Crawler:
                 if not same_origin(link, origin_url):
                     continue
                 link_key = canonical_key(link)
+                link_kind = "form" if link_key in form_keys else "html"
                 if link_key in queued:
+                    _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
                     continue
                 if is_pagination_trap(link, family_counts):
                     continue
+                _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
                 queued.add(link_key)
                 queue.append((link, depth + 1))
 
@@ -591,6 +626,7 @@ class Crawler:
             crawler=CrawlerInfo(name="shroodler-py", version=__version__, mode=self.mode),
             pages=pages,
             findings=deduped_findings,
+            edges=edges,
             js_endpoints=_dedupe_endpoints(js_endpoints),
             xhr_endpoints=_dedupe_captured_endpoints(xhr_endpoints),
             stats=CrawlStats(

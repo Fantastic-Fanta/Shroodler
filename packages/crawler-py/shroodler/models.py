@@ -25,6 +25,7 @@ Category = Literal[
 ]
 Mode = Literal["static", "headless", "ingest"]
 StoppedReason = Literal["complete", "max-pages", "max-time"]
+EdgeKind = Literal["html", "redirect", "form"]
 
 
 class CrawlerInfo(BaseModel):
@@ -87,6 +88,14 @@ class JsEndpoint(BaseModel):
     endpoint: str
 
 
+class CrawlEdge(BaseModel):
+    """A link the crawl followed: an HTML link, a redirect, or a form action."""
+
+    from_url: str
+    to_url: str
+    kind: EdgeKind
+
+
 class CapturedEndpoint(BaseModel):
     """XHR/fetch (or form POST) intercepted during a headless crawl."""
 
@@ -110,6 +119,7 @@ class CrawlResult(BaseModel):
     crawler: CrawlerInfo
     pages: list[Page]
     findings: list[Finding]
+    edges: list[CrawlEdge] = Field(default_factory=list)
     js_endpoints: list[JsEndpoint] = Field(default_factory=list)
     xhr_endpoints: list[CapturedEndpoint] = Field(default_factory=list)
     stats: CrawlStats | None = None

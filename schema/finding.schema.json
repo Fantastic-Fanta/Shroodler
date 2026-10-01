@@ -54,6 +54,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/js_endpoint" }
     },
+    "edges": {
+      "type": "array",
+      "description": "Links this crawl followed. kind is html (an HTML link), redirect, or form (a form action). Absent on crawls recorded before this field existed.",
+      "items": { "$ref": "#/$defs/edge" }
+    },
     "xhr_endpoints": {
       "type": "array",
       "items": { "$ref": "#/$defs/xhr_endpoint" },
@@ -242,6 +247,16 @@
           "type": "boolean",
           "description": "Optional. False when `shroodler sla apply` found zero recorded scans for this target in history (missing/empty history dir, or wrong target) -- age_days/sla_breached could not be meaningfully evaluated, as opposed to being evaluated and clean."
         }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["from_url", "to_url", "kind"],
+      "properties": {
+        "from_url": { "type": "string", "minLength": 1 },
+        "to_url": { "type": "string", "minLength": 1 },
+        "kind": { "type": "string", "enum": ["html", "redirect", "form"] }
       }
     },
     "js_endpoint": {

@@ -122,6 +122,20 @@ def _remember_edge(
     edges.append(CrawlEdge.model_validate({"from_url": from_url, "to_url": to_url, "kind": kind}))
 
 
+def _linked_unfetched(pages: list[Page], edges: list[CrawlEdge]) -> list[str]:
+    """Linked URLs this crawl recorded but did not fetch."""
+    fetched = {canonical_key(page.url) for page in pages}
+    out: list[str] = []
+    seen: set[str] = set()
+    for edge in edges:
+        key = canonical_key(edge.to_url)
+        if not key or key in fetched or key in seen:
+            continue
+        seen.add(key)
+        out.append(edge.to_url)
+    return out
+
+
 def _form_action_keys(page_url: str, forms: list) -> set[str]:
     keys: set[str] = set()
     for form in forms:
@@ -670,6 +684,11 @@ class Crawler:
             pages=pages,
             findings=deduped_findings,
             edges=edges,
+            unfetched=(
+                _linked_unfetched(pages, edges)
+                if stopped in {"max-time", "max-pages"}
+                else []
+            ),
             js_endpoints=_dedupe_endpoints(js_endpoints),
             xhr_endpoints=_dedupe_captured_endpoints(xhr_endpoints),
             stats=CrawlStats(

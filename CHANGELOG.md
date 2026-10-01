@@ -7,6 +7,12 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Crawl link graph.** Both crawlers record the links they followed
+  (`edges`: from-url, to-url, kind `html`, `redirect`, or `form`). Older
+  crawl JSON with no `edges` still loads. `shroodler attack-path` walks
+  those edges and reports click distance from the start URL (a redirect
+  is not a click). A crawl with no edges still uses URL path depth and
+  says so.
 - **Auth-bypass SQL injection detection.** A differential login probe: it submits wrong credentials, then a tautology in the username field, and flags `sqli-auth-bypass` (critical) when the payload produces a logged-in response the wrong credentials did not (a new session/data cookie, a redirect away from login, or success-vs-failure body markers). Catches the class the error/time/boolean SQLi probes miss. Verified on demo.testfire.net.
 - **Recon budget counts crawl and reads together.** The LLM agent could dodge the read budget by alternating `crawl` and `fetch_and_read`; both now count, so it transitions from reconnaissance to probing sooner.
 - **Recon tools follow / surface redirects.** `fetch_and_read` follows redirects and reports the final URL; `send_request` observations include `redirect_to` on a 3xx. Stops the agent stalling on a redirecting base like `/api`. On stingray this cut recon from 7 actions to 3 and got it probing.

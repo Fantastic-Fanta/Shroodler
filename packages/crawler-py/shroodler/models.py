@@ -120,6 +120,7 @@ class CrawlResult(BaseModel):
     pages: list[Page]
     findings: list[Finding]
     edges: list[CrawlEdge] = Field(default_factory=list)
+    unfetched: list[str] = Field(default_factory=list)
     js_endpoints: list[JsEndpoint] = Field(default_factory=list)
     xhr_endpoints: list[CapturedEndpoint] = Field(default_factory=list)
     stats: CrawlStats | None = None
@@ -128,6 +129,8 @@ class CrawlResult(BaseModel):
         data = self.model_dump(mode="json")
         if data.get("stats") is None:
             data.pop("stats", None)
+        if not data.get("unfetched"):
+            data.pop("unfetched", None)
         from shroodler.confidence import stamp_findings
 
         stamp_findings(data.get("findings") or [])

@@ -81,6 +81,7 @@ type CrawlResult struct {
 	Pages          []Page       `json:"pages"`
 	Findings       []Finding    `json:"findings"`
 	Edges          []CrawlEdge  `json:"edges,omitempty"`
+	Unfetched      []string     `json:"unfetched,omitempty"`
 	JSEndpoints    []JSEndpoint `json:"js_endpoints"`
 	Stats          *CrawlStats  `json:"stats,omitempty"`
 }

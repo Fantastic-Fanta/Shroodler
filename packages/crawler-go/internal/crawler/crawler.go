@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/shroodler/crawler-go/internal/extractors"
@@ -232,170 +233,188 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	var corsCandidates []string
 	rules := extractors.LoadSecretRules()
 
+	workers := 1
+	if mode != "headless" && cfg.LoginRecipe == nil {
+		workers = 4
+	}
 	for len(queue) > 0 {
 		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
 			stopped = hit
 			break
 		}
-		it := queue[0]
-		queue = queue[1:]
-		key := urls.CanonicalKey(it.u)
-		if seen[key] || !urls.SameOrigin(it.u, start) {
-			continue
-		}
-		if !cfg.IgnoreRobots && !extractors.RobotsAllowed(robots, urls.PathOf(it.u)) {
-			continue
-		}
-		fam := extractors.PaginationFamily(it.u)
-		if fam != "" && family[fam] >= 8 {
-			continue
-		}
-		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
-			stopped = hit
-			break
-		}
-		seen[key] = true
-		if fam != "" {
-			family[fam]++
-		}
-		res := fetchPage(it.u)
-		if res.Status != 200 && extractors.IsOpenAPIProbePath(urls.PathOf(it.u)) {
-			continue
-		}
-		fetchForSourceMap := func(u string) fetchResult {
-			return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
-		}
-		page, f, eps := pageFrom(res, rules, fetchForSourceMap, mode != "headless")
-		if hasFindingCategory(f, "waf-challenge") && extractors.HasChallengeCookie(res.SetCookies) &&
-			budgetHit(cfg, t0, len(pages)) == "" {
-			// The challenge response itself set a cookie the vendor's flow
-			// normally checks for on the next request (e.g. Cloudflare's
-			// cf_clearance) -- the client's cookie jar already has it, so
-			// one same-URL retry may already be enough to get past a
-			// transient challenge. Still detection-only: this never solves
-			// anything, it just avoids treating a one-off hiccup as a
-			// durable block.
-			retryRes := fetchPage(it.u)
-			retryPage, retryF, retryEps := pageFrom(retryRes, rules, fetchForSourceMap, mode != "headless")
-			if !hasFindingCategory(retryF, "waf-challenge") {
-				page, f, eps = retryPage, retryF, retryEps
-				res = retryRes
-			}
-		}
-		pages = append(pages, page)
-		findings = append(findings, f...)
-		endpoints = append(endpoints, eps...)
-		if extractors.IsAPIIsh(res.URL, header(res.Headers, "content-type")) {
-			corsCandidates = append(corsCandidates, res.URL)
-		}
-		for _, e := range eps {
-			joined := resolve(res.URL, e.Endpoint)
-			if extractors.IsAPIPath(e.Endpoint) || extractors.IsAPIPath(joined) {
-				corsCandidates = append(corsCandidates, joined)
-			}
-		}
-		if cfg.Progress != nil {
-			cfg.Progress(len(pages), res.URL)
-		}
-
-		if res.RedirectTo != "" {
-			loc := resolve(res.URL, res.RedirectTo)
-			depthSoFar := redirectChainDepth[key] + 1
-			if depthSoFar > cfg.MaxRedirects {
-				ev := "redirecting to " + loc
-				findings = append(findings, models.Finding{
-					ID:       "redirect-chain-truncated",
-					Severity: "info",
-					Category: "scan-note",
-					URL:      res.URL,
-					Description: fmt.Sprintf(
-						"Redirect chain exceeded %d hops and was not followed further -- "+
-							"content beyond this point was not crawled. This may be an "+
-							"infinite/looping redirect, or a chain longer than expected.",
-						cfg.MaxRedirects,
-					),
-					Evidence: &ev,
-				})
-			} else if urls.SameOrigin(loc, start) {
-				addEdge(&edges, edgeSeen, res.URL, loc, "redirect")
-				if !seen[urls.CanonicalKey(loc)] {
-					redirectChainDepth[urls.CanonicalKey(loc)] = depthSoFar
-					queue = append(queue, item{loc, it.depth})
-				}
-			}
-		}
-		if res.Status == 200 {
-			for _, p := range extractors.ParseOpenAPIPaths(res.Body) {
-				u := openAPIBase + p
-				if !urls.SameOrigin(u, start) || seen[urls.CanonicalKey(u)] {
-					continue
-				}
-				fam := extractors.PaginationFamily(u)
-				if fam != "" && family[fam] >= 8 {
-					continue
-				}
-				queue = append(queue, item{u, it.depth})
-			}
-		}
-		if cfg.Depth >= 0 && it.depth >= cfg.Depth {
-			continue
-		}
-		ctype := strings.ToLower(header(res.Headers, "content-type"))
-		var links []string
-		if strings.Contains(ctype, "html") || strings.HasPrefix(strings.TrimSpace(res.Body), "<") {
-			raw := extractors.ExtractLinks(res.URL, res.Body)
-			for _, r := range raw {
-				if n := urls.Normalize(res.URL, r); n != "" {
-					links = append(links, n)
-				}
-			}
-		}
-		for _, d := range res.Discovered {
-			if n := urls.Normalize(res.URL, d); n != "" {
-				links = append(links, n)
-			} else if urls.SameOrigin(d, start) {
-				links = append(links, d)
-			}
-		}
-		formKeys := map[string]bool{}
-		for _, f := range page.Forms {
-			raw := f.Action
-			if raw == "" {
-				raw = res.URL
-			}
-			if n := urls.Normalize(res.URL, raw); n != "" {
-				formKeys[urls.CanonicalKey(n)] = true
-			}
-		}
-		for _, link := range links {
-			// Checked here, BEFORE the same-origin filter below drops it
-			// -- an authorization request overwhelmingly points at a
-			// third-party IdP, which is off-origin and therefore never
-			// fetched. Since this check is purely passive (URL
-			// inspection only), restricting it to fetched pages would
-			// examine zero real authorization requests on most real
-			// engagements against a relying party. Duplicate off-origin
-			// links across multiple pages collapse via dedupeF below
-			// (keyed on id+url).
-			findings = append(findings, extractors.CheckOAuthAuthorizeURL(link)...)
-			if !urls.SameOrigin(link, start) {
+		var batch []item
+		for len(queue) > 0 && len(batch) < workers && budgetHit(cfg, t0, len(pages)+len(batch)) == "" {
+			it := queue[0]
+			queue = queue[1:]
+			key := urls.CanonicalKey(it.u)
+			if seen[key] || !urls.SameOrigin(it.u, start) {
 				continue
 			}
-			linkKey := urls.CanonicalKey(link)
-			kind := "html"
-			if formKeys[linkKey] {
-				kind = "form"
-			}
-			if seen[linkKey] {
-				addEdge(&edges, edgeSeen, res.URL, link, kind)
+			if !cfg.IgnoreRobots && !extractors.RobotsAllowed(robots, urls.PathOf(it.u)) {
 				continue
 			}
-			fam := extractors.PaginationFamily(link)
+			fam := extractors.PaginationFamily(it.u)
 			if fam != "" && family[fam] >= 8 {
 				continue
 			}
-			addEdge(&edges, edgeSeen, res.URL, link, kind)
-			queue = append(queue, item{link, it.depth + 1})
+			seen[key] = true
+			if fam != "" {
+				family[fam]++
+			}
+			batch = append(batch, it)
+		}
+		if len(batch) == 0 {
+			if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
+				stopped = hit
+			}
+			break
+		}
+		raws := make([]string, len(batch))
+		for i, it := range batch {
+			raws[i] = it.u
+		}
+		results := fetchMany(fetchPage, raws)
+		for i, it := range batch {
+			res := results[i]
+			key := urls.CanonicalKey(it.u)
+			if res.Status != 200 && extractors.IsOpenAPIProbePath(urls.PathOf(it.u)) {
+				continue
+			}
+			fetchForSourceMap := func(u string) fetchResult {
+				return fetchRetry(client, u, "", remainingTimeout(t0, cfg.MaxTime))
+			}
+			page, f, eps := pageFrom(res, rules, fetchForSourceMap, mode != "headless")
+			if hasFindingCategory(f, "waf-challenge") && extractors.HasChallengeCookie(res.SetCookies) &&
+				budgetHit(cfg, t0, len(pages)) == "" {
+				// The challenge response itself set a cookie the vendor's flow
+				// normally checks for on the next request (e.g. Cloudflare's
+				// cf_clearance) -- the client's cookie jar already has it, so
+				// one same-URL retry may already be enough to get past a
+				// transient challenge. Still detection-only: this never solves
+				// anything, it just avoids treating a one-off hiccup as a
+				// durable block.
+				retryRes := fetchPage(it.u)
+				retryPage, retryF, retryEps := pageFrom(retryRes, rules, fetchForSourceMap, mode != "headless")
+				if !hasFindingCategory(retryF, "waf-challenge") {
+					page, f, eps = retryPage, retryF, retryEps
+					res = retryRes
+				}
+			}
+			pages = append(pages, page)
+			findings = append(findings, f...)
+			endpoints = append(endpoints, eps...)
+			if extractors.IsAPIIsh(res.URL, header(res.Headers, "content-type")) {
+				corsCandidates = append(corsCandidates, res.URL)
+			}
+			for _, e := range eps {
+				joined := resolve(res.URL, e.Endpoint)
+				if extractors.IsAPIPath(e.Endpoint) || extractors.IsAPIPath(joined) {
+					corsCandidates = append(corsCandidates, joined)
+				}
+			}
+			if cfg.Progress != nil {
+				cfg.Progress(len(pages), res.URL)
+			}
+
+			if res.RedirectTo != "" {
+				loc := resolve(res.URL, res.RedirectTo)
+				depthSoFar := redirectChainDepth[key] + 1
+				if depthSoFar > cfg.MaxRedirects {
+					ev := "redirecting to " + loc
+					findings = append(findings, models.Finding{
+						ID:       "redirect-chain-truncated",
+						Severity: "info",
+						Category: "scan-note",
+						URL:      res.URL,
+						Description: fmt.Sprintf(
+							"Redirect chain exceeded %d hops and was not followed further -- "+
+								"content beyond this point was not crawled. This may be an "+
+								"infinite/looping redirect, or a chain longer than expected.",
+							cfg.MaxRedirects,
+						),
+						Evidence: &ev,
+					})
+				} else if urls.SameOrigin(loc, start) {
+					addEdge(&edges, edgeSeen, res.URL, loc, "redirect")
+					if !seen[urls.CanonicalKey(loc)] {
+						redirectChainDepth[urls.CanonicalKey(loc)] = depthSoFar
+						queue = append(queue, item{loc, it.depth})
+					}
+				}
+			}
+			if res.Status == 200 {
+				for _, p := range extractors.ParseOpenAPIPaths(res.Body) {
+					u := openAPIBase + p
+					if !urls.SameOrigin(u, start) || seen[urls.CanonicalKey(u)] {
+						continue
+					}
+					fam := extractors.PaginationFamily(u)
+					if fam != "" && family[fam] >= 8 {
+						continue
+					}
+					queue = append(queue, item{u, it.depth})
+				}
+			}
+			if cfg.Depth >= 0 && it.depth >= cfg.Depth {
+				continue
+			}
+			ctype := strings.ToLower(header(res.Headers, "content-type"))
+			var links []string
+			if strings.Contains(ctype, "html") || strings.HasPrefix(strings.TrimSpace(res.Body), "<") {
+				raw := extractors.ExtractLinks(res.URL, res.Body)
+				for _, r := range raw {
+					if n := urls.Normalize(res.URL, r); n != "" {
+						links = append(links, n)
+					}
+				}
+			}
+			for _, d := range res.Discovered {
+				if n := urls.Normalize(res.URL, d); n != "" {
+					links = append(links, n)
+				} else if urls.SameOrigin(d, start) {
+					links = append(links, d)
+				}
+			}
+			formKeys := map[string]bool{}
+			for _, f := range page.Forms {
+				raw := f.Action
+				if raw == "" {
+					raw = res.URL
+				}
+				if n := urls.Normalize(res.URL, raw); n != "" {
+					formKeys[urls.CanonicalKey(n)] = true
+				}
+			}
+			for _, link := range links {
+				// Checked here, BEFORE the same-origin filter below drops it
+				// -- an authorization request overwhelmingly points at a
+				// third-party IdP, which is off-origin and therefore never
+				// fetched. Since this check is purely passive (URL
+				// inspection only), restricting it to fetched pages would
+				// examine zero real authorization requests on most real
+				// engagements against a relying party. Duplicate off-origin
+				// links across multiple pages collapse via dedupeF below
+				// (keyed on id+url).
+				findings = append(findings, extractors.CheckOAuthAuthorizeURL(link)...)
+				if !urls.SameOrigin(link, start) {
+					continue
+				}
+				linkKey := urls.CanonicalKey(link)
+				kind := "html"
+				if formKeys[linkKey] {
+					kind = "form"
+				}
+				if seen[linkKey] {
+					addEdge(&edges, edgeSeen, res.URL, link, kind)
+					continue
+				}
+				fam := extractors.PaginationFamily(link)
+				if fam != "" && family[fam] >= 8 {
+					continue
+				}
+				addEdge(&edges, edgeSeen, res.URL, link, kind)
+				queue = append(queue, item{link, it.depth + 1})
+			}
 		}
 	}
 
@@ -850,6 +869,26 @@ func get(client *http.Client, raw string) (string, int, error) {
 	return r.Body, r.Status, nil
 }
 
+func fetchMany(fetch func(string) fetchResult, raws []string) []fetchResult {
+	if len(raws) <= 1 {
+		if len(raws) == 0 {
+			return nil
+		}
+		return []fetchResult{fetch(raws[0])}
+	}
+	out := make([]fetchResult, len(raws))
+	var wg sync.WaitGroup
+	for i, raw := range raws {
+		wg.Add(1)
+		go func(i int, raw string) {
+			defer wg.Done()
+			out[i] = fetch(raw)
+		}(i, raw)
+	}
+	wg.Wait()
+	return out
+}
+
 func budgetHit(cfg Config, t0 time.Time, nPages int) string {
 	if cfg.MaxTime > 0 && time.Since(t0) >= cfg.MaxTime {
 		return "max-time"
@@ -886,12 +925,15 @@ func header(h map[string]string, key string) string {
 
 type countingTransport struct {
 	base http.RoundTripper
+	mu   sync.Mutex
 	n    *int
 }
 
 func (t *countingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if t.n != nil {
+		t.mu.Lock()
 		*t.n++
+		t.mu.Unlock()
 	}
 	base := t.base
 	if base == nil {

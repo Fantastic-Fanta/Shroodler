@@ -19,6 +19,7 @@ import json
 import os
 import re
 import sys
+import threading
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -35,6 +36,7 @@ from shroodler.urls import origin as origin_of
 _STALE_AFTER = timedelta(hours=24)
 _DEFAULT_RATE_CEILING = 0.1  # 100 ms between HTTP requests if no guardrail
 _AGG_WORKERS = 8  # concurrent endpoint probes in --aggressive mode
+_PROBE_WORKERS = 4  # non-aggressive: several URLs in flight, still paced
 _AGG_TIMEOUT = 4.0  # per-request timeout (s) in --aggressive mode (default 8)
 _CRAWL_STALL_LIMIT = 3
 _PLACEHOLDER_RE = re.compile(r"\{[^{}]+\}")
@@ -2146,13 +2148,28 @@ def _finish_probe_action(
     seen_smuggle: set[str] = set()
     seen_rl: set[str] = set()
     seen_unauth: set[str] = set()
+    gate = threading.Lock()
 
-    def _probe_url(index: int, url: str) -> None:
+    def _claim(bucket: set[str], key: str) -> bool:
+        with gate:
+            if not key or key in bucket:
+                return False
+            bucket.add(key)
+            return True
+
+    def _probe_url(index: int, url: str, dest: list | None = None) -> None:
         def _run(label: str, fn) -> None:
             try:
-                findings.extend(fn())
+                got = fn() or []
             except Exception as exc:  # noqa: BLE001 - per-probe, must continue
-                errors.append(f"{url} {label}: {type(exc).__name__}: {exc}")
+                with gate:
+                    errors.append(f"{url} {label}: {type(exc).__name__}: {exc}")
+                return
+            if dest is None:
+                with gate:
+                    findings.extend(got)
+            else:
+                dest.extend(got)
 
         if not _in_target_origin(url, config.target):
             return
@@ -2249,8 +2266,7 @@ def _finish_probe_action(
             )
         if config.run_host_header:
             host = hostname_of(url)
-            if host and host not in seen_hosts:
-                seen_hosts.add(host)
+            if host and _claim(seen_hosts, host):
                 _run(
                     "host-header",
                     lambda: probe_host_header(url, hdr, pacer=pacer, state=state),
@@ -2277,8 +2293,7 @@ def _finish_probe_action(
             )
         if config.run_graphql:
             origin = origin_of(url)
-            if origin and origin not in seen_graphql:
-                seen_graphql.add(origin)
+            if origin and _claim(seen_graphql, origin):
                 _run(
                     "graphql",
                     lambda: probe_graphql(url, hdr, pacer=pacer, state=state),
@@ -2319,8 +2334,7 @@ def _finish_probe_action(
                                 probe_dom_xss(su, m, sp, h, pacer=pacer)
                             ),
                         )
-        if config.run_rate_limit and url not in seen_rl:
-            seen_rl.add(url)
+        if config.run_rate_limit and _claim(seen_rl, url):
             _run(
                 "rate-limit",
                 lambda: probe_rate_limit(url, method, hdr, pacer=pacer),
@@ -2332,9 +2346,8 @@ def _finish_probe_action(
         if (
             getattr(config, "run_unauth_exposure", True)
             and method == "GET"
-            and url not in seen_unauth
+            and _claim(seen_unauth, url)
         ):
-            seen_unauth.add(url)
             _run(
                 "unauth-exposure",
                 lambda: probe_unauth_exposure(url, method, pacer=pacer),
@@ -2353,8 +2366,7 @@ def _finish_probe_action(
             )
         if config.run_smuggling:
             host = smuggle_host(url)
-            if host and host not in seen_smuggle:
-                seen_smuggle.add(host)
+            if host and _claim(seen_smuggle, host):
                 _run(
                     "smuggling",
                     lambda: probe_smuggling(
@@ -2386,7 +2398,12 @@ def _finish_probe_action(
                 for item in found:
                     if item not in existing:
                         existing.append(item)
-                state.websocket_endpoints = existing
+                with gate:
+                    current = list(getattr(state, "websocket_endpoints", None) or [])
+                    for item in existing:
+                        if item not in current:
+                            current.append(item)
+                    state.websocket_endpoints = current
                 return hits
 
             _run("websocket", _ws_probe)
@@ -2412,8 +2429,22 @@ def _finish_probe_action(
         with concurrent.futures.ThreadPoolExecutor(max_workers=_AGG_WORKERS) as ex:
             list(ex.map(lambda pr: copy_context().run(_worker, pr), pairs))
     else:
-        for index, url in enumerate(urls, start=1):
-            _probe_url(index, url)
+        pairs = list(enumerate(urls, start=1))
+        if len(pairs) <= 1 or _PROBE_WORKERS <= 1:
+            for index, url in pairs:
+                _probe_url(index, url)
+        else:
+            # Several URLs in flight. Each request still waits on `pacer`.
+            import concurrent.futures
+
+            def _one(pair: tuple[int, str]) -> list:
+                local: list = []
+                _probe_url(pair[0], pair[1], local)
+                return local
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=_PROBE_WORKERS) as ex:
+                for local in ex.map(_one, pairs):
+                    findings.extend(local)
 
     findings_added = _merge_findings(state, findings)
     program.mark_tested(state, action.urls, "tested_payload")
@@ -2542,7 +2573,7 @@ def _execute_openapi_probe(
                     if url:
                         tested.append(url)
                         row["tested_payload"] = True
-        else:
+        elif len(rows) <= 1 or _PROBE_WORKERS <= 1:
             for row in rows:
                 url = str(row.get("url") or "")
                 try:
@@ -2552,6 +2583,27 @@ def _execute_openapi_probe(
                 if url:
                     tested.append(url)
                     row["tested_payload"] = True
+        else:
+            import concurrent.futures
+
+            def _one(row: dict) -> tuple[dict, str, list, str | None]:
+                url = str(row.get("url") or "")
+                try:
+                    return row, url, _probe_row(row, pacer), None
+                except Exception as exc:  # noqa: BLE001 - per-endpoint, loop must continue
+                    return row, url, [], f"{url} openapi-probe: {type(exc).__name__}: {exc}"
+
+            with concurrent.futures.ThreadPoolExecutor(
+                max_workers=min(_PROBE_WORKERS, len(rows))
+            ) as ex:
+                for row, url, got, err in ex.map(_one, rows):
+                    if got:
+                        findings.extend(got)
+                    if err:
+                        errors.append(err)
+                    if url:
+                        tested.append(url)
+                        row["tested_payload"] = True
     finally:
         _session_cm.__exit__(None, None, None)
     findings_added = _merge_findings(state, findings)

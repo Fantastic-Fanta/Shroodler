@@ -365,6 +365,33 @@ class Crawler:
                 t0,
             )
 
+        # Click distance from the start URL for URLs reached by a followed
+        # link. Missing keys are probe, sitemap, or spec seeds: when a time
+        # limit can cut the crawl short, those wait behind real links.
+        click_dist: dict[str, int] = {canonical_key(seed): 0}
+        unlinked_distance = 1_000_000
+
+        def _closer(url_key: str, dist: int) -> None:
+            prev = click_dist.get(url_key)
+            if prev is None or dist < prev:
+                click_dist[url_key] = dist
+
+        def _pop_next() -> tuple[str, int]:
+            if self.max_time is None or len(queue) < 2:
+                return queue.popleft()
+            best_i = 0
+            best_d = click_dist.get(canonical_key(queue[0][0]), unlinked_distance)
+            for i in range(1, len(queue)):
+                dist = click_dist.get(canonical_key(queue[i][0]), unlinked_distance)
+                if dist < best_d:
+                    best_d = dist
+                    best_i = i
+            if best_i == 0:
+                return queue.popleft()
+            item = queue[best_i]
+            del queue[best_i]
+            return item
+
         workers = 1 if self.mode == "headless" or self._resolved_recipe is not None else 4
         while queue:
             hit = self._budget_hit(t0, len(pages))
@@ -377,7 +404,7 @@ class Crawler:
                 and len(batch) < workers
                 and not self._budget_hit(t0, len(pages) + len(batch))
             ):
-                url, depth = queue.popleft()
+                url, depth = _pop_next()
                 key = canonical_key(url)
                 if key in seen:
                     continue
@@ -483,6 +510,7 @@ class Crawler:
                     else:
                         loc_key = canonical_key(loc)
                         _remember_edge(edges, edge_seen, result.url or url, loc, "redirect")
+                        _closer(loc_key, click_dist.get(key, 0))
                         if loc_key not in queued:
                             redirect_chain_depth[loc_key] = depth_so_far
                             queued.add(loc_key)
@@ -529,10 +557,12 @@ class Crawler:
                     link_kind = "form" if link_key in form_keys else "html"
                     if link_key in queued:
                         _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
+                        _closer(link_key, click_dist.get(key, 0) + 1)
                         continue
                     if is_pagination_trap(link, family_counts):
                         continue
                     _remember_edge(edges, edge_seen, result.url or url, link, link_kind)
+                    _closer(link_key, click_dist.get(key, 0) + 1)
                     queued.add(link_key)
                     queue.append((link, depth + 1))
             if self._session_died:

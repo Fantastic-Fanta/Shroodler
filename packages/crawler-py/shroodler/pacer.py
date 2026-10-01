@@ -9,6 +9,7 @@ paths share one clock. Sleep is injectable so tests do not wait.
 from __future__ import annotations
 
 import time
+import threading
 from collections.abc import Callable
 
 
@@ -35,8 +36,13 @@ class Pacer:
         self._sleeper = sleeper
         self._now = now
         self._last: float | None = None
+        self._lock = threading.Lock()
 
     def wait(self) -> None:
+        with self._lock:
+            self._wait_locked()
+
+    def _wait_locked(self) -> None:
         if self.min_interval <= 0:
             return
         t = self._now()

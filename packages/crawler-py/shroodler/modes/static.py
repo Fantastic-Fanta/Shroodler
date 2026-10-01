@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from threading import Lock
 
 import httpx
 
@@ -54,6 +55,7 @@ class StaticFetcher:
         self.user_agent = user_agent
         self.proxy = proxy
         self.requests = 0
+        self._count_lock = Lock()
 
     def close(self) -> None:
         self.client.close()
@@ -66,7 +68,8 @@ class StaticFetcher:
         *,
         anonymous: bool = False,
     ) -> FetchResult:
-        self.requests += 1
+        with self._count_lock:
+            self.requests += 1
         try:
             if anonymous:
                 kwargs: dict = {
@@ -93,7 +96,8 @@ class StaticFetcher:
         return _from_response(url, resp)
 
     def post_form(self, url: str, data: dict[str, str]) -> FetchResult:
-        self.requests += 1
+        with self._count_lock:
+            self.requests += 1
         try:
             resp = self.client.post(url, data=data)
         except httpx.RequestError as exc:

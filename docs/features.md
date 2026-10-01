@@ -75,6 +75,12 @@
 - **Cookie prefix contracts** — `__Secure-`/`__Host-` Set-Cookie
   violations (browsers reject these outright), distinct from the
   existing "could adopt a prefix" suggestions.
+- **Attack-path** (`shroodler attack-path`) — ranks findings by how many
+  clicks they are from the start URL, using the links the crawl recorded
+  (`edges`: HTML link, redirect, or form action). A redirect is not a
+  click. A crawl file with no `edges` still loads and is ranked by URL
+  path depth instead; the report says that is a heuristic, not a walk of
+  the links that were followed.
 - **Passive findings** — missing security headers, exposed secrets/keys,
   JWT issues (`alg: none`, missing/long expiry, weak secret), CORS
   misconfig, GraphQL introspection, and more, discovered while crawling.

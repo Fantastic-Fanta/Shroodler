@@ -222,3 +222,50 @@ def test_cmd_attack_path_cli_writes_json(tmp_path):
     assert cmd_attack_path(ns) == 0
     result = json.loads(out.read_text(encoding="utf-8"))
     assert result["nodes"][0]["id"] == "missing-hsts"
+
+
+def test_edges_report_click_distance_not_slash_count():
+    doc = {
+        "target": "http://x/",
+        "edges": [
+            {"from_url": "http://x/", "to_url": "http://x/a", "kind": "html"},
+            {"from_url": "http://x/a", "to_url": "http://x/a/b/c/d", "kind": "html"},
+        ],
+        "findings": [_finding("missing-hsts", "http://x/a/b/c/d")],
+    }
+    report = build_attack_path(doc)
+    node = report["nodes"][0]
+    assert node["path_depth"] == 4
+    assert node["click_distance"] == 2
+    assert node["distance_is_heuristic"] is False
+    assert report["path_depth_is_heuristic"] is False
+    assert "2 click(s) from the start URL" in node["narrative"]
+    md = render_attack_path_markdown(report)
+    assert "links this crawl followed" in md
+
+
+def test_redirect_does_not_add_a_click():
+    doc = {
+        "target": "http://x/",
+        "edges": [
+            {"from_url": "http://x/", "to_url": "http://x/go", "kind": "html"},
+            {"from_url": "http://x/go", "to_url": "http://x/land", "kind": "redirect"},
+        ],
+        "findings": [_finding("missing-hsts", "http://x/land")],
+    }
+    report = build_attack_path(doc)
+    assert report["nodes"][0]["click_distance"] == 1
+
+
+def test_url_missing_from_edges_keeps_slash_count_and_says_so():
+    doc = {
+        "target": "http://x/",
+        "edges": [{"from_url": "http://x/", "to_url": "http://x/a", "kind": "html"}],
+        "findings": [_finding("missing-hsts", "http://x/unlinked/page")],
+    }
+    report = build_attack_path(doc)
+    node = report["nodes"][0]
+    assert node["click_distance"] == 2
+    assert node["distance_is_heuristic"] is True
+    assert "not on a followed link" in node["narrative"]
+    assert report["path_depth_is_heuristic"] is False

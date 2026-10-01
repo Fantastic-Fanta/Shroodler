@@ -12,14 +12,15 @@ speculative ideas, but the pieces are all already there.
 Two honesty notes, stated up front because they shape every design
 choice below:
 
-1. Neither crawler engine persists a real inter-page link graph into its
-   JSON output (no "linked from" field on a page) -- adding one would be
-   a crawler/schema change affecting parity between the Python and Go
-   engines. Instead, "distance from the target root" is approximated by
-   URL PATH DEPTH (segment count), which correlates with click-distance
-   in most conventionally-organized sites but is not a real BFS over
-   actual discovered links. This is disclosed in every rendered output,
-   not just this docstring.
+1. Click distance is a walk of the links the crawl recorded (`edges`:
+   from-url, to-url, and kind). An HTML link or a form action counts as
+   one click. A redirect counts as zero: the browser follows it without
+   another click. When the crawl JSON has no edges (files written before
+   crawlers stored them), distance falls back to URL path depth (segment
+   count) and every rendered sentence says so. A finding whose URL is
+   not reachable from the start URL through those edges uses that same
+   path-depth fallback and says so, even when other findings used the
+   graph.
 2. "Needs a session token this scan proved guessable" is a same-scan
    correlation, not a proof that a specific finding's exploitation path
    actually routes through that specific token -- it means the scan
@@ -31,7 +32,10 @@ choice below:
 from __future__ import annotations
 
 import re
+from collections import defaultdict, deque
 from urllib.parse import unquote, urlparse
+
+from shroodler.urls import canonical_key
 
 _TOKEN_WEAKNESS_IDS = {
     "reset-token-sequential",
@@ -118,11 +122,50 @@ def _same_subsystem(url_a: str, url_b: str) -> bool:
     return bool(segs_a) and bool(segs_b) and segs_a[0] == segs_b[0]
 
 
+def _click_distances(target: str, edges: list) -> dict[str, int]:
+    """Shortest click distance from the start URL. Redirects weigh 0."""
+    start = canonical_key(target) if target else ""
+    adj: dict[str, list[tuple[str, int]]] = defaultdict(list)
+    for edge in edges:
+        if not isinstance(edge, dict):
+            continue
+        frm = canonical_key(str(edge.get("from_url") or ""))
+        to = canonical_key(str(edge.get("to_url") or ""))
+        if not frm or not to:
+            continue
+        weight = 0 if edge.get("kind") == "redirect" else 1
+        adj[frm].append((to, weight))
+    dist: dict[str, int] = {}
+    if not start:
+        return dist
+    dist[start] = 0
+    pending: deque[str] = deque([start])
+    while pending:
+        current = pending.popleft()
+        for nxt, weight in adj.get(current, []):
+            candidate = dist[current] + weight
+            if nxt in dist and candidate >= dist[nxt]:
+                continue
+            dist[nxt] = candidate
+            if weight == 0:
+                pending.appendleft(nxt)
+            else:
+                pending.append(nxt)
+    return dist
+
+
 def build_attack_path(doc: dict) -> dict:
-    """Returns a report correlating every finding in `doc` with its
-    path-depth (reachability proxy) and whether the same scan found
-    evidence of a guessable session/reset token."""
+    """Returns a report correlating every finding in `doc` with how many
+    clicks it is from the start URL, and whether the same scan found
+    evidence of a guessable session/reset token.
+
+    Crawls that recorded edges use those links. Crawls with no edges
+    keep the path-depth (slash-count) heuristic and say so.
+    """
     findings = doc.get("findings", [])
+    raw_edges = doc.get("edges") or []
+    use_edges = isinstance(raw_edges, list) and len(raw_edges) > 0
+    distances = _click_distances(doc.get("target") or "", raw_edges) if use_edges else {}
     weak_token_findings = [f for f in findings if f.get("id") in _TOKEN_WEAKNESS_IDS]
     weak_token_ids = sorted({f["id"] for f in weak_token_findings})
     weak_token_urls = [f.get("url", "") for f in weak_token_findings]
@@ -131,7 +174,26 @@ def build_attack_path(doc: dict) -> dict:
     for f in findings:
         if f.get("id") in _TOKEN_WEAKNESS_IDS:
             continue  # the token weakness itself is context, not a path node
-        depth = _path_depth(f.get("url", ""))
+        url = f.get("url", "")
+        depth = _path_depth(url)
+        on_graph = use_edges and canonical_key(url) in distances
+        distance = distances[canonical_key(url)] if on_graph else depth
+        if on_graph:
+            narrative = (
+                f"{f.get('id')} at {f.get('url')} is {distance} click(s) from the "
+                "start URL (links this crawl followed; a redirect is not a click)."
+            )
+        elif use_edges:
+            narrative = (
+                f"{f.get('id')} at {f.get('url')} is reachable ~{depth} click(s) from the "
+                "target root (path-depth heuristic: this URL is not on a followed "
+                "link from the start URL)."
+            )
+        else:
+            narrative = (
+                f"{f.get('id')} at {f.get('url')} is reachable ~{depth} click(s) from the "
+                "target root (path-depth heuristic, not a real link-graph traversal)."
+            )
         # Scoped to the same subsystem as at least one weak-token
         # finding (see _same_subsystem), not "flag every auth-category
         # finding in the whole scan off any weak token anywhere" -- an
@@ -140,10 +202,6 @@ def build_attack_path(doc: dict) -> dict:
         # every unrelated auth finding, training readers to ignore it.
         relevant_token_context = f.get("category") in _SESSION_RELEVANT_CATEGORIES and any(
             _same_subsystem(f.get("url", ""), token_url) for token_url in weak_token_urls
-        )
-        narrative = (
-            f"{f.get('id')} at {f.get('url')} is reachable ~{depth} click(s) from the "
-            f"target root (path-depth heuristic, not a real link-graph traversal)."
         )
         if relevant_token_context:
             narrative += (
@@ -159,31 +217,45 @@ def build_attack_path(doc: dict) -> dict:
                 "severity": f.get("severity"),
                 "category": f.get("category"),
                 "path_depth": depth,
+                "click_distance": distance,
+                "distance_is_heuristic": not on_graph,
                 "relevant_token_context": relevant_token_context,
                 "narrative": narrative,
             }
         )
 
     def _sort_key(n: dict) -> tuple:
-        return (n["path_depth"], n["severity"] != "critical", n["severity"] != "high")
+        return (n["click_distance"], n["severity"] != "critical", n["severity"] != "high")
 
     nodes.sort(key=_sort_key)
 
     return {
         "target": doc.get("target", ""),
-        "path_depth_is_heuristic": True,
+        "path_depth_is_heuristic": not use_edges,
         "weak_tokens_found": weak_token_ids,
         "nodes": nodes,
     }
 
 
 def render_attack_path_markdown(report: dict) -> str:
+    if report.get("path_depth_is_heuristic"):
+        disclaimer = (
+            "Distances are a **path-depth heuristic** (URL segment count from the "
+            "target root), not a real crawl-link-graph traversal -- treat as an "
+            "approximation of click-distance, not a guarantee. This crawl did not "
+            "record the links it followed."
+        )
+    else:
+        disclaimer = (
+            "Distances are click counts along links this crawl followed "
+            "(an HTML link or a form action is one click; a redirect is not a click). "
+            "A URL that is not on any followed path still uses the path-depth "
+            "heuristic, and that node's sentence says so."
+        )
     lines = [
         f"# Attack-path graph for {report.get('target', '')}",
         "",
-        "Distances are a **path-depth heuristic** (URL segment count from the "
-        "target root), not a real crawl-link-graph traversal -- treat as an "
-        "approximation of click-distance, not a guarantee.",
+        disclaimer,
         "",
     ]
     if report.get("weak_tokens_found"):

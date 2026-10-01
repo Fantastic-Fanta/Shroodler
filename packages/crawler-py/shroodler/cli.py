@@ -3262,10 +3262,12 @@ def build_parser() -> argparse.ArgumentParser:
         "attack-path",
         help="Correlate findings with reachability + weak-token context into one report",
         description=(
-            "Correlates every finding with its URL path-depth (a heuristic proxy "
-            "for click-distance from the target root -- not a real link-graph "
-            "traversal, since neither crawler engine persists one) and whether "
-            "this same scan found evidence of a guessable session/reset token."
+            "Correlates every finding with how many clicks it is from the start "
+            "URL. When the crawl recorded edges, that distance is a walk of those "
+            "links (an HTML link or form action is one click; a redirect is not). "
+            "A crawl file with no edges still loads and is ranked by URL path "
+            "depth instead; the report says that is a heuristic. Also notes "
+            "when this same scan found a guessable session/reset token."
         ),
     )
     attack_path.add_argument("findings")

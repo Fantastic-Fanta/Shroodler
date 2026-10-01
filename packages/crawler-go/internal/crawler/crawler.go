@@ -227,6 +227,8 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	var pages []models.Page
 	findings := append([]models.Finding{}, sessionFindings...)
 	var endpoints []models.JSEndpoint
+	var edges []models.CrawlEdge
+	edgeSeen := map[string]bool{}
 	var corsCandidates []string
 	rules := extractors.LoadSecretRules()
 
@@ -314,9 +316,12 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 					),
 					Evidence: &ev,
 				})
-			} else if urls.SameOrigin(loc, start) && !seen[urls.CanonicalKey(loc)] {
-				redirectChainDepth[urls.CanonicalKey(loc)] = depthSoFar
-				queue = append(queue, item{loc, it.depth})
+			} else if urls.SameOrigin(loc, start) {
+				addEdge(&edges, edgeSeen, res.URL, loc, "redirect")
+				if !seen[urls.CanonicalKey(loc)] {
+					redirectChainDepth[urls.CanonicalKey(loc)] = depthSoFar
+					queue = append(queue, item{loc, it.depth})
+				}
 			}
 		}
 		if res.Status == 200 {
@@ -352,6 +357,16 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 				links = append(links, d)
 			}
 		}
+		formKeys := map[string]bool{}
+		for _, f := range page.Forms {
+			raw := f.Action
+			if raw == "" {
+				raw = res.URL
+			}
+			if n := urls.Normalize(res.URL, raw); n != "" {
+				formKeys[urls.CanonicalKey(n)] = true
+			}
+		}
 		for _, link := range links {
 			// Checked here, BEFORE the same-origin filter below drops it
 			// -- an authorization request overwhelmingly points at a
@@ -363,13 +378,23 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 			// links across multiple pages collapse via dedupeF below
 			// (keyed on id+url).
 			findings = append(findings, extractors.CheckOAuthAuthorizeURL(link)...)
-			if !urls.SameOrigin(link, start) || seen[urls.CanonicalKey(link)] {
+			if !urls.SameOrigin(link, start) {
+				continue
+			}
+			linkKey := urls.CanonicalKey(link)
+			kind := "html"
+			if formKeys[linkKey] {
+				kind = "form"
+			}
+			if seen[linkKey] {
+				addEdge(&edges, edgeSeen, res.URL, link, kind)
 				continue
 			}
 			fam := extractors.PaginationFamily(link)
 			if fam != "" && family[fam] >= 8 {
 				continue
 			}
+			addEdge(&edges, edgeSeen, res.URL, link, kind)
 			queue = append(queue, item{link, it.depth + 1})
 		}
 	}
@@ -478,6 +503,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		Crawler:        models.CrawlerInfo{Name: "shroodler-go", Version: version, Mode: mode},
 		Pages:          pages,
 		Findings:       dedupedFindings,
+		Edges:          edges,
 		JSEndpoints:    endpoints,
 		Stats: &models.CrawlStats{
 			PagesCrawled:    len(pages),
@@ -494,6 +520,23 @@ var errNonLocal = errString("refusing to crawl non-local host; pass --allow-exte
 type errString string
 
 func (e errString) Error() string { return string(e) }
+
+func addEdge(edges *[]models.CrawlEdge, seen map[string]bool, from, to, kind string) {
+	if from == "" || to == "" {
+		return
+	}
+	fromKey := urls.CanonicalKey(from)
+	toKey := urls.CanonicalKey(to)
+	if fromKey == toKey {
+		return
+	}
+	key := fromKey + "\n" + toKey + "\n" + kind
+	if seen[key] {
+		return
+	}
+	seen[key] = true
+	*edges = append(*edges, models.CrawlEdge{FromURL: from, ToURL: to, Kind: kind})
+}
 
 // soft404Baseline fingerprints a site's "not found" response for an
 // obviously-nonexistent path. Many apps return HTTP 200 with a branded/

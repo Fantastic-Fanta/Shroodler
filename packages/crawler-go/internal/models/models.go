@@ -57,6 +57,14 @@ type JSEndpoint struct {
 	Endpoint string `json:"endpoint"`
 }
 
+// CrawlEdge is a link the crawl followed.
+// Kind is "html" (an HTML link), "redirect", or "form" (a form action).
+type CrawlEdge struct {
+	FromURL string `json:"from_url"`
+	ToURL   string `json:"to_url"`
+	Kind    string `json:"kind"`
+}
+
 type CrawlStats struct {
 	PagesCrawled    int    `json:"pages_crawled"`
 	PagesChallenged int    `json:"pages_challenged"`
@@ -72,6 +80,7 @@ type CrawlResult struct {
 	Crawler        CrawlerInfo  `json:"crawler"`
 	Pages          []Page       `json:"pages"`
 	Findings       []Finding    `json:"findings"`
+	Edges          []CrawlEdge  `json:"edges,omitempty"`
 	JSEndpoints    []JSEndpoint `json:"js_endpoints"`
 	Stats          *CrawlStats  `json:"stats,omitempty"`
 }

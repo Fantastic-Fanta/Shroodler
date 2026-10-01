@@ -58,6 +58,31 @@ def test_form_action_records_form_edge(fx):
 def test_crawl_json_without_edges_still_loads():
     doc = json.loads(_FIXTURE.read_text(encoding="utf-8"))
     assert "edges" not in doc
+    assert "unfetched" not in doc
     loaded = CrawlResult.model_validate(doc)
     assert loaded.edges == []
+    assert loaded.unfetched == []
     validate_crawl(doc)
+
+
+def test_early_stop_lists_linked_urls_not_opened(fx):
+    from urllib.parse import urlparse
+
+    fx.html("/", '<a href="/child">child</a>')
+    fx.html("/child", "child")
+    stopped = crawl_url(
+        fx.origin + "/", depth=1, ignore_robots=True, no_sitemap=True, max_pages=1
+    )
+    assert stopped.stats is not None
+    assert stopped.stats.stopped_reason == "max-pages"
+    assert [urlparse(url).path for url in stopped.unfetched] == ["/child"]
+    doc = stopped.to_dict()
+    assert doc["unfetched"] == stopped.unfetched
+    validate_crawl(doc)
+
+    finished = crawl_url(
+        fx.origin + "/", depth=1, ignore_robots=True, no_sitemap=True, max_pages=20
+    )
+    assert finished.unfetched == []
+    assert "unfetched" not in finished.to_dict()
+    validate_crawl(finished.to_dict())

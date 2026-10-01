@@ -101,4 +101,66 @@ func TestCrawlJSONWithoutEdgesStillLoads(t *testing.T) {
 	if len(doc.Edges) != 0 {
 		t.Fatalf("expected no edges, got %#v", doc.Edges)
 	}
+	if len(doc.Unfetched) != 0 {
+		t.Fatalf("expected no unfetched, got %#v", doc.Unfetched)
+	}
+}
+
+func TestEarlyStopListsLinkedURLNotOpened(t *testing.T) {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<a href="/child">child</a>`))
+	})
+	mux.HandleFunc("/child", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`child`))
+	})
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+
+	stopped, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if stopped.Stats == nil || stopped.Stats.StoppedReason != "max-pages" {
+		t.Fatalf("stats %#v", stopped.Stats)
+	}
+	if len(stopped.Unfetched) != 1 || urls.PathOf(stopped.Unfetched[0]) != "/child" {
+		t.Fatalf("unfetched %#v", stopped.Unfetched)
+	}
+	raw, err := json.Marshal(stopped)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var doc map[string]any
+	if err := json.Unmarshal(raw, &doc); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := doc["unfetched"]; !ok {
+		t.Fatal("early stop omitted unfetched")
+	}
+
+	finished, err := crawler.Crawl(srv.URL+"/", crawler.Config{Depth: 1, IgnoreRobots: true, NoSitemap: true, MaxPages: 20})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(finished.Unfetched) != 0 {
+		t.Fatalf("finished crawl listed %#v", finished.Unfetched)
+	}
+	finishedRaw, err := json.Marshal(finished)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var finishedDoc map[string]any
+	if err := json.Unmarshal(finishedRaw, &finishedDoc); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := finishedDoc["unfetched"]; ok {
+		t.Fatalf("finished crawl json has unfetched: %s", finishedRaw)
+	}
 }

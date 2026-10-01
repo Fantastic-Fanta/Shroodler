@@ -80,7 +80,9 @@
   (`edges`: HTML link, redirect, or form action). A redirect is not a
   click. A crawl file with no `edges` still loads and is ranked by URL
   path depth instead; the report says that is a heuristic, not a walk of
-  the links that were followed.
+  the links that were followed. A crawl that stops on a time or page
+  limit also lists the linked URLs it recorded but did not open
+  (`unfetched`). A finished crawl omits that list.
 - **Passive findings** — missing security headers, exposed secrets/keys,
   JWT issues (`alg: none`, missing/long expiry, weak secret), CORS
   misconfig, GraphQL introspection, and more, discovered while crawling.

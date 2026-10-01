@@ -59,6 +59,11 @@
       "description": "Links this crawl followed. kind is html (an HTML link), redirect, or form (a form action). Absent on crawls recorded before this field existed.",
       "items": { "$ref": "#/$defs/edge" }
     },
+    "unfetched": {
+      "type": "array",
+      "description": "Linked URLs the crawl recorded but did not open because it stopped early (time or page limit). Absent when the crawl finished or on older files.",
+      "items": { "type": "string", "minLength": 1 }
+    },
     "xhr_endpoints": {
       "type": "array",
       "items": { "$ref": "#/$defs/xhr_endpoint" },

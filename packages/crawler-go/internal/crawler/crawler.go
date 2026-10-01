@@ -558,6 +558,10 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 	if sitewide := sitewideChallengeFinding(start, len(challengedURLs), len(pages), challengeHits); sitewide != nil {
 		dedupedFindings = append(dedupedFindings, *sitewide)
 	}
+	var unfetched []string
+	if stopped == "max-time" || stopped == "max-pages" {
+		unfetched = linkedUnfetched(pages, edges)
+	}
 	return &models.CrawlResult{
 		Target:         start,
 		ScanStartedAt:  started,
@@ -566,6 +570,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		Pages:          pages,
 		Findings:       dedupedFindings,
 		Edges:          edges,
+		Unfetched:      unfetched,
 		JSEndpoints:    endpoints,
 		Stats: &models.CrawlStats{
 			PagesCrawled:    len(pages),
@@ -598,6 +603,24 @@ func addEdge(edges *[]models.CrawlEdge, seen map[string]bool, from, to, kind str
 	}
 	seen[key] = true
 	*edges = append(*edges, models.CrawlEdge{FromURL: from, ToURL: to, Kind: kind})
+}
+
+func linkedUnfetched(pages []models.Page, edges []models.CrawlEdge) []string {
+	fetched := map[string]bool{}
+	for _, page := range pages {
+		fetched[urls.CanonicalKey(page.URL)] = true
+	}
+	var out []string
+	seen := map[string]bool{}
+	for _, edge := range edges {
+		key := urls.CanonicalKey(edge.ToURL)
+		if key == "" || fetched[key] || seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, edge.ToURL)
+	}
+	return out
 }
 
 // soft404Baseline fingerprints a site's "not found" response for an

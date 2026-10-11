@@ -181,6 +181,20 @@ def test_env_key_value_config_stays_high():
     assert hit.severity == "high"
 
 
+def test_benign_config_without_secrets_is_info():
+    # A publicly-readable config path whose body carries no secret-like content
+    # and no high-signal extension is an observation, not a high -- this is the
+    # case that used to avalanche into false highs.
+    body = '{"apiBase": "/api", "theme": "dark", "features": {"beta": true}}\n'
+    finding = classify_config_file(
+        body, "http://127.0.0.1/config.json", "application/json", path="/config.json"
+    )
+    assert finding is not None
+    assert finding.id == "config-file-exposed"
+    assert finding.severity == "info"
+    assert finding.confidence == "heuristic"
+
+
 def test_config_php_html_catch_all_dropped():
     html = "<html><head></head><body><h1>Not Found</h1><p>SPA router</p></body></html>"
     finding = classify_path(

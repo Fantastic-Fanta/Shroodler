@@ -391,21 +391,36 @@ def classify_config_file(
             return None
         if is_spa_shell(body):
             return None
-    if is_high_signal_config_path(path) and not has_sensitive_config_patterns(body):
+    # Severity follows the body, not just the path. A file whose body carries
+    # secret-like content is a demonstrated high. A high-signal extension
+    # (.env/.sql/.key/...) without such content is still worth a medium. Any
+    # other publicly-readable config path with no secret-like content is an
+    # observation (info) -- a benign public config.json/settings.json must not
+    # avalanche into a false high.
+    if has_sensitive_config_patterns(body):
+        return _finding(
+            "config-file-exposed",
+            "high",
+            url,
+            "A configuration file with secret-like content is publicly readable.",
+            f"path={path}",
+        )
+    if is_high_signal_config_path(path):
         return _finding(
             "config-file-exposed",
             "medium",
             url,
-            "A configuration file is publicly readable.",
+            "A sensitive configuration file is publicly readable.",
             f"path={path}",
             confidence="heuristic",
         )
     return _finding(
         "config-file-exposed",
-        "high",
+        "info",
         url,
-        "A configuration file is publicly readable.",
+        "A configuration path is publicly readable (no secret-like content detected).",
         f"path={path}",
+        confidence="heuristic",
     )
 
 

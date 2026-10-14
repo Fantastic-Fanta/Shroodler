@@ -17,6 +17,7 @@ from shroodler.llm_provider import (
     LLMConfig,
     LLMProvider,
     llm_api_key_env,
+    provider_requires_api_key,
     llm_complete_sync,
 )
 from shroodler.program import (
@@ -260,7 +261,9 @@ def triage_leads(
     fallback = _fallback(object_ids, authz_urls)
     try:
         provider = _provider_for(config)
-        if not os.environ.get(llm_api_key_env(provider)):
+        if provider_requires_api_key(provider) and not os.environ.get(
+            llm_api_key_env(provider)
+        ):
             return fallback
         user_prompt = _build_user_prompt(state, object_ids, authz_urls, config)
         llm_config = LLMConfig(

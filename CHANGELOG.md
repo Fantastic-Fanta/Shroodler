@@ -7,6 +7,16 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Local LLM provider (Ollama).** `--llm-provider ollama` drives the agent,
+  triage, business-logic, and verify loops against a local Ollama daemon over
+  its OpenAI-compatible chat API. No API key is required (an optional
+  `OLLAMA_API_KEY` is sent as Bearer only for a proxied daemon), the base URL
+  defaults to `http://localhost:11434` and honors `OLLAMA_HOST`, and local
+  models are billed at zero so the cost cap and soak loops see them as free.
+  Pick a pulled model with `--llm-agent-model` (default `llama3.1`). The
+  DeepSeek and Ollama HTTP paths now share one OpenAI-compatible
+  request/response helper.
+
 - **Crawl link graph.** Both crawlers record the links they followed
   (`edges`: from-url, to-url, kind `html`, `redirect`, or `form`). Older
   crawl JSON with no `edges` still loads. `shroodler attack-path` walks

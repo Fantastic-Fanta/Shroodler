@@ -16,6 +16,7 @@ from shroodler.llm_provider import (
     llm_api_key_env,
     llm_complete,
     llm_complete_sync,
+    provider_requires_api_key,
     tools_to_openai,
 )
 
@@ -316,6 +317,81 @@ def test_deepseek_non_2xx_includes_body(monkeypatch):
         )
     assert "401" in str(exc.value)
     assert "nope" in str(exc.value)
+
+
+def test_provider_requires_api_key():
+    assert provider_requires_api_key(LLMProvider.ANTHROPIC) is True
+    assert provider_requires_api_key("deepseek") is True
+    assert provider_requires_api_key(LLMProvider.OLLAMA) is False
+    assert provider_requires_api_key("ollama") is False
+    # Unknown providers are treated as needing a key (fail closed).
+    assert provider_requires_api_key("mystery") is True
+
+
+def test_ollama_needs_no_key_and_omits_auth_header(monkeypatch):
+    monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
+    payload = {
+        "model": "llama3.1",
+        "choices": [{"message": {"content": "pong"}, "finish_reason": "stop"}],
+        "usage": {"prompt_tokens": 2, "completion_tokens": 3},
+    }
+    recorded = _patch_httpx(monkeypatch, payload=payload)
+    resp = _run(
+        llm_complete(
+            [{"role": "user", "content": "ping"}],
+            LLMConfig(provider=LLMProvider.OLLAMA, model=""),
+        )
+    )
+    assert recorded["url"] == "http://localhost:11434/v1/chat/completions"
+    assert recorded["json"]["model"] == "llama3.1"
+    assert "Authorization" not in recorded["headers"]
+    assert resp.text == "pong"
+    assert resp.input_tokens == 2
+    assert resp.output_tokens == 3
+    assert resp.stop_reason == "stop"
+
+
+def test_ollama_honors_base_url_and_optional_proxy_key(monkeypatch):
+    monkeypatch.delenv("OLLAMA_API_KEY", raising=False)
+    recorded = _patch_httpx(
+        monkeypatch,
+        payload={"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]},
+    )
+    _run(
+        llm_complete(
+            [{"role": "user", "content": "go"}],
+            LLMConfig(
+                provider="ollama",
+                model="qwen2.5",
+                base_url="http://gpu-box:11434/",
+                api_key="proxy-secret",
+            ),
+        )
+    )
+    assert recorded["url"] == "http://gpu-box:11434/v1/chat/completions"
+    assert recorded["headers"]["Authorization"] == "Bearer proxy-secret"
+
+
+def test_ollama_falls_back_to_ollama_host_env(monkeypatch):
+    monkeypatch.setenv("OLLAMA_HOST", "http://127.0.0.1:1234")
+    recorded = _patch_httpx(
+        monkeypatch,
+        payload={"choices": [{"message": {"content": "ok"}, "finish_reason": "stop"}]},
+    )
+    _run(
+        llm_complete(
+            [{"role": "user", "content": "go"}],
+            LLMConfig(provider="ollama"),
+        )
+    )
+    assert recorded["url"] == "http://127.0.0.1:1234/v1/chat/completions"
+
+
+def test_ollama_local_models_are_free():
+    assert estimate_cost_usd("llama3.1", 1_000_000, 1_000_000) == 0.0
+    assert estimate_cost_usd("qwen2.5:14b", 1_000_000, 1_000_000) == 0.0
+    assert llm_api_key_env("ollama") == "OLLAMA_API_KEY"
 
 
 def test_estimate_cost_usd_rates():

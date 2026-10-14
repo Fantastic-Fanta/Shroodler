@@ -7,6 +7,7 @@ live request and fails closed on transport errors.
 from __future__ import annotations
 
 from shroodler.probes.auth_bypass import probe_auth_bypass
+from shroodler.probes.cache_poisoning import probe_cache_poisoning
 from shroodler.probes.crlf import probe_crlf
 from shroodler.probes.dom_xss import probe_dom_xss
 from shroodler.probes.enum_id import probe_enumerable_id
@@ -30,6 +31,7 @@ from shroodler.probes.xss import probe_xss
 from shroodler.probes.xxe import probe_xxe
 
 __all__ = [
+    "probe_cache_poisoning",
     "probe_crlf",
     "probe_dom_xss",
     "probe_graphql",

@@ -7,6 +7,16 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Web cache poisoning probe.** A new active probe (`--run-probes`, once per
+  host) reflects a random marker through unkeyed request headers
+  (`X-Forwarded-Host`/`-Scheme`/`-Proto`, `X-Host`, `X-Original-URL`, ...) and
+  reports `cache-poisoning-unkeyed-header` (high, heuristic) only when the
+  marker is reflected into a response that is also cacheable (`Age`, `X-Cache`,
+  `CF-Cache-Status`, `Cache-Control: public/max-age`). Non-destructive: each
+  request carries a unique cache-buster query parameter so a throwaway cache key
+  is exercised and the canonical one is never poisoned. Distinct from the
+  host-header-injection probe, which does not check cacheability.
+
 - **Eval soak runner.** `scripts/eval_soak.py` repeats a scored eval run N
   times per target (and per provider/config) and summarises its *stability*,
   not just a single recall number: mean/min/max recall, the bugs that are only

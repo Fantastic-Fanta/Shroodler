@@ -50,6 +50,7 @@ _BY_ID: dict[str, str] = {
     "nosqli": "Never pass a raw request value straight into a MongoDB query. Coerce query inputs to the expected scalar type (string/number) so an object like {\"$ne\": null} cannot become an operator, and reject $-prefixed keys.",
     "nosqli-operator": "This value reached a MongoDB operator or $where JS context. Cast query inputs to scalars before querying, forbid $-prefixed keys, and never build a $where string from user input.",
     "cache-poisoning-unkeyed-header": "Either stop reflecting this request header into responses, or add it to the cache key (Vary / CDN cache-key config) so a value from one request is never served to others.",
+    "cloud-storage-bucket": "Informational: an object-storage bucket was referenced in client assets. Confirm the bucket blocks public list/read and anonymous writes, and does not expose non-public objects.",
     "tls-cert-expired": "Renew this certificate immediately; browsers and API clients will refuse the connection.",
     "tls-cert-expiring-soon": "Renew this certificate before it expires; automate renewal (e.g. ACME/Let's Encrypt) to avoid this recurring.",
     "tls-cert-self-signed": "Replace with a certificate from a trusted CA; a self-signed cert can't be verified by normal clients without manual trust.",

@@ -25,6 +25,7 @@ from shroodler.auth import (
 )
 from shroodler.extractors.auth_stack import probe_auth_stack
 from shroodler.extractors.challenge import detect_challenge, has_challenge_cookie
+from shroodler.extractors.cloud_storage import extract_cloud_buckets
 from shroodler.extractors.common_paths import (
     probe_mutations,
     probe_paths,
@@ -1180,6 +1181,7 @@ def page_from_fetch(
             ep_findings.extend(api_findings)
     verbose_findings = extract_verbose_errors(result.text, result.url, result.status_code)
     secret_findings = scan_text(result.text, result.url, extra_rules=extra_secret_rules)
+    bucket_findings = extract_cloud_buckets(result.text, result.url)
     jwt_findings = audit_jwts(result.text, result.url)
     markup_findings = extract_html_markup(result.text, result.url)
     oauth_findings = check_oauth_authorize_url(result.url)
@@ -1199,6 +1201,7 @@ def page_from_fetch(
         + header_findings
         + verbose_findings
         + secret_findings
+        + bucket_findings
         + jwt_findings
         + markup_findings
         + oauth_findings

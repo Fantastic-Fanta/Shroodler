@@ -7,6 +7,15 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Cloud object-storage bucket recon.** A new passive extractor mines HTML/JS
+  for S3, Google Cloud Storage, Azure Blob, DigitalOcean Spaces, and Cloudflare
+  R2 bucket references (virtual-hosted and path-style) and emits one
+  informational `cloud-storage-bucket` finding per unique bucket, so a tester
+  knows which buckets to check for public list/read or anonymous writes.
+  Surface recon, not a vulnerability by itself; deduped per bucket like the
+  js-endpoint findings. (The IMDS/metadata SSRF target already ships in the SSRF
+  probe.)
+
 - **Web cache poisoning probe.** A new active probe (`--run-probes`, once per
   host) reflects a random marker through unkeyed request headers
   (`X-Forwarded-Host`/`-Scheme`/`-Proto`, `X-Host`, `X-Original-URL`, ...) and

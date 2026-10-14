@@ -47,6 +47,8 @@ _BY_ID: dict[str, str] = {
     "payload-crlf-reflected": "Encode or reject control characters (CR/LF) in this input before it reaches any response header or log line.",
     "payload-lfi": "Never pass user input into include()/require()/fopen(); use a fixed allowlist of file identifiers instead of a raw path/wrapper URI.",
     "payload-lfi-rce": "Disable allow_url_include and never pass user input into include()/require(); this is full remote code execution, treat as a critical incident.",
+    "nosqli": "Never pass a raw request value straight into a MongoDB query. Coerce query inputs to the expected scalar type (string/number) so an object like {\"$ne\": null} cannot become an operator, and reject $-prefixed keys.",
+    "nosqli-operator": "This value reached a MongoDB operator or $where JS context. Cast query inputs to scalars before querying, forbid $-prefixed keys, and never build a $where string from user input.",
     "tls-cert-expired": "Renew this certificate immediately; browsers and API clients will refuse the connection.",
     "tls-cert-expiring-soon": "Renew this certificate before it expires; automate renewal (e.g. ACME/Let's Encrypt) to avoid this recurring.",
     "tls-cert-self-signed": "Replace with a certificate from a trusted CA; a self-signed cert can't be verified by normal clients without manual trust.",

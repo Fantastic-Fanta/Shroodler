@@ -63,6 +63,7 @@ class AgentConfig:
     write_authz_endpoints: list[dict] | None = None
     run_probes: bool = False  # opt-in; default off
     probe_sqli: bool = True
+    probe_nosql: bool = True
     probe_time_sqli: bool = True
     probe_xss: bool = True
     probe_path_traversal: bool = True
@@ -2127,6 +2128,7 @@ def _finish_probe_action(
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
     from shroodler.probes.mass_assignment import probe_mass_assignment
+    from shroodler.probes.nosql import probe_nosql
     from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.prototype_pollution import probe_prototype_pollution
@@ -2216,6 +2218,18 @@ def _finish_probe_action(
             _run(
                 "auth-bypass",
                 lambda: probe_auth_bypass(url, method, params, hdr, pacer=pacer),
+            )
+        if config.probe_nosql and method in {"GET", "POST", "PUT"} and params:
+            _run(
+                "nosqli",
+                lambda: probe_nosql(
+                    url,
+                    method,
+                    params,
+                    hdr,
+                    pacer=pacer,
+                    state=state,
+                ),
             )
         if config.probe_xss and method in {"GET", "POST", "PUT", "PATCH"} and params:
             _run(

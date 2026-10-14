@@ -754,13 +754,14 @@ def cmd_agent(args: argparse.Namespace) -> int:
         oob_public_url=str(getattr(args, "oob_public_url", None) or ""),
     )
     if config.llm_agent or config.llm_verify:
-        from shroodler.llm_provider import llm_api_key_env
+        from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-        env_name = llm_api_key_env(config.llm_provider)
-        if not os.environ.get(env_name):
-            flag = "--llm-agent" if config.llm_agent else "--llm-verify"
-            print(f"error: {flag} requires {env_name}", file=sys.stderr)
-            return 2
+        if provider_requires_api_key(config.llm_provider):
+            env_name = llm_api_key_env(config.llm_provider)
+            if not os.environ.get(env_name):
+                flag = "--llm-agent" if config.llm_agent else "--llm-verify"
+                print(f"error: {flag} requires {env_name}", file=sys.stderr)
+                return 2
     try:
         result = run_agent(config)
     except Exception as exc:
@@ -2781,9 +2782,14 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent.add_argument(
         "--llm-provider",
-        choices=["anthropic", "deepseek"],
+        choices=["anthropic", "deepseek", "ollama"],
         default="deepseek",
-        help="LLM provider (default: deepseek, the cheapest). deepseek uses DEEPSEEK_API_KEY",
+        help=(
+            "LLM provider (default: deepseek, the cheapest). deepseek uses "
+            "DEEPSEEK_API_KEY; ollama runs a local daemon (no key, free, set "
+            "--llm-agent-model to a pulled model like llama3.1 and OLLAMA_HOST "
+            "if not on localhost:11434)"
+        ),
     )
     agent.add_argument(
         "--llm-agent-model",

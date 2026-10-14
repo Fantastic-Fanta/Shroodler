@@ -1,0 +1,15 @@
+{
+  "title": "Local eval soak (example)",
+  "targets": [
+    {
+      "label": "app5-payload",
+      "expected": "packages/target-apps/app5-injectable/expected_findings.json",
+      "command": [
+        "shroodler", "payload",
+        "--target", "http://127.0.0.1:8087",
+        "--format", "json"
+      ],
+      "repeat": 5
+    }
+  ]
+}

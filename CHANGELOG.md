@@ -7,6 +7,18 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Eval soak runner.** `scripts/eval_soak.py` repeats a scored eval run N
+  times per target (and per provider/config) and summarises its *stability*,
+  not just a single recall number: mean/min/max recall, the bugs that are only
+  sometimes missed (nondeterministic LLM verdicts or flaky probes), false
+  positives, and cost. It diffs mean recall / false positives against a
+  committed baseline and exits nonzero on a regression, so it can gate CI or be
+  left running overnight. The pure aggregation and reporting live in
+  `shroodler/soak.py` (`aggregate`, `detect_regressions`, `baseline_from`,
+  `render_markdown`) and are fully unit-tested without a live target; the script
+  drives live runs via a JSON manifest (`scripts/soak-manifest.example.json`)
+  or scores pre-collected run files.
+
 - **NoSQL injection probe.** A new active probe (`--run-probes`) replays
   GET/POST/PUT parameters with MongoDB-style payloads, one parameter at a time.
   Error-based detection is baseline-differential (a Mongo/BSON/Mongoose/pymongo

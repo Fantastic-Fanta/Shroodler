@@ -15,6 +15,7 @@ from shroodler.probes.host_header import probe_host_header
 from shroodler.probes.idor import probe_idor
 from shroodler.probes.jwt import probe_jwt
 from shroodler.probes.mass_assignment import probe_mass_assignment
+from shroodler.probes.nosql import probe_nosql
 from shroodler.probes.open_redirect import probe_open_redirect
 from shroodler.probes.path_traversal import probe_path_traversal
 from shroodler.probes.prototype_pollution import probe_prototype_pollution
@@ -36,6 +37,7 @@ __all__ = [
     "probe_idor",
     "probe_jwt",
     "probe_mass_assignment",
+    "probe_nosql",
     "probe_open_redirect",
     "probe_path_traversal",
     "probe_prototype_pollution",

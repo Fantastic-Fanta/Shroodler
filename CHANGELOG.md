@@ -7,6 +7,16 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **NoSQL injection probe.** A new active probe (`--run-probes`) replays
+  GET/POST/PUT parameters with MongoDB-style payloads, one parameter at a time.
+  Error-based detection is baseline-differential (a Mongo/BSON/Mongoose/pymongo
+  driver error that a clean request did not already produce) and reports
+  `nosqli` (critical, confirmed). An operator / `$where` boolean-differential
+  reports `nosqli-operator` (high, heuristic) only when an always-true value
+  behaves like the clean baseline while an always-false value diverges, so a
+  merely reflective parameter is not flagged. Error markers are kept disjoint
+  from the SQLi probe so one endpoint is not double-reported.
+
 - **Local LLM provider (Ollama).** `--llm-provider ollama` drives the agent,
   triage, business-logic, and verify loops against a local Ollama daemon over
   its OpenAI-compatible chat API. No API key is required (an optional

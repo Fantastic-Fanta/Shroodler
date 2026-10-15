@@ -285,3 +285,16 @@ def test_is_capture_path_rejects_comment_fragments():
     assert _is_capture_path("/api/users") is True
     assert _is_capture_path("/rest/user/login") is True
     assert _is_capture_path("https://x/api/v1") is True
+
+
+def test_jquery_is_not_a_graphql_operation():
+    # Regression: the "Query" inside "jQuery" used to match the GraphQL op
+    # regex (no \b + re.I), flagging jQuery plugin functions as GraphQL ops.
+    js = (
+        "/* jQuery autoResize (textarea auto-resize plugin) */\n"
+        "(function($){ $.fn.autoResize = function(o){}; })(jQuery);"
+    )
+    state = _state()
+    findings = JSAnalyzer().analyze(js, SOURCE, state)
+    assert [f for f in findings if f.id == "js-graphql-operation"] == []
+    assert "autoResize" not in (state.extra_graphql_operations or [])

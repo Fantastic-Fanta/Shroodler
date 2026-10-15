@@ -84,3 +84,14 @@ def test_skips_non_auth_urls():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_redirect_endpoint_is_not_flagged():
+    # 15 rapid requests that all 307-redirect (e.g. apex->www) are not a
+    # missing-rate-limit: the endpoint processed nothing.
+    for code in (301, 302, 307, 308):
+        client = FakeClient([code] * 15)
+        findings = probe_rate_limit(
+            "https://h/admin/login", "GET", "", client=client, pacer=Pacer(0)
+        )
+        assert findings == [], f"{code} should not be flagged"

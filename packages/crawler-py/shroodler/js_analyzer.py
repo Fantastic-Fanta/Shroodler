@@ -177,9 +177,11 @@ _B64URL_TOKEN = re.compile(
     re.I | re.S,
 )
 
+# Lowercase + word-boundary: GraphQL operation keywords are reserved lowercase
+# words, so without \b and with re.I this matched the "Query" inside "jQuery"
+# (e.g. `jQuery autoResize(` -> a bogus GraphQL operation "autoResize").
 _GQL_OP = re.compile(
-    r"(?:query|mutation|subscription)\s+(\w+)\s*[({]",
-    re.I,
+    r"\b(?:query|mutation|subscription)\s+(\w+)\s*[({]",
 )
 
 _CALL_PATTERNS = (

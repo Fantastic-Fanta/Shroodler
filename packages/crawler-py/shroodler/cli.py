@@ -707,6 +707,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
         run_diff=bool(getattr(args, "run_diff", False)),
         run_business_logic=bool(getattr(args, "llm_business_logic", False)),
         chain_specs=list(getattr(args, "chain_spec", None) or []),
+        workflow_mutate=bool(getattr(args, "workflow_mutate", False)),
         run_openapi_discovery=not bool(getattr(args, "no_openapi", False)),
         run_openapi_probes=not bool(getattr(args, "no_openapi", False)),
         run_ssrf=not bool(getattr(args, "no_ssrf", False)),
@@ -3076,6 +3077,15 @@ def build_parser() -> argparse.ArgumentParser:
         action="append",
         metavar="FILE",
         help="Operator attack-chain JSON spec (repeatable). Runs regardless of --run-probes.",
+    )
+    agent.add_argument(
+        "--workflow-mutate",
+        action="store_true",
+        help=(
+            "For each --chain-spec workflow that completes, also run skip-step "
+            "and replay-the-final-action bypass mutations and flag any that still "
+            "succeed (workflow-step-skip / workflow-replay)."
+        ),
     )
     agent.set_defaults(func=cmd_agent)
 

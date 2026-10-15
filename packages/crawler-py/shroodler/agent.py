@@ -83,6 +83,9 @@ class AgentConfig:
     run_diff: bool = False  # opt-in; also auto-runs when a previous run exists
     run_business_logic: bool = False  # --llm-business-logic
     chain_specs: list[str] = field(default_factory=list)
+    # --workflow-mutate: for each chain-spec, also run skip-step/replay bypass
+    # mutations of that workflow and flag mutations that still succeed.
+    workflow_mutate: bool = False
     run_openapi_discovery: bool = True  # on by default; mapping, not probing
     run_openapi_probes: bool = True
     run_dom_xss: bool = False  # opt-in; headless / slow
@@ -1865,6 +1868,7 @@ def _execute_chain(
             chains.append(load_chain_spec(spec))
         except Exception as exc:  # noqa: BLE001 - fail closed per spec
             errors.append(f"chain-spec {spec}: {type(exc).__name__}: {exc}")
+    mutate = bool(getattr(config, "workflow_mutate", False))
     for chain in chains:
         try:
             raw = run_chain(chain, config=config, pacer=pacer)
@@ -1872,6 +1876,15 @@ def _execute_chain(
             urls_tested += int(raw.get("urls_tested") or 0)
         except Exception as exc:  # noqa: BLE001
             errors.append(f"chain {chain.name}: {type(exc).__name__}: {exc}")
+        if mutate:
+            try:
+                from shroodler.workflow import run_workflow_mutations
+
+                findings.extend(
+                    run_workflow_mutations(chain, config=config, pacer=pacer)
+                )
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"workflow {chain.name}: {type(exc).__name__}: {exc}")
     findings_added = _merge_findings(state, findings)
     out: dict[str, Any] = {
         "pages_crawled": 0,

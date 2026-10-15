@@ -7,6 +7,14 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Agent recon-first guardrail.** The LLM agent could jump straight to
+  `analyze_logic` / `test_hypothesis` / `hypothesise` before crawling, inventing
+  endpoints and probing nothing (common with weaker local models). A new
+  guardrail blocks those logic/hypothesis actions until the target has been
+  crawled this run or endpoints are already known; the blocked decision falls
+  back to `decide_next_action`, which crawls first. Once real surface is
+  discovered the actions run normally.
+
 - **Ollama fixes (the local provider now actually runs the agent).** Three more
   key gates in the agent run -- the `--llm-agent`, `--llm-business-logic`, and
   `--llm-verify` pre-checks -- were still requiring an API key, so an Ollama run

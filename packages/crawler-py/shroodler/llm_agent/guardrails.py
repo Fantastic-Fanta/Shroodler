@@ -17,6 +17,10 @@ from shroodler.scope import in_scope, load_scope
 _RECON_ACTIONS = {"fetch_and_read", "crawl"}
 # Max recon actions per run before the planner is forced to probe.
 _MAX_READS = 6
+# Actions that reason about the app's endpoints. Run before anything has been
+# crawled, they only invent endpoints, so they are blocked until a crawl (or a
+# prior run) has discovered real surface -- the fallback then crawls first.
+_NEEDS_RECON = {"analyze_logic", "test_hypothesis", "hypothesise", "hypothesize"}
 
 
 @dataclass
@@ -92,6 +96,20 @@ def check_guardrails(
 
     params = decision.params or {}
     url = _decision_url(decision)
+
+    # Reconnaissance-first: block logic/hypothesis actions until the target has
+    # actually been crawled (this run) or endpoints are already known (a prior
+    # run). Otherwise a weak model jumps straight to analyze_logic and reasons
+    # about hallucinated endpoints, crawling and probing nothing.
+    if decision.action in _NEEDS_RECON:
+        crawled = bool(getattr(config, "_crawled_this_run", False))
+        known = bool(getattr(state, "endpoints", None))
+        if not crawled and not known:
+            return GuardrailResult(
+                False,
+                "crawl the target first — no endpoints discovered yet, so there "
+                "is nothing to reason about",
+            )
 
     if decision.action in _RECON_ACTIONS:
         recon = [item for item in (history or []) if _entry_action(item) in _RECON_ACTIONS]

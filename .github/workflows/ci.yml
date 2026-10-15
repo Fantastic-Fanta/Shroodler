@@ -51,6 +51,12 @@ jobs:
             -e packages/cli \
             -e packages/guardrails \
             -e packages/mcp-server
+      - name: Install Playwright browser
+        # Headless-mode tests drive Playwright's sync API. Without a browser the
+        # first one errors mid-launch and leaks its event loop into the session,
+        # cascading into every later asyncio.run() test. Installing it lets the
+        # headless tests actually run and tears the loop down cleanly.
+        run: python -m playwright install --with-deps chromium
       - name: Unit tests
         run: |
           pytest packages/crawler-py/tests/unit -q

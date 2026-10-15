@@ -10,6 +10,7 @@ By default everything only touches local targets (127.0.0.1/localhost); pass
 ## Documentation
 
 - [Quickstart](docs/quickstart.md)
+- [Usage manual](docs/manual.md)
 - [Features](docs/features.md)
 - [Command line reference](docs/cli-reference.md)
 - [Changelog](CHANGELOG.md)

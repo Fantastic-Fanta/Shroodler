@@ -148,3 +148,45 @@ def test_collapse_keeps_highest_severity():
     assert len(cors) == 1
     assert cors[0]["severity"] == "high"
     assert "ACAC=true" in (cors[0].get("evidence") or "")
+
+
+def test_agent_probe_xss_now_chains_to_cookie_theft():
+    # Previously the agent-probe id "xss-reflected" was not in _XSS_IDS, so it
+    # never chained. It must now.
+    findings = [
+        Finding(
+            id="xss-reflected",
+            severity="high",
+            category="payload",
+            url="http://127.0.0.1/search",
+            description="reflected xss",
+        )
+    ]
+    pages = [
+        Page(
+            url="http://127.0.0.1/search",
+            status_code=200,
+            cookies=[Cookie(name="sessionid", secure=True, http_only=False, same_site="Lax")],
+        )
+    ]
+    assert [c.id for c in chain_findings(findings, pages)] == ["chain-xss-cookie-theft"]
+
+
+def test_upload_stored_xss_chains_to_cookie_theft():
+    findings = [
+        Finding(
+            id="upload-stored-xss",
+            severity="high",
+            category="payload",
+            url="http://127.0.0.1/uploads/x.svg",
+            description="stored xss via upload",
+        )
+    ]
+    pages = [
+        Page(
+            url="http://127.0.0.1/profile",
+            status_code=200,
+            cookies=[Cookie(name="sessionid", secure=True, http_only=False, same_site="Lax")],
+        )
+    ]
+    assert [c.id for c in chain_findings(findings, pages)] == ["chain-xss-cookie-theft"]

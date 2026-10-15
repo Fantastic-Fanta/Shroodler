@@ -343,6 +343,7 @@ _shroodler() {
             '--run-diff[Diff endpoints against the previous engagement snapshot after crawl]' \
             '--llm-business-logic[Infer app domain and run business-logic probes]' \
             '--chain-spec[Operator attack-chain JSON spec]:file:_files' \
+            '--workflow-mutate[Run skip-step/replay bypass mutations of each chain-spec workflow]' \
             '--dom-xss[Enable DOM XSS probes (Playwright; off by default)]' \
             '--no-crlf[Disable CRLF header-injection probes]' \
             '--no-prototype-pollution[Disable prototype-pollution probes]' \

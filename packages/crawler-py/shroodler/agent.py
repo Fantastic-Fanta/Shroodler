@@ -98,6 +98,12 @@ class AgentConfig:
     run_websocket: bool = True
     allow_external: bool = False
     scope_file: str | None = None
+    # Operator-supplied context about the target (what it is, what matters, what
+    # abuse means here). Grounds the LLM's business-logic reasoning.
+    context_note: str = ""
+    # --prove-impact: after the scan, demonstrate bounded read-only impact for
+    # confirmed findings (e.g. read back the DB version for a confirmed SQLi).
+    prove_impact: bool = False
     llm_agent: bool = False  # --llm-agent; requires the provider API key
     llm_provider: str = "deepseek"  # "deepseek" | "anthropic"
     llm_agent_model: str = "deepseek-chat"  # cheap, high-volume planner model
@@ -277,9 +283,13 @@ def _scope_dict(state: ProgramState, config: AgentConfig) -> dict:
 
 
 def _url_in_program_scope(url: str, state: ProgramState, config: AgentConfig) -> bool:
-    from shroodler.scope import in_scope
+    from shroodler.scope import in_scope, path_denied
 
-    if in_scope(url, _scope_dict(state, config)):
+    scope = _scope_dict(state, config)
+    if path_denied(url, scope):
+        emit_log_entry({"debug": "scope-deny", "url": url})
+        return False
+    if in_scope(url, scope):
         return True
     emit_log_entry({"debug": "scope-excluded", "url": url})
     return False
@@ -3398,6 +3408,18 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
 
     if getattr(config, "llm_verify", False):
         _run_llm_verify(state, config, pacer, log)
+
+    if getattr(config, "prove_impact", False) and not config.dry_run:
+        from shroodler.impact import annotate_impact
+
+        proven = annotate_impact(
+            state.findings,
+            cookie_header=_merged_owner_cookie(state, config),
+            pacer=pacer,
+        )
+        if proven:
+            emit_log_entry({"impact": "proven", "count": proven})
+            program.save(state)
 
     confirmed = _confirmed_findings(state)
     if not config.dry_run:

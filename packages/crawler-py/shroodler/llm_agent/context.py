@@ -292,6 +292,11 @@ def build_context(
         f"TARGET: {target} (program: {slug})",
         f"ITERATION: {iteration}/{max_iter}",
     ]
+    note = str(getattr(config, "context_note", "") or "").strip()
+    if note:
+        blocks.append("")
+        blocks.append("OPERATOR CONTEXT (what this app is and what matters here):")
+        blocks.append(note[:1200])
     try:
         from shroodler.llm_agent.engagement_memory import summarize_facts
 

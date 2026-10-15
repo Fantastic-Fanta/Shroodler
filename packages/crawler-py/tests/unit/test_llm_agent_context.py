@@ -113,3 +113,17 @@ def test_build_context_caps_findings_and_endpoints():
     assert text.count("[LOW]") == 29
     assert text.count("GET /p/") == 50
     assert len(text) < 32000
+
+
+def test_build_context_includes_operator_context_note():
+    state = ProgramState(slug="lab")
+    cfg = _config(context_note="construction quoting app; quotes immutable after submit")
+    text = build_context(state, state.findings, [], cfg)
+    assert "OPERATOR CONTEXT" in text
+    assert "quotes immutable after submit" in text
+
+
+def test_build_context_omits_operator_context_when_blank():
+    state = ProgramState(slug="lab")
+    text = build_context(state, state.findings, [], _config())
+    assert "OPERATOR CONTEXT" not in text

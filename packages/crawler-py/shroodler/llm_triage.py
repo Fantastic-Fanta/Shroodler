@@ -17,8 +17,8 @@ from shroodler.llm_provider import (
     LLMConfig,
     LLMProvider,
     llm_api_key_env,
-    provider_requires_api_key,
     llm_complete_sync,
+    provider_requires_api_key,
 )
 from shroodler.program import (
     _INT_ID_RE,

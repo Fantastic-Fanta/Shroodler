@@ -63,8 +63,8 @@ from shroodler.extractors.tls import check_tls
 from shroodler.extractors.verbose import extract_verbose_errors
 from shroodler.models import (
     CapturedEndpoint,
-    CrawlerInfo,
     CrawlEdge,
+    CrawlerInfo,
     CrawlResult,
     CrawlStats,
     Finding,

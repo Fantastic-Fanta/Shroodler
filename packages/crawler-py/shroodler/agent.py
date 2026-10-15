@@ -2121,11 +2121,11 @@ def _finish_probe_action(
     cookie_header: str,
 ) -> dict[str, Any]:
     from shroodler.probes.auth_bypass import probe_auth_bypass
+    from shroodler.probes.cache_poisoning import probe_cache_poisoning
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
     from shroodler.probes.enum_id import probe_enumerable_id
     from shroodler.probes.graphql import probe_graphql
-    from shroodler.probes.cache_poisoning import probe_cache_poisoning
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt

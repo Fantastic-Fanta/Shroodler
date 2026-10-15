@@ -138,3 +138,25 @@ def test_nosql_skips_when_no_params():
     )
     assert findings == []
     assert called == []
+
+
+def test_nosql_challenge_is_coverage_gap():
+    bad = ("$", "{", "[", "'", ";", "|")
+
+    def handler(method, url, kw):
+        blob = " ".join(_values(kw))
+        if any(ch in blob for ch in bad):
+            return FakeResp(403, "Just a moment...")
+        return FakeResp(200, "ok")
+
+    findings = probe_nosql(
+        "http://127.0.0.1/api/users",
+        "GET",
+        [{"name": "id", "value": "1"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id.startswith("nosqli")] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-nosql")
+    assert gap.category == "waf-challenge"

@@ -14,9 +14,11 @@ from shroodler.oob import collaborator_of, confirm_oob
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
     request,
     response_elapsed,
 )
@@ -149,6 +151,10 @@ def probe_ssrf(
         return []
 
     findings: list[Finding] = []
+    # Params whose injection was answered by a WAF challenge instead of the
+    # app: recorded as a coverage gap. Also stops a challenge page that echoes
+    # the OOB URL/nonce from being mistaken for SSRF reflection.
+    challenged: dict[str, str] = {}
     listen = listen_fn or _default_listen
     normalized = normalize_params(params)
     collab = collaborator_of(oob, state)
@@ -266,6 +272,10 @@ def probe_ssrf(
             )
             if resp is None:
                 continue
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault(name, vendor)
+                continue
             body = body_text(resp)
             if _body_has_metadata(body):
                 findings.append(
@@ -286,6 +296,12 @@ def probe_ssrf(
         if metadata_hit:
             continue
 
+        oob_vendor = challenge_vendor(oob_resp)
+        if oob_vendor is not None:
+            # The OOB injection hit a challenge: any echo of the URL/nonce is
+            # the block page, not app reflection. Record coverage, do not fire.
+            challenged.setdefault(name, oob_vendor)
+            continue
         body = body_text(oob_resp)
         elapsed = response_elapsed(oob_resp, 0.0) if oob_resp is not None else 0.0
         reflected = bool(oob_url) and (oob_url in body or nonce in body)
@@ -312,4 +328,10 @@ def probe_ssrf(
                 )
             )
 
+    if challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "ssrf", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

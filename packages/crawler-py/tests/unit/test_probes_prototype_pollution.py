@@ -159,3 +159,23 @@ def test_waf_block_page_echo_is_not_reflection():
         pacer=Pacer(0),
     )
     assert [f for f in findings if f.id == "prototype-pollution-reflected"] == []
+
+
+def test_prototype_pollution_challenge_is_coverage_gap():
+    def handler(method, url, kw):
+        blob = _blob(url, kw)
+        if "proto" in blob or "constructor" in blob:
+            return FakeResp(403, "Just a moment...", headers={"content-type": "text/html"})
+        return FakeResp(200, "{}", headers={"content-type": "application/json"})
+
+    findings = probe_prototype_pollution(
+        "http://127.0.0.1/api/items",
+        "GET",
+        [{"name": "q"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id.startswith("prototype-pollution")] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-prototype-pollution")
+    assert gap.category == "waf-challenge"

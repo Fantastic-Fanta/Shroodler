@@ -7,6 +7,14 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Race-condition / TOCTOU probe.** A conservative active probe (aggressive
+  mode only, since it is side-effecting). It reports `race-condition` (medium,
+  heuristic) only on the real TOCTOU signature: a first request succeeds, a
+  second *sequential* request is rejected (so a single-use/limit check is
+  enforced serially), yet a concurrent burst of the same request still gets two
+  or more successes. If the endpoint simply repeats, it bails without firing the
+  burst, avoiding the false positives a blind concurrent-flood probe produces.
+
 - **File-upload abuse probe.** A new active probe (`--run-probes`) uploads a
   benign SVG carrying a unique marker to each file field, then locates where the
   app stored it and fetches it back. It reports `upload-stored-xss` (high,

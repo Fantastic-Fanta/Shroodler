@@ -20,6 +20,7 @@ from shroodler.llm_provider import (
     LLMProvider,
     llm_api_key_env,
     llm_complete_sync,
+    provider_requires_api_key,
     tools_to_openai,
 )
 from shroodler.llm_provider import estimate_cost_usd as estimate_cost_usd
@@ -328,7 +329,7 @@ def plan_next_action(
     else:
         display_model = DEFAULT_MODEL
     env_name = llm_api_key_env(provider)
-    if not os.environ.get(env_name):
+    if provider_requires_api_key(provider) and not os.environ.get(env_name):
         return _fallback(f"{env_name} missing", model=display_model)
     prompt_context = _with_probe_memory(context, probe_memory)
     try:

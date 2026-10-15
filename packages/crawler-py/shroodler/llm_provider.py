@@ -1,7 +1,9 @@
-"""LLM provider abstraction (Anthropic SDK + DeepSeek OpenAI-compatible HTTP).
+"""LLM provider abstraction (Anthropic SDK + DeepSeek / Ollama OpenAI-compatible HTTP).
 
 Callers pass OpenAI-style chat messages and (optional) OpenAI tool schemas.
-The Anthropic branch converts those at the provider boundary.
+The Anthropic branch converts those at the provider boundary. DeepSeek and
+Ollama share the OpenAI-compatible chat-completions wire format; Ollama runs
+locally, needs no API key, and is billed at zero.
 """
 
 from __future__ import annotations
@@ -43,20 +45,43 @@ COST_PER_TOKEN: dict[str, tuple[float, float]] = {
 DEFAULT_MODELS: dict[str, str] = {
     "anthropic": "claude-sonnet-5",
     "deepseek": "deepseek-chat",
+    "ollama": "llama3.1",
 }
 
 API_KEY_ENV: dict[str, str] = {
     "anthropic": "ANTHROPIC_API_KEY",
     "deepseek": "DEEPSEEK_API_KEY",
+    # Ollama needs no key for a local daemon; an optional one is used only when
+    # a reverse proxy in front of Ollama requires Bearer auth.
+    "ollama": "OLLAMA_API_KEY",
 }
 
 DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+DEFAULT_OLLAMA_BASE_URL = "http://localhost:11434"
 DEFAULT_TIMEOUT_S = 60.0
+
+# Local models (served by Ollama and the like) are free. Match on the model
+# family so a user-chosen local model still estimates at zero cost.
+_LOCAL_MODEL_MARKERS = ("llama", "qwen", "mistral", "mixtral", "gemma", "phi", "codellama")
 
 
 class LLMProvider(StrEnum):
     ANTHROPIC = "anthropic"
     DEEPSEEK = "deepseek"
+    OLLAMA = "ollama"
+
+
+# Providers that do not require an API key (a local daemon). Callers use this
+# to avoid demanding a key env var that a local provider never needs.
+_NO_KEY_PROVIDERS = frozenset({LLMProvider.OLLAMA})
+
+
+def provider_requires_api_key(provider: LLMProvider | str | None) -> bool:
+    """Whether `provider` needs an API key before it can be used."""
+    try:
+        return coerce_provider(provider) not in _NO_KEY_PROVIDERS
+    except LLMProviderError:
+        return True
 
 
 class LLMProviderError(Exception):
@@ -109,6 +134,8 @@ def prices_for_model(model: str) -> tuple[float, float]:
     for key, rates in COST_PER_TOKEN.items():
         if key in lowered:
             return rates
+    if any(marker in lowered for marker in _LOCAL_MODEL_MARKERS):
+        return (0.0, 0.0)
     if "opus" in lowered:
         return COST_PER_TOKEN["claude-opus-5"]
     return COST_PER_TOKEN["claude-sonnet-5"]
@@ -368,44 +395,34 @@ def _deepseek_tool_calls(message: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
-async def _complete_deepseek(
-    messages: list[dict[str, Any]],
-    config: LLMConfig,
-    tools: list[dict[str, Any]] | None,
+async def _openai_chat_call(
+    url: str,
+    headers: dict[str, str],
+    body: dict[str, Any],
     *,
-    api_key: str,
-    model: str,
-) -> LLMResponse:
-    base = str(config.base_url or DEFAULT_DEEPSEEK_BASE_URL).rstrip("/")
-    url = f"{base}/v1/chat/completions"
-    body: dict[str, Any] = {
-        "model": model,
-        "messages": list(messages or []),
-        "max_tokens": int(config.max_tokens),
-        "temperature": config.temperature,
-    }
-    if tools:
-        body["tools"] = tools
-        body["tool_choice"] = "auto"
-    headers = {
-        "Authorization": f"Bearer {api_key}",
-        "Content-Type": "application/json",
-    }
-    timeout = float(config.timeout or DEFAULT_TIMEOUT_S)
+    timeout: float,
+    label: str,
+) -> dict[str, Any]:
+    """POST an OpenAI-compatible chat-completions request and return its JSON."""
     try:
         async with httpx.AsyncClient(timeout=timeout) as http:
             resp = await http.post(url, headers=headers, json=body)
     except httpx.HTTPError as exc:
-        raise LLMProviderError(f"DeepSeek request failed: {exc}") from exc
+        raise LLMProviderError(f"{label} request failed: {exc}") from exc
     if resp.status_code < 200 or resp.status_code >= 300:
         body_text = getattr(resp, "text", None) or ""
-        raise LLMProviderError(f"DeepSeek HTTP {resp.status_code}: {body_text}")
+        raise LLMProviderError(f"{label} HTTP {resp.status_code}: {body_text}")
     try:
         payload = resp.json()
     except Exception as exc:  # noqa: BLE001
-        raise LLMProviderError(f"DeepSeek returned non-JSON: {exc}") from exc
+        raise LLMProviderError(f"{label} returned non-JSON: {exc}") from exc
     if not isinstance(payload, dict):
-        raise LLMProviderError("DeepSeek returned a non-object JSON body")
+        raise LLMProviderError(f"{label} returned a non-object JSON body")
+    return payload
+
+
+def _openai_chat_response(payload: dict[str, Any], model: str) -> LLMResponse:
+    """Parse an OpenAI-compatible chat-completions JSON body into an LLMResponse."""
     choices = payload.get("choices") or []
     choice = choices[0] if choices and isinstance(choices[0], dict) else {}
     message = choice.get("message") if isinstance(choice.get("message"), dict) else {}
@@ -431,6 +448,75 @@ async def _complete_deepseek(
     )
 
 
+def _openai_chat_body(
+    messages: list[dict[str, Any]],
+    config: LLMConfig,
+    tools: list[dict[str, Any]] | None,
+    model: str,
+) -> dict[str, Any]:
+    body: dict[str, Any] = {
+        "model": model,
+        "messages": list(messages or []),
+        "max_tokens": int(config.max_tokens),
+        "temperature": config.temperature,
+    }
+    if tools:
+        body["tools"] = tools
+        body["tool_choice"] = "auto"
+    return body
+
+
+async def _complete_deepseek(
+    messages: list[dict[str, Any]],
+    config: LLMConfig,
+    tools: list[dict[str, Any]] | None,
+    *,
+    api_key: str,
+    model: str,
+) -> LLMResponse:
+    base = str(config.base_url or DEFAULT_DEEPSEEK_BASE_URL).rstrip("/")
+    url = f"{base}/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = await _openai_chat_call(
+        url,
+        headers,
+        _openai_chat_body(messages, config, tools, model),
+        timeout=float(config.timeout or DEFAULT_TIMEOUT_S),
+        label="DeepSeek",
+    )
+    return _openai_chat_response(payload, model)
+
+
+async def _complete_ollama(
+    messages: list[dict[str, Any]],
+    config: LLMConfig,
+    tools: list[dict[str, Any]] | None,
+    *,
+    model: str,
+) -> LLMResponse:
+    # Base URL precedence: explicit config, then OLLAMA_HOST, then local default.
+    base = str(
+        config.base_url or os.environ.get("OLLAMA_HOST") or DEFAULT_OLLAMA_BASE_URL
+    ).rstrip("/")
+    url = f"{base}/v1/chat/completions"
+    headers = {"Content-Type": "application/json"}
+    # A local Ollama daemon needs no auth; only send Bearer when a proxy key is set.
+    api_key = config.api_key or os.environ.get("OLLAMA_API_KEY")
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    payload = await _openai_chat_call(
+        url,
+        headers,
+        _openai_chat_body(messages, config, tools, model),
+        timeout=float(config.timeout or DEFAULT_TIMEOUT_S),
+        label="Ollama",
+    )
+    return _openai_chat_response(payload, model)
+
+
 async def llm_complete(
     messages: list[dict[str, Any]],
     config: LLMConfig,
@@ -440,17 +526,21 @@ async def llm_complete(
 ) -> LLMResponse:
     """Complete a chat turn. `tools` must be OpenAI function-tool schema or None."""
     provider = coerce_provider(config.provider)
-    api_key = _resolve_api_key(config, provider)
     model = _resolve_model(config, provider)
     openai_tools = tools if tools else None
     if provider is LLMProvider.ANTHROPIC:
+        _resolve_api_key(config, provider)  # gate: fail fast when the key is missing
         return await _complete_anthropic(
             messages, config, openai_tools, client=client, model=model
         )
     if provider is LLMProvider.DEEPSEEK:
+        api_key = _resolve_api_key(config, provider)
         return await _complete_deepseek(
             messages, config, openai_tools, api_key=api_key, model=model
         )
+    if provider is LLMProvider.OLLAMA:
+        # Local provider: no API key required.
+        return await _complete_ollama(messages, config, openai_tools, model=model)
     raise LLMProviderError(f"unknown LLM provider {provider!r}")
 
 

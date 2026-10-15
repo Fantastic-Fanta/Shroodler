@@ -7,6 +7,7 @@ live request and fails closed on transport errors.
 from __future__ import annotations
 
 from shroodler.probes.auth_bypass import probe_auth_bypass
+from shroodler.probes.cache_poisoning import probe_cache_poisoning
 from shroodler.probes.crlf import probe_crlf
 from shroodler.probes.dom_xss import probe_dom_xss
 from shroodler.probes.enum_id import probe_enumerable_id
@@ -15,6 +16,7 @@ from shroodler.probes.host_header import probe_host_header
 from shroodler.probes.idor import probe_idor
 from shroodler.probes.jwt import probe_jwt
 from shroodler.probes.mass_assignment import probe_mass_assignment
+from shroodler.probes.nosql import probe_nosql
 from shroodler.probes.open_redirect import probe_open_redirect
 from shroodler.probes.path_traversal import probe_path_traversal
 from shroodler.probes.prototype_pollution import probe_prototype_pollution
@@ -29,6 +31,7 @@ from shroodler.probes.xss import probe_xss
 from shroodler.probes.xxe import probe_xxe
 
 __all__ = [
+    "probe_cache_poisoning",
     "probe_crlf",
     "probe_dom_xss",
     "probe_graphql",
@@ -36,6 +39,7 @@ __all__ = [
     "probe_idor",
     "probe_jwt",
     "probe_mass_assignment",
+    "probe_nosql",
     "probe_open_redirect",
     "probe_path_traversal",
     "probe_prototype_pollution",

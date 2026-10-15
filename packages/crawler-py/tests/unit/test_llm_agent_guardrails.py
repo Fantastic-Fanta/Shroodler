@@ -171,3 +171,17 @@ def test_allows_logic_action_after_a_crawl_this_run():
     cfg._crawled_this_run = True
     result = check_guardrails(decision, [], ProgramState(slug="lab"), cfg)
     assert result.allowed is True
+
+
+def test_blocks_denied_path_by_rules_of_engagement(monkeypatch):
+    from shroodler.llm_agent import guardrails as gr
+
+    monkeypatch.setattr(gr, "load_scope", lambda *_a, **_k: {"deny": ["*/payment*"]})
+    decision = PlannerDecision(
+        action="probe_sqli",
+        params={"url": "http://127.0.0.1/payment/charge", "param": "amt"},
+    )
+    state = ProgramState(slug="lab", endpoints={"http://127.0.0.1/payment/charge": {}})
+    result = check_guardrails(decision, [], state, _config())
+    assert result.allowed is False
+    assert "off-limits" in result.reason

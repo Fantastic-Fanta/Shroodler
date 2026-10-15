@@ -7,6 +7,15 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Always run sensitive-path discovery in agent scans.** Content-discovery
+  (which finds an exposed `.git` directory, `.env`, backups, config files, admin
+  pages) is not an LLM tool, so in `--llm-agent` mode it previously ran only
+  opportunistically via the deterministic fallback -- meaning a critical
+  exposure like an open `.git` could be found on one run and missed on the next.
+  It now runs once up front in every agent scan (the deterministic non-LLM path
+  already ran it in priority order), so these high-value, cheap checks no longer
+  depend on the planner's choices.
+
 - **Fix WAF-echo reflection false positives (and over-severe prototype
   pollution).** A WAF/bot-mitigation block page echoes the offending request, so
   the reflected-marker checks in the prototype-pollution and XSS probes could

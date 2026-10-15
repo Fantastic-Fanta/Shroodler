@@ -2540,3 +2540,82 @@ def test_looks_like_api_route_recognizes_rest_prefix():
     # SPA view routes are not server API surface.
     assert not _looks_like_api_route("https://t/search")
     assert not _looks_like_api_route("https://t/about")
+
+
+def test_llm_agent_forces_content_discovery(tmp_path, monkeypatch):
+    # Content-discovery (which finds an exposed .git, .env, backups, admin) is
+    # not an LLM tool, so it used to run only opportunistically and a critical
+    # exposure could be missed between runs. It must now run every agent scan.
+    from shroodler.llm_agent.planner import PlannerDecision
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+
+    called = {"n": 0}
+
+    def fake_discover(target, owner, *, pacer=None):
+        called["n"] += 1
+        return [
+            Finding(
+                id="git-repo-exposed",
+                severity="critical",
+                category="exposed-file",
+                url=f"{target}/.git/HEAD",
+                description="A .git object is publicly readable.",
+                confidence="confirmed",
+            )
+        ]
+
+    monkeypatch.setattr("shroodler.content_discovery.discover_content", fake_discover)
+    monkeypatch.setattr(
+        "shroodler.llm_agent.planner.plan_next_action",
+        lambda *a, **k: PlannerDecision(action="report", params={}, reasoning="done"),
+    )
+
+    run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1:9",
+            dry_run=False,
+            max_iterations=1,
+            llm_agent=True,
+            llm_provider="anthropic",
+            run_content_discovery=True,
+            run_discovery=False,
+            run_probes=False,
+        )
+    )
+    assert called["n"] >= 1
+    st = load("lab")
+    assert any(getattr(f, "id", "") == "git-repo-exposed" for f in st.findings)
+
+
+def test_dry_run_does_not_force_content_discovery(tmp_path, monkeypatch):
+    from shroodler.llm_agent.planner import PlannerDecision
+
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
+    called = {"n": 0}
+
+    def fake_discover(target, owner, *, pacer=None):
+        called["n"] += 1
+        return []
+
+    monkeypatch.setattr("shroodler.content_discovery.discover_content", fake_discover)
+    monkeypatch.setattr(
+        "shroodler.llm_agent.planner.plan_next_action",
+        lambda *a, **k: PlannerDecision(action="report", params={}, reasoning="done"),
+    )
+    run_agent(
+        _config(
+            program="lab",
+            target="http://127.0.0.1:9",
+            dry_run=True,
+            max_iterations=1,
+            llm_agent=True,
+            llm_provider="anthropic",
+            run_content_discovery=True,
+            run_discovery=False,
+        )
+    )
+    assert called["n"] == 0  # dry-run makes no real content-discovery requests

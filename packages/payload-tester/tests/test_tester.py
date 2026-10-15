@@ -12,9 +12,7 @@ import yaml
 
 PACKAGES = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PACKAGES / "payload-tester"))
-sys.path.insert(0, str(PACKAGES / "target-apps" / "app5-injectable"))
 
-from app import app as flask_app
 from tester import (
     MARKER_HOST,
     _clause_matches,
@@ -40,6 +38,15 @@ HARDCODED_PAYLOADS = ("' OR '1'='1", "<script>alert(1)</script>", "{{7*7}}", "..
 
 @pytest.fixture
 def origin():
+    # The target app lives in the private Shroodler-Tests submodule, which CI
+    # does not check out. Skip the live-app tests when it is absent (the
+    # pure-unit tests in this file still run); import it lazily otherwise.
+    app_dir = PACKAGES / "target-apps" / "app5-injectable"
+    if not (app_dir / "app.py").is_file():
+        pytest.skip("target-apps submodule (private Shroodler-Tests) not checked out")
+    sys.path.insert(0, str(app_dir))
+    from app import app as flask_app
+
     httpd = make_server("127.0.0.1", 0, flask_app)
     port = httpd.server_port
     t = threading.Thread(target=httpd.serve_forever, daemon=True)

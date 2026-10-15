@@ -54,6 +54,7 @@ _BY_ID: dict[str, str] = {
     "upload-stored-xss": "Serve user uploads from a separate origin/sandbox with Content-Disposition: attachment and a non-executable Content-Type (never text/html or image/svg+xml inline), and validate/transcode uploads; an uploaded SVG/HTML running inline is stored XSS.",
     "upload-unrestricted-type": "Validate uploads by content, not just extension; reject or neutralize active types (HTML/SVG/scripts) and serve stored files with a safe, non-inline Content-Type.",
     "race-condition": "Enforce the single-use/limit check atomically (a DB unique constraint, SELECT ... FOR UPDATE, an atomic decrement, or a lock), not as read-then-write, so concurrent requests cannot each pass the check before any writes.",
+    "postmessage-no-origin-check": "Validate event.origin against an explicit allowlist at the top of every window 'message' handler (and check event.source where relevant) before acting on the data; never trust a postMessage sender by default.",
     "tls-cert-expired": "Renew this certificate immediately; browsers and API clients will refuse the connection.",
     "tls-cert-expiring-soon": "Renew this certificate before it expires; automate renewal (e.g. ACME/Let's Encrypt) to avoid this recurring.",
     "tls-cert-self-signed": "Replace with a certificate from a trusted CA; a self-signed cert can't be verified by normal clients without manual trust.",

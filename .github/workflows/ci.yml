@@ -57,15 +57,30 @@ jobs:
         # cascading into every later asyncio.run() test. Installing it lets the
         # headless tests actually run and tears the loop down cleanly.
         run: python -m playwright install --with-deps chromium
-      - name: Unit tests
-        run: |
-          pytest packages/crawler-py/tests/unit -q
-          pytest packages/secret-patterns/tests -q
-          pytest packages/report-generator/tests -q
-          PYTHONPATH=packages/payload-tester pytest packages/payload-tester/tests -q
-          pytest packages/cli/tests -q
-          pytest packages/guardrails/tests -q
-          pytest packages/mcp-server/tests -q
+      # One step per suite with `if: ${{ !cancelled() }}` so a failure in one
+      # suite does not mask the others (they previously ran in a single
+      # `bash -e` block, so the first failure hid every later suite's result).
+      - name: crawler-py unit tests
+        if: ${{ !cancelled() }}
+        run: pytest packages/crawler-py/tests/unit -q
+      - name: secret-patterns tests
+        if: ${{ !cancelled() }}
+        run: pytest packages/secret-patterns/tests -q
+      - name: report-generator tests
+        if: ${{ !cancelled() }}
+        run: pytest packages/report-generator/tests -q
+      - name: payload-tester tests
+        if: ${{ !cancelled() }}
+        run: PYTHONPATH=packages/payload-tester pytest packages/payload-tester/tests -q
+      - name: cli tests
+        if: ${{ !cancelled() }}
+        run: pytest packages/cli/tests -q
+      - name: guardrails tests
+        if: ${{ !cancelled() }}
+        run: pytest packages/guardrails/tests -q
+      - name: mcp-server tests
+        if: ${{ !cancelled() }}
+        run: pytest packages/mcp-server/tests -q
 
   # Go build + unit tests + gofmt. Independent of the Python jobs.
   go-unit:

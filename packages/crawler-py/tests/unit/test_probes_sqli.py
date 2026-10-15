@@ -403,3 +403,27 @@ def test_sqli_persistent_error_is_not_flagged():
         pacer=Pacer(0),
     )
     assert not any(f.id == "sqli" for f in findings)
+
+
+def test_sqli_challenge_is_coverage_gap_no_false_positive():
+    # Every injection is answered by a WAF challenge: no sqli finding (the
+    # boolean-blind path must not fire on the challenge diff), one coverage gap.
+    bad = ("'", '"', "=", "(", ")", ";")
+
+    def handler(method, url, kw):
+        blob = " ".join(_values(kw))
+        if any(ch in blob for ch in bad):
+            return FakeResp(403, "Just a moment...")
+        return FakeResp(200, "ok")
+
+    findings = probe_sqli(
+        "http://127.0.0.1/item",
+        "GET",
+        [{"name": "id", "value": "1"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id.startswith("sqli")] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-sqli")
+    assert gap.category == "waf-challenge"

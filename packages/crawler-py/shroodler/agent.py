@@ -98,6 +98,9 @@ class AgentConfig:
     run_websocket: bool = True
     allow_external: bool = False
     scope_file: str | None = None
+    # Operator-supplied context about the target (what it is, what matters, what
+    # abuse means here). Grounds the LLM's business-logic reasoning.
+    context_note: str = ""
     llm_agent: bool = False  # --llm-agent; requires the provider API key
     llm_provider: str = "deepseek"  # "deepseek" | "anthropic"
     llm_agent_model: str = "deepseek-chat"  # cheap, high-volume planner model

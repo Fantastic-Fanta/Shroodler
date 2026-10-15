@@ -11,7 +11,18 @@ from shroodler.extractors.cookies import is_session_cookie
 from shroodler.models import Finding, Page
 from shroodler.urls import origin as origin_of
 
-_XSS_IDS = frozenset({"payload-xss-reflect", "payload-xss-stored"})
+_XSS_IDS = frozenset(
+    {
+        # payload-tester ids
+        "payload-xss-reflect",
+        "payload-xss-stored",
+        # agent-probe ids (these previously never chained to cookie theft)
+        "xss-reflected",
+        "xss-stored",
+        # stored XSS delivered via a file upload
+        "upload-stored-xss",
+    }
+)
 _SYSTEMIC_CATEGORIES = frozenset({"header", "subresource"})
 _SEV_RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
 

@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import json
 import secrets
+from typing import Any
 
 import httpx
 
+from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
@@ -16,6 +18,25 @@ from shroodler.probes.common import (
     normalize_params,
     request,
 )
+
+
+def _spurious_reflection(resp: Any, clean_body: str, nonce: str) -> bool:
+    """True when a detected 'reflection' is not real application reflection.
+
+    A WAF/bot-mitigation block page echoes the offending request, so its body
+    contains the marker even though the app never reflected it (the common
+    false positive behind a WAF). And if the marker is already in the clean
+    baseline, its presence is not reflection either.
+    """
+    body = body_text(resp)
+    try:
+        headers = {str(k): str(v) for k, v in (getattr(resp, "headers", {}) or {}).items()}
+    except Exception:  # noqa: BLE001
+        headers = {}
+    status = int(getattr(resp, "status_code", 0) or 0)
+    if detect_challenge(headers, body, status) is not None:
+        return True
+    return bool(nonce) and nonce in (clean_body or "")
 
 QUERY_PAYLOADS = (
     "__proto__[shroodlerPP]={nonce}",
@@ -112,7 +133,9 @@ def probe_prototype_pollution(
 
     findings: list[Finding] = []
     normalized = normalize_params(params)
-    nonce = secrets.token_hex(4)
+    # 16 hex chars: long enough that it will not collide by chance inside a
+    # large serialized response (a short nonce could).
+    nonce = secrets.token_hex(8)
     key = "shroodlerPP"
 
     clean = request(
@@ -131,12 +154,17 @@ def probe_prototype_pollution(
         findings.append(
             Finding(
                 id="prototype-pollution-reflected",
-                severity="high",
+                severity="low",
                 category="payload",
                 url=url,
-                description="The response JSON reflected a prototype-pollution marker.",
+                description=(
+                    "The response echoed a prototype-pollution marker. Reflection is "
+                    "not proof of pollution: confirm the injected property actually "
+                    "leaks into an unrelated response/object (and that the backend is "
+                    "a JS/Node runtime) before treating this as a real finding."
+                ),
                 evidence=evidence,
-                confidence="confirmed",
+                confidence="heuristic",
             )
         )
 
@@ -172,9 +200,10 @@ def probe_prototype_pollution(
                 )
                 body = body_text(resp)
                 parsed = _parse_json(body)
-                if (parsed is not None and _contains_pp(parsed, nonce)) or (
-                    key in body and nonce in body
-                ):
+                if (
+                    (parsed is not None and _contains_pp(parsed, nonce))
+                    or (key in body and nonce in body)
+                ) and not _spurious_reflection(resp, clean_body, nonce):
                     _record_reflected(f"param={name} payload={payload} nonce={nonce}")
                 elif clean_status == 200 and _status(resp) == 500:
                     _record_behavior(
@@ -198,9 +227,10 @@ def probe_prototype_pollution(
             )
             body = body_text(resp)
             parsed = _parse_json(body)
-            if (parsed is not None and _contains_pp(parsed, nonce)) or (
-                key in body and nonce in body
-            ):
+            if (
+                (parsed is not None and _contains_pp(parsed, nonce))
+                or (key in body and nonce in body)
+            ) and not _spurious_reflection(resp, clean_body, nonce):
                 _record_reflected(f"json={raw} nonce={nonce}")
             elif clean_status == 200 and _status(resp) == 500:
                 _record_behavior(f"json={raw} clean=200 polluted=500 nonce={nonce}")

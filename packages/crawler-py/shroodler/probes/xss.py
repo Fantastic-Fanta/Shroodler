@@ -6,6 +6,7 @@ import secrets
 
 import httpx
 
+from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
@@ -20,6 +21,19 @@ from shroodler.waf_detect import expand_if_waf
 
 def _payload(nonce: str) -> str:
     return f"<script>alert('shroodler-xss-{nonce}')</script>"
+
+
+def _is_waf_challenge(resp) -> bool:
+    """A WAF/bot-mitigation block page echoes the request, so the payload shows
+    up in its body though the app never reflected it (a common false positive)."""
+    if resp is None:
+        return False
+    try:
+        headers = {str(k): str(v) for k, v in (getattr(resp, "headers", {}) or {}).items()}
+    except Exception:  # noqa: BLE001
+        headers = {}
+    status = int(getattr(resp, "status_code", 0) or 0)
+    return detect_challenge(headers, body_text(resp), status) is not None
 
 
 # Content types that a browser will parse as HTML (so a reflected <script>
@@ -86,7 +100,7 @@ def probe_xss(
                 pacer=pacer,
             )
             body = body_text(resp)
-            if marker in body or injected in body:
+            if (marker in body or injected in body) and not _is_waf_challenge(resp):
                 if _renders_html(resp):
                     findings.append(
                         Finding(

@@ -54,7 +54,7 @@ def test_prototype_pollution_reflected_in_json():
         if "shroodlerPP" in blob:
             nonce = ""
             for token in blob.replace("{", " ").replace("}", " ").replace('"', " ").split():
-                if len(token) == 8 and all(c in "0123456789abcdef" for c in token):
+                if len(token) == 16 and all(c in "0123456789abcdef" for c in token):
                     nonce = token
             if not nonce:
                 return FakeResp(200, "{}")
@@ -71,8 +71,8 @@ def test_prototype_pollution_reflected_in_json():
         pacer=Pacer(0),
     )
     hit = next(f for f in findings if f.id == "prototype-pollution-reflected")
-    assert hit.severity == "high"
-    assert hit.confidence == "confirmed"
+    assert hit.severity == "low"  # reflection is not proof of pollution
+    assert hit.confidence == "heuristic"
     assert hit.category == "payload"
 
 
@@ -103,7 +103,7 @@ def test_prototype_pollution_persistent_on_followup():
         blob = _blob(url, kw)
         if "shroodlerPP" in blob:
             for token in blob.replace("{", " ").replace("}", " ").replace('"', " ").split():
-                if len(token) == 8 and all(c in "0123456789abcdef" for c in token):
+                if len(token) == 16 and all(c in "0123456789abcdef" for c in token):
                     polluted["nonce"] = token
                     polluted["on"] = True
             return FakeResp(200, "{}")
@@ -136,3 +136,26 @@ def test_prototype_pollution_skips_html_pages():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_waf_block_page_echo_is_not_reflection():
+    # Regression (StudioFile): a WAF/Cloudflare block page echoes the offending
+    # request, so the marker appears in its body even though the app never
+    # reflected it. This must NOT be reported as prototype-pollution-reflected.
+    def handler(method, url, kw):
+        blob = _blob(url, kw)
+        if "shroodlerPP" in blob:
+            # "Just a moment" is a strong Cloudflare challenge signature; the
+            # page echoes the request (marker + nonce) as block pages often do.
+            return FakeResp(403, "Just a moment... " + blob)
+        return FakeResp(200, "{}")
+
+    findings = probe_prototype_pollution(
+        "http://127.0.0.1/api/templates/1/build",
+        "GET",
+        [{"name": "id"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id == "prototype-pollution-reflected"] == []

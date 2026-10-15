@@ -7,6 +7,32 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Ollama fixes (the local provider now actually runs the agent).** Three more
+  key gates in the agent run -- the `--llm-agent`, `--llm-business-logic`, and
+  `--llm-verify` pre-checks -- were still requiring an API key, so an Ollama run
+  bailed at 0 iterations with "requires OLLAMA_API_KEY"; they now honor
+  `provider_requires_api_key`. And the hard-reasoning step no longer 404s: for
+  Ollama the reasoning model defaults to the local planner model instead of
+  `deepseek-reasoner` (which Ollama does not serve), and an unset model resolves
+  to the Ollama default rather than an Anthropic one.
+
+- **Race-condition / TOCTOU probe.** A conservative active probe (aggressive
+  mode only, since it is side-effecting). It reports `race-condition` (medium,
+  heuristic) only on the real TOCTOU signature: a first request succeeds, a
+  second *sequential* request is rejected (so a single-use/limit check is
+  enforced serially), yet a concurrent burst of the same request still gets two
+  or more successes. If the endpoint simply repeats, it bails without firing the
+  burst, avoiding the false positives a blind concurrent-flood probe produces.
+
+- **File-upload abuse probe.** A new active probe (`--run-probes`) uploads a
+  benign SVG carrying a unique marker to each file field, then locates where the
+  app stored it and fetches it back. It reports `upload-stored-xss` (high,
+  confirmed) only when the file is served with an executable content-type
+  (text/html, image/svg+xml, or an undeclared type a browser sniffs) with the
+  marker intact, and `upload-unrestricted-type` (medium, heuristic) when the
+  upload was accepted but served execution could not be confirmed.
+  Non-destructive: it reads back only its own upload.
+
 - **Cloud object-storage bucket recon.** A new passive extractor mines HTML/JS
   for S3, Google Cloud Storage, Azure Blob, DigitalOcean Spaces, and Cloudflare
   R2 bucket references (virtual-hosted and path-style) and emits one

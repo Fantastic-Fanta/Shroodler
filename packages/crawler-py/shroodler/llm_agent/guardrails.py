@@ -10,7 +10,7 @@ from typing import Any
 
 from shroodler.llm_agent.history import HistoryEntry
 from shroodler.llm_agent.planner import PlannerDecision
-from shroodler.scope import in_scope, load_scope
+from shroodler.scope import in_scope, load_scope, path_denied
 
 # Recon actions counted against the budget. Both count, so the planner cannot
 # dodge the limit by alternating crawl and fetch_and_read.
@@ -149,5 +149,10 @@ def check_guardrails(
         for candidate in candidate_urls:
             if not in_scope(candidate, scope):
                 return GuardrailResult(False, f"out of scope: {candidate}")
+            # Rules of engagement: never touch an operator-denied path.
+            if path_denied(candidate, scope):
+                return GuardrailResult(
+                    False, f"off-limits by rules of engagement (deny): {candidate}"
+                )
 
     return GuardrailResult(True, "")

@@ -307,6 +307,8 @@ _shroodler() {
           _arguments \
             '--program[Program slug]:slug' \
             '--target[Base URL]:url' \
+            '--context[Operator context about the target to ground business-logic reasoning]:text' \
+            '--prove-impact[Demonstrate bounded read-only impact for confirmed findings]' \
             '--max-iterations[Loop budget]:count' \
             '--max-pages-per-crawl[Cap on URLs per crawl action]:count' \
             '--login-recipe[Login recipe JSON]:file:_files' \
@@ -319,7 +321,7 @@ _shroodler() {
             '--dry-run[Print the plan without making requests]' \
             '--llm-triage[Rank leads with an LLM (requires ANTHROPIC_API_KEY or DEEPSEEK_API_KEY)]' \
             '--llm-agent[Use an LLM to decide each action (requires ANTHROPIC_API_KEY or DEEPSEEK_API_KEY)]' \
-            '--llm-provider[LLM provider (default deepseek)]:(anthropic deepseek)' \
+            '--llm-provider[LLM provider (default deepseek)]:(anthropic deepseek ollama)' \
             '--llm-agent-model[Cheap planner model (default deepseek-chat)]:model' \
             '--llm-model[Alias for --llm-agent-model]:model' \
             '--llm-reasoning-model[Stronger model for hard reasoning (default deepseek-reasoner)]:model' \

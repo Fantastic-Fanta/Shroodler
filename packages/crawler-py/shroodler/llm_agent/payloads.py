@@ -364,11 +364,16 @@ def analyze_logic(
         for f in (getattr(state, "findings", None) or [])
         if str(getattr(f, "confidence", "")) == "confirmed"
     ][:20]
+    note = str(getattr(config, "context_note", "") or "").strip()
+    context_block = f"OPERATOR CONTEXT: {note[:1200]}\n" if note else ""
     user = (
         f"TARGET: {getattr(config, 'target', '')}\n"
+        f"{context_block}"
         f"CONFIRMED FINDINGS: {confirmed or '(none)'}\n"
         f"ENDPOINTS:\n{digest}\n\n"
-        "Infer the workflow and propose concrete business-logic abuse cases. JSON only."
+        "Infer the workflow and propose concrete business-logic abuse cases "
+        "grounded in the ENDPOINTS and OPERATOR CONTEXT above. Do not invent "
+        "endpoints that are not listed. JSON only."
     )
     call = complete_json(_LOGIC_SYSTEM, user, config, use_reasoning=True, max_tokens=1200)
     if call.data is None:

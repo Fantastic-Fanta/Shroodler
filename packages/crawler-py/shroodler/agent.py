@@ -1788,10 +1788,11 @@ def _execute_business_logic(
     )
 
     config._business_logic_done = True
-    from shroodler.llm_provider import llm_api_key_env
+    from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-    env_name = llm_api_key_env(getattr(config, "llm_provider", "anthropic"))
-    if not os.environ.get(env_name):
+    provider = getattr(config, "llm_provider", "anthropic")
+    env_name = llm_api_key_env(provider)
+    if provider_requires_api_key(provider) and not os.environ.get(env_name):
         return {
             "pages_crawled": 0,
             "findings_added": 0,
@@ -2127,11 +2128,11 @@ def _finish_probe_action(
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
     from shroodler.probes.enum_id import probe_enumerable_id
+    from shroodler.probes.file_upload import probe_file_upload
     from shroodler.probes.graphql import probe_graphql
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
-    from shroodler.probes.file_upload import probe_file_upload
     from shroodler.probes.mass_assignment import probe_mass_assignment
     from shroodler.probes.nosql import probe_nosql
     from shroodler.probes.open_redirect import probe_open_redirect
@@ -2775,10 +2776,11 @@ def _run_llm_verify(
 ) -> None:
     """LLM autoconfirm: re-check tentative findings against fresh evidence,
     confirming, downgrading, or dropping false positives. Never raises."""
-    from shroodler.llm_provider import llm_api_key_env
+    from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-    env_name = llm_api_key_env(getattr(config, "llm_provider", "deepseek"))
-    if not os.environ.get(env_name):
+    provider = getattr(config, "llm_provider", "deepseek")
+    env_name = llm_api_key_env(provider)
+    if provider_requires_api_key(provider) and not os.environ.get(env_name):
         emit_log_entry({"warning": "llm-verify-skipped", "reason": f"{env_name} missing"})
         return
     try:
@@ -3206,10 +3208,11 @@ def _llm_agent_step(
 
 def run_agent(config: AgentConfig) -> AgentResult:
     if config.llm_agent:
-        from shroodler.llm_provider import llm_api_key_env
+        from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-        env_name = llm_api_key_env(getattr(config, "llm_provider", "anthropic"))
-        if not os.environ.get(env_name):
+        provider = getattr(config, "llm_provider", "anthropic")
+        env_name = llm_api_key_env(provider)
+        if provider_requires_api_key(provider) and not os.environ.get(env_name):
             return AgentResult(
                 iterations=0,
                 confirmed=0,

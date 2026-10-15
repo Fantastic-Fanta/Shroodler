@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from shroodler.llm_provider import (
+    DEFAULT_MODELS,
     LLMConfig,
     LLMProvider,
     estimate_cost_usd,
@@ -70,6 +71,10 @@ def planner_model_for(config: Any) -> str:
         if not raw or lowered in {"sonnet", "opus", "claude-sonnet-5", "claude-opus-5"}:
             return _DEEPSEEK_CHAT
         return raw
+    if provider is LLMProvider.OLLAMA:
+        # Local model name as given; fall back to the provider default. Never
+        # map onto an Anthropic default, which Ollama does not serve.
+        return raw or DEFAULT_MODELS["ollama"]
     from shroodler.llm_agent.planner import resolve_llm_agent_model
 
     return resolve_llm_agent_model(raw)
@@ -85,6 +90,17 @@ def reasoning_model_for(config: Any) -> str:
     """
     provider = _provider_for(config)
     raw = str(getattr(config, "llm_agent_reasoning_model", "") or "").strip()
+    if provider is LLMProvider.OLLAMA:
+        # The CLI default reasoning model is "deepseek-reasoner", which Ollama
+        # does not serve. Use an explicit local reasoning model if one was set;
+        # otherwise reuse the local planner model rather than 404 on a remote
+        # model name.
+        if raw and not raw.lower().startswith(("deepseek", "claude")) and raw.lower() not in {
+            "reasoner",
+            "default",
+        }:
+            return raw
+        return planner_model_for(config)
     if raw and raw.lower() not in {"reasoner", "default"}:
         return raw
     if provider is LLMProvider.DEEPSEEK:

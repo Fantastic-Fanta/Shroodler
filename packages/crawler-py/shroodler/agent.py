@@ -73,6 +73,8 @@ class AgentConfig:
     run_open_redirect: bool = True
     run_host_header: bool = True
     run_cache_poisoning: bool = True
+    run_file_upload: bool = True
+    run_race_condition: bool = False  # side-effecting; aggressive mode only
     run_ssti: bool = True
     run_xxe: bool = True
     run_graphql: bool = True
@@ -1786,10 +1788,11 @@ def _execute_business_logic(
     )
 
     config._business_logic_done = True
-    from shroodler.llm_provider import llm_api_key_env
+    from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-    env_name = llm_api_key_env(getattr(config, "llm_provider", "anthropic"))
-    if not os.environ.get(env_name):
+    provider = getattr(config, "llm_provider", "anthropic")
+    env_name = llm_api_key_env(provider)
+    if provider_requires_api_key(provider) and not os.environ.get(env_name):
         return {
             "pages_crawled": 0,
             "findings_added": 0,
@@ -2125,6 +2128,7 @@ def _finish_probe_action(
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
     from shroodler.probes.enum_id import probe_enumerable_id
+    from shroodler.probes.file_upload import probe_file_upload
     from shroodler.probes.graphql import probe_graphql
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
@@ -2134,6 +2138,7 @@ def _finish_probe_action(
     from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.prototype_pollution import probe_prototype_pollution
+    from shroodler.probes.race_condition import probe_race_condition
     from shroodler.probes.rate_limit import probe_rate_limit, probe_rate_limit_bypass
     from shroodler.probes.smuggling import hostname_of as smuggle_host
     from shroodler.probes.smuggling import probe_smuggling
@@ -2299,6 +2304,20 @@ def _finish_probe_action(
             _run(
                 "ssti",
                 lambda: probe_ssti(url, method, params, hdr, pacer=pacer, state=state),
+            )
+        if config.run_file_upload and method in {"POST", "PUT"} and params:
+            _run(
+                "file-upload",
+                lambda: probe_file_upload(url, method, params, hdr, pacer=pacer, state=state),
+            )
+        if (
+            (config.run_race_condition or getattr(config, "aggressive", False))
+            and method in {"POST", "PUT", "PATCH", "DELETE"}
+            and params
+        ):
+            _run(
+                "race-condition",
+                lambda: probe_race_condition(url, method, params, hdr, pacer=pacer, state=state),
             )
         if config.run_xxe and method in {"GET", "POST"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")
@@ -2757,10 +2776,11 @@ def _run_llm_verify(
 ) -> None:
     """LLM autoconfirm: re-check tentative findings against fresh evidence,
     confirming, downgrading, or dropping false positives. Never raises."""
-    from shroodler.llm_provider import llm_api_key_env
+    from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-    env_name = llm_api_key_env(getattr(config, "llm_provider", "deepseek"))
-    if not os.environ.get(env_name):
+    provider = getattr(config, "llm_provider", "deepseek")
+    env_name = llm_api_key_env(provider)
+    if provider_requires_api_key(provider) and not os.environ.get(env_name):
         emit_log_entry({"warning": "llm-verify-skipped", "reason": f"{env_name} missing"})
         return
     try:
@@ -3188,10 +3208,11 @@ def _llm_agent_step(
 
 def run_agent(config: AgentConfig) -> AgentResult:
     if config.llm_agent:
-        from shroodler.llm_provider import llm_api_key_env
+        from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
 
-        env_name = llm_api_key_env(getattr(config, "llm_provider", "anthropic"))
-        if not os.environ.get(env_name):
+        provider = getattr(config, "llm_provider", "anthropic")
+        env_name = llm_api_key_env(provider)
+        if provider_requires_api_key(provider) and not os.environ.get(env_name):
             return AgentResult(
                 iterations=0,
                 confirmed=0,

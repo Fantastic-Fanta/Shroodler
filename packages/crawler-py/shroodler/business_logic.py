@@ -12,6 +12,7 @@ from shroodler.llm_provider import (
     LLMProvider,
     llm_api_key_env,
     llm_complete_sync,
+    provider_requires_api_key,
 )
 from shroodler.llm_triage import _parse_json_object
 from shroodler.models import Finding
@@ -126,7 +127,9 @@ def infer_app_domain(
     """Call the configured LLM when its API key is set; otherwise return unknown."""
     empty = AppDomainModel()
     provider = _provider_for(config)
-    if not os.environ.get(llm_api_key_env(provider)):
+    if provider_requires_api_key(provider) and not os.environ.get(
+        llm_api_key_env(provider)
+    ):
         return empty
     try:
         import json

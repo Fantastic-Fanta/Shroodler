@@ -7,6 +7,57 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Cloud object-storage bucket recon.** A new passive extractor mines HTML/JS
+  for S3, Google Cloud Storage, Azure Blob, DigitalOcean Spaces, and Cloudflare
+  R2 bucket references (virtual-hosted and path-style) and emits one
+  informational `cloud-storage-bucket` finding per unique bucket, so a tester
+  knows which buckets to check for public list/read or anonymous writes.
+  Surface recon, not a vulnerability by itself; deduped per bucket like the
+  js-endpoint findings. (The IMDS/metadata SSRF target already ships in the SSRF
+  probe.)
+
+- **Web cache poisoning probe.** A new active probe (`--run-probes`, once per
+  host) reflects a random marker through unkeyed request headers
+  (`X-Forwarded-Host`/`-Scheme`/`-Proto`, `X-Host`, `X-Original-URL`, ...) and
+  reports `cache-poisoning-unkeyed-header` (high, heuristic) only when the
+  marker is reflected into a response that is also cacheable (`Age`, `X-Cache`,
+  `CF-Cache-Status`, `Cache-Control: public/max-age`). Non-destructive: each
+  request carries a unique cache-buster query parameter so a throwaway cache key
+  is exercised and the canonical one is never poisoned. Distinct from the
+  host-header-injection probe, which does not check cacheability.
+
+- **Eval soak runner.** `scripts/eval_soak.py` repeats a scored eval run N
+  times per target (and per provider/config) and summarises its *stability*,
+  not just a single recall number: mean/min/max recall, the bugs that are only
+  sometimes missed (nondeterministic LLM verdicts or flaky probes), false
+  positives, and cost. It diffs mean recall / false positives against a
+  committed baseline and exits nonzero on a regression, so it can gate CI or be
+  left running overnight. The pure aggregation and reporting live in
+  `shroodler/soak.py` (`aggregate`, `detect_regressions`, `baseline_from`,
+  `render_markdown`) and are fully unit-tested without a live target; the script
+  drives live runs via a JSON manifest (`scripts/soak-manifest.example.json`)
+  or scores pre-collected run files.
+
+- **NoSQL injection probe.** A new active probe (`--run-probes`) replays
+  GET/POST/PUT parameters with MongoDB-style payloads, one parameter at a time.
+  Error-based detection is baseline-differential (a Mongo/BSON/Mongoose/pymongo
+  driver error that a clean request did not already produce) and reports
+  `nosqli` (critical, confirmed). An operator / `$where` boolean-differential
+  reports `nosqli-operator` (high, heuristic) only when an always-true value
+  behaves like the clean baseline while an always-false value diverges, so a
+  merely reflective parameter is not flagged. Error markers are kept disjoint
+  from the SQLi probe so one endpoint is not double-reported.
+
+- **Local LLM provider (Ollama).** `--llm-provider ollama` drives the agent,
+  triage, business-logic, and verify loops against a local Ollama daemon over
+  its OpenAI-compatible chat API. No API key is required (an optional
+  `OLLAMA_API_KEY` is sent as Bearer only for a proxied daemon), the base URL
+  defaults to `http://localhost:11434` and honors `OLLAMA_HOST`, and local
+  models are billed at zero so the cost cap and soak loops see them as free.
+  Pick a pulled model with `--llm-agent-model` (default `llama3.1`). The
+  DeepSeek and Ollama HTTP paths now share one OpenAI-compatible
+  request/response helper.
+
 - **Crawl link graph.** Both crawlers record the links they followed
   (`edges`: from-url, to-url, kind `html`, `redirect`, or `form`). Older
   crawl JSON with no `edges` still loads. `shroodler attack-path` walks

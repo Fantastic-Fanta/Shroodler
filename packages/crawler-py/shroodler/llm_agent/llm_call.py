@@ -26,6 +26,7 @@ from shroodler.llm_provider import (
     estimate_cost_usd,
     llm_api_key_env,
     llm_complete_sync,
+    provider_requires_api_key,
 )
 from shroodler.llm_triage import _parse_json_object
 
@@ -115,7 +116,7 @@ def complete_json(
     """One JSON-returning LLM turn. Never raises; charges cost onto config."""
     provider = _provider_for(config)
     env_name = llm_api_key_env(provider)
-    if not os.environ.get(env_name):
+    if provider_requires_api_key(provider) and not os.environ.get(env_name):
         return LlmJson(error=f"{env_name} missing")
     model = reasoning_model_for(config) if use_reasoning else planner_model_for(config)
     llm_config = LLMConfig(

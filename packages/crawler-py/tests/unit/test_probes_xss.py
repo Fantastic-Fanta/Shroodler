@@ -227,3 +227,63 @@ def test_waf_block_page_echo_is_not_reflected_xss():
         client=FakeClient(), pacer=Pacer(0),
     )
     assert [f for f in findings if f.id in {"xss-reflected", "xss-reflected-nonhtml"}] == []
+    # ...but the parameter went untested behind the challenge: surface it as a
+    # coverage gap so this run is distinguishable from a genuinely clean one.
+    gap = next(f for f in findings if f.id == "probe-challenged-xss")
+    assert gap.severity == "info"
+    assert gap.category == "waf-challenge"
+    assert gap.confidence == "heuristic"
+    assert "q" in (gap.evidence or "")
+    assert "Cloudflare" in (gap.evidence or "")
+
+
+def test_probe_challenge_lists_only_untested_params():
+    # One param reflects cleanly, the other is challenged: the clean one is a
+    # real finding and must NOT appear in the coverage gap.
+    def handler(method, url, kw):
+        injected = _injected(kw)
+        if "shroodler-xss-" not in injected:
+            return _resp_with_ctype("<div>clean</div>", "text/html")
+        # 'q' reflects verbatim; 'name' is answered by a challenge page.
+        params = kw.get("params") or {}
+        if "shroodler-xss-" in str(params.get("name", "")):
+            return _resp_with_ctype("Just a moment... " + injected, "text/html")
+        return _resp_with_ctype(f"<div>{injected}</div>", "text/html")
+
+    findings = probe_xss(
+        "http://127.0.0.1/search",
+        "GET",
+        [{"name": "q"}, {"name": "name"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert any(f.id == "xss-reflected" and "param=q" in (f.evidence or "") for f in findings)
+    gaps = [f for f in findings if f.id == "probe-challenged-xss"]
+    assert len(gaps) == 1
+    assert "name" in (gaps[0].evidence or "")
+    assert "q," not in (gaps[0].evidence or "") and "q " not in (gaps[0].evidence or "")
+
+
+def test_no_coverage_gap_on_confirmed_reflection():
+    def handler(method, url, kw):
+        injected = _injected(kw)
+        if "shroodler-xss-" in injected:
+            return _resp_with_ctype(f"<div>{injected}</div>", "text/html")
+        return _resp_with_ctype("<div>clean</div>", "text/html")
+
+    findings = probe_xss(
+        "http://127.0.0.1/search", "GET", [{"name": "q"}], "",
+        client=FakeClient(handler), pacer=Pacer(0),
+    )
+    assert any(f.id == "xss-reflected" for f in findings)
+    assert [f for f in findings if f.id == "probe-challenged-xss"] == []
+
+
+def test_no_coverage_gap_on_clean_scan():
+    findings = probe_xss(
+        "http://127.0.0.1/search", "GET", [{"name": "q"}], "",
+        client=FakeClient(lambda m, u, kw: _resp_with_ctype("<div>clean</div>", "text/html")),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id == "probe-challenged-xss"] == []

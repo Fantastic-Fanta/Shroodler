@@ -13,6 +13,7 @@ from urllib.parse import parse_qsl, urlparse
 import httpx
 
 from shroodler.authz_diff import headers_from_auth_line
+from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.paced_fetch import pace
 from shroodler.pacer import Pacer
@@ -332,6 +333,68 @@ def body_text(resp: Any) -> str:
     if isinstance(content, bytes):
         return content.decode("utf-8", errors="replace")
     return str(content or "")
+
+
+def _resp_set_cookies(resp: Any) -> list[str]:
+    """Every Set-Cookie value on a response, across httpx (multi-valued
+    headers via get_list) and plain-dict fakes."""
+    headers = getattr(resp, "headers", None)
+    if headers is None:
+        return []
+    get_list = getattr(headers, "get_list", None)
+    if callable(get_list):
+        try:
+            return list(get_list("set-cookie"))
+        except Exception:  # noqa: BLE001
+            pass
+    try:
+        value = headers.get("set-cookie")  # type: ignore[union-attr]
+    except Exception:  # noqa: BLE001
+        return []
+    return [value] if value else []
+
+
+def challenge_vendor(resp: Any) -> str | None:
+    """Vendor label when this probe response is a WAF/bot-mitigation challenge
+    (so the injection never reached the application and the parameter was not
+    actually tested), else None. Detection-only: never solves or bypasses a
+    challenge, it only keeps the probe from treating the block page as app
+    behaviour."""
+    if resp is None:
+        return None
+    try:
+        headers = {str(k): str(v) for k, v in (getattr(resp, "headers", {}) or {}).items()}
+    except Exception:  # noqa: BLE001
+        headers = {}
+    status = int(getattr(resp, "status_code", 0) or 0)
+    finding = detect_challenge(headers, body_text(resp), status, _resp_set_cookies(resp))
+    return finding.evidence if finding is not None else None
+
+
+def probe_challenge_finding(url: str, probe: str, params, vendor: str) -> Finding:
+    """A coverage observation: an active probe was answered by a WAF challenge,
+    so the listed parameters at this URL were NOT reliably tested. This is not a
+    vulnerability and not proof of safety -- it stops a challenge-blocked run
+    from looking identical to a genuinely clean one, the silent false negative
+    behind 'it found the bug last run but not this one'."""
+    plist = ", ".join(sorted({str(p) for p in params if p})) or "(unnamed)"
+    return Finding(
+        id=f"probe-challenged-{probe}",
+        severity="info",
+        category="waf-challenge",
+        url=url,
+        description=(
+            f"A {vendor} challenge/interstitial answered the active {probe} probe "
+            f"for parameter(s) {plist} at this URL, so these parameters were not "
+            "reliably tested: the injected payload reached a challenge page, not "
+            "the application, and a real issue here would be silently missed. "
+            "This is a coverage gap, not a finding and not proof of safety. "
+            "Re-run from an allowlisted source IP/User-Agent (or set "
+            "--user-agent) to test these parameters."
+        ),
+        evidence=f"probe={probe} params={plist} vendor={vendor}",
+        confidence="heuristic",
+    )
 
 
 def inject(

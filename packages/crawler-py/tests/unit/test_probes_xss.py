@@ -188,3 +188,42 @@ def test_xss_reflected_in_html_is_confirmed_high():
     assert reflected and reflected[0].id == "xss-reflected"
     assert reflected[0].severity == "high"
     assert reflected[0].confidence == "confirmed"
+
+
+def test_waf_block_page_echo_is_not_reflected_xss():
+    # Regression: a WAF HTML block page echoes the payload; must not be reported
+    # as reflected XSS (it would otherwise fire the high xss-reflected).
+    from datetime import timedelta
+
+    from shroodler.pacer import Pacer
+    from shroodler.probes.xss import probe_xss
+
+    class FakeResp:
+        def __init__(self, status, text):
+            self.status_code = status
+            self.text = text
+            self.content = text.encode()
+            self.elapsed = timedelta(0)
+            self.headers = {"content-type": "text/html"}
+
+    class FakeClient:
+        def request(self, method, url, **kw):
+            vals = []
+            for key in ("params", "data"):
+                blob = kw.get(key) or {}
+                if isinstance(blob, dict):
+                    vals.extend(str(v) for v in blob.values())
+            joined = " ".join(vals)
+            if "<script>" in joined:
+                # Cloudflare "Just a moment" HTML page echoing the payload.
+                return FakeResp(403, "<html>Just a moment... " + joined + "</html>")
+            return FakeResp(200, "<html>ok</html>")
+
+        def close(self):
+            pass
+
+    findings = probe_xss(
+        "http://127.0.0.1/search", "GET", [{"name": "q"}], "",
+        client=FakeClient(), pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id in {"xss-reflected", "xss-reflected-nonhtml"}] == []

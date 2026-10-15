@@ -7,6 +7,16 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Bounded impact proofs (`--prove-impact`).** After a scan, demonstrate
+  minimum impact for confirmed findings with one read-only example instead of
+  just a technical signal. For confirmed SQLi it reads back the database
+  version/user via a UNION with a split sentinel (the payload carries the two
+  sentinel halves separately, so a reflected payload can never fake the join --
+  only the DB concatenating them proves arbitrary SQL runs), and annotates the
+  finding with `IMPACT: ...`. Never dumps data or writes. Other confirmed
+  classes already demonstrate impact in their own evidence (SSRF via OOB
+  callback, path traversal via /etc/passwd contents).
+
 - **Agent recon-first guardrail.** The LLM agent could jump straight to
   `analyze_logic` / `test_hypothesis` / `hypothesise` before crawling, inventing
   endpoints and probing nothing (common with weaker local models). A new

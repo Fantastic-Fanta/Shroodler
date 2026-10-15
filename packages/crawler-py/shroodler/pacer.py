@@ -8,8 +8,8 @@ paths share one clock. Sleep is injectable so tests do not wait.
 
 from __future__ import annotations
 
-import time
 import threading
+import time
 from collections.abc import Callable
 
 

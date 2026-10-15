@@ -63,6 +63,7 @@ class AgentConfig:
     write_authz_endpoints: list[dict] | None = None
     run_probes: bool = False  # opt-in; default off
     probe_sqli: bool = True
+    probe_nosql: bool = True
     probe_time_sqli: bool = True
     probe_xss: bool = True
     probe_path_traversal: bool = True
@@ -71,6 +72,7 @@ class AgentConfig:
     run_ssrf: bool = True
     run_open_redirect: bool = True
     run_host_header: bool = True
+    run_cache_poisoning: bool = True
     run_ssti: bool = True
     run_xxe: bool = True
     run_graphql: bool = True
@@ -2119,6 +2121,7 @@ def _finish_probe_action(
     cookie_header: str,
 ) -> dict[str, Any]:
     from shroodler.probes.auth_bypass import probe_auth_bypass
+    from shroodler.probes.cache_poisoning import probe_cache_poisoning
     from shroodler.probes.crlf import probe_crlf
     from shroodler.probes.dom_xss import probe_dom_xss, spa_search_view_url
     from shroodler.probes.enum_id import probe_enumerable_id
@@ -2127,6 +2130,7 @@ def _finish_probe_action(
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
     from shroodler.probes.mass_assignment import probe_mass_assignment
+    from shroodler.probes.nosql import probe_nosql
     from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.prototype_pollution import probe_prototype_pollution
@@ -2144,6 +2148,7 @@ def _finish_probe_action(
     findings: list[Any] = []
     errors: list[str] = []
     seen_hosts: set[str] = set()
+    seen_cache: set[str] = set()
     seen_graphql: set[str] = set()
     seen_smuggle: set[str] = set()
     seen_rl: set[str] = set()
@@ -2217,6 +2222,18 @@ def _finish_probe_action(
                 "auth-bypass",
                 lambda: probe_auth_bypass(url, method, params, hdr, pacer=pacer),
             )
+        if config.probe_nosql and method in {"GET", "POST", "PUT"} and params:
+            _run(
+                "nosqli",
+                lambda: probe_nosql(
+                    url,
+                    method,
+                    params,
+                    hdr,
+                    pacer=pacer,
+                    state=state,
+                ),
+            )
         if config.probe_xss and method in {"GET", "POST", "PUT", "PATCH"} and params:
             _run(
                 "xss",
@@ -2270,6 +2287,13 @@ def _finish_probe_action(
                 _run(
                     "host-header",
                     lambda: probe_host_header(url, hdr, pacer=pacer, state=state),
+                )
+        if config.run_cache_poisoning:
+            host = hostname_of(url)
+            if host and _claim(seen_cache, host):
+                _run(
+                    "cache-poisoning",
+                    lambda: probe_cache_poisoning(url, hdr, pacer=pacer, state=state),
                 )
         if config.run_ssti and method in {"GET", "POST"} and params:
             _run(

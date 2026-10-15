@@ -7,6 +7,19 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Fix WAF-echo reflection false positives (and over-severe prototype
+  pollution).** A WAF/bot-mitigation block page echoes the offending request, so
+  the reflected-marker checks in the prototype-pollution and XSS probes could
+  match the block page even though the application never reflected the payload
+  -- surfacing a bogus confirmed-High `prototype-pollution-reflected` (and a
+  bogus `xss-reflected`). Both probes now skip responses that `detect_challenge`
+  recognizes as a WAF/interstitial page, and the prototype-pollution reflected
+  check is also baseline-differential (the marker must be absent from the clean
+  response). `prototype-pollution-reflected` is downgraded from confirmed/high to
+  heuristic/low (reflection is not proof of pollution, and is meaningless on a
+  non-JS backend), and its nonce is lengthened so it cannot collide by chance in
+  a large serialized response. Regression tests added for the WAF-echo case.
+
 - **Stateful-workflow bypass testing (`--workflow-mutate`).** For each
   `--chain-spec` workflow that completes end to end, Shroodler now also runs
   bypass *mutations* of it: dropping each prerequisite step (does the final

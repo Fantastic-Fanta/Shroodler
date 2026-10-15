@@ -186,3 +186,23 @@ def test_open_redirect_challenge_is_coverage_gap():
     assert [f for f in findings if f.id == "open-redirect"] == []
     gap = next(f for f in findings if f.id == "probe-challenged-open-redirect")
     assert gap.category == "waf-challenge"
+
+
+def test_open_redirect_on_auth_flow_is_high():
+    # On an OAuth/login flow an open redirect enables token/credential theft.
+    def handler(method, url, kw):
+        if any("evil.example.com" in v for v in _values(kw)):
+            return FakeResp(302, "", headers={"Location": "https://evil.example.com/"})
+        return FakeResp(200, "ok")
+
+    findings = probe_open_redirect(
+        "http://127.0.0.1/login",
+        "GET",
+        [{"name": "next", "value": "/home"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    hit = next(f for f in findings if f.id == "open-redirect")
+    assert hit.severity == "high"
+    assert "auth_context=true" in (hit.evidence or "")

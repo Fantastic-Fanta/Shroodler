@@ -140,3 +140,34 @@ def test_recon_budget_counts_crawl_and_reads_together():
     result = check_guardrails(decision, history, ProgramState(slug="lab"), _config())
     assert result.allowed is False
     assert "recon budget" in result.reason
+
+
+def test_blocks_logic_action_before_any_recon():
+    # analyze_logic with nothing crawled and no known endpoints -> blocked, so
+    # the fallback crawls first instead of reasoning about hallucinated URLs.
+    decision = PlannerDecision(action="analyze_logic", params={})
+    result = check_guardrails(decision, [], ProgramState(slug="lab"), _config())
+    assert result.allowed is False
+    assert "crawl the target first" in result.reason
+
+
+def test_blocks_hypothesis_actions_before_recon():
+    for action in ("test_hypothesis", "hypothesise", "hypothesize"):
+        decision = PlannerDecision(action=action, params={})
+        result = check_guardrails(decision, [], ProgramState(slug="lab"), _config())
+        assert result.allowed is False, action
+
+
+def test_allows_logic_action_once_endpoints_are_known():
+    decision = PlannerDecision(action="analyze_logic", params={})
+    state = ProgramState(slug="lab", endpoints={"http://127.0.0.1/x": {}})
+    result = check_guardrails(decision, [], state, _config())
+    assert result.allowed is True
+
+
+def test_allows_logic_action_after_a_crawl_this_run():
+    decision = PlannerDecision(action="analyze_logic", params={})
+    cfg = _config()
+    cfg._crawled_this_run = True
+    result = check_guardrails(decision, [], ProgramState(slug="lab"), cfg)
+    assert result.allowed is True

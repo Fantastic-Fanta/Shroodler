@@ -2011,7 +2011,13 @@ def test_llm_agent_uses_planner_and_logs_reasoning(tmp_path, monkeypatch, capsys
 
     monkeypatch.setenv("HOME", str(tmp_path))
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")
-    load("lab")
+    # Seed a known endpoint so the recon-first guard allows a logic/hypothesis
+    # action (otherwise it is redirected to a crawl before anything is known).
+    from shroodler import program as _program
+
+    seeded = load("lab")
+    seeded.endpoints["http://127.0.0.1/"] = {"last_seen": "x"}
+    _program.save(seeded)
 
     def fake_plan(*_a, **_k):
         return PlannerDecision(

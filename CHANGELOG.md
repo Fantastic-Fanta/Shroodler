@@ -7,6 +7,15 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Ollama fixes (the local provider now actually runs the agent).** Three more
+  key gates in the agent run -- the `--llm-agent`, `--llm-business-logic`, and
+  `--llm-verify` pre-checks -- were still requiring an API key, so an Ollama run
+  bailed at 0 iterations with "requires OLLAMA_API_KEY"; they now honor
+  `provider_requires_api_key`. And the hard-reasoning step no longer 404s: for
+  Ollama the reasoning model defaults to the local planner model instead of
+  `deepseek-reasoner` (which Ollama does not serve), and an unset model resolves
+  to the Ollama default rather than an Anthropic one.
+
 - **Race-condition / TOCTOU probe.** A conservative active probe (aggressive
   mode only, since it is side-effecting). It reports `race-condition` (medium,
   heuristic) only on the real TOCTOU signature: a first request succeeds, a

@@ -398,6 +398,29 @@ def test_reasoning_model_resolution():
     assert llm_call.reasoning_model_for(cfg) == "deepseek-reasoner"
 
 
+def test_ollama_model_resolution_uses_local_models():
+    # The CLI default reasoning model is "deepseek-reasoner", which Ollama does
+    # not serve. For ollama it must fall back to the local planner model, never
+    # a remote model name (that previously 404'd mid-scan).
+    cfg = SimpleNamespace(
+        llm_provider="ollama",
+        llm_agent_model="qwen2.5:7b",
+        llm_agent_reasoning_model="deepseek-reasoner",
+    )
+    assert llm_call.planner_model_for(cfg) == "qwen2.5:7b"
+    assert llm_call.reasoning_model_for(cfg) == "qwen2.5:7b"
+
+    # An explicit local reasoning model is honored.
+    cfg.llm_agent_reasoning_model = "qwen2.5:14b"
+    assert llm_call.reasoning_model_for(cfg) == "qwen2.5:14b"
+
+    # No model configured -> the Ollama provider default, never an Anthropic one.
+    cfg.llm_agent_model = ""
+    cfg.llm_agent_reasoning_model = "deepseek-reasoner"
+    assert llm_call.planner_model_for(cfg) == "llama3.1"
+    assert llm_call.reasoning_model_for(cfg) == "llama3.1"
+
+
 def test_observe_reports_redirect_target():
     from shroodler.llm_agent.http_tools import _observe
 

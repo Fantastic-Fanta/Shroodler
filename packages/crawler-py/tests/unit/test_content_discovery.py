@@ -364,3 +364,56 @@ def test_metrics_prometheus_emits():
     finding = classify_path("/metrics", body, "http://127.0.0.1/metrics")
     assert finding is not None
     assert finding.id == "metrics-endpoint-exposed"
+
+
+class _AllSameClient:
+    """Every path (including the random soft-404 probe) returns one body:
+    simulates a site that serves its homepage/error page for any unknown path."""
+
+    def __init__(self, body, status=200):
+        self.body = body
+        self.status = status
+
+    def request(self, method, url, **kw):
+        return FakeResp(self.status, self.body)
+
+    def close(self):
+        pass
+
+
+def test_soft_404_homepage_suppresses_directory_listing():
+    # Body that WOULD trip the directory-listing classifier, but is returned
+    # for every path (soft-404), so it must be suppressed, not flagged.
+    homepage = (
+        "<html><title>FTP Archive</title><a href='a.pdf'>a.pdf</a> listing directory "
+        + ("x" * 200)
+    )
+    findings = discover_content(
+        "http://127.0.0.1/",
+        client=_AllSameClient(homepage),
+        pacer=Pacer(0),
+        paths=("/ftp", "/ftp/"),
+    )
+    assert [f for f in findings if f.id == "directory-listing"] == []
+
+
+def test_real_listing_distinct_from_soft_404_is_still_flagged():
+    homepage = "<html><title>Welcome</title><p>home</p></html>" + ("x" * 200)
+    listing = "<html><title>Index of /ftp</title><a href='a.pdf'>a.pdf</a> listing directory</html>"
+
+    class Client:
+        def request(self, method, url, **kw):
+            if url.rstrip("/").endswith("/ftp"):
+                return FakeResp(200, listing)
+            return FakeResp(200, homepage)  # soft-404 baseline for everything else
+
+        def close(self):
+            pass
+
+    findings = discover_content(
+        "http://127.0.0.1/",
+        client=Client(),
+        pacer=Pacer(0),
+        paths=("/ftp",),
+    )
+    assert any(f.id == "directory-listing" for f in findings)

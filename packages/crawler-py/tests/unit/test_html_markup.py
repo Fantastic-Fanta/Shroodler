@@ -96,3 +96,21 @@ def test_crawl_reports_comment_and_generator_not_layout(fx):
     about = crawl_url(fx.origin + "/about", depth=0)
     about_ids = {f.id for f in about.findings if urlparse(f.url).path == "/about"}
     assert "html-comment" not in about_ids
+
+
+def test_ie_conditional_comment_is_ignored():
+    # Regression: a downlevel IE conditional comment (standard Showdown markup)
+    # whose URL contains "auToDOwnload" used to match TODO via substring.
+    html = (
+        "<html><!--[if lte IE 8]><script>"
+        "document.location.replace('http://pokemonshowdown.com/autodownload/win');"
+        "</script><![endif]--></html>"
+    )
+    assert extract_html_comments(html, "http://127.0.0.1/") == []
+
+
+def test_substring_keyword_is_not_a_hit():
+    # "autodownload" contains "todo"; "author" contains "auth" -- neither is a
+    # leftover dev note, so boundary-anchored matching must skip them.
+    html = "<html><!-- autodownload scheduled; author notes --></html>"
+    assert extract_html_comments(html, "http://127.0.0.1/") == []

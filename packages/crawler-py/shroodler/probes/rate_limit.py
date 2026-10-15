@@ -112,7 +112,11 @@ def probe_rate_limit(
     if not statuses or len(set(statuses)) != 1:
         return []
     code = statuses[0]
-    if code < 200 or code >= 400:
+    # Only a consistent 2xx is a real missing-rate-limit signal. A 3xx means the
+    # endpoint redirected every request without processing it (e.g. an apex->www
+    # or http->https redirect), so "it never throttled" is meaningless there;
+    # 4xx/5xx is not a served response either.
+    if not (200 <= code < 300):
         return []
     return [
         Finding(

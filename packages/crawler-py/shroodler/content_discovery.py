@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import re
+import uuid
 from urllib.parse import urlparse
 
 import httpx
@@ -565,6 +567,42 @@ def classify_path(
     return None
 
 
+def _soft404_fingerprint(
+    origin: str,
+    cookie_header: str,
+    client: httpx.Client | None,
+    pacer: Pacer | None,
+) -> tuple[int, int, str] | None:
+    """Fingerprint the site's response to a known-nonexistent path. Many apps
+    serve HTTP 200 with a branded error page or SPA shell for any unknown path;
+    a probed path that merely echoes that same page is not real content and
+    must not be classified (the source of directory-listing / config / admin
+    false positives when every wordlist entry "exists")."""
+    marker = f"__shroodler_nonexistent_{uuid.uuid4().hex[:16]}__"
+    url = origin.rstrip("/") + "/" + marker
+    resp = request("GET", url, cookie_header=cookie_header, client=client, pacer=pacer)
+    if resp is None:
+        return None
+    body = body_text(resp)
+    return (
+        _status(resp),
+        len(body),
+        hashlib.sha256(body.encode("utf-8", "ignore")).hexdigest(),
+    )
+
+
+def _matches_soft404(fp: tuple[int, int, str] | None, status: int, body: str) -> bool:
+    if fp is None or fp[0] != status:
+        return False
+    if hashlib.sha256(body.encode("utf-8", "ignore")).hexdigest() == fp[2]:
+        return True
+    # Same status, near-identical length (a templated page with a few dynamic
+    # bytes); only when the body is big enough that a 2% window is not most of it.
+    if fp[1] >= 200:
+        return abs(len(body) - fp[1]) <= int(fp[1] * 0.02)
+    return False
+
+
 def discover_content(
     target: str,
     cookie_header: str = "",
@@ -575,8 +613,10 @@ def discover_content(
 ) -> list[Finding]:
     """GET a wordlist of sensitive paths on the target origin."""
     findings: list[Finding] = []
+    origin = _origin(target)
+    soft404 = _soft404_fingerprint(origin, cookie_header, client, pacer)
     for path in paths or WORDLIST:
-        url = _origin(target).rstrip("/") + path
+        url = origin.rstrip("/") + path
         resp = request(
             "GET",
             url,
@@ -603,6 +643,11 @@ def discover_content(
                 findings.append(hit)
             continue
         if path in GIT_PATHS:
+            continue
+        # A 200 that merely echoes the site's not-found page (soft-404 SPA
+        # shell / branded error template) is not real content: skip it so its
+        # body does not trip directory-listing / config / admin classifiers.
+        if code == 200 and _matches_soft404(soft404, code, body):
             continue
         if path in ADMIN_PATHS and code in _REDIRECT_CODES:
             hit = classify_path(path, body, url, **extra)

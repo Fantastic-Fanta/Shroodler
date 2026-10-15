@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from pathlib import Path
 
@@ -36,9 +37,25 @@ def load_comment_keywords() -> list[str]:
     return _parse_keywords(keywords_path().read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=1)
+def _keyword_re(keywords: tuple[str, ...]) -> re.Pattern[str]:
+    alt = "|".join(re.escape(k.lower()) for k in keywords)
+    return re.compile(rf"(?<![a-z0-9]){alt}(?![a-z0-9])")
+
+
 def _comment_hits(text: str, keywords: list[str]) -> bool:
-    lowered = text.lower()
-    return any(key.lower() in lowered for key in keywords)
+    # Boundary-anchored, not bare substring: a substring match flagged the
+    # "todo" inside "autodownload" (and "auth" inside "author", etc.) as a
+    # leftover dev note. Require the keyword to stand alone.
+    return _keyword_re(tuple(keywords)).search(text.lower()) is not None
+
+
+def _is_conditional_comment(text: str) -> bool:
+    """IE downlevel conditional comments (<!--[if ...]> ... <![endif]-->) are
+    standard page markup, not leftover developer notes, so their contents must
+    not trip the keyword match."""
+    stripped = text.lstrip()
+    return stripped.startswith("[if") or stripped.startswith("[endif") or "<![endif]" in text
 
 
 def _snippet(text: str, limit: int = 80) -> str:
@@ -59,7 +76,7 @@ def extract_html_comments(body: str, page_url: str) -> list[Finding]:
     seen: set[str] = set()
     for node in soup.find_all(string=lambda t: isinstance(t, Comment)):
         text = str(node).strip()
-        if not text or not _comment_hits(text, keywords):
+        if not text or _is_conditional_comment(text) or not _comment_hits(text, keywords):
             continue
         key = text.casefold()
         if key in seen:

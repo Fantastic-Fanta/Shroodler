@@ -74,6 +74,7 @@ class AgentConfig:
     run_host_header: bool = True
     run_cache_poisoning: bool = True
     run_file_upload: bool = True
+    run_race_condition: bool = False  # side-effecting; aggressive mode only
     run_ssti: bool = True
     run_xxe: bool = True
     run_graphql: bool = True
@@ -2136,6 +2137,7 @@ def _finish_probe_action(
     from shroodler.probes.open_redirect import probe_open_redirect
     from shroodler.probes.path_traversal import probe_path_traversal
     from shroodler.probes.prototype_pollution import probe_prototype_pollution
+    from shroodler.probes.race_condition import probe_race_condition
     from shroodler.probes.rate_limit import probe_rate_limit, probe_rate_limit_bypass
     from shroodler.probes.smuggling import hostname_of as smuggle_host
     from shroodler.probes.smuggling import probe_smuggling
@@ -2306,6 +2308,15 @@ def _finish_probe_action(
             _run(
                 "file-upload",
                 lambda: probe_file_upload(url, method, params, hdr, pacer=pacer, state=state),
+            )
+        if (
+            (config.run_race_condition or getattr(config, "aggressive", False))
+            and method in {"POST", "PUT", "PATCH", "DELETE"}
+            and params
+        ):
+            _run(
+                "race-condition",
+                lambda: probe_race_condition(url, method, params, hdr, pacer=pacer, state=state),
             )
         if config.run_xxe and method in {"GET", "POST"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")

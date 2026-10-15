@@ -133,19 +133,31 @@ def probe_open_redirect(
             loc = _location(resp)
             if _EVIL_HOST not in loc.lower():
                 continue
+            # Severity by reachable impact: on an auth/OAuth/login flow an open
+            # redirect is weaponizable for token/credential theft (high); on an
+            # ordinary page it is phishing-grade (medium).
+            auth_context = url_looks_auth(url)
+            severity = "high" if auth_context else "medium"
+            context_note = (
+                " This parameter is on an auth/OAuth/login flow, where the "
+                "redirect can be used to steal an auth code or credentials."
+                if auth_context
+                else ""
+            )
             findings.append(
                 Finding(
                     id="open-redirect",
-                    severity="medium",
+                    severity=severity,
                     category="payload",
                     url=url,
                     description=(
                         f"{method_u} parameter {name!r} issued a 3xx Location "
-                        f"pointing at {_EVIL_HOST}."
+                        f"pointing at {_EVIL_HOST}.{context_note}"
                     ),
                     evidence=(
                         f"param={name} payload={payload!r} "
-                        f"status={int(resp.status_code)} location={loc!r}"
+                        f"status={int(resp.status_code)} location={loc!r} "
+                        f"auth_context={str(auth_context).lower()}"
                     ),
                     confidence="confirmed",
                 )

@@ -7,6 +7,15 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **File-upload abuse probe.** A new active probe (`--run-probes`) uploads a
+  benign SVG carrying a unique marker to each file field, then locates where the
+  app stored it and fetches it back. It reports `upload-stored-xss` (high,
+  confirmed) only when the file is served with an executable content-type
+  (text/html, image/svg+xml, or an undeclared type a browser sniffs) with the
+  marker intact, and `upload-unrestricted-type` (medium, heuristic) when the
+  upload was accepted but served execution could not be confirmed.
+  Non-destructive: it reads back only its own upload.
+
 - **Cloud object-storage bucket recon.** A new passive extractor mines HTML/JS
   for S3, Google Cloud Storage, Azure Blob, DigitalOcean Spaces, and Cloudflare
   R2 bucket references (virtual-hosted and path-style) and emits one

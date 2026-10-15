@@ -6,14 +6,15 @@ import secrets
 
 import httpx
 
-from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
     request,
 )
 from shroodler.waf_detect import expand_if_waf
@@ -21,19 +22,6 @@ from shroodler.waf_detect import expand_if_waf
 
 def _payload(nonce: str) -> str:
     return f"<script>alert('shroodler-xss-{nonce}')</script>"
-
-
-def _is_waf_challenge(resp) -> bool:
-    """A WAF/bot-mitigation block page echoes the request, so the payload shows
-    up in its body though the app never reflected it (a common false positive)."""
-    if resp is None:
-        return False
-    try:
-        headers = {str(k): str(v) for k, v in (getattr(resp, "headers", {}) or {}).items()}
-    except Exception:  # noqa: BLE001
-        headers = {}
-    status = int(getattr(resp, "status_code", 0) or 0)
-    return detect_challenge(headers, body_text(resp), status) is not None
 
 
 # Content types that a browser will parse as HTML (so a reflected <script>
@@ -77,6 +65,10 @@ def probe_xss(
 
     findings: list[Finding] = []
     follow_url = view_url or url
+    # Params whose active probe hit a WAF challenge instead of the app: these
+    # went UNTESTED, and are surfaced as a coverage gap (not a vuln) so a
+    # challenge-blocked run is not mistaken for a clean one.
+    challenged: dict[str, str] = {}
 
     for item in normalized:
         name = item["name"]
@@ -88,6 +80,7 @@ def probe_xss(
             waf_detected=waf_detected,
             waf_vendor=waf_vendor,
         )
+        recorded = False
         for injected in variants:
             resp = inject(
                 url,
@@ -99,8 +92,16 @@ def probe_xss(
                 client=client,
                 pacer=pacer,
             )
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                # The injection reached a WAF challenge, not the app: any echo
+                # here is the block page, not reflection. Note the coverage gap
+                # and keep trying the remaining variants, since an evasion
+                # variant may still get through.
+                challenged.setdefault(name, vendor)
+                continue
             body = body_text(resp)
-            if (marker in body or injected in body) and not _is_waf_challenge(resp):
+            if marker in body or injected in body:
                 if _renders_html(resp):
                     findings.append(
                         Finding(
@@ -136,7 +137,12 @@ def probe_xss(
                             confidence="heuristic",
                         )
                     )
+                recorded = True
                 break
+        if recorded:
+            # A variant got through and was tested: not a coverage gap, even if
+            # an earlier variant was challenged.
+            challenged.pop(name, None)
 
         write_method = method_u if method_u in {"POST", "PUT", "PATCH"} else "POST"
         stored_resp = inject(
@@ -169,6 +175,12 @@ def probe_xss(
             client=client,
             pacer=pacer,
         )
+        view_vendor = challenge_vendor(view)
+        if view_vendor is not None:
+            # The confirmation read was challenged: persistence is unverifiable,
+            # so record coverage rather than silently dropping it.
+            challenged.setdefault(name, view_vendor)
+            continue
         view_body = body_text(view)
         if nonce in view_body:
             if _renders_html(view):
@@ -204,4 +216,10 @@ def probe_xss(
                     )
                 )
 
+    if challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "xss", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

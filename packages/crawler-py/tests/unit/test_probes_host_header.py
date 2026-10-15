@@ -25,7 +25,9 @@ class FakeClient:
         pass
 
 
-def test_host_header_confirmed_when_body_reflects_evil_host():
+def test_host_header_body_only_reflection_is_medium():
+    # Reflected into the body (no redirect): a Host-trust misconfig that needs
+    # an amplifier to hit a third party, so medium, not high.
     def handler(method, url, kw):
         headers = kw.get("headers") or {}
         if headers.get("Host") == "evil.example.com":
@@ -41,12 +43,15 @@ def test_host_header_confirmed_when_body_reflects_evil_host():
     )
     hit = next(f for f in findings if f.id == "host-header-injection")
     assert hit.confidence == "confirmed"
-    assert hit.severity == "high"
+    assert hit.severity == "medium"
     assert hit.category == "payload"
+    assert "where=body" in (hit.evidence or "")
     assert any((c[2].get("headers") or {}).get("Host") == "evil.example.com" for c in client.calls)
 
 
-def test_host_header_confirmed_on_location():
+def test_host_header_redirect_location_is_high():
+    # Reflected into a redirect Location: the Host drives the redirect target,
+    # directly abusable, so high.
     def handler(method, url, kw):
         headers = kw.get("headers") or {}
         if headers.get("X-Forwarded-Host") == "evil.example.com":
@@ -64,8 +69,31 @@ def test_host_header_confirmed_on_location():
         pacer=Pacer(0),
     )
     hit = next(f for f in findings if f.id == "host-header-injection")
+    assert hit.severity == "high"
+    assert "where=location" in (hit.evidence or "")
+    assert "redirect=true" in (hit.evidence or "")
     assert "X-Forwarded-Host" in (hit.evidence or "")
     assert "evil.example.com" in (hit.evidence or "")
+
+
+def test_host_header_location_without_redirect_is_medium():
+    # Evil host echoed into a Location header on a 200 (not a 3xx): not a
+    # redirect the attacker can drive, so medium.
+    def handler(method, url, kw):
+        headers = kw.get("headers") or {}
+        if headers.get("Host") == "evil.example.com":
+            return FakeResp(200, "ok", headers={"Location": "https://evil.example.com/x"})
+        return FakeResp(200, "ok")
+
+    findings = probe_host_header(
+        "http://127.0.0.1/",
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    hit = next(f for f in findings if f.id == "host-header-injection")
+    assert hit.severity == "medium"
+    assert "redirect=false" in (hit.evidence or "")
 
 
 def test_host_header_tries_x_host():

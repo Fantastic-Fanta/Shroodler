@@ -280,9 +280,13 @@ def _scope_dict(state: ProgramState, config: AgentConfig) -> dict:
 
 
 def _url_in_program_scope(url: str, state: ProgramState, config: AgentConfig) -> bool:
-    from shroodler.scope import in_scope
+    from shroodler.scope import in_scope, path_denied
 
-    if in_scope(url, _scope_dict(state, config)):
+    scope = _scope_dict(state, config)
+    if path_denied(url, scope):
+        emit_log_entry({"debug": "scope-deny", "url": url})
+        return False
+    if in_scope(url, scope):
         return True
     emit_log_entry({"debug": "scope-excluded", "url": url})
     return False

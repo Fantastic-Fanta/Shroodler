@@ -27,10 +27,14 @@ def load_scope(slug: str, path: str | Path | None = None) -> dict[str, Any]:
         return {}
     include = [str(item) for item in (data.get("include") or []) if str(item)]
     exclude = [str(item) for item in (data.get("exclude") or []) if str(item)]
+    deny = [str(item) for item in (data.get("deny") or []) if str(item)]
     allow = data.get("allow_subdomains")
     return {
         "include": include,
         "exclude": exclude,
+        # Rules of engagement: URL/path glob patterns the agent must never touch
+        # (e.g. "*/password-reset*", "*/payment*", "*/admin/delete*").
+        "deny": deny,
         "allow_subdomains": True if allow is None else bool(allow),
     }
 
@@ -41,6 +45,7 @@ def save_scope(slug: str, scope: dict[str, Any]) -> Path:
     payload = {
         "include": list(scope.get("include") or []),
         "exclude": list(scope.get("exclude") or []),
+        "deny": list(scope.get("deny") or []),
         "allow_subdomains": bool(scope.get("allow_subdomains", True)),
     }
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -71,6 +76,28 @@ def _host_matches(host: str, pattern: str, *, allow_subdomains: bool) -> bool:
     if allow_subdomains and host.endswith("." + pat):
         return True
     return False
+
+
+def path_denied(url: str, scope: dict | None) -> bool:
+    """True when `url` matches a rules-of-engagement deny pattern (off-limits).
+
+    Patterns are matched against the URL path, the path+query, and the full URL
+    with fnmatch, so "*/payment*" or "https://x/admin/*" both work. An empty or
+    missing deny list denies nothing.
+    """
+    if not scope:
+        return False
+    deny = [str(p) for p in (scope.get("deny") or []) if str(p)]
+    if not deny:
+        return False
+    try:
+        parsed = urlparse(url)
+    except Exception:  # noqa: BLE001
+        return False
+    path = parsed.path or "/"
+    path_q = f"{path}?{parsed.query}" if parsed.query else path
+    candidates = (path, path_q, url)
+    return any(fnmatch(c, pat) for pat in deny for c in candidates)
 
 
 def in_scope(url: str, scope: dict | None) -> bool:

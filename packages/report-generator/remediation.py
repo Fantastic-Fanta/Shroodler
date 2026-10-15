@@ -55,6 +55,8 @@ _BY_ID: dict[str, str] = {
     "upload-unrestricted-type": "Validate uploads by content, not just extension; reject or neutralize active types (HTML/SVG/scripts) and serve stored files with a safe, non-inline Content-Type.",
     "race-condition": "Enforce the single-use/limit check atomically (a DB unique constraint, SELECT ... FOR UPDATE, an atomic decrement, or a lock), not as read-then-write, so concurrent requests cannot each pass the check before any writes.",
     "postmessage-no-origin-check": "Validate event.origin against an explicit allowlist at the top of every window 'message' handler (and check event.source where relevant) before acting on the data; never trust a postMessage sender by default.",
+    "workflow-step-skip": "Enforce workflow prerequisites server-side: the final action must verify, from server state, that every required prior step (payment, approval, verification) actually completed for this session/object, not just that the client sent the final request.",
+    "workflow-replay": "Make the final action single-use/idempotent server-side (a unique constraint, a consumed-token check, or an idempotency key), so replaying the same completed action does not take effect twice.",
     "tls-cert-expired": "Renew this certificate immediately; browsers and API clients will refuse the connection.",
     "tls-cert-expiring-soon": "Renew this certificate before it expires; automate renewal (e.g. ACME/Let's Encrypt) to avoid this recurring.",
     "tls-cert-self-signed": "Replace with a certificate from a trusted CA; a self-signed cert can't be verified by normal clients without manual trust.",

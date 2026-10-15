@@ -3320,6 +3320,27 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
         )
         emit_log_entry({"pre_loop": "discovery", "result": asdict(disc)})
 
+    # Content-discovery (sensitive-path exposure: .git/.env/backups/config/admin)
+    # is not an LLM tool, so in --llm-agent mode it would otherwise run only
+    # opportunistically via the deterministic fallback -- meaning a critical
+    # exposure like an open .git directory gets found inconsistently between
+    # runs. Force it once up front for every agent scan, like a human doing
+    # recon. The deterministic (non-LLM) path already runs it in priority order.
+    if (
+        config.llm_agent
+        and config.run_content_discovery
+        and not config.dry_run
+        and not getattr(config, "_content_discover_done", False)
+    ):
+        try:
+            cd = _execute_content_discover(ContentDiscoverAction(), state, config, pacer)
+            program.save(state)
+            emit_log_entry({"pre_loop": "content-discover", "result": cd})
+        except Exception as exc:  # noqa: BLE001 - recon must never break the run
+            emit_log_entry(
+                {"pre_loop": "content-discover", "error": f"{type(exc).__name__}: {exc}"}
+            )
+
     for i in range(max(0, int(config.max_iterations))):
         config._iteration = i + 1  # used by decide_next_action triage logs
         if config.llm_agent:

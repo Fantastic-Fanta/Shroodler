@@ -156,7 +156,10 @@ def render_markdown(
 
     lines.append("## Results")
     lines.append("")
-    lines.append("| Target / config | runs | recall (mean) | recall range | precision | FP (mean/max) | flaky |")
+    lines.append(
+        "| Target / config | runs | recall (mean) | recall range | "
+        "precision | FP (mean/max) | flaky |"
+    )
     lines.append("| --- | --- | --- | --- | --- | --- | --- |")
     for stat in stats:
         rng = (
@@ -187,7 +190,9 @@ def render_markdown(
         lines.append("## Coverage gaps (never 100% recall in any run)")
         for stat in hard_miss:
             missed = ", ".join(stat.sometimes_missed[:10]) or "none"
-            lines.append(f"- **{stat.label}**: best recall {_pct(stat.recall_max)}; missed: {missed}")
+            lines.append(
+                f"- **{stat.label}**: best recall {_pct(stat.recall_max)}; missed: {missed}"
+            )
         lines.append("")
 
     return "\n".join(lines).rstrip() + "\n"

@@ -11,8 +11,8 @@ from shroodler.llm_provider import (
     LLMConfig,
     LLMProvider,
     llm_api_key_env,
-    provider_requires_api_key,
     llm_complete_sync,
+    provider_requires_api_key,
 )
 from shroodler.llm_triage import _parse_json_object
 from shroodler.models import Finding

@@ -15,18 +15,23 @@ import re
 from shroodler.models import Finding
 
 # (provider, compiled regex, group index holding the bucket/account name).
+# Bucket-name-ish labels (dot/dash allowed, length-bounded).
+_S3 = r"[a-z0-9][a-z0-9.\-]{1,61}[a-z0-9]"
+_GCS = r"[a-z0-9][a-z0-9._\-]{1,61}"
+_REGION = r"(?:[.-][a-z0-9\-]+)?"
+
 _PATTERNS: list[tuple[str, re.Pattern[str], int]] = [
     # AWS S3 virtual-hosted: bucket.s3.amazonaws.com / bucket.s3.<region>.amazonaws.com
-    ("aws-s3", re.compile(r"\b([a-z0-9][a-z0-9.\-]{1,61}[a-z0-9])\.s3(?:[.-][a-z0-9\-]+)?\.amazonaws\.com\b", re.I), 1),
+    ("aws-s3", re.compile(rf"\b({_S3})\.s3{_REGION}\.amazonaws\.com\b", re.I), 1),
     # AWS S3 path-style: s3.amazonaws.com/bucket / s3-<region>.amazonaws.com/bucket
-    ("aws-s3", re.compile(r"\bs3(?:[.-][a-z0-9\-]+)?\.amazonaws\.com/([a-z0-9][a-z0-9.\-]{1,61}[a-z0-9])", re.I), 1),
+    ("aws-s3", re.compile(rf"\bs3{_REGION}\.amazonaws\.com/({_S3})", re.I), 1),
     # Google Cloud Storage virtual-hosted and path-style.
-    ("gcs", re.compile(r"\b([a-z0-9][a-z0-9._\-]{1,61})\.storage\.googleapis\.com\b", re.I), 1),
-    ("gcs", re.compile(r"\bstorage\.(?:googleapis|cloud\.google)\.com/([a-z0-9][a-z0-9._\-]{1,61})", re.I), 1),
+    ("gcs", re.compile(rf"\b({_GCS})\.storage\.googleapis\.com\b", re.I), 1),
+    ("gcs", re.compile(rf"\bstorage\.(?:googleapis|cloud\.google)\.com/({_GCS})", re.I), 1),
     # Azure Blob Storage: account.blob.core.windows.net
     ("azure-blob", re.compile(r"\b([a-z0-9]{3,24})\.blob\.core\.windows\.net\b", re.I), 1),
     # DigitalOcean Spaces: bucket.<region>.digitaloceanspaces.com
-    ("do-spaces", re.compile(r"\b([a-z0-9][a-z0-9.\-]{1,61})\.[a-z0-9\-]+\.digitaloceanspaces\.com\b", re.I), 1),
+    ("do-spaces", re.compile(rf"\b({_S3})\.[a-z0-9\-]+\.digitaloceanspaces\.com\b", re.I), 1),
     # Cloudflare R2: account.r2.cloudflarestorage.com
     ("cloudflare-r2", re.compile(r"\b([a-z0-9]{2,64})\.r2\.cloudflarestorage\.com\b", re.I), 1),
 ]

@@ -7,6 +7,15 @@ work that produced them rather than tags.
 
 ## Unreleased
 
+- **Stateful-workflow bypass testing (`--workflow-mutate`).** For each
+  `--chain-spec` workflow that completes end to end, Shroodler now also runs
+  bypass *mutations* of it: dropping each prerequisite step (does the final
+  action still succeed without it?) and replaying the final action (does it take
+  effect twice?). A mutation that still succeeds is reported as
+  `workflow-step-skip` or `workflow-replay` (medium, heuristic -- a human
+  confirms the skipped step was a required gate). Built on the existing
+  multi-step attack-chain executor (`attack_chain.py`).
+
 - **Bounded impact proofs (`--prove-impact`).** After a scan, demonstrate
   minimum impact for confirmed findings with one read-only example instead of
   just a technical signal. For confirmed SQLi it reads back the database

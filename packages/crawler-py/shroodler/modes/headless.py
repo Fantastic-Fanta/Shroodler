@@ -84,14 +84,26 @@ class HeadlessFetcher:
         self.user_agent = user_agent
         self.max_clicks = max_clicks
         self._pw = sync_playwright().start()
-        self._browser = self._pw.chromium.launch(headless=True)
-        ctx: dict = {"user_agent": user_agent}
-        if proxy:
-            ctx["proxy"] = {"server": proxy}
-        if extra_headers:
-            ctx["extra_http_headers"] = extra_headers
-        self._extra_headers = dict(extra_headers or {})
-        self._context = self._browser.new_context(**ctx)
+        # If launch/new_context fails (e.g. the browser is not installed), stop
+        # the driver before propagating. Otherwise the started sync_playwright
+        # event loop leaks into the process and every later asyncio.run() fails
+        # with "another event loop is running" -- which is exactly how one
+        # missing browser in CI cascaded into dozens of unrelated test failures.
+        try:
+            self._browser = self._pw.chromium.launch(headless=True)
+            ctx: dict = {"user_agent": user_agent}
+            if proxy:
+                ctx["proxy"] = {"server": proxy}
+            if extra_headers:
+                ctx["extra_http_headers"] = extra_headers
+            self._extra_headers = dict(extra_headers or {})
+            self._context = self._browser.new_context(**ctx)
+        except Exception:
+            try:
+                self._pw.stop()
+            except Exception:
+                pass
+            raise
         self.requests = 0
 
     def close(self) -> None:

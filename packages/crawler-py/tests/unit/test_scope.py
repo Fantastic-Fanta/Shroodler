@@ -62,3 +62,24 @@ def test_save_and_load_scope(tmp_path, monkeypatch):
     path = tmp_path / ".shroodler" / "programs" / "lab" / "scope.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["exclude"] == ["cdn.example.com"]
+
+
+def test_path_denied_matches_roe_patterns():
+    from shroodler.scope import path_denied
+
+    scope = {"deny": ["*/password-reset*", "*/payment*", "https://x/admin/*"]}
+    assert path_denied("https://x/account/password-reset", scope) is True
+    assert path_denied("https://x/api/payment/charge", scope) is True
+    assert path_denied("https://x/admin/users", scope) is True
+    # Not denied.
+    assert path_denied("https://x/search?q=1", scope) is False
+    # No deny list -> nothing denied.
+    assert path_denied("https://x/payment", {}) is False
+    assert path_denied("https://x/payment", None) is False
+
+
+def test_path_denied_matches_query():
+    from shroodler.scope import path_denied
+
+    scope = {"deny": ["*action=delete*"]}
+    assert path_denied("https://x/item?id=1&action=delete", scope) is True

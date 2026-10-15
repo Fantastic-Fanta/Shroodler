@@ -11,6 +11,7 @@ from shroodler.probes.cache_poisoning import probe_cache_poisoning
 from shroodler.probes.crlf import probe_crlf
 from shroodler.probes.dom_xss import probe_dom_xss
 from shroodler.probes.enum_id import probe_enumerable_id
+from shroodler.probes.file_upload import probe_file_upload
 from shroodler.probes.graphql import probe_graphql
 from shroodler.probes.host_header import probe_host_header
 from shroodler.probes.idor import probe_idor
@@ -48,6 +49,7 @@ __all__ = [
     "probe_unauth_exposure",
     "probe_auth_bypass",
     "probe_enumerable_id",
+    "probe_file_upload",
     "probe_smuggling",
     "probe_sqli",
     "probe_ssrf",

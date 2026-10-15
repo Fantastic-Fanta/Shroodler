@@ -73,6 +73,7 @@ class AgentConfig:
     run_open_redirect: bool = True
     run_host_header: bool = True
     run_cache_poisoning: bool = True
+    run_file_upload: bool = True
     run_ssti: bool = True
     run_xxe: bool = True
     run_graphql: bool = True
@@ -2129,6 +2130,7 @@ def _finish_probe_action(
     from shroodler.probes.host_header import hostname_of, probe_host_header
     from shroodler.probes.idor import probe_idor
     from shroodler.probes.jwt import probe_jwt
+    from shroodler.probes.file_upload import probe_file_upload
     from shroodler.probes.mass_assignment import probe_mass_assignment
     from shroodler.probes.nosql import probe_nosql
     from shroodler.probes.open_redirect import probe_open_redirect
@@ -2299,6 +2301,11 @@ def _finish_probe_action(
             _run(
                 "ssti",
                 lambda: probe_ssti(url, method, params, hdr, pacer=pacer, state=state),
+            )
+        if config.run_file_upload and method in {"POST", "PUT"} and params:
+            _run(
+                "file-upload",
+                lambda: probe_file_upload(url, method, params, hdr, pacer=pacer, state=state),
             )
         if config.run_xxe and method in {"GET", "POST"}:
             content_type = str(meta.get("content_type") or meta.get("content-type") or "")

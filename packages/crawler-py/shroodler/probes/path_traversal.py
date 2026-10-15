@@ -11,8 +11,10 @@ from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     normalize_params,
+    probe_challenge_finding,
     request,
     url_without_query,
 )
@@ -131,6 +133,10 @@ def _probe_multipart_upload(
     )
     if resp is None:
         return None
+    if challenge_vendor(resp) is not None:
+        # A challenge page echoes the ../../etc/passwd filename; with
+        # allow_path_echo that would be a false positive, so do not fire.
+        return None
     if _hits(body_text(resp), allow_path_echo=True, filesystem_error=True):
         return _finding(
             url,
@@ -149,6 +155,9 @@ def probe_path_traversal(
 ) -> list[Finding]:
     """Try traversal sequences as query values, path suffixes, and multipart uploads."""
     findings: list[Finding] = []
+    # Vectors blocked by a WAF challenge (never tested): recorded as a coverage
+    # gap rather than silently counted as clean.
+    challenged: dict[str, str] = {}
     names = [item["name"] for item in normalize_params(params)]
     if not names:
         parsed = urlparse(url)
@@ -164,6 +173,10 @@ def probe_path_traversal(
                 client=client,
                 pacer=pacer,
             )
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault(name, vendor)
+                continue
             if _hits(body_text(resp)):
                 findings.append(_finding(url, evidence=f"param={name} payload={sequence}"))
                 return dedupe(findings)
@@ -175,7 +188,10 @@ def probe_path_traversal(
             client=client,
             pacer=pacer,
         )
-        if _hits(body_text(resp)):
+        vendor = challenge_vendor(resp)
+        if vendor is not None:
+            challenged.setdefault("path-suffix", vendor)
+        elif _hits(body_text(resp)):
             findings.append(_finding(url, evidence=f"path-suffix={sequence}"))
             return dedupe(findings)
 
@@ -188,4 +204,10 @@ def probe_path_traversal(
     )
     if uploaded is not None:
         findings.append(uploaded)
+    if not findings and challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "path-traversal", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

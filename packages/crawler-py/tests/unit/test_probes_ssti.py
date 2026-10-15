@@ -168,3 +168,23 @@ def test_ssti_network_error_returns_empty():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_ssti_challenge_is_coverage_gap():
+    def handler(method, url, kw):
+        blob = " ".join(_values(kw))
+        if any(tok in blob for tok in ("{", "}", "$", "#", "<%", "%{")):
+            return FakeResp(403, "Just a moment...")
+        return FakeResp(200, "ok")
+
+    findings = probe_ssti(
+        "http://127.0.0.1/greet",
+        "GET",
+        [{"name": "name"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id.startswith("ssti")] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-ssti")
+    assert gap.category == "waf-challenge"

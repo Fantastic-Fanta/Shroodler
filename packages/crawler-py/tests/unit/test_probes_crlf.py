@@ -112,3 +112,23 @@ def test_crlf_no_finding_on_clean_response():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_crlf_challenge_is_coverage_gap():
+    def handler(method, url, kw):
+        blob = url + " " + " ".join(_values(kw))
+        if "Injected" in blob or "%0d" in blob or "Set-Cookie" in blob:
+            return FakeResp(403, "Just a moment...")
+        return FakeResp(200, "ok")
+
+    findings = probe_crlf(
+        "http://127.0.0.1/go",
+        "GET",
+        [{"name": "q"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id.startswith("crlf")] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-crlf")
+    assert gap.category == "waf-challenge"

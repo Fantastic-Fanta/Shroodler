@@ -9,7 +9,14 @@ import httpx
 
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
-from shroodler.probes.common import dedupe, inject, normalize_params, request
+from shroodler.probes.common import (
+    challenge_vendor,
+    dedupe,
+    inject,
+    normalize_params,
+    probe_challenge_finding,
+    request,
+)
 
 _REDIRECT_HINTS = (
     "login",
@@ -91,6 +98,9 @@ def probe_crlf(
         return []
 
     findings: list[Finding] = []
+    # Params whose injection was answered by a WAF challenge (never tested):
+    # recorded as a coverage gap rather than silently counted clean.
+    challenged: dict[str, str] = {}
     normalized = normalize_params(params)
     nonce = secrets.token_hex(4)
     marker = f"shroodler-{nonce}"
@@ -112,6 +122,10 @@ def probe_crlf(
                 client=client,
                 pacer=pacer,
             )
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault(name, vendor)
+                continue
             injected = _header_value(resp, _HEADER_NAME)
             blob = _all_header_blob(resp)
             location = _header_value(resp, "location")
@@ -156,18 +170,28 @@ def probe_crlf(
         client=client,
         pacer=pacer,
     )
-    set_cookie = _set_cookie(resp)
-    if f"shroodler={cookie_nonce}" in set_cookie:
+    cookie_vendor = challenge_vendor(resp)
+    if cookie_vendor is not None:
+        challenged.setdefault("path", cookie_vendor)
+    else:
+        set_cookie = _set_cookie(resp)
+        if f"shroodler={cookie_nonce}" in set_cookie:
+            findings.append(
+                Finding(
+                    id="crlf-header-injection",
+                    severity="high",
+                    category="payload",
+                    url=url,
+                    description="A CRLF sequence in the URL path became a Set-Cookie header.",
+                    evidence=f"nonce={cookie_nonce} set-cookie={set_cookie[:200]}",
+                    confidence="confirmed",
+                )
+            )
+
+    if challenged:
         findings.append(
-            Finding(
-                id="crlf-header-injection",
-                severity="high",
-                category="payload",
-                url=url,
-                description="A CRLF sequence in the URL path became a Set-Cookie header.",
-                evidence=f"nonce={cookie_nonce} set-cookie={set_cookie[:200]}",
-                confidence="confirmed",
+            probe_challenge_finding(
+                url, "crlf", list(challenged), next(iter(challenged.values()))
             )
         )
-
     return dedupe(findings)

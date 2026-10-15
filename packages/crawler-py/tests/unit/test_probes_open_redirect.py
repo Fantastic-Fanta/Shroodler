@@ -167,3 +167,22 @@ def test_open_redirect_network_error_returns_empty():
         pacer=Pacer(0),
     )
     assert findings == []
+
+
+def test_open_redirect_challenge_is_coverage_gap():
+    def handler(method, url, kw):
+        if any("evil.example.com" in v for v in _values(kw)):
+            return FakeResp(403, "Just a moment...")
+        return FakeResp(200, "ok")
+
+    findings = probe_open_redirect(
+        "http://127.0.0.1/login",
+        "GET",
+        [{"name": "redirect"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id == "open-redirect"] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-open-redirect")
+    assert gap.category == "waf-challenge"

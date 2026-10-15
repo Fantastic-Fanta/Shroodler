@@ -224,3 +224,29 @@ def test_ssrf_listen_factory_failure_fails_closed():
         oob_timeout=0,
     )
     assert not any(f.id == "ssrf-oob" for f in findings)
+
+
+def test_ssrf_challenge_is_coverage_gap_not_reflected():
+    # A WAF challenge echoes the injected SSRF URL; without the guard that echo
+    # would fire ssrf-reflected. It must instead be a coverage gap.
+    def handler(method, url, kw):
+        vals = _values(kw)
+        if vals:
+            return FakeResp(403, "Just a moment... " + " ".join(vals))
+        return FakeResp(200, "ok")
+
+    findings = probe_ssrf(
+        "http://127.0.0.1/fetch",
+        "GET",
+        [{"name": "url", "value": "http://example.com"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+        listen_fn=_listen_miss,
+        oob_timeout=0,
+    )
+    assert [f for f in findings if f.id in {"ssrf-reflected", "ssrf-oob"}] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-ssrf")
+    assert gap.severity == "info"
+    assert gap.category == "waf-challenge"
+    assert "url" in (gap.evidence or "")

@@ -20,9 +20,11 @@ from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
 )
 from shroodler.waf_detect import expand_if_waf
 
@@ -130,6 +132,10 @@ def probe_nosql(
         return []
 
     findings: list[Finding] = []
+    # Params whose injection was answered by a WAF challenge (never tested):
+    # recorded as a coverage gap. Also stops an intermittent challenge on a
+    # true/false request from faking an operator-injection diff.
+    challenged: dict[str, str] = {}
     error_payloads = expand_if_waf(
         _ERROR_PAYLOADS,
         state=state,
@@ -165,6 +171,10 @@ def probe_nosql(
                 pacer=pacer,
             )
             if resp is None:
+                continue
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault(name, vendor)
                 continue
             if _has_nosql_error(body_text(resp)) and not baseline_errored:
                 findings.append(
@@ -219,6 +229,16 @@ def probe_nosql(
         )
         if base_resp is None or true_resp is None or false_resp is None:
             continue
+        vendor = (
+            challenge_vendor(base_resp)
+            or challenge_vendor(true_resp)
+            or challenge_vendor(false_resp)
+        )
+        if vendor is not None:
+            # A challenge on any of the three skews the comparison: record
+            # coverage, do not treat the divergence as operator injection.
+            challenged.setdefault(name, vendor)
+            continue
         # Injection signature: always-true behaves like the clean baseline
         # (same result set) while always-false diverges. A merely reflective
         # parameter fails the first test because the raw value differs.
@@ -246,4 +266,10 @@ def probe_nosql(
             )
             break
 
+    if not findings and challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "nosql", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

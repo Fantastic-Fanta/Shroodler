@@ -9,9 +9,11 @@ import httpx
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
 )
 from shroodler.waf_detect import expand_if_waf
 
@@ -100,6 +102,9 @@ def probe_open_redirect(
         return []
 
     findings: list[Finding] = []
+    # Params whose injection was answered by a WAF challenge (never tested):
+    # recorded as a coverage gap rather than silently counted clean.
+    challenged: dict[str, str] = {}
     for item in candidates:
         name = item["name"]
         nonce = secrets.token_hex(6)
@@ -119,6 +124,10 @@ def probe_open_redirect(
                 client=client,
                 pacer=pacer,
             )
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault(name, vendor)
+                break
             if not _is_redirect(resp):
                 continue
             loc = _location(resp)
@@ -142,4 +151,10 @@ def probe_open_redirect(
                 )
             )
             return dedupe(findings)
+    if not findings and challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "open-redirect", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

@@ -733,6 +733,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
         allow_external=bool(getattr(args, "allow_external", False)),
         scope_file=getattr(args, "scope_file", None),
         context_note=str(getattr(args, "context", None) or ""),
+        prove_impact=bool(getattr(args, "prove_impact", False)),
         llm_agent=bool(getattr(args, "llm_agent", False)),
         llm_provider=str(getattr(args, "llm_provider", None) or "deepseek"),
         llm_agent_model=str(
@@ -2791,6 +2792,16 @@ def build_parser() -> argparse.ArgumentParser:
             "must be immutable after submit; coupons are single-use'). Grounds "
             "the LLM's business-logic hypotheses so it reasons about the real app "
             "instead of inventing endpoints."
+        ),
+    )
+    agent.add_argument(
+        "--prove-impact",
+        action="store_true",
+        help=(
+            "After the scan, demonstrate bounded read-only impact for confirmed "
+            "findings (e.g. read back the database version for a confirmed SQLi "
+            "via a split-sentinel UNION, proving arbitrary SQL runs). Never "
+            "dumps data or writes."
         ),
     )
     agent.add_argument(

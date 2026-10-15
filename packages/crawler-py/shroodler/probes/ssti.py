@@ -10,9 +10,11 @@ from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
     request,
 )
 from shroodler.waf_detect import expand_if_waf
@@ -99,6 +101,9 @@ def probe_ssti(
     baseline = body_text(baseline_resp)
 
     findings: list[Finding] = []
+    # Params whose injection was answered by a WAF challenge (never tested):
+    # recorded as a coverage gap rather than silently counted clean.
+    challenged: dict[str, str] = {}
     for item in normalized:
         name = item["name"]
         prime = nonce_prime()
@@ -119,6 +124,11 @@ def probe_ssti(
                 client=client,
                 pacer=pacer,
             )
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                # Blocked by a challenge: skip this param's math fallback too.
+                challenged.setdefault(name, vendor)
+                break
             body = body_text(resp)
             if ssti_evaluated(body, expected, baseline=baseline):
                 findings.append(
@@ -163,4 +173,10 @@ def probe_ssti(
                 if hit:
                     break
 
+    if not findings and challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "ssti", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

@@ -4,38 +4,29 @@ from __future__ import annotations
 
 import json
 import secrets
-from typing import Any
 
 import httpx
 
-from shroodler.extractors.challenge import detect_challenge
 from shroodler.models import Finding
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
     request,
 )
 
 
-def _spurious_reflection(resp: Any, clean_body: str, nonce: str) -> bool:
-    """True when a detected 'reflection' is not real application reflection.
+def _baseline_has_nonce(clean_body: str, nonce: str) -> bool:
+    """A marker already present in the clean baseline is not reflection.
 
-    A WAF/bot-mitigation block page echoes the offending request, so its body
-    contains the marker even though the app never reflected it (the common
-    false positive behind a WAF). And if the marker is already in the clean
-    baseline, its presence is not reflection either.
+    (The other spurious case, a WAF block page echoing the request, is handled
+    separately via challenge_vendor() so the blocked param is recorded as a
+    coverage gap rather than silently dropped.)
     """
-    body = body_text(resp)
-    try:
-        headers = {str(k): str(v) for k, v in (getattr(resp, "headers", {}) or {}).items()}
-    except Exception:  # noqa: BLE001
-        headers = {}
-    status = int(getattr(resp, "status_code", 0) or 0)
-    if detect_challenge(headers, body, status) is not None:
-        return True
     return bool(nonce) and nonce in (clean_body or "")
 
 QUERY_PAYLOADS = (
@@ -133,6 +124,9 @@ def probe_prototype_pollution(
 
     findings: list[Finding] = []
     normalized = normalize_params(params)
+    # Params whose injection was answered by a WAF challenge (never reached the
+    # app): surfaced as a coverage gap, not silently dropped.
+    challenged: dict[str, str] = {}
     # 16 hex chars: long enough that it will not collide by chance inside a
     # large serialized response (a short nonce could).
     nonce = secrets.token_hex(8)
@@ -198,12 +192,16 @@ def probe_prototype_pollution(
                     client=client,
                     pacer=pacer,
                 )
+                vendor = challenge_vendor(resp)
+                if vendor is not None:
+                    challenged.setdefault(name, vendor)
+                    continue
                 body = body_text(resp)
                 parsed = _parse_json(body)
                 if (
                     (parsed is not None and _contains_pp(parsed, nonce))
                     or (key in body and nonce in body)
-                ) and not _spurious_reflection(resp, clean_body, nonce):
+                ) and not _baseline_has_nonce(clean_body, nonce):
                     _record_reflected(f"param={name} payload={payload} nonce={nonce}")
                 elif clean_status == 200 and _status(resp) == 500:
                     _record_behavior(
@@ -225,12 +223,16 @@ def probe_prototype_pollution(
                 client=client,
                 pacer=pacer,
             )
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault("json-body", vendor)
+                continue
             body = body_text(resp)
             parsed = _parse_json(body)
             if (
                 (parsed is not None and _contains_pp(parsed, nonce))
                 or (key in body and nonce in body)
-            ) and not _spurious_reflection(resp, clean_body, nonce):
+            ) and not _baseline_has_nonce(clean_body, nonce):
                 _record_reflected(f"json={raw} nonce={nonce}")
             elif clean_status == 200 and _status(resp) == 500:
                 _record_behavior(f"json={raw} clean=200 polluted=500 nonce={nonce}")
@@ -264,4 +266,10 @@ def probe_prototype_pollution(
                     )
                 )
 
+    if challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "prototype-pollution", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

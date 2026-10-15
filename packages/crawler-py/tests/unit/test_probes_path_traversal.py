@@ -159,3 +159,24 @@ def test_path_traversal_multipart_filesystem_error_is_confirmed():
     hit = findings[0]
     assert hit.id == "path-traversal"
     assert hit.confidence == "confirmed"
+
+
+def test_path_traversal_challenge_is_coverage_gap():
+    # Challenge echoes the ../../etc/passwd filename; with allow_path_echo the
+    # multipart branch would FP, so it must be a coverage gap instead.
+    def handler(method, url, kw):
+        blob = url + " " + " ".join(str(v) for v in (kw.get("data") or {}).values())
+        if "passwd" in blob:
+            return FakeResp(403, "Just a moment... " + blob)
+        return FakeResp(200, "ok")
+
+    findings = probe_path_traversal(
+        "http://127.0.0.1/view",
+        [{"name": "file"}],
+        "",
+        client=FakeClient(handler),
+        pacer=Pacer(0),
+    )
+    assert [f for f in findings if f.id == "path-traversal"] == []
+    gap = next(f for f in findings if f.id == "probe-challenged-path-traversal")
+    assert gap.category == "waf-challenge"

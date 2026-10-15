@@ -12,9 +12,11 @@ from shroodler.oob import collaborator_of, confirm_oob
 from shroodler.pacer import Pacer
 from shroodler.probes.common import (
     body_text,
+    challenge_vendor,
     dedupe,
     inject,
     normalize_params,
+    probe_challenge_finding,
     request,
     response_elapsed,
 )
@@ -244,6 +246,10 @@ def probe_sqli(
     time_params = [item for item in normalized if not _is_path_param(item)]
 
     findings: list[Finding] = []
+    # Params whose injection was answered by a WAF challenge (never tested):
+    # recorded as a coverage gap. Also stops an intermittent challenge on one
+    # of the boolean true/false requests from faking a boolean-blind diff.
+    challenged: dict[str, str] = {}
     collab = collaborator_of(oob, state)
     error_payloads = expand_if_waf(
         _ERROR_PAYLOADS,
@@ -293,6 +299,10 @@ def probe_sqli(
                 pacer=pacer,
             )
             if resp is None:
+                continue
+            vendor = challenge_vendor(resp)
+            if vendor is not None:
+                challenged.setdefault(name, vendor)
                 continue
             body = body_text(resp)
             error_induced = _has_sql_error(body) and not baseline_errored
@@ -442,6 +452,13 @@ def probe_sqli(
         )
         if true_resp is None or false_resp is None:
             continue
+        true_vendor = challenge_vendor(true_resp)
+        false_vendor = challenge_vendor(false_resp)
+        if true_vendor is not None or false_vendor is not None:
+            # A challenge on either request skews the true/false comparison:
+            # record coverage, do not treat the difference as boolean-blind.
+            challenged.setdefault(name, true_vendor or false_vendor)
+            continue
         if not _boolean_differs(true_resp, false_resp):
             continue
         true_len = len(body_text(true_resp))
@@ -481,4 +498,10 @@ def probe_sqli(
         if oob_finding is not None:
             findings.append(oob_finding)
 
+    if not findings and challenged:
+        findings.append(
+            probe_challenge_finding(
+                url, "sqli", list(challenged), next(iter(challenged.values()))
+            )
+        )
     return dedupe(findings)

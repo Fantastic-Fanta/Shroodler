@@ -87,35 +87,7 @@ PROFILES: dict[str, dict[str, object]] = {
 }
 
 
-def build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        prog="shroodler",
-        description=(
-            "Shroodler command-line toolkit: crawl a target, render reports, "
-            "diff baselines, run payload packs, or drive the intercepting proxy. "
-            "Local targets (127.0.0.1/localhost) are crawled by default; pass "
-            "--allow-external to scan a remote target you're authorized to test."
-        ),
-        epilog=(
-            "Examples:\n"
-            "  shroodler crawl http://127.0.0.1:8081 -o out.json\n"
-            "  shroodler crawl https://example.com --allow-external -o out.json\n"
-            "  shroodler crawl http://127.0.0.1:8081 --profile aggressive -o out.json\n"
-            "  shroodler report out.json --format html -o out.html\n"
-            "  shroodler payload out.json -o hits.json\n"
-            "  shroodler proxy start --record /tmp/sess.jsonl\n"
-            "Desktop GUI is optional; this CLI is the full product surface."
-        ),
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    p.add_argument("-V", "--version", action="store_true", help="Print version and exit")
-    p.add_argument(
-        "--debug",
-        action="store_true",
-        help="Print full tracebacks on error instead of a one-line message",
-    )
-    sub = p.add_subparsers(dest="command", required=False)
-
+def _build_crawl_parser(sub) -> None:
     crawl = sub.add_parser("crawl", help="Crawl a target URL")
     crawl.add_argument("url")
     crawl.add_argument(
@@ -321,6 +293,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     crawl.set_defaults(func=cmd_crawl)
 
+
+def _build_diff_parser(sub) -> None:
     diff = sub.add_parser("diff", help="Compare crawl JSON to expected_findings.json")
     diff.add_argument("findings")
     diff.add_argument("expected")
@@ -353,6 +327,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     diff.set_defaults(func=cmd_diff)
 
+
+def _build_ev_parser(sub) -> None:
     ev = sub.add_parser(
         "eval",
         help="Score a scan/agent result against expected findings (precision/recall)",
@@ -369,6 +345,8 @@ def build_parser() -> argparse.ArgumentParser:
     ev.add_argument("--json", action="store_true", help="Emit the scorecard as JSON")
     ev.set_defaults(func=cmd_eval)
 
+
+def _build_report_parser(sub) -> None:
     report = sub.add_parser(
         "report",
         help="Render findings JSON as HTML, CSV, SARIF, JUnit, Markdown, pentest, or submit",
@@ -416,6 +394,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     report.set_defaults(func=cmd_report)
 
+
+def _build_baseline_parser(sub) -> None:
     baseline = sub.add_parser(
         "baseline",
         help="Write expected_findings.json from a scan",
@@ -431,6 +411,8 @@ def build_parser() -> argparse.ArgumentParser:
     baseline.add_argument("--suppressions", default=None)
     baseline.set_defaults(func=cmd_baseline)
 
+
+def _build_expected_parser(sub) -> None:
     expected = sub.add_parser(
         "expected",
         help="Write expected_findings.json from a scan (alias of baseline)",
@@ -446,6 +428,8 @@ def build_parser() -> argparse.ArgumentParser:
     expected.add_argument("--suppressions", default=None)
     expected.set_defaults(func=cmd_baseline)
 
+
+def _build_ingest_parser(sub) -> None:
     ingest = sub.add_parser(
         "ingest-sessions",
         help="Turn captured proxy JSONL (or a HAR) into findings",
@@ -460,6 +444,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ingest.set_defaults(func=cmd_ingest)
 
+
+def _build_ingest_har_parser(sub) -> None:
     ingest_har = sub.add_parser(
         "ingest-har",
         help="Turn a Burp/mitmproxy/Caido/DevTools HAR into crawl JSON",
@@ -482,6 +468,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ingest_har.set_defaults(func=cmd_ingest)
 
+
+def _build_tokens_parser(sub) -> None:
     tokens = sub.add_parser(
         "tokens",
         help="Analyze reset/verification token predictability from captured proxy JSONL",
@@ -500,6 +488,8 @@ def build_parser() -> argparse.ArgumentParser:
     tokens.add_argument("--output", "-o")
     tokens.set_defaults(func=cmd_tokens)
 
+
+def _build_cadence_parser(sub) -> None:
     cadence = sub.add_parser(
         "cadence",
         help="Print recommended crawl/payload flags for a PR, nightly, or weekly scan",
@@ -524,6 +514,9 @@ def build_parser() -> argparse.ArgumentParser:
     cadence.add_argument("--output", "-o")
     cadence.set_defaults(func=cmd_cadence)
 
+
+
+def _build_triage_parser(sub) -> None:
     from shroodler.triage import (
         DEFAULT_CONCURRENCY,
         DEFAULT_PROXY_CONCURRENCY,
@@ -616,6 +609,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     triage.set_defaults(func=cmd_triage)
 
+
+def _build_triage_findings_parser(sub) -> None:
     triage_findings = sub.add_parser(
         "triage-findings",
         help="Score and rank crawl findings for bug-bounty submission",
@@ -651,6 +646,8 @@ def build_parser() -> argparse.ArgumentParser:
     triage_findings.add_argument("--output", "-o")
     triage_findings.set_defaults(func=cmd_triage_findings)
 
+
+def _build_payload_parser(sub) -> None:
     payload = sub.add_parser(
         "payload",
         help="Run YAML payload packs (SQLi/XSS/SSTI/path-traversal/SSRF/"
@@ -721,6 +718,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     payload.set_defaults(func=cmd_payload)
 
+
+def _build_nuclei_parser(sub) -> None:
     nuclei = sub.add_parser(
         "nuclei-ingest",
         help="Convert local Nuclei HTTP YAML templates into a payload pack",
@@ -739,6 +738,8 @@ def build_parser() -> argparse.ArgumentParser:
     nuclei.add_argument("--output", "-o", help="Write converted pack YAML (default stdout)")
     nuclei.set_defaults(func=cmd_nuclei_ingest)
 
+
+def _build_slither_parser(sub) -> None:
     slither = sub.add_parser(
         "slither-ingest",
         help="Convert a local Slither JSON report into Shroodler findings",
@@ -757,6 +758,8 @@ def build_parser() -> argparse.ArgumentParser:
     slither.add_argument("--output", "-o")
     slither.set_defaults(func=cmd_slither_ingest)
 
+
+def _build_authz_parser(sub) -> None:
     authz = sub.add_parser(
         "authz-diff",
         help="Replay a privileged crawl's pages under a second (lower-priv) "
@@ -862,6 +865,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     authz.set_defaults(func=cmd_authz_diff)
 
+
+def _build_peer_parser(sub) -> None:
     peer = sub.add_parser(
         "peer-write",
         help="Replay known-object writes as a second session (not n±1 enum)",
@@ -998,6 +1003,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     peer.set_defaults(func=cmd_peer_write)
 
+
+def _build_session_export_parser(sub) -> None:
     session_export = sub.add_parser(
         "session-export",
         help="Write a Playwright storageState JSON from a browser or captured jar",
@@ -1039,6 +1046,8 @@ def build_parser() -> argparse.ArgumentParser:
     session_export.add_argument("--output", "-o", help="Write storageState JSON (default stdout)")
     session_export.set_defaults(func=cmd_session_export)
 
+
+def _build_js_routes_parser(sub) -> None:
     js_routes = sub.add_parser(
         "js-routes",
         help="Extract parameterized URL templates from a JS bundle",
@@ -1052,6 +1061,8 @@ def build_parser() -> argparse.ArgumentParser:
     js_routes.add_argument("--output", "-o", help="Write routes JSON (default stdout)")
     js_routes.set_defaults(func=cmd_js_routes)
 
+
+def _build_paced_parser(sub) -> None:
     paced = sub.add_parser(
         "paced-fetch",
         help="GET a URL list at a capped request rate (default 1 req/s)",
@@ -1125,6 +1136,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     paced.set_defaults(func=cmd_paced_fetch)
 
+
+def _build_proxy_parser(sub) -> None:
     proxy = sub.add_parser(
         "proxy",
         help="Forward to shroodler-proxy (start, ca, replay)",
@@ -1136,6 +1149,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     proxy.set_defaults(func=cmd_proxy)
 
+
+def _build_history_parser(sub) -> None:
     history = sub.add_parser(
         "history",
         help="Record and list local scan history (for trend diffing over time)",
@@ -1158,6 +1173,8 @@ def build_parser() -> argparse.ArgumentParser:
     hlist.add_argument("--history-dir")
     hlist.set_defaults(func=cmd_history_list)
 
+
+def _build_engagement_history_parser(sub) -> None:
     engagement_history = sub.add_parser(
         "engagement-history",
         help="Show per-program agent run history (date, iterations, confirmed, new endpoints)",
@@ -1165,6 +1182,8 @@ def build_parser() -> argparse.ArgumentParser:
     engagement_history.add_argument("--program", required=True, metavar="SLUG")
     engagement_history.set_defaults(func=cmd_engagement_history)
 
+
+def _build_engagement_diff_parser(sub) -> None:
     engagement_diff = sub.add_parser(
         "engagement-diff",
         help="Show endpoint additions/removals/param changes since the previous agent run",
@@ -1172,6 +1191,8 @@ def build_parser() -> argparse.ArgumentParser:
     engagement_diff.add_argument("--program", required=True, metavar="SLUG")
     engagement_diff.set_defaults(func=cmd_engagement_diff)
 
+
+def _build_program_parser(sub) -> None:
     program = sub.add_parser(
         "program",
         help="Per-program engagement memory (endpoints, object IDs, coverage)",
@@ -1233,6 +1254,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pscope.set_defaults(func=cmd_program_scope)
 
+
+def _build_agent_parser(sub) -> None:
     agent = sub.add_parser(
         "agent",
         help="Run the autonomous engagement loop for a program",
@@ -1631,6 +1654,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     agent.set_defaults(func=cmd_agent)
 
+
+def _build_dedup_parser(sub) -> None:
     dedup = sub.add_parser(
         "dedup",
         help="Deduplicate findings JSON by id/url/param and host-level checks",
@@ -1639,6 +1664,8 @@ def build_parser() -> argparse.ArgumentParser:
     dedup.add_argument("--output", "-o", help="Write deduplicated JSON to FILE")
     dedup.set_defaults(func=cmd_dedup)
 
+
+def _build_ci_template_parser(sub) -> None:
     ci_template = sub.add_parser(
         "ci-template",
         help="Print a ready-to-paste CI workflow for shroodler crawl+diff",
@@ -1653,6 +1680,8 @@ def build_parser() -> argparse.ArgumentParser:
     ci_template.add_argument("--target", metavar="URL", help="Pre-fill crawl target URL")
     ci_template.set_defaults(func=cmd_ci_template)
 
+
+def _build_discover_parser(sub) -> None:
     discover = sub.add_parser(
         "discover",
         help="Find live subdomains and JS API endpoints for a program",
@@ -1702,6 +1731,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     discover.set_defaults(func=cmd_discover)
 
+
+def _build_trend_parser(sub) -> None:
     trend = sub.add_parser(
         "trend",
         help="Diff findings between two recorded (or arbitrary) scans",
@@ -1759,9 +1790,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     trend.set_defaults(func=cmd_trend)
 
+
+def _build_version_parser(sub) -> None:
     version = sub.add_parser("version", help="Print version")
     version.set_defaults(func=cmd_version)
 
+
+def _build_ask_parser(sub) -> None:
     ask = sub.add_parser(
         "ask",
         help="Ask a question over a scan/report ('show critical findings', "
@@ -1776,6 +1811,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ask.set_defaults(func=cmd_ask)
 
+
+def _build_mcp_server_parser(sub) -> None:
     mcp_server = sub.add_parser(
         "mcp-server",
         help="Run the MCP server exposing Shroodler as agent tools over stdio",
@@ -1810,6 +1847,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     mcp_server.set_defaults(func=cmd_mcp_server)
 
+
+def _build_audit_verify_parser(sub) -> None:
     audit_verify = sub.add_parser(
         "audit-verify",
         help="Replay a guardrail --audit-log and confirm its hash chain is intact",
@@ -1817,6 +1856,8 @@ def build_parser() -> argparse.ArgumentParser:
     audit_verify.add_argument("audit_log")
     audit_verify.set_defaults(func=cmd_audit_verify)
 
+
+def _build_self_scan_parser(sub) -> None:
     self_scan = sub.add_parser(
         "self-scan",
         help="Adversarial self-scan: fuzz the tool's own report renderers with "
@@ -1840,6 +1881,8 @@ def build_parser() -> argparse.ArgumentParser:
     self_scan.add_argument("--output", "-o")
     self_scan.set_defaults(func=cmd_self_scan)
 
+
+def _build_attack_path_parser(sub) -> None:
     attack_path = sub.add_parser(
         "attack-path",
         help="Correlate findings with reachability + weak-token context into one report",
@@ -1857,6 +1900,8 @@ def build_parser() -> argparse.ArgumentParser:
     attack_path.add_argument("--output", "-o")
     attack_path.set_defaults(func=cmd_attack_path)
 
+
+def _build_reverify_parser(sub) -> None:
     reverify = sub.add_parser(
         "reverify",
         help="Re-scan one route and check whether a specific finding is now gone "
@@ -1890,6 +1935,8 @@ def build_parser() -> argparse.ArgumentParser:
     reverify.add_argument("--audit-log", metavar="PATH")
     reverify.set_defaults(func=cmd_reverify)
 
+
+def _build_gen_test_parser(sub) -> None:
     gen_test = sub.add_parser(
         "gen-regression-test",
         help="Generate a pytest regression test from a confirmed-then-fixed finding",
@@ -1915,6 +1962,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     gen_test.set_defaults(func=cmd_gen_regression_test)
 
+
+def _build_compare_engines_parser(sub) -> None:
     compare_engines = sub.add_parser(
         "compare-engines",
         help="Merge Python and Go crawl JSON, tagging each finding with which "
@@ -1925,6 +1974,8 @@ def build_parser() -> argparse.ArgumentParser:
     compare_engines.add_argument("--output", "-o")
     compare_engines.set_defaults(func=cmd_compare_engines)
 
+
+def _build_ticket_parser(sub) -> None:
     ticket = sub.add_parser(
         "ticket",
         help="File or sync GitHub issues from scan findings (dry-run by default)",
@@ -1981,6 +2032,8 @@ def build_parser() -> argparse.ArgumentParser:
     _ticket_flags(tsync)
     tsync.set_defaults(func=cmd_ticket_sync)
 
+
+def _build_sla_parser(sub) -> None:
     sla = sub.add_parser(
         "sla",
         help="Attach ownership + SLA-escalated severity to findings, using recorded history",
@@ -2017,6 +2070,8 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sla_apply.set_defaults(func=cmd_sla_apply)
 
+
+def _build_suppress_parser(sub) -> None:
     suppress = sub.add_parser(
         "suppress",
         help="Work with suppression rules (.shroodlerignore) beyond diff/report/baseline",
@@ -2057,6 +2112,78 @@ def build_parser() -> argparse.ArgumentParser:
     )
     suppress_expiring.set_defaults(func=cmd_suppress_expiring)
 
+
+def build_parser() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        prog="shroodler",
+        description=(
+            "Shroodler command-line toolkit: crawl a target, render reports, "
+            "diff baselines, run payload packs, or drive the intercepting proxy. "
+            "Local targets (127.0.0.1/localhost) are crawled by default; pass "
+            "--allow-external to scan a remote target you're authorized to test."
+        ),
+        epilog=(
+            "Examples:\n"
+            "  shroodler crawl http://127.0.0.1:8081 -o out.json\n"
+            "  shroodler crawl https://example.com --allow-external -o out.json\n"
+            "  shroodler crawl http://127.0.0.1:8081 --profile aggressive -o out.json\n"
+            "  shroodler report out.json --format html -o out.html\n"
+            "  shroodler payload out.json -o hits.json\n"
+            "  shroodler proxy start --record /tmp/sess.jsonl\n"
+            "Desktop GUI is optional; this CLI is the full product surface."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p.add_argument("-V", "--version", action="store_true", help="Print version and exit")
+    p.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print full tracebacks on error instead of a one-line message",
+    )
+    sub = p.add_subparsers(dest="command", required=False)
+
+    _build_crawl_parser(sub)
+    _build_diff_parser(sub)
+    _build_ev_parser(sub)
+    _build_report_parser(sub)
+    _build_baseline_parser(sub)
+    _build_expected_parser(sub)
+    _build_ingest_parser(sub)
+    _build_ingest_har_parser(sub)
+    _build_tokens_parser(sub)
+    _build_cadence_parser(sub)
+    _build_triage_parser(sub)
+    _build_triage_findings_parser(sub)
+    _build_payload_parser(sub)
+    _build_nuclei_parser(sub)
+    _build_slither_parser(sub)
+    _build_authz_parser(sub)
+    _build_peer_parser(sub)
+    _build_session_export_parser(sub)
+    _build_js_routes_parser(sub)
+    _build_paced_parser(sub)
+    _build_proxy_parser(sub)
+    _build_history_parser(sub)
+    _build_engagement_history_parser(sub)
+    _build_engagement_diff_parser(sub)
+    _build_program_parser(sub)
+    _build_agent_parser(sub)
+    _build_dedup_parser(sub)
+    _build_ci_template_parser(sub)
+    _build_discover_parser(sub)
+    _build_trend_parser(sub)
+    _build_version_parser(sub)
+    _build_ask_parser(sub)
+    _build_mcp_server_parser(sub)
+    _build_audit_verify_parser(sub)
+    _build_self_scan_parser(sub)
+    _build_attack_path_parser(sub)
+    _build_reverify_parser(sub)
+    _build_gen_test_parser(sub)
+    _build_compare_engines_parser(sub)
+    _build_ticket_parser(sub)
+    _build_sla_parser(sub)
+    _build_suppress_parser(sub)
     return p
 
 

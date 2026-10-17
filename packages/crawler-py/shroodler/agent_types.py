@@ -96,6 +96,9 @@ class AgentConfig:
     oob: bool = False  # --oob; local HTTP callback collaborator
     oob_listen: str = "127.0.0.1:8765"
     oob_public_url: str = ""
+    # Network engine for crawling: "py" (in-process shroodler.crawler) or
+    # "go" (the shroodler-go subprocess). Default "py" until parity is proven.
+    engine: str = "py"
 
 
 @dataclass

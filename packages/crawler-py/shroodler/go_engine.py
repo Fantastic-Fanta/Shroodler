@@ -57,6 +57,7 @@ def available() -> bool:
 def _crawl_args(
     target: str,
     *,
+    mode: str | None,
     max_pages: int | None,
     depth: int | None,
     max_time: float | None,
@@ -68,12 +69,15 @@ def _crawl_args(
     user_agent: str | None,
     cookie: str | None,
     cookie_jar: str | None,
+    storage_state: str | None,
     login_recipe: str | None,
     proxy: str | None,
     output: str,
 ) -> list[str]:
     """Build the ``shroodler-go crawl`` argument vector (pure, for testing)."""
     args = ["crawl", target, "--output", output]
+    if mode:
+        args += ["--mode", mode]
     if max_pages is not None:
         args += ["--max-pages", str(max_pages)]
     if depth is not None:
@@ -96,6 +100,8 @@ def _crawl_args(
         args += ["--cookie", cookie]
     if cookie_jar:
         args += ["--cookie-jar", cookie_jar]
+    if storage_state:
+        args += ["--storage-state", storage_state]
     if login_recipe:
         args += ["--login-recipe", login_recipe]
     if proxy:
@@ -106,6 +112,7 @@ def _crawl_args(
 def crawl(
     target: str,
     *,
+    mode: str | None = None,
     max_pages: int | None = None,
     depth: int | None = None,
     max_time: float | None = None,
@@ -117,6 +124,7 @@ def crawl(
     user_agent: str | None = None,
     cookie: str | None = None,
     cookie_jar: str | None = None,
+    storage_state: str | None = None,
     login_recipe: str | None = None,
     proxy: str | None = None,
     timeout: float | None = None,
@@ -132,6 +140,7 @@ def crawl(
         out_path = os.path.join(tmp, "crawl.json")
         args = _crawl_args(
             target,
+            mode=mode,
             max_pages=max_pages,
             depth=depth,
             max_time=max_time,
@@ -143,6 +152,7 @@ def crawl(
             user_agent=user_agent,
             cookie=cookie,
             cookie_jar=cookie_jar,
+            storage_state=storage_state,
             login_recipe=login_recipe,
             proxy=proxy,
             output=out_path,

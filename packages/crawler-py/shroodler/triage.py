@@ -890,7 +890,7 @@ def _host_and_url(raw: str) -> tuple[str, str | None]:
 
 
 def _default_url(host: str) -> str:
-    if host.startswith("[") or ":" in host and not _is_ip(host.split(":")[0]):
+    if host.startswith("[") or (":" in host and not _is_ip(host.split(":")[0])):
         # host:port
         hostname, port = _split_hostport(host)
         scheme = "http" if _host_is_local(hostname) else "https"

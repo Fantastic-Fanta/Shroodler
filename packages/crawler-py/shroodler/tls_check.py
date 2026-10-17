@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import socket
 import ssl
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 from shroodler.models import Finding
@@ -41,9 +41,11 @@ def _name_from_rdn(rdn) -> str:
     try:
         for item in rdn:
             if isinstance(item, tuple) and len(item) == 2:
-                if item[0] in {"commonName", "commonName".lower()} or item[0] == "commonName":
-                    parts.append(str(item[1]))
-                elif str(item[0]).lower() in {"commonname", "cn"}:
+                if (
+                    item[0] in {"commonName", "commonName".lower()}
+                    or item[0] == "commonName"
+                    or str(item[0]).lower() in {"commonname", "cn"}
+                ):
                     parts.append(str(item[1]))
             elif isinstance(item, (list, tuple)):
                 for inner in item:
@@ -113,7 +115,7 @@ def _parse_not_after(raw: str) -> datetime | None:
     for fmt in ("%b %d %H:%M:%S %Y %Z", "%b %d %H:%M:%S %Y GMT"):
         try:
             dt = datetime.strptime(text, fmt)
-            return dt.replace(tzinfo=timezone.utc)
+            return dt.replace(tzinfo=UTC)
         except ValueError:
             continue
     return None
@@ -195,7 +197,7 @@ def check_target_tls(target_url: str) -> list[Finding]:
         return []
 
     not_after = _parse_not_after(str((cert or {}).get("notAfter") or ""))
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     if not_after is not None:
         if not_after < now:
             findings.append(

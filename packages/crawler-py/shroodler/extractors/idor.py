@@ -121,7 +121,7 @@ def _content_type(headers: dict[str, str]) -> str:
 
 
 class _Candidate:
-    __slots__ = ("original_url", "build_url", "original_value", "dedup_key")
+    __slots__ = ("build_url", "dedup_key", "original_url", "original_value")
 
     def __init__(self, original_url: str, build_url, original_value: int, dedup_key: str):
         self.original_url = original_url

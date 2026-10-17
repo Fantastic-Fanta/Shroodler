@@ -19,7 +19,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -75,7 +75,7 @@ def _parse_ts(raw: str | None) -> datetime | None:
     except ValueError:
         return None
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt
 
 
@@ -774,7 +774,7 @@ def _hydrate_ghost_routes(state: ProgramState, config: AgentConfig) -> None:
     segments). Numeric path IDs get a synthetic ``id`` param when no spec
     match exists.
     """
-    setattr(config, "_ghost_hydrate_done", True)
+    config._ghost_hydrate_done = True
     now = now_iso()
     target = str(getattr(config, "target", "") or "")
     oa_by_pattern: dict[str, dict[str, Any]] = {}
@@ -912,9 +912,9 @@ def decide_next_action(
     authz_urls: list[str] = []
     object_ids: list[str] = []
     write_endpoints: list[dict] = []
-    if config.higher_priv_jar and config.lower_priv_jar:
-        authz_urls = _untested_authz_urls(state, config)
-    elif config.higher_priv_jar and (config.peer_cookie or "").strip():
+    if (config.higher_priv_jar and config.lower_priv_jar) or (
+        config.higher_priv_jar and (config.peer_cookie or "").strip()
+    ):
         authz_urls = _untested_authz_urls(state, config)
     if config.owner_cookie and config.peer_cookie:
         object_ids = _pending_peer_write_ids(state, config)

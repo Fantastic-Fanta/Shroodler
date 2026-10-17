@@ -5,7 +5,7 @@ import hashlib
 import hmac
 import json
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from shroodler.models import Finding
 
@@ -150,8 +150,8 @@ def audit_jwt(token: str, url: str) -> list[Finding]:
         )
     elif isinstance(payload, dict):
         try:
-            exp = datetime.fromtimestamp(float(payload["exp"]), tz=timezone.utc)
-            if exp - datetime.now(timezone.utc) > _LONG_EXPIRY:
+            exp = datetime.fromtimestamp(float(payload["exp"]), tz=UTC)
+            if exp - datetime.now(UTC) > _LONG_EXPIRY:
                 findings.append(
                     Finding(
                         id="jwt-long-expiry",

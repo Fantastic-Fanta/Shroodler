@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -204,13 +205,13 @@ def ingest_sessions(
     target: str | None = None,
     allow_external: bool = False,
 ) -> CrawlResult:
-    from datetime import datetime, timezone
+    from datetime import datetime
     from time import monotonic
 
     from shroodler.cookie_source import load_captured_sessions
 
     sessions = load_captured_sessions(path)
-    started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     t0 = monotonic()
     inferred = target
     if not inferred:
@@ -269,7 +270,7 @@ def ingest_sessions(
 
     from shroodler.crawler import _dedupe_endpoints, _dedupe_findings, _with_capture_source
 
-    finished = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    finished = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     stamped = [_with_capture_source(f) for f in findings]
     return CrawlResult(
         target=inferred,

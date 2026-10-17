@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -97,7 +97,7 @@ def is_expired(rule: dict, today: date | None = None) -> bool:
     expires = _parse_expires(rule.get("expires"))
     if expires is None:
         return False
-    return (today or datetime.now(timezone.utc).date()) > expires
+    return (today or datetime.now(UTC).date()) > expires
 
 
 def expires_malformed(rule: dict) -> bool:
@@ -121,7 +121,7 @@ def expiring_within(rules: list[dict], days: int, today: date | None = None) -> 
     input a scheduled job needs to open a PR nudging someone to either
     extend-with-justification or remove it, before it silently starts
     failing `diff --gate` with no notice."""
-    now = today or datetime.now(timezone.utc).date()
+    now = today or datetime.now(UTC).date()
     horizon = now + timedelta(days=days)
     out = []
     for rule in rules:

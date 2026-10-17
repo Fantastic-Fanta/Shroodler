@@ -8,7 +8,7 @@ or vendors its detectors.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from time import monotonic
 from typing import Any
@@ -111,7 +111,7 @@ def to_findings(obj: dict[str, Any]) -> list[Finding]:
 def convert_file(path: str | Path, *, target: str | None = None) -> CrawlResult:
     from shroodler.crawler import _dedupe_findings
 
-    started = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     t0 = monotonic()
     raw = json.loads(Path(path).read_text(encoding="utf-8"))
     if not is_slither_report(raw):
@@ -120,7 +120,7 @@ def convert_file(path: str | Path, *, target: str | None = None) -> CrawlResult:
     inferred = (target or "").strip()
     if not inferred:
         inferred = findings[0].url.split("#", 1)[0] if findings else str(path)
-    finished = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    finished = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     return CrawlResult(
         target=inferred,
         scan_started_at=started,

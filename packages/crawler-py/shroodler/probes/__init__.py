@@ -33,9 +33,12 @@ from shroodler.probes.xss import probe_xss
 from shroodler.probes.xxe import probe_xxe
 
 __all__ = [
+    "probe_auth_bypass",
     "probe_cache_poisoning",
     "probe_crlf",
     "probe_dom_xss",
+    "probe_enumerable_id",
+    "probe_file_upload",
     "probe_graphql",
     "probe_host_header",
     "probe_idor",
@@ -48,14 +51,11 @@ __all__ = [
     "probe_race_condition",
     "probe_rate_limit",
     "probe_rate_limit_bypass",
-    "probe_unauth_exposure",
-    "probe_auth_bypass",
-    "probe_enumerable_id",
-    "probe_file_upload",
     "probe_smuggling",
     "probe_sqli",
     "probe_ssrf",
     "probe_ssti",
+    "probe_unauth_exposure",
     "probe_websocket",
     "probe_xss",
     "probe_xxe",

@@ -214,7 +214,7 @@ def probe_paths(
     already: set[str],
     remaining: int | None = None,
     deadline: float | None = None,
-    baseline: Soft404Baseline | None | object = _UNSET,
+    baseline: Soft404Baseline | object | None = _UNSET,
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []
@@ -261,7 +261,7 @@ def probe_mutations(
     discovered: list[str],
     remaining: int | None = None,
     deadline: float | None = None,
-    baseline: Soft404Baseline | None | object = _UNSET,
+    baseline: Soft404Baseline | object | None = _UNSET,
 ) -> tuple[list[Page], list[Finding]]:
     pages: list[Page] = []
     findings: list[Finding] = []

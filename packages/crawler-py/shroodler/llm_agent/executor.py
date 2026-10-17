@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 from urllib.parse import urlencode, urlparse, urlunparse
 
@@ -143,7 +143,7 @@ def _remember_probe(
                 probe_type=probe_type,
                 param_name=param,
                 result=status,
-                tried_at=datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                tried_at=datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
                 finding_id=finding_id,
             )
         )

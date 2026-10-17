@@ -21,7 +21,7 @@ won't have.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from shroodler.history import default_history_dir, list_scans, load_scan
@@ -176,7 +176,7 @@ def apply_sla(
     hist_dir = history_dir or default_history_dir()
     budgets = {**DEFAULT_SLA_DAYS, **(sla_days or {})}
     rules = owners or []
-    today = today or datetime.now(timezone.utc).date()
+    today = today or datetime.now(UTC).date()
 
     finder = HistoryFirstSeen(hist_dir, target=doc.get("target"))
     history_available = finder.history_available

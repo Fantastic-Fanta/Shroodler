@@ -30,7 +30,7 @@ def test_execute_crawl_delegates(monkeypatch):
         assert isinstance(action, CrawlAction)
         return {"pages_crawled": 2, "findings_added": 1, "new_endpoints": 3}
 
-    monkeypatch.setattr("shroodler.agent._execute_crawl", fake_crawl)
+    monkeypatch.setattr("shroodler.agent_exec._execute_crawl", fake_crawl)
     state = ProgramState(slug="lab")
     result = execute_tool(
         PlannerDecision(action="crawl", params={"url": "http://127.0.0.1/a"}),
@@ -180,7 +180,7 @@ def test_check_authz_calls_run_authz_diff(monkeypatch):
             ]
         }
 
-    monkeypatch.setattr("shroodler.agent.run_authz_diff", fake_diff)
+    monkeypatch.setattr("shroodler.agent_exec.run_authz_diff", fake_diff)
     state = ProgramState(
         slug="lab",
         endpoints={"http://127.0.0.1/api/1": {"method": "GET"}},

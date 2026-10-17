@@ -7,11 +7,11 @@ from shroodler.agent import (
     AgentConfig,
     ProbeAction,
     _hydrate_ghost_routes,
-    _probe_params,
     _probe_rank,
     _untested_probe_urls,
     execute_action,
 )
+from shroodler.agent_exec import _probe_params
 from shroodler.pacer import Pacer
 from shroodler.probes.common import normalize_params
 from shroodler.program import ProgramState

@@ -157,7 +157,7 @@ def _one_param(
     state: Any,
     current_value: str = "",
 ) -> tuple[str, list[dict]]:
-    from shroodler.agent import _probe_params
+    from shroodler.agent_exec import _probe_params
 
     meta = (getattr(state, "endpoints", None) or {}).get(url) or {}
     method, params = _probe_params(url, meta)
@@ -207,7 +207,8 @@ def _mark(state: Any, urls: list[str], flag: str) -> None:
 
 
 def _crawl(decision: PlannerDecision, state: Any, config: Any, pacer: Pacer) -> ToolResult:
-    from shroodler.agent import CrawlAction, _execute_crawl
+    from shroodler.agent import CrawlAction
+    from shroodler.agent_exec import _execute_crawl
 
     params = _params_of(decision)
     url = params.get("url")
@@ -338,7 +339,8 @@ def _check_authz(
     pacer: Pacer,
 ) -> ToolResult:
     from shroodler import program
-    from shroodler.agent import _allow_external, run_authz_diff
+    from shroodler.agent import _allow_external
+    from shroodler.agent_exec import run_authz_diff
 
     url = str(_params_of(decision).get("url") or "")
     if not url:
@@ -485,7 +487,7 @@ def _auto_verify_before_report(
 
 
 def _report(state: Any) -> ToolResult:
-    from shroodler.agent import _execute_report
+    from shroodler.agent_exec import _execute_report
 
     raw = _execute_report(state)
     confirmed = int(raw.get("confirmed") or 0)

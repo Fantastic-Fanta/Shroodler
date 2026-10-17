@@ -212,7 +212,7 @@ def test_format_submit_has_header_and_steps():
     md = format_submit([finding])
     assert "## " in md
     assert "Steps to Reproduce" in md
-    assert "Suggested Remediation" in md
+    assert "Suggested Remediation" not in md
     assert "Reflected XSS" in md
 
 

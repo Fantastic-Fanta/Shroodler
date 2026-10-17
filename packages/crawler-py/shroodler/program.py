@@ -10,7 +10,7 @@ import json
 import os
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -65,7 +65,7 @@ def _parse_ts(raw: str | None) -> datetime | None:
     except ValueError:
         return None
     if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = dt.replace(tzinfo=UTC)
     return dt
 
 
@@ -444,9 +444,7 @@ def _upsert_endpoint(
     if method:
         incoming = str(method).upper() or "GET"
         existing = str(meta.get("method") or "GET").upper() or "GET"
-        if not meta.get("method") or (existing == "GET" and incoming != "GET"):
-            meta["method"] = incoming
-        elif incoming != "GET":
+        if not meta.get("method") or (existing == "GET" and incoming != "GET") or incoming != "GET":
             meta["method"] = incoming
     before_names = _param_name_set(meta.get("params") or [])
     incoming_params = _normalize_param_list(params)
@@ -763,15 +761,15 @@ def add_session(
 
 
 def stale_sessions(state: ProgramState, now: datetime | None = None) -> list[dict[str, Any]]:
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     out: list[dict[str, Any]] = []
     for sess in state.sessions:
         captured = _parse_ts(sess.get("captured_at"))
         expires = _parse_ts(sess.get("expires_hint"))
         stale = False
-        if expires is not None and expires <= now:
-            stale = True
-        elif captured is not None and (now - captured) > _STALE_AFTER:
+        if (expires is not None and expires <= now) or (
+            captured is not None and (now - captured) > _STALE_AFTER
+        ):
             stale = True
         if stale:
             out.append(dict(sess))

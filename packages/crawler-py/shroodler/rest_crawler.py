@@ -203,9 +203,7 @@ def extract_rest_urls(base_url: str, data: Any) -> list[str]:
             for item in obj:
                 walk(item, parent_key)
         elif isinstance(obj, str):
-            if parent_key.lower() in _HATEOAS_KEYS:
-                add(obj)
-            elif _looks_like_url(obj):
+            if parent_key.lower() in _HATEOAS_KEYS or _looks_like_url(obj):
                 add(obj)
 
     walk(data)

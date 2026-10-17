@@ -53,7 +53,7 @@ class OpenApiEndpoint:
 
 def spec_urls_from_html(html: str, page_url: str) -> list[str]:
     """Pull swagger-ui ``url:`` / ``urls:`` spec locations out of HTML."""
-    if not html or "<" not in html[:4096] and "swagger" not in html.lower():
+    if not html or ("<" not in html[:4096] and "swagger" not in html.lower()):
         # Still scan short config blobs that aren't full documents.
         if "url" not in (html or "").lower():
             return []

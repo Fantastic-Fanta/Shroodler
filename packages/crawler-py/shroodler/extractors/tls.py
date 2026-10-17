@@ -23,7 +23,7 @@ from __future__ import annotations
 import ipaddress
 import socket
 import ssl
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import urlparse
 
 from cryptography import x509
@@ -216,7 +216,7 @@ def check_tls(target_url: str) -> list[Finding]:
         return []
 
     findings: list[Finding] = []
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     not_after = cert.not_valid_after_utc
     expired = not_after < now
     if expired:

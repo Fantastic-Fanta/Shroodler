@@ -955,17 +955,6 @@ class Crawler:
         self._emit_session_died(last)
         return last
 
-    def _maybe_reauth(self, result: FetchResult, seed: str) -> bool:
-        """Compatibility wrapper: re-auth if the session expired."""
-        if not self._session_looks_expired(result):
-            return False
-        if self._reauth_attempts >= self.reauth_max_retries:
-            if not self._session_died:
-                self._emit_session_died(result)
-            return False
-        recovered = self._reauth_until_ok(result, seed, result.url, monotonic())
-        return not self._session_looks_expired(recovered)
-
     def _budget_hit(self, t0: float, n_pages: int) -> str | None:
         if self.max_time is not None and (monotonic() - t0) >= self.max_time:
             return "max-time"

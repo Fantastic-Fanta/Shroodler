@@ -389,16 +389,6 @@ def captured_write_requires_csrf(body: str, headers: dict[str, str] | None = Non
     return False
 
 
-def header_has_csrf(headers: dict[str, str] | None) -> bool:
-    if not headers:
-        return False
-    for key in headers:
-        folded = str(key).lower().replace("_", "-")
-        if "csrf" in folded or "xsrf" in folded:
-            return True
-    return False
-
-
 def csrf_harvest_url_ok(url: str, *, allow_external: bool = False) -> bool:
     """CSRF harvest is a live GET — same local-only default as every other probe."""
     if not url:

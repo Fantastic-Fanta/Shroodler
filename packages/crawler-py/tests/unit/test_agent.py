@@ -366,7 +366,7 @@ def test_execute_crawl_records_per_url_errors(monkeypatch):
 
 def test_execute_authz_merges_findings_and_marks_tested(monkeypatch):
     monkeypatch.setattr(
-        "shroodler.agent.run_authz_diff",
+        "shroodler.agent_exec.run_authz_diff",
         lambda urls, **kw: {
             "findings": [
                 {
@@ -441,7 +441,7 @@ def test_attach_live_details_lists_new_findings_and_urls():
 
 def test_execute_peer_write_marks_owning_endpoints(monkeypatch):
     monkeypatch.setattr(
-        "shroodler.agent.run_peer_write",
+        "shroodler.agent_exec.run_peer_write",
         lambda object_ids, **kw: {
             "findings": [
                 {
@@ -746,7 +746,7 @@ def test_crawl_falls_back_to_target_when_endpoints_are_off_origin():
 
 
 def test_playbook_builds_get_writes_from_object_ids():
-    from shroodler.agent import _playbook_from_object_ids
+    from shroodler.agent_exec import _playbook_from_object_ids
 
     state = ProgramState(
         slug="lab",
@@ -904,7 +904,7 @@ def test_decide_write_authz_after_authz_before_peer_write():
 
 def test_execute_write_authz_merges_findings(monkeypatch):
     monkeypatch.setattr(
-        "shroodler.agent.run_write_authz",
+        "shroodler.agent_exec.run_write_authz",
         lambda endpoints, **kw: {
             "findings": [
                 {
@@ -948,7 +948,7 @@ def test_execute_write_authz_merges_findings(monkeypatch):
 
 
 def test_run_write_authz_skips_placeholders_and_records_finding():
-    from shroodler.agent import run_write_authz
+    from shroodler.agent_exec import run_write_authz
 
     class FakeResp:
         def __init__(self, status):
@@ -2500,6 +2500,7 @@ def test_run_llm_verify_skipped_without_key(monkeypatch):
 
 def test_openapi_probe_aggressive_parallel_covers_all(monkeypatch):
     import shroodler.agent as ag
+    import shroodler.agent_exec as ax
     import shroodler.probes.openapi_probe as oap
     from shroodler.models import Finding
 
@@ -2513,11 +2514,11 @@ def test_openapi_probe_aggressive_parallel_covers_all(monkeypatch):
         ]
 
     monkeypatch.setattr(oap, "probe_openapi_endpoints", fake_probe)
-    monkeypatch.setattr(ag, "_openapi_auth_header", lambda s, c: ("", ""))
+    monkeypatch.setattr(ax, "_openapi_auth_header", lambda s, c: ("", ""))
 
     import contextlib
 
-    monkeypatch.setattr(ag, "_bind_probe_session", lambda s, c, p: contextlib.nullcontext())
+    monkeypatch.setattr(ax, "_bind_probe_session", lambda s, c, p: contextlib.nullcontext())
 
     endpoints = [{"url": f"http://127.0.0.1/api/e{i}"} for i in range(12)]
     state = ProgramState(slug="lab")
@@ -2525,7 +2526,7 @@ def test_openapi_probe_aggressive_parallel_covers_all(monkeypatch):
         state.endpoints[e["url"]] = {}
     config = AgentConfig(program="lab", target="http://127.0.0.1/", aggressive=True)
     action = ag.OpenApiProbeAction(endpoints=endpoints)
-    out = ag._execute_openapi_probe(action, state, config, Pacer(0))
+    out = ax._execute_openapi_probe(action, state, config, Pacer(0))
     assert out["urls_tested"] == 12
     assert out["findings_added"] == 12
     assert set(calls) == {e["url"] for e in endpoints}  # every endpoint probed

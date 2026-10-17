@@ -451,6 +451,7 @@ def _execute_crawl(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    from shroodler import go_engine
     from shroodler.crawler import crawl_url
 
     pages_crawled = 0
@@ -464,28 +465,50 @@ def _execute_crawl(
         is_webgoat_url(u) for u in action.urls
     )
     mode = "headless" if webgoat else "static"
+    # The Go engine covers the same crawl surface (incl. --mode headless); fall
+    # back to the in-process Python crawler when it is unavailable or when a
+    # Python-only option (harvest-robots) is requested, so behaviour never
+    # silently degrades.
+    use_go = (
+        str(getattr(config, "engine", "py")).lower() == "go"
+        and not config.harvest_robots
+        and go_engine.available()
+    )
     for url in action.urls:
         if not _in_target_origin(url, config.target):
             continue
         pacer.wait()
+        storage_state = (config.higher_priv_jar or "").strip() or None
         try:
-            result = crawl_url(
-                url,
-                depth=1,
-                max_pages=config.max_pages_per_crawl,
-                login_recipe=config.login_recipe,
-                storage_state=(config.higher_priv_jar or "").strip() or None,
-                allow_external=allow_external,
-                ignore_robots=config.ignore_robots,
-                harvest_robots=config.harvest_robots,
-                mode=mode,
-            )
+            if use_go:
+                doc = go_engine.crawl(
+                    url,
+                    mode=mode,
+                    depth=1,
+                    max_pages=config.max_pages_per_crawl,
+                    login_recipe=config.login_recipe,
+                    storage_state=storage_state,
+                    allow_external=allow_external,
+                    ignore_robots=config.ignore_robots,
+                )
+            else:
+                result = crawl_url(
+                    url,
+                    depth=1,
+                    max_pages=config.max_pages_per_crawl,
+                    login_recipe=config.login_recipe,
+                    storage_state=storage_state,
+                    allow_external=allow_external,
+                    ignore_robots=config.ignore_robots,
+                    harvest_robots=config.harvest_robots,
+                    mode=mode,
+                )
+                doc = result.to_dict() if hasattr(result, "to_dict") else dict(result)
         except Exception as exc:  # noqa: BLE001 - per-URL, loop must continue
             errors.append(f"{url}: {type(exc).__name__}: {exc}")
             # Still stamp last_seen so this URL doesn't loop forever as a gap.
             _stamp_last_seen(state, url)
             continue
-        doc = result.to_dict() if hasattr(result, "to_dict") else dict(result)
         delta = program.merge_crawl_doc(state, doc)
         # Ensure the attempted URL is stamped even when the crawler returned no
         # pages (e.g. a JSON API endpoint the HTML crawler can't traverse).

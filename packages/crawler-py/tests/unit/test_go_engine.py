@@ -18,6 +18,7 @@ from shroodler import go_engine
 def test_crawl_args_maps_options():
     args = go_engine._crawl_args(
         "http://127.0.0.1:8081/",
+        mode="headless",
         max_pages=50,
         depth=3,
         max_time=None,
@@ -29,12 +30,14 @@ def test_crawl_args_maps_options():
         user_agent="ua",
         cookie="k=v",
         cookie_jar=None,
+        storage_state="/tmp/state.json",
         login_recipe=None,
         proxy=None,
         output="/tmp/out.json",
     )
     assert args[:2] == ["crawl", "http://127.0.0.1:8081/"]
     assert "--output" in args and "/tmp/out.json" in args
+    assert "--mode" in args and "headless" in args
     assert "--max-pages" in args and "50" in args
     assert "--depth" in args and "3" in args
     assert "--ignore-robots" in args
@@ -44,6 +47,7 @@ def test_crawl_args_maps_options():
     assert "--header" in args and "X-A: 1" in args
     assert "--user-agent" in args and "ua" in args
     assert "--cookie" in args and "k=v" in args
+    assert "--storage-state" in args and "/tmp/state.json" in args
 
 
 def test_find_binary_missing(monkeypatch, tmp_path):
@@ -94,3 +98,41 @@ def test_crawl_timeout_raises(monkeypatch, tmp_path):
     monkeypatch.setattr(go_engine.subprocess, "run", _boom)
     with pytest.raises(go_engine.GoEngineError, match="timed out"):
         go_engine.crawl("http://127.0.0.1:8081/", binary=tmp_path / "shroodler-go")
+
+
+def test_execute_crawl_uses_go_engine_when_selected(monkeypatch):
+    """engine='go' routes _execute_crawl through go_engine.crawl, not crawl_url."""
+    from shroodler import agent_exec
+    from shroodler.agent_types import AgentConfig, CrawlAction
+    from shroodler.pacer import Pacer
+    from shroodler.program import ProgramState
+
+    target = "http://127.0.0.1:8081/"
+    doc = {
+        "target": target,
+        "pages": [{"url": target}],
+        "findings": [
+            {"id": "missing-csp", "url": target, "severity": "info", "evidence": "x"}
+        ],
+    }
+    calls = {"go": 0, "py": 0}
+
+    def _fake_go_crawl(url, **kwargs):
+        calls["go"] += 1
+        return doc
+
+    def _boom_crawl_url(*a, **k):
+        calls["py"] += 1
+        raise AssertionError("crawl_url must not be called when engine='go'")
+
+    monkeypatch.setattr(go_engine, "available", lambda: True)
+    monkeypatch.setattr(go_engine, "crawl", _fake_go_crawl)
+    monkeypatch.setattr("shroodler.crawler.crawl_url", _boom_crawl_url)
+
+    state = ProgramState(slug="t")
+    cfg = AgentConfig(program="t", target=target, engine="go")
+    out = agent_exec._execute_crawl(CrawlAction(urls=[target]), state, cfg, Pacer(0))
+
+    assert calls["go"] == 1 and calls["py"] == 0
+    assert out["pages_crawled"] >= 1
+    assert target in state.endpoints

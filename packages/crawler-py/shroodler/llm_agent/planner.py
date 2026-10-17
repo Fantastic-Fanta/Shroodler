@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -25,6 +24,7 @@ from shroodler.llm_provider import (
 )
 from shroodler.llm_provider import estimate_cost_usd as estimate_cost_usd
 from shroodler.llm_triage import _parse_json_object
+from shroodler.util import log_exc
 
 DEFAULT_MODEL = "claude-sonnet-5"
 OPUS_MODEL = "claude-opus-5"
@@ -138,13 +138,6 @@ def _fallback(reason: str, *, model: str = DEFAULT_MODEL) -> PlannerDecision:
         model=model,
     )
 
-
-def _log_error(exc: BaseException) -> None:
-    print(
-        json.dumps({"error": f"llm_agent: {type(exc).__name__}: {exc}"}, default=str),
-        file=sys.stderr,
-        flush=True,
-    )
 
 
 def _truncate_names(names: list[str], limit: int) -> list[str]:
@@ -350,5 +343,5 @@ def plan_next_action(
         response = llm_complete_sync(messages, llm_config, tools=openai_tools)
         return _decision_from_response(response, model=display_model)
     except Exception as exc:  # noqa: BLE001 - planner must never raise
-        _log_error(exc)
+        log_exc("llm_agent", exc)
         return _fallback(f"{type(exc).__name__}: {exc}", model=display_model)

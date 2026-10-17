@@ -13,9 +13,9 @@ from shroodler.cli import (
     cmd_payload,
     cmd_proxy,
     cmd_report,
-    find_proxy_bin,
     main,
 )
+from shroodler.commands import find_proxy_bin
 from shroodler.config import load_rc
 from shroodler.diffcmd import diff_documents, load_json
 from shroodler.report import write_report
@@ -339,13 +339,13 @@ def test_cmd_payload_refuses_external(tmp_path):
 
 def test_cmd_proxy_missing_and_forward(tmp_path, monkeypatch, capfd):
     monkeypatch.delenv("SHROODLER_PROXY_BIN", raising=False)
-    monkeypatch.setattr("shroodler.cli.find_proxy_bin", lambda: None)
+    monkeypatch.setattr("shroodler.commands.find_proxy_bin", lambda: None)
     assert cmd_proxy(argparse.Namespace(proxy_args=["start"])) == 1
     assert "not found" in capfd.readouterr().err
     script = tmp_path / "fake-proxy"
     script.write_text("#!/bin/sh\necho proxy-ok \"$@\"\n", encoding="utf-8")
     script.chmod(0o755)
-    monkeypatch.setattr("shroodler.cli.find_proxy_bin", lambda: script)
+    monkeypatch.setattr("shroodler.commands.find_proxy_bin", lambda: script)
     assert cmd_proxy(argparse.Namespace(proxy_args=["ca", "generate"])) == 0
     assert "proxy-ok ca generate" in capfd.readouterr().out
 

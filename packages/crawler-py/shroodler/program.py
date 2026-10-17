@@ -16,6 +16,7 @@ from typing import Any
 from urllib.parse import urljoin, urlparse
 
 from shroodler.models import Finding
+from shroodler.util import now_iso
 
 _SLUG_RE = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._-]{0,63}$")
 _UUID_RE = re.compile(
@@ -51,9 +52,6 @@ def program_dir(slug: str) -> Path:
 def state_path(slug: str) -> Path:
     return program_dir(slug) / "state.json"
 
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _parse_ts(raw: str | None) -> datetime | None:
@@ -526,7 +524,7 @@ def _ingest_page_samples(state: ProgramState, page: dict) -> None:
 
 def merge_crawl_doc(state: ProgramState, doc: dict) -> dict[str, int]:
     """Ingest an in-memory crawl document. Returns a delta of counts."""
-    last_seen = str(doc.get("scan_finished_at") or doc.get("scan_started_at") or _now())
+    last_seen = str(doc.get("scan_finished_at") or doc.get("scan_started_at") or now_iso())
     new_endpoints = 0
     updated_endpoints = 0
     urls: list[str] = []
@@ -695,7 +693,7 @@ def load_suppressions(state: ProgramState) -> set[tuple[str, str]]:
 
 def record_run_summary(state: ProgramState, summary_dict: dict[str, Any]) -> None:
     row = {
-        "started_at": str(summary_dict.get("started_at") or _now()),
+        "started_at": str(summary_dict.get("started_at") or now_iso()),
         "iterations": int(summary_dict.get("iterations") or 0),
         "confirmed": int(summary_dict.get("confirmed") or 0),
         "new_endpoints": int(summary_dict.get("new_endpoints") or 0),
@@ -731,7 +729,7 @@ def mark_tested(state: ProgramState, urls: list[str], field: str) -> int:
     if field not in {"tested_authz", "tested_peer_write", "tested_payload"}:
         raise ValueError(f"unknown tested field {field!r}")
     n = 0
-    now = _now()
+    now = now_iso()
     for url in urls:
         if not url:
             continue
@@ -757,7 +755,7 @@ def add_session(
     record = {
         "label": label,
         "path": str(path),
-        "captured_at": _now(),
+        "captured_at": now_iso(),
         "expires_hint": expires,
     }
     state.sessions.append(record)

@@ -32,6 +32,7 @@ from shroodler.pacer import Pacer
 from shroodler.program import ProgramState, object_ids_flat, url_to_pattern
 from shroodler.urls import is_loopback_or_local, same_origin
 from shroodler.urls import origin as origin_of
+from shroodler.util import now_iso, now_utc
 
 _STALE_AFTER = timedelta(hours=24)
 _DEFAULT_RATE_CEILING = 0.1  # 100 ms between HTTP requests if no guardrail
@@ -250,9 +251,6 @@ class AgentResult:
     errors: list[str] = field(default_factory=list)
 
 
-def _now() -> datetime:
-    return datetime.now(timezone.utc)
-
 
 def _parse_ts(raw: str | None) -> datetime | None:
     if not raw:
@@ -345,7 +343,7 @@ def crawl_coverage_gaps(state: ProgramState, config: AgentConfig) -> list[str]:
     Out-of-origin URLs are never queued.
     """
     cap = max(0, int(config.max_pages_per_crawl))
-    now = _now()
+    now = now_utc()
     stale: list[tuple[str, str]] = []
     for url, meta in state.endpoints.items():
         if not _in_target_origin(url, config.target):
@@ -965,7 +963,7 @@ def _hydrate_ghost_routes(state: ProgramState, config: AgentConfig) -> None:
     match exists.
     """
     setattr(config, "_ghost_hydrate_done", True)
-    now = program._now()
+    now = now_iso()
     target = str(getattr(config, "target", "") or "")
     oa_by_pattern: dict[str, dict[str, Any]] = {}
 
@@ -1654,7 +1652,7 @@ def _execute_js_analysis(
 
 def _stamp_last_seen(state: ProgramState, url: str) -> None:
     """Stamp last_seen=now on an endpoint so it exits the coverage-gap queue."""
-    now_str = _now().isoformat()
+    now_str = now_utc().isoformat()
     meta = state.endpoints.get(url)
     if meta is None:
         state.endpoints[url] = program._endpoint_meta(url, now_str)
@@ -3288,7 +3286,7 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
         _ensure_write_authz_endpoints(config)
 
     config._prev_endpoints = copy.deepcopy(state.endpoints)
-    config._run_started_at = _now().isoformat()
+    config._run_started_at = now_utc().isoformat()
     config._endpoint_count_at_start = len(state.endpoints)
     config._crawled_this_run = False
     config._diff_done = False
@@ -3461,7 +3459,7 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
         program.record_run_summary(
             state,
             {
-                "started_at": getattr(config, "_run_started_at", None) or _now().isoformat(),
+                "started_at": getattr(config, "_run_started_at", None) or now_utc().isoformat(),
                 "iterations": len(log),
                 "confirmed": len(confirmed),
                 "new_endpoints": max(

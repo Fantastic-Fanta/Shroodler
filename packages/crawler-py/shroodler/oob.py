@@ -11,10 +11,11 @@ import threading
 import time
 import weakref
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any
 from urllib.parse import parse_qs, urlparse
+
+from shroodler.util import now_iso
 
 _DEFAULT_WAIT = 3.0
 _HEADER_CAP = 20
@@ -45,9 +46,6 @@ class OOBToken:
     token: str
     url: str
 
-
-def _now_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _cap_headers(raw: Any) -> dict[str, str]:
@@ -304,7 +302,7 @@ class OOBCollaborator:
             path=str(getattr(handler, "path", "") or ""),
             remote=remote,
             headers=_cap_headers(getattr(handler, "headers", None)),
-            at=_now_iso(),
+            at=now_iso(),
         )
         with self._lock:
             self._log.setdefault(token, []).append(hit)
@@ -317,7 +315,7 @@ class OOBCollaborator:
             path=str(kwargs.get("path") or f"/{token}"),
             remote=str(kwargs.get("remote") or "127.0.0.1"),
             headers=dict(kwargs.get("headers") or {}),
-            at=str(kwargs.get("at") or _now_iso()),
+            at=str(kwargs.get("at") or now_iso()),
         )
         with self._lock:
             self._log.setdefault(token, []).append(hit)

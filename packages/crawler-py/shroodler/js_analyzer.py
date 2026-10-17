@@ -20,6 +20,7 @@ from shroodler.extractors.sourcemap import (
 )
 from shroodler.models import Finding
 from shroodler.program import ProgramState
+from shroodler.util import now_iso
 
 _TEMPLATE_INTERP = re.compile(r"\$\{[^}]*\}")
 
@@ -370,7 +371,7 @@ class JSAnalyzer:
             program._upsert_endpoint(
                 state,
                 resolved,
-                program._now(),
+                now_iso(),
                 source="js-analysis",
                 method=verb,
                 params=extra_params or None,
@@ -380,7 +381,7 @@ class JSAnalyzer:
                 program._upsert_endpoint(
                     state,
                     concrete,
-                    program._now(),
+                    now_iso(),
                     source="js-analysis",
                     method=verb,
                     params=extra_params or None,

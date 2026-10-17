@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import os
-import sys
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -17,6 +16,7 @@ from shroodler.llm_provider import (
 from shroodler.llm_triage import _parse_json_object
 from shroodler.models import Finding
 from shroodler.probes.common import body_text, request
+from shroodler.util import log_exc
 
 # Spec asked for claude-sonnet-5. llm_triage uses claude-haiku-4-5-20251001.
 BUSINESS_LOGIC_MODEL = "claude-sonnet-5"
@@ -64,20 +64,6 @@ class BusinessProbe:
     id: str
     description: str
     steps: list[ProbeStep] = field(default_factory=list)
-
-
-def _log_error(exc: BaseException) -> None:
-    print(
-        json_dumps({"error": f"business_logic: {type(exc).__name__}: {exc}"}),
-        file=sys.stderr,
-        flush=True,
-    )
-
-
-def json_dumps(payload: dict[str, Any]) -> str:
-    import json
-
-    return json.dumps(payload, default=str)
 
 
 def _bundle_texts(js_bundles: Any) -> list[str]:
@@ -167,7 +153,7 @@ def infer_app_domain(
             currency_params=[str(x) for x in currency_params if str(x)],
         )
     except Exception as exc:  # noqa: BLE001 - fail closed, never crash the agent
-        _log_error(exc)
+        log_exc("business_logic", exc)
         return empty
 
 

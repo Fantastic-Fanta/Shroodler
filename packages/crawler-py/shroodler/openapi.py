@@ -187,8 +187,9 @@ def merge_openapi_into_state(
 ) -> int:
     """Upsert spec endpoints into program state. Returns the number newly added."""
     from shroodler import program as program_mod
+    from shroodler.util import now_iso
 
-    last_seen = program_mod._now()
+    last_seen = now_iso()
     added = 0
     rows: list[dict[str, Any]] = []
     existing_keys = {

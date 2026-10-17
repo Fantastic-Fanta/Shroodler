@@ -823,7 +823,7 @@ def test_agent_oob_flags_parse(monkeypatch):
 def test_robots_flags_resolution():
     import argparse
 
-    from shroodler.cli import _robots_flags
+    from shroodler.commands import _robots_flags
 
     def ns(**kw):
         n = argparse.Namespace()

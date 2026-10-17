@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from dataclasses import dataclass
 from typing import Any
 from urllib.parse import urlparse
@@ -26,6 +25,7 @@ from shroodler.program import (
     ProgramState,
     url_to_pattern,
 )
+from shroodler.util import log_exc
 
 TRIAGE_MODEL = "claude-haiku-4-5-20251001"
 
@@ -78,13 +78,6 @@ def _fallback(object_ids: list[str], authz_urls: list[str]) -> TriageResult:
         used_llm=False,
     )
 
-
-def _log_error(exc: BaseException) -> None:
-    print(
-        json.dumps({"error": f"llm_triage: {type(exc).__name__}: {exc}"}, default=str),
-        file=sys.stderr,
-        flush=True,
-    )
 
 
 def _owning_endpoints(state: ProgramState, object_id: str) -> list[str]:
@@ -294,5 +287,5 @@ def triage_leads(
             used_llm=True,
         )
     except Exception as exc:  # noqa: BLE001 - triage must never raise
-        _log_error(exc)
+        log_exc("llm_triage", exc)
         return fallback

@@ -23,6 +23,7 @@ from shroodler.modes.static import StaticFetcher
 from shroodler.program import ProgramState
 from shroodler.robots import DEFAULT_UA
 from shroodler.urls import same_origin
+from shroodler.util import now_iso
 
 
 @dataclass
@@ -298,7 +299,7 @@ def discover(state: ProgramState, target: str, config: DiscoveryConfig) -> Disco
             if not config.dry_run:
                 state.scope_urls.append(scoped)
         if not config.dry_run and scoped not in state.endpoints:
-            state.endpoints[scoped] = program._endpoint_meta(scoped, program._now())
+            state.endpoints[scoped] = program._endpoint_meta(scoped, now_iso())
 
     new_endpoints: list[str] = []
     for url in endpoints:
@@ -306,7 +307,7 @@ def discover(state: ProgramState, target: str, config: DiscoveryConfig) -> Disco
             continue
         new_endpoints.append(url)
         if not config.dry_run:
-            state.endpoints[url] = program._endpoint_meta(url, program._now())
+            state.endpoints[url] = program._endpoint_meta(url, now_iso())
 
     if not config.dry_run:
         program.save(state)

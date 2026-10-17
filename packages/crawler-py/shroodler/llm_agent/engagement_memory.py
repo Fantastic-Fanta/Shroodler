@@ -13,8 +13,9 @@ run counter, so a fact that keeps reappearing reads as more reliable.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from typing import Any
+
+from shroodler.util import now_iso
 
 # Keys we know how to summarise, in the order they should appear.
 _KNOWN_KEYS = (
@@ -28,9 +29,6 @@ _KNOWN_KEYS = (
 _MAX_FACTS = 20
 _MAX_VALUE_CHARS = 120
 
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _store(state: Any) -> dict[str, Any]:
@@ -59,7 +57,7 @@ def record_fact(state: Any, key: str, value: Any, *, source: str = "") -> None:
         mem[k] = {
             "value": v,
             "source": source or prior.get("source") or "",
-            "updated": _now(),
+            "updated": now_iso(),
             "runs": runs,
         }
         # Cap total facts, dropping the least-reinforced first.

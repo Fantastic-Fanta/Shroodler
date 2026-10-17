@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from collections import defaultdict, deque
 from collections.abc import Callable
-from datetime import datetime, timezone
 from time import monotonic, sleep
 from urllib.parse import urljoin, urlparse
 
@@ -98,13 +97,11 @@ from shroodler.urls import (
 from shroodler.urls import (
     origin as origin_of,
 )
+from shroodler.util import now_iso
 from shroodler.webgoat import dedupe_captured, is_webgoat_url
 
 ProgressCb = Callable[[int, str], None]
 
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _remember_edge(
@@ -255,7 +252,7 @@ class Crawler:
             self.http.close()
 
     def crawl(self, start_url: str) -> CrawlResult:
-        started = _now()
+        started = now_iso()
         stopped = "complete"
         if not self.allow_external and not is_loopback_or_local(start_url):
             raise ValueError(
@@ -663,7 +660,7 @@ class Crawler:
             if later:
                 stopped = later
 
-        finished = _now()
+        finished = now_iso()
         requests = getattr(self.http, "requests", 0)
         if self.fetcher is not self.http:
             requests += getattr(self.fetcher, "requests", 0)

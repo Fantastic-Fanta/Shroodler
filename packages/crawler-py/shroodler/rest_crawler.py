@@ -129,9 +129,9 @@ def crawl_rest(
 
 def merge_rest_into_state(state: ProgramState, result: RestCrawlResult) -> dict[str, Any]:
     """Upsert REST endpoints, object IDs, and a discovered bearer token."""
-    from shroodler.program import _now
+    from shroodler.util import now_iso
 
-    last_seen = _now()
+    last_seen = now_iso()
     new_endpoints = 0
     for ep in result.endpoints:
         url = str(ep.get("url") or "")

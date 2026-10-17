@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from typing import Any
 
 from shroodler.models import Finding
 from shroodler.program import ProgramState
-
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+from shroodler.util import now_iso
 
 
 def _param_names(meta: Any) -> set[str]:
@@ -74,7 +70,7 @@ def record_suppression(state: ProgramState, finding_id: str, url: str, reason: s
             continue
         if str(row.get("id") or "") == fid and str(row.get("url") or "*") == target:
             row["reason"] = why
-            row["suppressed_at"] = str(row.get("suppressed_at") or _now())
+            row["suppressed_at"] = str(row.get("suppressed_at") or now_iso())
             state.suppressed_findings = rows
             return
     rows.append(
@@ -82,7 +78,7 @@ def record_suppression(state: ProgramState, finding_id: str, url: str, reason: s
             "id": fid,
             "url": target,
             "reason": why,
-            "suppressed_at": _now(),
+            "suppressed_at": now_iso(),
         }
     )
     state.suppressed_findings = rows

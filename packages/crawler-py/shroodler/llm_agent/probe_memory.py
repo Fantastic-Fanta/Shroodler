@@ -10,9 +10,10 @@ import re
 import sqlite3
 import threading
 from dataclasses import dataclass
-from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
+
+from shroodler.util import now_iso
 
 _UUID_RE = re.compile(
     r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
@@ -24,9 +25,6 @@ _LETTER_RE = re.compile(r"[A-Za-z]")
 _DIGIT_RE = re.compile(r"\d")
 _MEMORY_PATH = ":memory:"
 
-
-def _now() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _param_key(param_name: str | None) -> str:
@@ -123,7 +121,7 @@ class ProbeMemory:
 
     def record(self, rec: ProbeRecord) -> None:
         """Insert a record. Duplicates of the unique triple are ignored."""
-        tried_at = rec.tried_at or _now()
+        tried_at = rec.tried_at or now_iso()
         with self._lock:
             self._conn.execute(
                 """

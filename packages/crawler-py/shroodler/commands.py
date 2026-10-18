@@ -16,7 +16,6 @@ from pathlib import Path
 
 from shroodler import __version__
 from shroodler.baseline import document_to_baseline
-from shroodler.crawler import crawl_url
 from shroodler.diffcmd import diff_outcome, load_json
 from shroodler.suppress import filter_findings, load_suppressions
 from shroodler.validate import validate_crawl
@@ -48,10 +47,6 @@ def _as_str_list(value: object) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value if str(item)]
     return []
-
-
-def _progress(pages: int, current: str) -> None:
-    print(f"PROGRESS pages={pages} current={current}", flush=True)
 
 
 def _write(text: str, output: str | None) -> None:
@@ -107,34 +102,53 @@ def cmd_crawl(args: argparse.Namespace) -> int:
         if seed_from:
             extra_seeds.extend(seed_urls(load_captured_sessions(seed_from), args.url))
     ignore_robots, harvest_robots = _robots_flags(args)
-    result = crawl_url(
-        args.url,
-        mode=args.mode,
-        depth=depth,
-        ignore_robots=ignore_robots,
-        harvest_robots=harvest_robots,
-        allow_external=args.allow_external,
-        max_pages=max_pages,
-        max_time=max_time,
-        progress=_progress,
-        cookies=cookies,
-        headers=headers,
-        cookie_jar=getattr(args, "cookie_jar", None),
-        storage_state=getattr(args, "storage_state", None),
-        login_recipe=getattr(args, "login_recipe", None),
-        reauth_max_retries=int(getattr(args, "reauth_max_retries", 3) or 3),
-        proxy=getattr(args, "proxy", None),
-        extra_seeds=extra_seeds,
-        no_sitemap=bool(getattr(args, "no_sitemap", False)),
-        check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
-        check_idor=bool(getattr(args, "check_idor", False)),
-        plugins=list(getattr(args, "plugin", None) or []),
-        exclude_paths=list(getattr(args, "exclude_path", None) or []),
-        gql_field_names=_gql_field_names(args),
-        from_capture=getattr(args, "from_capture", None),
-        **({"user_agent": args.user_agent} if getattr(args, "user_agent", None) else {}),
-    )
-    doc = result.to_dict()
+    # The Go engine (shroodler-go) is the sole crawl engine. A handful of the
+    # retired Python crawler's options have no Go equivalent; rather than
+    # silently ignore them, refuse so the user is never misled about what ran.
+    unsupported: list[str] = []
+    if harvest_robots:
+        unsupported.append("--robots harvest / --profile aggressive")
+    if bool(getattr(args, "check_idor", False)):
+        unsupported.append("--check-idor")
+    if list(getattr(args, "plugin", None) or []):
+        unsupported.append("--plugin")
+    if list(getattr(args, "exclude_path", None) or []):
+        unsupported.append("--exclude-path")
+    if _gql_field_names(args):
+        unsupported.append("--gql-schema / --gql-wordlist")
+    if getattr(args, "from_capture", None):
+        unsupported.append("--from-capture (use `shroodler ingest-sessions` instead)")
+    if unsupported:
+        print(
+            "error: the Go crawl engine does not support: " + ", ".join(unsupported),
+            file=sys.stderr,
+        )
+        return 2
+    from shroodler import go_engine
+
+    try:
+        doc = go_engine.crawl(
+            args.url,
+            mode=args.mode,
+            depth=depth if depth is not None else -1,
+            ignore_robots=ignore_robots,
+            allow_external=args.allow_external,
+            max_pages=max_pages,
+            max_time=max_time,
+            cookies=cookies,
+            headers=headers,
+            cookie_jar=getattr(args, "cookie_jar", None),
+            storage_state=getattr(args, "storage_state", None),
+            login_recipe=getattr(args, "login_recipe", None),
+            proxy=getattr(args, "proxy", None),
+            seeds=extra_seeds,
+            no_sitemap=bool(getattr(args, "no_sitemap", False)),
+            check_rate_limit=bool(getattr(args, "check_rate_limit", False)),
+            user_agent=getattr(args, "user_agent", None),
+        )
+    except go_engine.GoEngineError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     validate_crawl(doc)
     fmt = args.format
     if fmt == "json":
@@ -1412,17 +1426,6 @@ def cmd_gen_regression_test(args: argparse.Namespace) -> int:
         print(f"wrote {args.output}")
     else:
         print(text, end="")
-    return 0
-
-
-def cmd_compare_engines(args: argparse.Namespace) -> int:
-    from shroodler.compare_engines import merge_engine_results
-
-    py_doc = load_json(args.python_crawl_json)
-    go_doc = load_json(args.go_crawl_json)
-    merged = merge_engine_results(py_doc, go_doc)
-    text = json.dumps(merged, indent=2) + "\n"
-    _write(text, args.output)
     return 0
 
 

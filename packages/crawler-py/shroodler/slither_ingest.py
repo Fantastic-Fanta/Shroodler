@@ -109,7 +109,7 @@ def to_findings(obj: dict[str, Any]) -> list[Finding]:
 
 
 def convert_file(path: str | Path, *, target: str | None = None) -> CrawlResult:
-    from shroodler.crawler import _dedupe_findings
+    from shroodler.crawl_support import _dedupe_findings
 
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     t0 = monotonic()

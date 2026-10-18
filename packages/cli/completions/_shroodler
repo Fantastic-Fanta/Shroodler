@@ -36,7 +36,6 @@ _shroodler_commands=(
   'ask:Ask a question over a scan/report'
   'mcp-server:Run the MCP server exposing Shroodler as agent tools'
   'audit-verify:Verify a guardrail audit-log hash chain is intact'
-  'compare-engines:Merge Python/Go crawl JSON as a confidence signal'
   'ticket:File or sync GitHub issues from findings (dry-run by default)'
   'sla:Attach ownership + SLA-escalated severity to findings'
   'suppress:Work with suppression rules beyond diff/report/baseline'
@@ -424,12 +423,6 @@ _shroodler() {
           ;;
         audit-verify)
           _arguments '1:audit log jsonl:_files'
-          ;;
-        compare-engines)
-          _arguments \
-            '(--output -o)'{--output,-o}'[Output file]:file:_files' \
-            '1:python crawl json:_files' \
-            '2:go crawl json:_files'
           ;;
         ticket)
           _values 'ticket subcommand' \

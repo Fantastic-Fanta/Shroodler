@@ -1,9 +1,7 @@
 from __future__ import annotations
 
 from shroodler.confidence import confidence_for, stamp_findings
-from shroodler.crawler import crawl_url
 from shroodler.models import Finding
-from shroodler.validate import validate_crawl
 
 
 def test_header_absence_is_confirmed():
@@ -41,18 +39,6 @@ def test_stamp_skips_already_set_and_never_writes_null():
     assert findings[1]["confidence"] == "confirmed"
     assert findings[2]["confidence"] == "heuristic"
     assert all(f["confidence"] in {"confirmed", "probable", "heuristic"} for f in findings)
-
-
-def test_crawl_json_stamps_confidence_and_validates(fx):
-    fx.html("/", "<h1>home</h1>")
-    doc = crawl_url(fx.origin + "/", depth=0, ignore_robots=True).to_dict()
-    validate_crawl(doc)
-    confs = {f["id"]: f.get("confidence") for f in doc["findings"]}
-    assert confs
-    assert None not in confs.values()
-    assert "" not in confs.values()
-    if "missing-csp" in confs:
-        assert confs["missing-csp"] == "confirmed"
 
 
 def test_finding_model_omits_unset_confidence_from_exclude_none():

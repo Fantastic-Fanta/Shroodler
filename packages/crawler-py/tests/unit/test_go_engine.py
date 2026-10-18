@@ -26,13 +26,14 @@ def test_crawl_args_maps_options():
         no_sitemap=False,
         allow_external=True,
         check_rate_limit=False,
-        headers={"X-A": "1"},
+        headers=["X-A: 1"],
         user_agent="ua",
-        cookie="k=v",
+        cookies=["k=v"],
         cookie_jar=None,
         storage_state="/tmp/state.json",
         login_recipe=None,
         proxy=None,
+        seeds=["http://127.0.0.1:8081/seed"],
         output="/tmp/out.json",
     )
     assert args[:2] == ["crawl", "http://127.0.0.1:8081/"]
@@ -48,6 +49,7 @@ def test_crawl_args_maps_options():
     assert "--user-agent" in args and "ua" in args
     assert "--cookie" in args and "k=v" in args
     assert "--storage-state" in args and "/tmp/state.json" in args
+    assert "--seed" in args and "http://127.0.0.1:8081/seed" in args
 
 
 def test_find_binary_missing(monkeypatch, tmp_path):
@@ -101,7 +103,7 @@ def test_crawl_timeout_raises(monkeypatch, tmp_path):
 
 
 def test_execute_crawl_uses_go_engine_when_selected(monkeypatch):
-    """engine='go' routes _execute_crawl through go_engine.crawl, not crawl_url."""
+    """_execute_crawl routes through go_engine.crawl (the sole crawl path)."""
     from shroodler import agent_exec
     from shroodler.agent_types import AgentConfig, CrawlAction
     from shroodler.pacer import Pacer
@@ -115,25 +117,20 @@ def test_execute_crawl_uses_go_engine_when_selected(monkeypatch):
             {"id": "missing-csp", "url": target, "severity": "info", "evidence": "x"}
         ],
     }
-    calls = {"go": 0, "py": 0}
+    calls = {"go": 0}
 
     def _fake_go_crawl(url, **kwargs):
         calls["go"] += 1
         return doc
 
-    def _boom_crawl_url(*a, **k):
-        calls["py"] += 1
-        raise AssertionError("crawl_url must not be called when engine='go'")
-
     monkeypatch.setattr(go_engine, "available", lambda: True)
     monkeypatch.setattr(go_engine, "crawl", _fake_go_crawl)
-    monkeypatch.setattr("shroodler.crawler.crawl_url", _boom_crawl_url)
 
     state = ProgramState(slug="t")
     cfg = AgentConfig(program="t", target=target, engine="go")
     out = agent_exec._execute_crawl(CrawlAction(urls=[target]), state, cfg, Pacer(0))
 
-    assert calls["go"] == 1 and calls["py"] == 0
+    assert calls["go"] == 1
     assert out["pages_crawled"] >= 1
     assert target in state.endpoints
 

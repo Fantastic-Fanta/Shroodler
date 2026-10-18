@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from shroodler.crawler import crawl_url
 from shroodler.extractors.oauth import check_oauth_authorize_url, is_authorization_request
 
 
@@ -128,37 +127,6 @@ def test_code_flow_does_not_trigger_implicit_finding():
 
 def test_non_authorize_url_is_ignored():
     assert check_oauth_authorize_url("https://example.com/search?q=hello") == []
-
-
-def test_crawl_flags_oauth_authorize_link(fx):
-    fx.html(
-        "/",
-        '<html><body><a href="/authorize?response_type=code&client_id=abc">login</a></body></html>',
-    )
-    fx.html("/authorize", "<html><body>authorize</body></html>")
-    result = crawl_url(fx.origin + "/", depth=1)
-    ids = {f.id for f in result.findings}
-    assert "oauth-missing-state" in ids
-
-
-def test_crawl_flags_off_origin_authorize_link_never_fetched(fx):
-    # Regression test for a real coverage gap caught in review: the
-    # overwhelming majority of real relying parties link to a
-    # THIRD-PARTY IdP (accounts.google.com, an Okta/Auth0 tenant, ...),
-    # which the crawler's same-origin policy never follows or fetches.
-    # Since this check is purely passive (URL inspection only, no
-    # request), it must still fire on off-origin authorize links
-    # discovered on a page, not just links the crawler happened to fetch.
-    fx.html(
-        "/",
-        '<html><body><a href="https://idp.example.invalid/authorize'
-        '?response_type=code&client_id=abc">login</a></body></html>',
-    )
-    result = crawl_url(fx.origin + "/", depth=1)
-    ids = {f.id for f in result.findings}
-    assert "oauth-missing-state" in ids
-    # And that off-origin URL was never queued/fetched as a page.
-    assert not any(p.url.startswith("https://idp.example.invalid") for p in result.pages)
 
 
 def test_malformed_query_is_not_assessed():

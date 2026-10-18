@@ -281,7 +281,7 @@ def test_cookie_host_prefix_compliant_does_not_get_path_broad_suggestion():
 
 
 def test_page_from_fetch_passes_cookies_attrs_reliable_false_in_headless_mode():
-    from shroodler.crawler import page_from_fetch
+    from shroodler.crawl_support import page_from_fetch
     from shroodler.modes.static import FetchResult
 
     result = FetchResult(
@@ -308,7 +308,7 @@ def test_failed_fetch_reports_no_missing_header_findings():
     # not "the target set zero security headers". The latter would fire
     # missing-csp/missing-hsts/etc. on every unreachable host, which is a
     # false finding manufactured from the absence of data.
-    from shroodler.crawler import page_from_fetch
+    from shroodler.crawl_support import page_from_fetch
     from shroodler.modes.static import FetchResult
 
     result = FetchResult(

@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from urllib.parse import urlparse
 
-from shroodler.crawler import crawl_url
 from shroodler.extractors.graphql import (
     format_types,
     looks_like_graphql,
@@ -99,40 +98,6 @@ def _gql_handler(typename: str = "Query", types: list[str] | None = None):
     return handle
 
 
-def test_post_graphql_is_discovered(fx):
-    fx.html("/", "<p>home</p>")
-    fx.html("/graphql-hidden", "<h1>unlinked</h1>")
-    fx.on("POST", "/graphql", _gql_handler())
-    result = crawl_url(fx.origin + "/", depth=0)
-    paths = _paths(result)
-    assert "/graphql" in paths
-    assert "/graphql-hidden" not in paths
-    assert "/api/graphql" not in paths
-    hit = next(
-        f for f in result.findings if f.id == "js-endpoint" and f.url.endswith("/graphql")
-    )
-    assert hit.category == "js-endpoint"
-    assert hit.severity == "info"
-    assert "HiddenNote" in hit.description
-    assert any(e.endpoint == "/graphql" for e in result.js_endpoints)
-
-
-def test_get_graphql_fallback(fx):
-    fx.html("/", "<p>home</p>")
-
-    def handle_get(_req: str) -> tuple[int, dict[str, str], bytes]:
-        return (
-            200,
-            {"Content-Type": "application/json"},
-            b'{"data":{"__typename":"Query"}}',
-        )
-
-    fx.route("/query", handle_get)
-    result = crawl_url(fx.origin + "/", depth=0)
-    assert "/query" in _paths(result)
-    assert any(f.id == "js-endpoint" and f.url.endswith("/query") for f in result.findings)
-
-
 def test_parse_query_fields():
     body = json.dumps({"data": {"__type": {"fields": [{"name": "me"}, {"name": "__schema"}]}}})
     assert parse_query_fields(body) == ["me"]
@@ -224,25 +189,3 @@ def test_load_clairvoyance_and_wordlist(tmp_path):
     assert names == ["user", "order", "wallet", "cart"]
 
 
-def test_crawl_records_supplied_graphql_fields(fx):
-    from shroodler.extractors.graphql import FIELD_ENDPOINT_PREFIX
-
-    fx.html("/", "<p>home</p>")
-    fx.on("POST", "/graphql", _gql_handler())
-    result = crawl_url(fx.origin + "/", depth=0, gql_field_names=["wallet", "cart"])
-    endpoints = {e.endpoint for e in result.js_endpoints}
-    assert FIELD_ENDPOINT_PREFIX + "wallet" in endpoints
-    assert FIELD_ENDPOINT_PREFIX + "cart" in endpoints
-
-
-def test_missing_and_non_graphql_not_recorded(fx):
-    fx.html("/", "<p>home</p>")
-    fx.on(
-        "POST",
-        "/graphql",
-        lambda _i: (200, {"Content-Type": "application/json"}, b'{"data":{"users":[]}}'),
-    )
-    result = crawl_url(fx.origin + "/", depth=0)
-    paths = _paths(result)
-    assert paths == {"/"}
-    assert not any(f.url.endswith("/graphql") for f in result.findings)

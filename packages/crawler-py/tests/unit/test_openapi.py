@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from urllib.parse import urlparse
 
-from shroodler.crawler import crawl_url
 from shroodler.extractors.openapi import parse_spec_paths, urls_from_seed_text, urls_from_spec
 
 OPENAPI3 = """
@@ -62,41 +61,6 @@ def test_urls_join_origin_only():
     ]
 
 
-def test_unlinked_spec_path_is_crawled(fx):
-    spec = """
-    {
-      "openapi": "3.0.3",
-      "info": {"title": "demo", "version": "1.0.0"},
-      "paths": {"/internal/inventory": {"get": {}}}
-    }
-    """
-    fx.html("/", "<h1>home</h1>")
-    fx.route(
-        "/openapi.json",
-        lambda _req: (200, {"Content-Type": "application/json"}, spec.encode()),
-    )
-    fx.route(
-        "/internal/inventory",
-        lambda _req: (
-            200,
-            {"Content-Type": "application/json"},
-            b'{"items":["widget"]}',
-        ),
-    )
-    result = crawl_url(fx.origin + "/", depth=0)
-    paths = {urlparse(p.url).path for p in result.pages}
-    assert "/openapi.json" in paths
-    assert "/internal/inventory" in paths
-    assert "/swagger.json" not in paths
-
-
-def test_missing_spec_not_recorded(fx):
-    fx.html("/", "<p>home</p>")
-    result = crawl_url(fx.origin + "/", depth=0)
-    paths = {urlparse(p.url).path for p in result.pages}
-    assert paths == {"/"}
-
-
 POSTMAN = """
 {
   "info": {
@@ -138,24 +102,6 @@ def test_postman_and_openapi_seed_text():
     urls2 = urls_from_seed_text("http://127.0.0.1:9/", OPENAPI3)
     assert "/users" in "".join(urls2)
     assert urls_from_seed_text("http://127.0.0.1:9/", NOT_A_SPEC) == []
-
-
-def test_local_spec_file_seeds_unlinked_path(fx, tmp_path):
-    fx.html("/", "<h1>home</h1>")
-    fx.route(
-        "/from-spec",
-        lambda _req: (200, {"Content-Type": "application/json"}, b'{"ok":true}'),
-    )
-    spec = tmp_path / "api.json"
-    spec.write_text(
-        '{"openapi":"3.0.3","info":{"title":"d","version":"1"},'
-        '"paths":{"/from-spec":{"get":{}}}}',
-        encoding="utf-8",
-    )
-    extra = urls_from_seed_text(fx.origin + "/", spec.read_text(encoding="utf-8"))
-    result = crawl_url(fx.origin + "/", depth=0, ignore_robots=True, extra_seeds=extra)
-    paths = {urlparse(p.url).path for p in result.pages}
-    assert "/from-spec" in paths
 
 
 def test_cli_parses_spec_flag():

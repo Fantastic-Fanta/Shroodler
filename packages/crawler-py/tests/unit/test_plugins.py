@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from shroodler.crawler import crawl_url
 from shroodler.extractors.secrets import scan_text
 from shroodler.plugins import (
     load_plugins,
@@ -93,21 +92,6 @@ def test_secret_rule_from_plugin_fires():
         ],
     )
     assert any(f.id == "plugin-fixture-secret" for f in findings)
-
-
-def test_python_check_runs_during_crawl(tmp_path, fx):
-    root = _plugin_dir(tmp_path)
-    fx.html("/", "<html>hello PLUGIN_MARKER</html>")
-    result = crawl_url(
-        fx.origin + "/",
-        depth=0,
-        ignore_robots=True,
-        plugins=[str(root)],
-    )
-    ids = {f.id for f in result.findings}
-    assert "plugin-marker-seen" in ids
-    assert any(f.id == "plugin-fixture-secret" for f in result.findings) is False
-    # The page body does not contain PLUGIN_SECRET_... so only the check fired.
 
 
 def test_autodiscover_classifies_secrets_vs_packs(tmp_path):

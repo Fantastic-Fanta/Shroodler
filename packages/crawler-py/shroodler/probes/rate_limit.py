@@ -1,7 +1,7 @@
 """Missing rate-limit checks on authentication-shaped endpoints.
 
-Distinct from `shroodler.extractors.rate_limit` (login-form hammering during
-a crawl). This probe runs from ProbeAction against URL-shaped auth routes.
+This probe runs from ProbeAction against URL-shaped auth routes. (The old
+in-crawl login-form hammering extractor was retired with the Python crawler.)
 """
 
 from __future__ import annotations

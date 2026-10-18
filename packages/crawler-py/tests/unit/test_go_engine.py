@@ -127,7 +127,7 @@ def test_execute_crawl_uses_go_engine_when_selected(monkeypatch):
     monkeypatch.setattr(go_engine, "crawl", _fake_go_crawl)
 
     state = ProgramState(slug="t")
-    cfg = AgentConfig(program="t", target=target, engine="go")
+    cfg = AgentConfig(program="t", target=target)
     out = agent_exec._execute_crawl(CrawlAction(urls=[target]), state, cfg, Pacer(0))
 
     assert calls["go"] == 1
@@ -158,7 +158,7 @@ def test_execute_crawl_go_collapses_systemic_header_findings(monkeypatch):
     monkeypatch.setattr(go_engine, "crawl", lambda url, **k: doc)
 
     state = ProgramState(slug="t")
-    cfg = AgentConfig(program="t", target=origin + "/", engine="go")
+    cfg = AgentConfig(program="t", target=origin + "/")
     agent_exec._execute_crawl(CrawlAction(urls=[origin + "/"]), state, cfg, Pacer(0))
 
     svl = [f for f in state.findings if f.id == "server-version-leak"]

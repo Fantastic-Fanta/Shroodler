@@ -330,6 +330,13 @@ def _execute_js_analysis(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    import types
+
+    from shroodler.extractors.client_side import extract_client_side
+    from shroodler.extractors.js_endpoints import (
+        extract_js_endpoints,
+        ghost_route_findings,
+    )
     from shroodler.js_analyzer import JSAnalyzer
     from shroodler.probes.common import body_text, request
 
@@ -339,6 +346,11 @@ def _execute_js_analysis(
         state.js_urls = list(urls)
     analyzer = JSAnalyzer()
     findings: list[Finding] = []
+    js_eps: list = []
+    # Snapshot the crawled endpoints before the analyzer discovers new ones, so
+    # ghost-route detection matches the Python crawl (which runs it at crawl
+    # time, before JS analysis registers those endpoints).
+    crawled_pages = [types.SimpleNamespace(url=u) for u in list(state.endpoints)]
     errors: list[str] = []
     analyzed = 0
     allow_external = _allow_external(config.target)
@@ -369,9 +381,22 @@ def _execute_js_analysis(
                 findings.extend(analyzer.analyze(body, url, state))
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{url} analyze: {type(exc).__name__}: {exc}")
+            # Deep JS checks the Python crawler runs inline but the Go crawler
+            # does not; run them here so they fire regardless of --engine.
+            # _merge_findings dedups by (id, url), so the Python crawl's copies
+            # don't double-count.
+            try:
+                findings.extend(extract_client_side(body, url))
+                eps, ep_findings = extract_js_endpoints(url, body)
+                js_eps.extend(eps)
+                findings.extend(ep_findings)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{url} js-extract: {type(exc).__name__}: {exc}")
     finally:
         _session_cm.__exit__(None, None, None)
 
+    origin = origin_of(config.target or "")
+    findings.extend(ghost_route_findings(origin, crawled_pages, js_eps))
     findings = _dedupe_js_findings(findings)
     api_n = sum(1 for f in findings if f.id == "js-api-endpoint-found")
     secret_n = sum(1 for f in findings if f.id == "js-hardcoded-secret")

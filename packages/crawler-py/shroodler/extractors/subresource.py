@@ -1,13 +1,9 @@
 """Mixed-content and Subresource Integrity (SRI) checks.
 
-Python-only and opt-in (--check-subresources): unlike the always-on
-extractors in this package, these require parsing the HTML body for
-<script>/<link> tags with their src/href, and the Go crawler does not
-implement them. Gating behind an explicit off-by-default flag (rather than
-running unconditionally like html_markup/cookies/headers) keeps a default
-`crawl` producing identical findings on both engines, which is what
-packages/parity-tests/run_parity.py enforces. See docs/features.md for the
-Python-only-features note.
+These parse the HTML body for <script>/<link> tags with their src/href. The
+Go crawl engine emits its own mixed-content/SRI findings; this Python extractor
+remains in use for captured-session replay (crawl_support.page_from_fetch). See
+docs/features.md for the Python-only-features note.
 """
 
 from __future__ import annotations

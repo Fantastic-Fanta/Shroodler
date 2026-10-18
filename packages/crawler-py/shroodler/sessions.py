@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from shroodler import __version__
-from shroodler.crawler import page_from_fetch
+from shroodler.crawl_support import page_from_fetch
 from shroodler.extractors.secrets import scan_text
 from shroodler.models import CrawlerInfo, CrawlResult, CrawlStats, Form, FormField
 from shroodler.modes.static import FetchResult, _decode_body
@@ -268,7 +268,7 @@ def ingest_sessions(
         findings.extend(page_findings)
         endpoints.extend(page_eps)
 
-    from shroodler.crawler import _dedupe_endpoints, _dedupe_findings, _with_capture_source
+    from shroodler.crawl_support import _dedupe_endpoints, _dedupe_findings, _with_capture_source
 
     finished = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     stamped = [_with_capture_source(f) for f in findings]

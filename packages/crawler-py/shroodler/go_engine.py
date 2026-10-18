@@ -65,16 +65,22 @@ def _crawl_args(
     no_sitemap: bool,
     allow_external: bool,
     check_rate_limit: bool,
-    headers: dict[str, str] | None,
+    headers: list[str] | None,
     user_agent: str | None,
-    cookie: str | None,
+    cookies: list[str] | None,
     cookie_jar: str | None,
     storage_state: str | None,
     login_recipe: str | None,
     proxy: str | None,
+    seeds: list[str] | None,
     output: str,
 ) -> list[str]:
-    """Build the ``shroodler-go crawl`` argument vector (pure, for testing)."""
+    """Build the ``shroodler-go crawl`` argument vector (pure, for testing).
+
+    ``headers`` are raw ``"Name: value"`` lines and ``cookies`` raw
+    ``"name=value"`` pairs -- the same shapes the CLI accepts and the Go
+    binary's repeatable ``--header`` / ``--cookie`` flags expect.
+    """
     args = ["crawl", target, "--output", output]
     if mode:
         args += ["--mode", mode]
@@ -92,11 +98,11 @@ def _crawl_args(
         args.append("--allow-external")
     if check_rate_limit:
         args.append("--check-rate-limit")
-    for name, value in (headers or {}).items():
-        args += ["--header", f"{name}: {value}"]
+    for line in headers or []:
+        args += ["--header", line]
     if user_agent:
         args += ["--user-agent", user_agent]
-    if cookie:
+    for cookie in cookies or []:
         args += ["--cookie", cookie]
     if cookie_jar:
         args += ["--cookie-jar", cookie_jar]
@@ -106,6 +112,8 @@ def _crawl_args(
         args += ["--login-recipe", login_recipe]
     if proxy:
         args += ["--proxy", proxy]
+    for seed in seeds or []:
+        args += ["--seed", seed]
     return args
 
 
@@ -120,13 +128,14 @@ def crawl(
     no_sitemap: bool = False,
     allow_external: bool = False,
     check_rate_limit: bool = False,
-    headers: dict[str, str] | None = None,
+    headers: list[str] | None = None,
     user_agent: str | None = None,
-    cookie: str | None = None,
+    cookies: list[str] | None = None,
     cookie_jar: str | None = None,
     storage_state: str | None = None,
     login_recipe: str | None = None,
     proxy: str | None = None,
+    seeds: list[str] | None = None,
     timeout: float | None = None,
     binary: Path | None = None,
 ) -> dict:
@@ -150,11 +159,12 @@ def crawl(
             check_rate_limit=check_rate_limit,
             headers=headers,
             user_agent=user_agent,
-            cookie=cookie,
+            cookies=cookies,
             cookie_jar=cookie_jar,
             storage_state=storage_state,
             login_recipe=login_recipe,
             proxy=proxy,
+            seeds=seeds,
             output=out_path,
         )
         try:
@@ -175,6 +185,23 @@ def crawl(
                 f"{(proc.stderr or '').strip()[:500]}"
             )
         try:
-            return json.loads(Path(out_path).read_text(encoding="utf-8"))
+            doc = json.loads(Path(out_path).read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError) as exc:
             raise GoEngineError(f"shroodler-go produced no valid JSON report: {exc}") from exc
+        return _normalize_doc(doc)
+
+
+# List-typed top-level fields the crawl schema expects as arrays. Go marshals a
+# nil slice to JSON ``null`` rather than ``[]`` (e.g. js_endpoints when a crawl
+# finds none), which fails schema validation for callers that validate the raw
+# doc (reverify, cmd_crawl, scan_route). Coerce them so every Python consumer
+# gets a schema-valid document from the seam.
+_DOC_LIST_FIELDS = ("pages", "findings", "js_endpoints", "edges", "xhr_endpoints")
+
+
+def _normalize_doc(doc: dict) -> dict:
+    if isinstance(doc, dict):
+        for key in _DOC_LIST_FIELDS:
+            if doc.get(key) is None and key in doc:
+                doc[key] = []
+    return doc

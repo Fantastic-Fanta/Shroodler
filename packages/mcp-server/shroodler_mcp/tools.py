@@ -284,7 +284,8 @@ def scan_route(args: dict) -> dict:
     headless mode makes internally -- per-click scope enforcement inside
     the Playwright click loop is a known follow-up, not yet implemented.
     """
-    from shroodler.crawler import crawl_url
+    from shroodler import go_engine
+    from shroodler.urls import is_loopback_or_local
     from shroodler.validate import validate_crawl
 
     url = args.get("url")
@@ -294,11 +295,20 @@ def scan_route(args: dict) -> dict:
     run_payloads = bool(args.get("run_payloads", False))
     mode = args.get("mode", "static")
 
+    # Fail closed on remote targets before invoking the engine: an agent-facing
+    # tool must not reach off the local host unless explicitly allowed. (The Go
+    # engine also refuses, but enforcing here keeps the contract a clean
+    # ValueError rather than an engine error and avoids spawning a subprocess.)
+    if not allow_external and not is_loopback_or_local(url):
+        raise ValueError(
+            "refusing to scan non-local host; pass allow_external to scan a remote target"
+        )
+
     enforcer = None
     if run_payloads or mode == "headless":
         enforcer = _build_enforcer(args, url)
 
-    result = crawl_url(
+    doc = go_engine.crawl(
         url,
         mode=mode,
         depth=0,
@@ -307,7 +317,6 @@ def scan_route(args: dict) -> dict:
         cookies=list(args.get("cookies") or []),
         headers=list(args.get("headers") or []),
     )
-    doc = result.to_dict()
     validate_crawl(doc)
 
     if run_payloads:

@@ -14,7 +14,6 @@ from shroodler.commands import (
     cmd_baseline,
     cmd_cadence,
     cmd_ci_template,
-    cmd_compare_engines,
     cmd_crawl,
     cmd_dedup,
     cmd_diff,
@@ -1971,18 +1970,6 @@ def _build_gen_test_parser(sub) -> None:
     gen_test.set_defaults(func=cmd_gen_regression_test)
 
 
-def _build_compare_engines_parser(sub) -> None:
-    compare_engines = sub.add_parser(
-        "compare-engines",
-        help="Merge Python and Go crawl JSON, tagging each finding with which "
-        "engine(s) reproduced it -- agreement as a confidence signal",
-    )
-    compare_engines.add_argument("python_crawl_json")
-    compare_engines.add_argument("go_crawl_json")
-    compare_engines.add_argument("--output", "-o")
-    compare_engines.set_defaults(func=cmd_compare_engines)
-
-
 def _build_ticket_parser(sub) -> None:
     ticket = sub.add_parser(
         "ticket",
@@ -2188,7 +2175,6 @@ def build_parser() -> argparse.ArgumentParser:
     _build_attack_path_parser(sub)
     _build_reverify_parser(sub)
     _build_gen_test_parser(sub)
-    _build_compare_engines_parser(sub)
     _build_ticket_parser(sub)
     _build_sla_parser(sub)
     _build_suppress_parser(sub)

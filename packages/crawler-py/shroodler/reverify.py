@@ -67,10 +67,10 @@ def reverify(
     same URL. `enforcer`, if given, gates the payload run exactly like
     `shroodler payload`/`scan_route` do.
     """
-    from shroodler.crawler import crawl_url
+    from shroodler import go_engine
     from shroodler.validate import validate_crawl
 
-    result = crawl_url(
+    doc = go_engine.crawl(
         url,
         mode=mode,
         depth=0,
@@ -79,7 +79,6 @@ def reverify(
         cookies=list(cookies or []),
         headers=list(headers or []),
     )
-    doc = result.to_dict()
     validate_crawl(doc)
     findings = list(doc.get("findings", []))
 

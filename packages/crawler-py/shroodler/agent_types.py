@@ -96,10 +96,10 @@ class AgentConfig:
     oob: bool = False  # --oob; local HTTP callback collaborator
     oob_listen: str = "127.0.0.1:8765"
     oob_public_url: str = ""
-    # Network engine for crawling: "go" (the shroodler-go subprocess, default)
-    # or "py" (in-process shroodler.crawler). Parity is verified across the
-    # deterministic eval labs; "go" falls back to "py" when the binary is
-    # unavailable or --harvest-robots is set.
+    # Network engine for crawling. The Go engine (shroodler-go via go_engine)
+    # is now the sole crawl path; the in-process Python crawler was retired in
+    # the Go consolidation. Retained for CLI compatibility -- the agent always
+    # crawls through the Go engine regardless of this value.
     engine: str = "go"
 
 

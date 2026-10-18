@@ -351,6 +351,23 @@ def _execute_js_analysis(
     # ghost-route detection matches the Python crawl (which runs it at crawl
     # time, before JS analysis registers those endpoints).
     crawled_pages = [types.SimpleNamespace(url=u) for u in list(state.endpoints)]
+    # Crawled HTML pages (from the crawl snapshots). The Python crawler runs
+    # extract_js_endpoints over every page's HTML inline; the Go crawler does
+    # not, so re-visit the pages here and extract from them too, for engine
+    # parity. Exclude the .js files already handled above.
+    _js_url_set = set(urls)
+    page_urls: list[str] = []
+    _seen_pages: set[str] = set()
+    for scan in state.scans or []:
+        if not isinstance(scan, dict):
+            continue
+        for page in scan.get("pages") or []:
+            if not isinstance(page, dict):
+                continue
+            pu = str(page.get("url") or "")
+            if pu and pu not in _js_url_set and pu not in _seen_pages:
+                _seen_pages.add(pu)
+                page_urls.append(pu)
     errors: list[str] = []
     analyzed = 0
     allow_external = _allow_external(config.target)
@@ -392,6 +409,33 @@ def _execute_js_analysis(
                 findings.extend(ep_findings)
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{url} js-extract: {type(exc).__name__}: {exc}")
+        # Second pass: extract endpoints + client-side issues from the crawled
+        # HTML pages' inline JS (the Go crawler, unlike the Python one, does not
+        # scan inline page scripts). Full JS analysis stays limited to .js files.
+        for url in page_urls:
+            if not url.startswith(("http://", "https://")):
+                continue
+            if not allow_external and not is_loopback_or_local(url):
+                continue
+            if not _url_in_program_scope(url, state, config):
+                continue
+            try:
+                resp = request("GET", url, cookie_header=owner, pacer=pacer)
+            except Exception as exc:  # noqa: BLE001 - fail closed per URL
+                errors.append(f"{url}: {type(exc).__name__}: {exc}")
+                continue
+            if resp is None:
+                continue
+            body = body_text(resp)
+            if not body:
+                continue
+            try:
+                findings.extend(extract_client_side(body, url))
+                eps, ep_findings = extract_js_endpoints(url, body)
+                js_eps.extend(eps)
+                findings.extend(ep_findings)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{url} page-extract: {type(exc).__name__}: {exc}")
     finally:
         _session_cm.__exit__(None, None, None)
 

@@ -278,6 +278,11 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		queue = append(queue[:bestI], queue[bestI+1:]...)
 		return it
 	}
+	// Soft-404 baseline, fingerprinted once and reused for the OpenAPI-probe
+	// filter in the loop and the content-discovery phase below: a SPA that
+	// serves its index page for every path must not have probe URLs recorded
+	// as real endpoints.
+	baseline := probeSoft404Baseline(client, openAPIBase, t0, cfg.MaxTime)
 	for len(queue) > 0 {
 		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
 			stopped = hit
@@ -317,7 +322,8 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		for i, it := range batch {
 			res := results[i]
 			key := urls.CanonicalKey(it.u)
-			if res.Status != 200 && extractors.IsOpenAPIProbePath(urls.PathOf(it.u)) {
+			if extractors.IsOpenAPIProbePath(urls.PathOf(it.u)) &&
+				(res.Status != 200 || isSoft404(baseline, res)) {
 				continue
 			}
 			fetchForSourceMap := func(u string) fetchResult {
@@ -461,8 +467,7 @@ func Crawl(start string, cfg Config) (*models.CrawlResult, error) {
 		}
 	}
 
-	root := strings.TrimRight(origin(start), "/")
-	baseline := probeSoft404Baseline(client, root, t0, cfg.MaxTime)
+	root := openAPIBase // == strings.TrimRight(origin(start), "/"); baseline already fingerprinted above
 	for _, p := range extractors.LoadCommonPaths() {
 		if hit := budgetHit(cfg, t0, len(pages)); hit != "" {
 			if stopped == "complete" {

@@ -1652,6 +1652,14 @@ def _build_agent_parser(sub) -> None:
             "succeed (workflow-step-skip / workflow-replay)."
         ),
     )
+    agent.add_argument(
+        "--engine",
+        choices=["py", "go"],
+        default="go",
+        help="Network/crawl engine: 'go' (the shroodler-go binary, default) or "
+        "'py' (in-process). 'go' falls back to 'py' when the binary is "
+        "unavailable or --harvest-robots is set.",
+    )
     agent.set_defaults(func=cmd_agent)
 
 

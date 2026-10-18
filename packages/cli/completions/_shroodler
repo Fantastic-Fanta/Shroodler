@@ -331,6 +331,7 @@ _shroodler() {
             '--ignore-robots[Bypass robots.txt during crawl legs]' \
             '--robots[robots.txt handling: respect|ignore|harvest]:mode:(respect ignore harvest)' \
             '--run-probes[Run active injection probes (SQLi/XSS/path-traversal/JWT/IDOR/SSRF/open-redirect/host-header/SSTI/XXE/GraphQL)]' \
+            '--engine[Network/crawl engine: py (default) or go]:engine:(py go)' \
             '--no-openapi[Disable OpenAPI spec discovery and spec-driven probes]' \
             '--no-ssrf[Disable SSRF probes]' \
             '--no-open-redirect[Disable open-redirect probes]' \

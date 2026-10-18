@@ -1,9 +1,8 @@
 # Shroodler usage manual
 
 How to run Shroodler on a real target, in the order you actually run things.
-For the command cheat-sheet see [cli-reference.md](cli-reference.md); for the
-per-feature catalogue see [features.md](features.md); for engagement tradecraft
-see the local `docs/bug-bounty-playbook.md`.
+For the per-command reference see [cli-reference.md](cli-reference.md); for
+engagement tradecraft see the local `docs/bug-bounty-playbook.md`.
 
 Applies to shroodler 0.2.0.
 
@@ -341,7 +340,6 @@ next_step}` summary by default; pass `summary=false` for full JSON.
 - `shroodler <command> --help` for the authoritative flag list.
 - `man packages/cli/man/shroodler.1` for the full man page.
 - `source packages/cli/completions/shroodler.bash` for bash completion.
-- [cli-reference.md](cli-reference.md), [features.md](features.md), and the
-  [CHANGELOG](../CHANGELOG.md).
+- [cli-reference.md](cli-reference.md) and the [CHANGELOG](../CHANGELOG.md).
 - `docs/bug-bounty-playbook.md` (local, not published) for engagement
   tradecraft.

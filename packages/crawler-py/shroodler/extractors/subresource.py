@@ -2,8 +2,7 @@
 
 These parse the HTML body for <script>/<link> tags with their src/href. The
 Go crawl engine emits its own mixed-content/SRI findings; this Python extractor
-remains in use for captured-session replay (crawl_support.page_from_fetch). See
-docs/features.md for the Python-only-features note.
+remains in use for captured-session replay (crawl_support.page_from_fetch).
 """
 
 from __future__ import annotations

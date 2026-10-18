@@ -38,7 +38,6 @@ shroodler payload out.json --require-policy -o hits.json   # refuse without a co
 shroodler payload out.json --audit-log audit.jsonl -o hits.json   # record every allow/block decision
 
 # SRI/mixed-content checks run automatically as part of a normal crawl
-# (Python engine only for now -- see docs/features.md)
 
 # Password-reset/verification-token predictability, from a recorded proxy session
 shroodler tokens /tmp/sess.jsonl -o token-findings.json

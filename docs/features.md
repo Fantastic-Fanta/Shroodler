@@ -1,228 +1,175 @@
 # Features
 
-- **Nuclei ingest** (`shroodler nuclei-ingest`) — converts local Nuclei
-  HTTP YAML templates into payload-pack YAML. `payload --pack` also
-  auto-detects a Nuclei-shaped file. Does not vendor or download a
-  template library.
+## Crawl
 
-- **HAR ingest** (`shroodler ingest-har`) — turns a Burp / mitmproxy /
-  Caido / DevTools HAR 1.2 export into crawl JSON (Page records +
-  passive findings from captured bodies) so `authz-diff` / `payload`
-  can consume traffic Shroodler's own proxy never saw. `ingest-sessions`
-  and `crawl --seed-from` also auto-detect HAR.
+- **Crawl** — static (HTML parse) or headless (real browser, for SPAs) with
+  depth/page/time budgets, robots/sitemap handling, cookie/header/session-state
+  injection, configurable `--user-agent`, safe/balanced/aggressive profiles, and
+  `--spec` to seed paths from a local OpenAPI/Swagger doc or Postman collection.
+- **Scripted login** — re-runs the login recipe up to `--reauth-max-retries`
+  times on a mid-crawl 401 or login redirect, then emits `session-died` and stops
+  that origin. Recipes may include `oauth_pkce` and opt-in `hook` steps.
+- **Go crawl engine** — `shroodler-go` is the sole crawl/network engine (`crawl`,
+  `authz-diff`, session-fixation/logout checks, headless). Engine-independent
+  analysis (JS, deep extractors, captured-session replay) stays in Python and
+  runs on the crawl documents Go emits.
+- **Proxy-first hunt** (`crawl --from-capture FILE`) — ingest a HAR / `shroodler
+  proxy` JSONL as pages (no re-fetch) and live-crawl only the links and API seeds
+  it mentioned. Use with `--proxy` when a WAF challenges the HTML crawler;
+  findings from the capture are marked `source=capture`.
 
-- **Slither ingest** (`shroodler slither-ingest`) — translates a local
-  Slither JSON report into Shroodler findings. Does not run Slither or
-  analyze EVM bytecode.
+## Passive findings
 
-- **SARIF merge** (`shroodler report --merge-sarif FILE`) — folds an
-  external SARIF 2.x file (Semgrep, CodeQL, Slither, any SARIF emitter)
-  into the report alongside Shroodler's own findings. Dedupes by id+url.
+- **Security checks while crawling** — missing security headers, exposed
+  secrets/keys, JWT issues (`alg: none`, missing/long expiry, weak secret), CORS
+  misconfig, GraphQL introspection, and more.
+- **Secret detection** — known-prefix keys plus an entropy heuristic. ASP.NET
+  ViewState and benign URL params (`bookmark`, `cursor`, tracking ids) are
+  excluded from `generic-api-key`; high-signal names (`api_key`, `secret`, ...)
+  still fire.
+- **TLS certificate checks** (Python) — expired/expiring, self-signed,
+  untrusted-chain (real verified handshake), handshake failures, and
+  SAN/CN/IP-SAN hostname mismatch, once per crawl against an `https://` origin.
+- **Subresource checks** — cross-origin `<script>`/`<link>` missing SRI, and
+  HTTPS pages loading `http://` subresources (mixed content). Go emits these
+  during a crawl; `extractors/subresource.py` runs on captured-session replay.
+- **Cookie prefix contracts** — `__Secure-`/`__Host-` Set-Cookie violations
+  (browsers reject these outright).
+- **Auth-stack fingerprinting** — detects next-auth, Keycloak, and Auth0 from
+  cookie/path signatures; for next-auth runs the `callbackUrl` probe
+  automatically.
+- **WAF/bot-mitigation detection** — recognizes Cloudflare/Akamai/PerimeterX/
+  DataDome/CAPTCHA challenge pages so the crawler doesn't parse a block page as
+  real content; emits `waf-challenge` (vendor as evidence), and
+  `waf-challenge-sitewide` when a large share of the crawl was challenged.
+  Detection only -- never attempts to solve or bypass a challenge.
+- **Confidence-graded findings** (`confirmed` / `probable` / `heuristic`) on
+  crawl JSON and payload hits, so the report Confidence column is populated for
+  passive checks too. An already-stamped value wins.
 
-- **Cadence** (`shroodler cadence --tier pr|nightly|weekly`) — prints
-  recommended crawl/payload flags for a PR-time passive scan, a nightly
-  active scan, or a weekly aggressive+adaptive scan. Does not itself
-  crawl.
+## Active payloads
 
-- **Tickets** (`shroodler ticket file` / `ticket sync`) — open GitHub
-  issues for new findings (the same id+path key `diff --gate` uses) and
-  close them when a later scan no longer reports the finding. Dry-run by
-  default; `--apply` calls `gh`. Dedup state lives in
-  `.shroodler-tickets.json`.
+- **Payload testing** — SQLi, XSS, SSTI, path traversal, SSRF, open redirect,
+  XXE, OS command injection (marker-echo and blind/timing across shells),
+  CRLF/header injection, and PHP stream-wrapper LFI/RFI, including
+  blind/out-of-band checks via your own collaborator host.
+- **Stored XSS** — after a reflected XSS hit on a POST, a follow-up GET of the
+  view page still containing this run's marker is `payload-xss-stored`.
 
-- **Confidence-graded findings** (`confirmed` / `probable` /
-  `heuristic`) on crawl JSON as well as payload hits, so the report
-  Confidence column is populated for passive checks too: header/cookie/
-  TLS observations are `confirmed`, IDOR/authz leads are `probable`,
-  entropy `generic-api-key` and auth-stack fingerprints are `heuristic`.
-  An already-stamped value (payload tester, authz identity marker) wins.
+## Access control
 
-- **Triage** (`shroodler triage`) — a fast pre-crawl pass over a host
-  list or `--discover` apex: passive Certificate Transparency expansion,
-  DNS/CNAME classification (including dangling-CNAME takeover
-  candidates), and one gentle HTTP probe per live host that labels
-  redirect aliases, WAF/challenge walls, SSO/auth gates, and live
-  unauthenticated content. Bounded concurrency + rate, proxy-aware,
-  WAF-polite (pauses a zone on challenge/429), identifying User-Agent
-  and required custom headers. Emits JSON, a table, or a crawl-ready
-  host list (`--format hosts` / `--hosts-out`). Does not crawl or fire
-  payloads.
-- **Secret detection** — known-prefix keys plus an entropy heuristic,
-  with ASP.NET ViewState and known-benign URL query params (`bookmark`,
-  `cursor`, tracking IDs) excluded from `generic-api-key` so they don't
-  drown real leaked tokens. High-signal query names (`api_key`,
-  `secret`, ...) still fire.
-- **Auth-stack fingerprinting** — detects next-auth, Keycloak, and Auth0
-  from cookie/path signatures during a crawl, and for next-auth runs the
-  known `callbackUrl` → callback-url-cookie probe automatically.
-- **Plugins** — extra payload packs, secret rules, and optional Python
-  page checks loadable from a local directory (`--plugin` on `crawl` /
-  `payload`, or `$SHROODLER_PLUGIN_PATH`).
-- **Crawl** — static (HTML parse) or headless (real browser, for SPAs)
-  crawling with configurable depth/page/time budgets, robots/sitemap
-  handling, scripted login (re-runs the login recipe up to
-  `--reauth-max-retries` times on a mid-crawl 401 or login redirect, then
-  emits `session-died` and stops that origin if retries fail; recipes may
-  include `oauth_pkce` and opt-in `hook` steps), cookie/header/session-state
-  injection,
-  configurable User-Agent (`--user-agent`), named safe/balanced/
-  aggressive profiles, and `--spec` to seed extra same-origin paths from
-  a local OpenAPI/Swagger document or Postman collection.
-- **GraphQL field names without introspection** — `crawl --gql-schema` /
-  `--gql-wordlist` (and the same flags on `authz-diff`) feed Clairvoyance
-  JSON or a plain field-name list into GraphQL Query-field replay when
-  live introspection is blocked.
-- **Cookie prefix contracts** — `__Secure-`/`__Host-` Set-Cookie
-  violations (browsers reject these outright), distinct from the
-  existing "could adopt a prefix" suggestions.
-- **Attack-path** (`shroodler attack-path`) — ranks findings by how many
-  clicks they are from the start URL, using the links the crawl recorded
-  (`edges`: HTML link, redirect, or form action). A redirect is not a
-  click. A crawl file with no `edges` still loads and is ranked by URL
-  path depth instead; the report says that is a heuristic, not a walk of
-  the links that were followed. A crawl that stops on a time or page
-  limit also lists the linked URLs it recorded but did not open
-  (`unfetched`). A finished crawl omits that list.
-- **Passive findings** — missing security headers, exposed secrets/keys,
-  JWT issues (`alg: none`, missing/long expiry, weak secret), CORS
-  misconfig, GraphQL introspection, and more, discovered while crawling.
-- **WAF/bot-mitigation detection** — recognizes Cloudflare/Akamai/
-  PerimeterX/DataDome/CAPTCHA challenge and interstitial pages (via
-  response headers, body wording, and known challenge-issuance cookies)
-  so the crawler doesn't silently parse a block page as real target
-  content (a `waf-challenge` finding is emitted instead, with the vendor
-  as evidence). A single same-URL retry is attempted after a challenge
-  cookie is issued, to recover transient challenges without solving
-  anything. When a large share of the crawl was challenged, a single
-  `waf-challenge-sitewide` finding flags that the scan's other results
-  substantially understate the target's real surface. Detection only —
-  Shroodler never attempts to solve or bypass a challenge; ask the
-  target's operator to allowlist the scan if this fires unexpectedly.
-- **Active payload testing** — SQLi, XSS, SSTI, path traversal, SSRF,
-  open redirect, XXE, OS command injection (marker-echo and blind/timing
-  variants across `;`/`|`/`&&`/backtick/`$()`/Windows shells), CRLF/HTTP
-  header-injection, and PHP stream-wrapper LFI/RFI (rot13-proof file
-  read, data:// wrapper RCE), including blind/out-of-band checks via your
-  own collaborator host.
-- **TLS certificate checks** (Python-only for now) — expired/expiring-soon
-  certs, self-signed certs, untrusted-chain (real verified-handshake
-  check, catches non-self-signed certs from a CA nothing trusts), TLS
-  handshake failures, and SAN/CN/IP-SAN hostname mismatch, checked once
-  per crawl against an `https://` target's origin.
-- **Subresource checks** — cross-origin `<script>`/`<link>` tags missing
-  Subresource Integrity, and HTTPS pages loading `http://` subresources
-  (mixed content). The Go crawl engine emits these; the Python extractor
-  (`extractors/subresource.py`) still runs on captured-session replay.
-- **Remediation guidance** — every finding in the HTML and Markdown
-  reports carries a one-line fix suggestion (`packages/report-generator/
-  remediation.py`), keyed by finding id with a category-level fallback for
-  ids added by new payload/secret packs.
-- **Auth checks** — missing rate limiting on login/auth forms, session
-  fixation, logout not invalidating sessions.
-- **Authz diff** — replay a higher-privileged crawl's URLs with a
+- **Authz diff** (`authz-diff`) — replay a higher-privileged crawl's URLs with a
   lower-privileged session to find broken access control.
-- **IDOR probing** (`--check-idor`, opt-in) — same-session adjacent-ID
-  replay against JSON API endpoints (n-1/n+1), proven via matching
-  top-level JSON key shape plus a not-found-baseline probe to rule out
-  targets that don't distinguish valid/invalid IDs at all. Reported as a
-  medium-severity lead to manually confirm (a single session can't tell
-  whether the adjacent ID belongs to a different account), not a proven
-  vulnerability.
-- **Peer-write replay** (`shroodler peer-write`, Python-only) — replay
-  captured writes against *known* object ids as a second session, with a
-  nonsense-id control and an optional owner re-read. A dummy 200 that
-  matches the fake id, or `{"success": false}`, is not a finding. CSRF
-  tokens are harvested (hidden input / meta / JS / cookie) and attached
-  unless `--no-csrf`. If the captured write already had a CSRF field and
-  harvest fails, the write is skipped (fail closed). `--require-confirm`
-  keeps only owner-reread confirmations; with both owner and peer jars
-  that is the default (`--allow-unconfirmed` to emit probable leads).
-  Cookie jars come from Playwright `storageState`,
-  Netscape, HAR, or proxy JSONL — no crawl required. MCP: `peer_write`.
-- **Session export** (`shroodler session-export`) — dump HttpOnly cookies
-  from a live Chrome `--cdp` URL (true loopback only unless
-  `--allow-external`; `*.local` / `0.0.0.0` are not loopback), or convert
-  HAR / proxy JSONL / Netscape into Playwright `storageState` JSON.
-  `--origin` must be an absolute http(s) URL when set. MCP `session_export`
-  with `cdp` also requires a scan-policy (or `allow_without_policy`).
-- **Authenticated CSRF** — crawl emits `csrf-state-change-unprotected`
-  when a SameSite=None session cookie is paired with a state-changing
-  form that has no CSRF field. An Origin-reflection probe (gated like
-  CORS) sends anonymous OPTIONS only and records a reflected Origin as
-  supporting evidence, not as proof a cross-site POST would succeed.
-- **Stored XSS** — after a reflected XSS hit on a POST, a follow-up GET
-  of the view page that still contains this run's marker is
-  `payload-xss-stored`.
-- **JS API surface** — JSON-RPC methods, tRPC procedures, React Query
-  keys, and GraphQL operation names mined from JS (`js-jsonrpc-method`,
-  `js-trpc-procedure`, `js-react-query-key`, `js-graphql-operation`).
-  React Query paths and tRPC `/trpc/{proc}` URLs are queued as crawl
-  seeds. `authz-diff` replays
-  GraphQL Query fields as the lower-priv session (`graphql-field-authz`).
-- **Chain findings** — reports add `chain-xss-cookie-theft` and
-  `chain-cors-credentialed` when both halves exist, and cluster a
-  header/SRI issue repeated across many pages into one row.
-- **Proxy-first hunt** (`crawl --from-capture FILE`) — ingest a browser
-  HAR / `shroodler proxy` JSONL as pages (no re-fetch of captured URLs)
-  and live-crawl only the links and API seeds it mentioned. Skips live
-  robots/sitemap/OpenAPI probes. Use with `--proxy` when a WAF challenges
-  the HTML crawler. Findings from the capture are marked `source=capture`.
-- **OAuth redirect_uri probe** — when Keycloak or Auth0 is fingerprinted,
-  on-origin authorize endpoints are probed (CORS-gated) for an open
-  `redirect_uri` allowlist (`oauth-redirect-uri-unvalidated`). Confirmation
-  is a 3xx to `https://shroodler.invalid/oauth-callback` or a form_post
-  whose action is that URL, not an error-page echo.
-- **JS route templates** (`shroodler js-routes`) — mine `{userId}`,
-  `{collectionId}`, `{pk}`, `${var}`, `:id`, and `<int:pk>` URL
-  templates from a webpack/SPA bundle so a peer-write playbook has a
-  map. Does not fetch or enumerate ids. MCP: `extract_js_routes`.
-- **Paced fetch** (`shroodler paced-fetch`) — GET/HEAD/OPTIONS a URL
-  list at a capped rate (default 1 req/s) so an agent loop does not
-  trip a program's rate limit. Does not solve captchas. MCP:
-  `paced_fetch` (max 20 URLs).
-- **OAuth 2.0/OIDC checks** (both engines) — missing/empty `state` param
-  (CSRF risk) and deprecated implicit-flow (`response_type=token`)
-  detection on any crawled authorization-request URL.
-- **`shroodler tokens`** — password-reset/verification-token
-  predictability analysis from a recorded proxy session (a token is
-  delivered out-of-band, so this is a standalone command over captured
-  JSONL, not a crawl-time check). With 2+ samples of the same token
-  parameter, tests for a sequential/incrementing generator or measures
-  real Shannon entropy across the samples; with a single sample, only
-  makes a conservative length-based estimate and says so explicitly.
-- **Intercepting proxy** — MITM proxy with its own CA, session recording,
-  and an AutoResponder-style rule system; crawls can route through it or be
-  seeded from a recorded session.
-- **History & trend** — record scans locally and diff findings between any
-  two of them (introduced vs. resolved, plus same-key severity
-  increases; `trend --gate-on-severity-increase` for CI).
-- **Baseline & CI gating** — snapshot current findings as a baseline
-  checked into git, then fail CI on anything new (`diff --gate`), with
-  optional suppressions. A suppression can carry an `expires` date
-  (YYYY-MM-DD): once passed, the rule stops suppressing and `diff`
-  warns (not fails) that it aged out, rather than silently suppressing
-  forever with no visible signal. An optional `owner` field is carried
-  through for humans/tooling.
-- **Reports** — render findings as HTML, CSV, SARIF (GitHub code scanning),
-  JUnit (CI test panels), or Markdown. HTML and Markdown carry an
-  executive-summary risk score (0-100, A-F) weighted by distinct
-  finding type per severity (not raw per-page instance count, so one
-  systemic header issue repeated across 500 pages doesn't dwarf five
-  genuinely distinct critical bugs on one page).
+- **IDOR probing** (`--check-idor`, opt-in) — same-session adjacent-ID replay
+  (n-1/n+1) against JSON APIs, proven via matching JSON key shape plus a
+  not-found baseline. A medium-severity lead to confirm manually, not a proven
+  vuln (one session can't tell whether the adjacent ID is another account).
+- **Peer-write replay** (`peer-write`, Python) — replay captured writes against
+  known object ids as a second session, with a nonsense-id control and optional
+  owner re-read. CSRF tokens are harvested and attached unless `--no-csrf`; a
+  captured write with a CSRF field whose harvest fails is skipped (fail closed).
+  `--require-confirm` keeps only owner-reread confirmations (default with both
+  jars). Jars from Playwright `storageState`, Netscape, HAR, or proxy JSONL.
+- **Authenticated CSRF** — `csrf-state-change-unprotected` when a SameSite=None
+  session cookie is paired with a state-changing form that has no CSRF field. An
+  Origin-reflection probe records a reflected Origin as supporting evidence, not
+  proof.
+
+## Auth / session
+
+- **Auth checks** — missing rate limiting on login/auth forms, session fixation,
+  logout not invalidating sessions.
+- **OAuth 2.0/OIDC checks** — missing/empty `state` (CSRF) and deprecated
+  implicit-flow (`response_type=token`) on any crawled authorization URL.
+- **OAuth redirect_uri probe** — when Keycloak/Auth0 is fingerprinted, on-origin
+  authorize endpoints are probed (CORS-gated) for an open `redirect_uri`
+  allowlist (`oauth-redirect-uri-unvalidated`). Confirmed only by a 3xx or
+  form_post to `https://shroodler.invalid/oauth-callback`, not an error echo.
+- **Token predictability** (`tokens`) — password-reset/verification-token
+  analysis from a recorded proxy session. With 2+ samples tests for a sequential
+  generator or measures Shannon entropy; with one sample makes only a
+  conservative length-based estimate.
+
+## JS analysis
+
+- **JS API surface** — JSON-RPC methods, tRPC procedures, React Query keys, and
+  GraphQL operation names mined from JS (`js-jsonrpc-method`, `js-trpc-procedure`,
+  `js-react-query-key`, `js-graphql-operation`). React Query and tRPC URLs are
+  queued as crawl seeds; `authz-diff` replays GraphQL Query fields
+  (`graphql-field-authz`).
+- **GraphQL without introspection** — `--gql-schema` / `--gql-wordlist` feed
+  Clairvoyance JSON or a field-name list into Query-field replay when live
+  introspection is blocked.
+- **JS route templates** (`js-routes`) — mine `{userId}`, `{pk}`, `${var}`,
+  `:id`, `<int:pk>` URL templates from a bundle so a peer-write playbook has a
+  map. Does not fetch or enumerate ids.
+
+## Sessions & capture
+
+- **Session export** (`session-export`) — dump HttpOnly cookies from a live
+  Chrome `--cdp` URL (true loopback only unless `--allow-external`), or convert
+  HAR / proxy JSONL / Netscape into Playwright `storageState`.
+- **Intercepting proxy** (`proxy`) — MITM proxy with its own CA, session
+  recording, and AutoResponder-style rules; crawls can route through it or seed
+  from a recording.
+- **Paced fetch** (`paced-fetch`) — GET/HEAD/OPTIONS a URL list at a capped rate
+  (default 1 req/s) so an agent loop doesn't trip rate limits.
+
+## Ingest
+
+- **HAR ingest** (`ingest-har`) — turn a Burp/mitmproxy/Caido/DevTools HAR into
+  crawl JSON (pages + passive findings) so `authz-diff`/`payload` can consume
+  traffic the proxy never saw. `crawl --seed-from` also auto-detects HAR.
+- **Nuclei ingest** (`nuclei-ingest`) — convert local Nuclei HTTP YAML templates
+  into payload-pack YAML. Does not download a template library.
+- **Slither ingest** (`slither-ingest`) — translate a local Slither JSON report
+  into findings. Does not run Slither.
+- **SARIF merge** (`report --merge-sarif FILE`) — fold an external SARIF 2.x file
+  (Semgrep, CodeQL, Slither, any emitter) into the report, deduped by id+url.
+
+## Reporting & CI
+
+- **Reports** — HTML, CSV, SARIF (GitHub code scanning), JUnit (CI), or Markdown.
+  HTML/Markdown carry an executive-summary risk score (0-100, A-F) weighted by
+  distinct finding type per severity, so one systemic issue across 500 pages
+  doesn't dwarf five distinct critical bugs.
+- **Remediation guidance** — every HTML/Markdown finding carries a one-line fix
+  (`packages/report-generator/remediation.py`), keyed by finding id.
+- **Attack-path** (`attack-path`) — rank findings by clicks from the start URL
+  using recorded `edges`. A crawl with no edges falls back to URL path depth (a
+  heuristic, flagged as such); an interrupted crawl also lists linked-but-unopened
+  URLs (`unfetched`).
+- **Chain findings** — `chain-xss-cookie-theft` and `chain-cors-credentialed`
+  when both halves exist; a header/SRI issue across many pages collapses to one
+  row.
+- **Baseline & CI gating** — snapshot findings as a git baseline, then fail CI on
+  anything new (`diff --gate`), with suppressions. A suppression can carry an
+  `expires` date (after which `diff` warns instead of suppressing) and an `owner`.
+- **History & trend** — record scans locally and diff any two (introduced vs.
+  resolved, plus same-key severity increases; `trend
+  --gate-on-severity-increase`).
+- **Tickets** (`ticket file` / `ticket sync`) — open GitHub issues for new
+  findings and close them when a later scan no longer reports them. Dry-run by
+  default; `--apply` calls `gh`. State in `.shroodler-tickets.json`.
+- **Cadence** (`cadence --tier pr|nightly|weekly`) — print recommended
+  crawl/payload flags for a slot. Does not itself crawl.
+
+## Agent & memory
+
+- **Engagement memory** (`program`) — per-program state at
+  `~/.shroodler/programs/<slug>/state.json` (endpoints tested, object ids,
+  findings, sessions). `crawl`/`authz-diff`/`peer-write --program` keep it up to
+  date. MCP `program_state` is the orient step; `coverage_gaps` is the untested
+  queue.
 - **MCP summary output** — `scan_route`, `check_idor`, `peer_write`, and
-  `diff_since_baseline` return a compact `{leads, confirmed, probable,
-  top, next_step}` dict by default so an agent is not dumped a 400-line
-  crawl blob. Pass `summary=false` for the full JSON.
-- **Engagement memory** (`shroodler program`) — per-program state at
-  `~/.shroodler/programs/<slug>/state.json` (endpoints tested for
-  authz/peer-write, object IDs extracted from JSON bodies, findings,
-  sessions). `crawl --program`, `authz-diff --program`, and
-  `peer-write --program` / `--from-program` keep it up to date. MCP
-  `program_state` is the agent's orient step; `coverage_gaps` is the
-  prioritized untested-endpoint queue.
-- **Go crawl engine** — `shroodler-go` is the sole crawl/network engine
-  (`crawl`, `authz-diff`, session-fixation/logout-invalidation checks, headless
-  mode). The in-process Python crawler was retired once Go reached finding
-  parity across the eval labs. Engine-independent analysis (JS bundle analysis,
-  the deep extractors, captured-session replay) stays in Python and runs on the
-  crawl documents the Go engine emits.
+  `diff_since_baseline` return a compact `{leads, confirmed, probable, top,
+  next_step}` dict by default; pass `summary=false` for full JSON.
+
+## Extensibility
+
+- **Triage** (`triage`) — fast pre-crawl pass over a host list or `--discover`
+  apex: CT expansion, DNS/CNAME classification (incl. dangling-CNAME takeover),
+  and one gentle probe per host labeling redirects, WAF walls, SSO gates, and
+  live content. Emits JSON, a table, or a crawl-ready host list. Does not crawl.
+- **Plugins** — extra payload packs, secret rules, and optional Python page
+  checks from a local directory (`--plugin`, or `$SHROODLER_PLUGIN_PATH`).

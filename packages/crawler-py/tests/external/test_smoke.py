@@ -4,7 +4,7 @@ import os
 
 import pytest
 
-from shroodler.crawler import crawl_url
+from shroodler import go_engine
 from shroodler.validate import validate_crawl
 
 pytestmark = pytest.mark.skipif(
@@ -14,13 +14,12 @@ pytestmark = pytest.mark.skipif(
 
 
 def test_httpbin_allow_external_smoke():
-    result = crawl_url(
+    doc = go_engine.crawl(
         "https://httpbin.org/get",
         depth=0,
         allow_external=True,
         ignore_robots=False,
         max_pages=3,
     )
-    doc = result.to_dict()
     validate_crawl(doc)
     assert doc["pages"]

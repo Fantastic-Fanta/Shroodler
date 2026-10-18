@@ -183,7 +183,7 @@ def test_accepts_finding_models():
 
 
 def test_crawler_header_dedupe_keeps_most_pages():
-    from shroodler.crawler import _dedupe_findings
+    from shroodler.crawl_support import _dedupe_findings
 
     findings = [
         Finding(

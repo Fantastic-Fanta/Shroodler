@@ -139,10 +139,10 @@ def test_dry_run_makes_no_requests(tmp_path, monkeypatch):
 
     def boom_crawl(*args, **kwargs):
         http_calls.append("crawl")
-        raise AssertionError("crawl_url must not be called in dry-run")
+        raise AssertionError("go_engine.crawl must not be called in dry-run")
 
     monkeypatch.setattr("httpx.Client", BoomClient)
-    monkeypatch.setattr("shroodler.crawler.crawl_url", boom_crawl)
+    monkeypatch.setattr("shroodler.go_engine.crawl", boom_crawl)
     load("lab")
     result = run_agent(
         _config(program="lab", target="http://127.0.0.1/", dry_run=True, max_iterations=2)
@@ -273,22 +273,20 @@ def test_decide_report_when_confirmed_and_queue_empty():
 
 
 def test_execute_crawl_merges_mocked_result(monkeypatch):
-    class FakeResult:
-        def to_dict(self):
-            return {
-                "pages": [{"url": "http://127.0.0.1/api/a", "status_code": 200}],
-                "findings": [
-                    {
-                        "id": "missing-hsts",
-                        "severity": "medium",
-                        "category": "header",
-                        "url": "http://127.0.0.1/api/a",
-                        "description": "no hsts",
-                    }
-                ],
+    doc = {
+        "pages": [{"url": "http://127.0.0.1/api/a", "status_code": 200}],
+        "findings": [
+            {
+                "id": "missing-hsts",
+                "severity": "medium",
+                "category": "header",
+                "url": "http://127.0.0.1/api/a",
+                "description": "no hsts",
             }
+        ],
+    }
 
-    monkeypatch.setattr("shroodler.crawler.crawl_url", lambda *a, **k: FakeResult())
+    monkeypatch.setattr("shroodler.go_engine.crawl", lambda *a, **k: doc)
     state = ProgramState(slug="lab")
     result = execute_action(
         CrawlAction(urls=["http://127.0.0.1/api/a", "https://evil.example/x"]),
@@ -304,31 +302,29 @@ def test_execute_crawl_merges_mocked_result(monkeypatch):
 def test_execute_crawl_uses_headless_for_webgoat(monkeypatch):
     seen: dict = {}
 
-    class FakeResult:
-        def to_dict(self):
-            return {
-                "pages": [
-                    {
-                        "url": "http://127.0.0.1:8080/WebGoat/start.mvc",
-                        "status_code": 200,
-                    }
-                ],
-                "xhr_endpoints": [
-                    {
-                        "url": "http://127.0.0.1:8080/WebGoat/SqlInjection/attack2",
-                        "method": "POST",
-                        "params": [{"name": "username", "value": "guest", "in": "body"}],
-                    }
-                ],
-                "findings": [],
+    doc = {
+        "pages": [
+            {
+                "url": "http://127.0.0.1:8080/WebGoat/start.mvc",
+                "status_code": 200,
             }
+        ],
+        "xhr_endpoints": [
+            {
+                "url": "http://127.0.0.1:8080/WebGoat/SqlInjection/attack2",
+                "method": "POST",
+                "params": [{"name": "username", "value": "guest", "in": "body"}],
+            }
+        ],
+        "findings": [],
+    }
 
     def fake_crawl(url, **kwargs):
         seen["url"] = url
         seen["kwargs"] = kwargs
-        return FakeResult()
+        return doc
 
-    monkeypatch.setattr("shroodler.crawler.crawl_url", fake_crawl)
+    monkeypatch.setattr("shroodler.go_engine.crawl", fake_crawl)
     state = ProgramState(slug="lab")
     execute_action(
         CrawlAction(urls=["http://127.0.0.1:8080/WebGoat/start.mvc"]),
@@ -352,7 +348,7 @@ def test_execute_crawl_records_per_url_errors(monkeypatch):
     def boom(*a, **k):
         raise RuntimeError("network down")
 
-    monkeypatch.setattr("shroodler.crawler.crawl_url", boom)
+    monkeypatch.setattr("shroodler.go_engine.crawl", boom)
     state = ProgramState(slug="lab")
     result = execute_action(
         CrawlAction(urls=["http://127.0.0.1/"]),

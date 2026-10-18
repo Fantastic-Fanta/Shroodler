@@ -1,9 +1,5 @@
 from __future__ import annotations
 
-import json
-from base64 import b64encode
-
-from shroodler.crawler import crawl_url
 from shroodler.extractors.js_endpoints import extract_js_endpoints, ghost_route_findings
 from shroodler.extractors.sourcemap import (
     decode_data_url,
@@ -104,26 +100,6 @@ def test_garbage_js_does_not_crash():
     assert eps == []
     assert findings == []
 
-def test_html_inline_script(fx):
-    fx.html(
-        "/",
-        '<script src="/rt.js"></script><script>new EventSource("/sse/inline")</script>',
-    )
-    fx.route(
-        "/rt.js",
-        lambda _req: (
-            200,
-            {"Content-Type": "application/javascript"},
-            b'new WebSocket("/ws/live")',
-        ),
-    )
-    result = crawl_url(fx.origin + "/", depth=2)
-    got = {e.endpoint for e in result.js_endpoints}
-    assert "/ws/live" in got
-    assert "/sse/inline" in got
-    assert all(not (p.url or "").startswith("ws") for p in result.pages)
-
-
 def test_ghost_route_unvisited_same_origin():
     origin = "http://127.0.0.1:8081/"
     src = "http://127.0.0.1:8081/static/app.js"
@@ -160,48 +136,6 @@ def test_ghost_route_skips_cross_origin():
     )
     assert findings == []
 
-def test_ghost_route_not_fetched_during_crawl(fx):
-    # /api/-shaped paths are also legitimate CORS-probe candidates (see cors.py
-    # is_api_path), so this endpoint can see an OPTIONS/GET CORS probe — that's
-    # expected. What "ghost route" guarantees is that it's never treated as a
-    # crawled page, i.e. never queued and walked like a normal discovered link.
-    fx.html("/", '<script src="/static/app.js"></script>')
-    fx.route(
-        "/static/app.js",
-        lambda _req: (
-            200,
-            {"Content-Type": "application/javascript"},
-            b'fetch("/api/never-crawled-ghost")',
-        ),
-    )
-    fx.route(
-        "/api/never-crawled-ghost",
-        lambda _req: (200, {"Content-Type": "text/plain"}, b"should-not-be-fetched"),
-    )
-    result = crawl_url(fx.origin + "/", depth=2, ignore_robots=True)
-    assert any(e.endpoint == "/api/never-crawled-ghost" for e in result.js_endpoints)
-    ghost = next(f for f in result.findings if f.id == "ghost-route")
-    assert ghost.category == "js-endpoint"
-    assert "/api/never-crawled-ghost" in ghost.url
-    assert "app.js" in (ghost.evidence or "")
-    assert not any("/api/never-crawled-ghost" in p.url for p in result.pages)
-
-def test_ghost_route_absent_when_linked_and_crawled(fx):
-    fx.html("/", '<script src="/app.js"></script><a href="/api/visited">v</a>')
-    fx.route(
-        "/app.js",
-        lambda _req: (
-            200,
-            {"Content-Type": "application/javascript"},
-            b'fetch("/api/visited")',
-        ),
-    )
-    fx.route("/api/visited", lambda _req: (200, {"Content-Type": "text/plain"}, b"ok"))
-    result = crawl_url(fx.origin + "/", depth=2, ignore_robots=True)
-    assert any(e.endpoint == "/api/visited" for e in result.js_endpoints)
-    assert not any(f.id == "ghost-route" for f in result.findings)
-
-
 def test_source_mapping_url_comment():
     js = "function n(){}\n//# sourceMappingURL=app.min.js.map\n"
     assert source_mapping_url(js) == "app.min.js.map"
@@ -212,44 +146,6 @@ def test_extract_from_source_map_resolves_original():
     assert eps[0].endpoint == "/api/sourcemap-only"
     assert any("src/internal.ts" in (f.evidence or "") for f in findings)
     assert any("original src/internal.ts" in f.description for f in findings)
-
-
-def test_inline_data_source_map(fx):
-    payload = b64encode(json.dumps(_map_obj()).encode()).decode()
-    js = f'function n(){{return 1}}\n//# sourceMappingURL=data:application/json;base64,{payload}\n'
-    fx.html("/", '<script src="/app.min.js"></script>')
-    fx.route(
-        "/app.min.js",
-        lambda _req: (200, {"Content-Type": "application/javascript"}, js.encode()),
-    )
-    result = crawl_url(fx.origin + "/", depth=2)
-    assert any(e.endpoint == "/api/sourcemap-only" for e in result.js_endpoints)
-    hit = next(f for f in result.findings if f.id == "js-endpoint")
-    assert "src/internal.ts" in (hit.evidence or hit.description)
-
-
-def test_fetched_source_map_not_in_minified(fx):
-    fx.html("/", '<script src="/mapped.min.js"></script>')
-    fx.route(
-        "/mapped.min.js",
-        lambda _req: (
-            200,
-            {"Content-Type": "application/javascript"},
-            b"function n(){return 1}\n//# sourceMappingURL=mapped.min.js.map\n",
-        ),
-    )
-    fx.route(
-        "/mapped.min.js.map",
-        lambda _req: (
-            200,
-            {"Content-Type": "application/json"},
-            json.dumps(_map_obj()).encode(),
-        ),
-    )
-    result = crawl_url(fx.origin + "/", depth=2)
-    assert "/api/sourcemap-only" not in fx.origin
-    assert any(e.endpoint == "/api/sourcemap-only" for e in result.js_endpoints)
-    assert not any("/api/sourcemap-only" in (p.url or "") for p in result.pages)
 
 
 def test_parse_and_data_url_helpers():

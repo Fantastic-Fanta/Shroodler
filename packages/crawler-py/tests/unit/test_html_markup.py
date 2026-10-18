@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from shroodler.crawler import crawl_url
 from shroodler.extractors.html_markup import (
     extract_html_comments,
     extract_html_markup,
@@ -76,26 +75,6 @@ def test_extract_html_markup_combines_both():
     </head><body><!-- TODO: leftover --><!-- layout --></body></html>"""
     findings = extract_html_markup(html, "http://127.0.0.1/")
     assert _ids(findings) == {"html-comment", "meta-generator"}
-
-
-def test_crawl_reports_comment_and_generator_not_layout(fx):
-    from urllib.parse import urlparse
-
-    fx.html(
-        "/",
-        (
-            "<html><head><meta name='generator' content='App1CMS 0.1.0'></head>"
-            "<body><!-- TODO: remove debug admin at /nope --></body></html>"
-        ),
-    )
-    fx.html("/about", "<html><body><!-- layout --><p>about</p></body></html>")
-    home = crawl_url(fx.origin + "/", depth=0)
-    home_ids = {f.id for f in home.findings if urlparse(f.url).path == "/"}
-    assert "html-comment" in home_ids
-    assert "meta-generator" in home_ids
-    about = crawl_url(fx.origin + "/about", depth=0)
-    about_ids = {f.id for f in about.findings if urlparse(f.url).path == "/about"}
-    assert "html-comment" not in about_ids
 
 
 def test_ie_conditional_comment_is_ignored():

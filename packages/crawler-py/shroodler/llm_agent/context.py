@@ -315,6 +315,15 @@ def build_context(
     if patterns_block:
         blocks.append("")
         blocks.append(patterns_block)
+    try:
+        from shroodler.world_model import summarize_model
+
+        model_block = summarize_model(state)
+    except Exception:  # noqa: BLE001
+        model_block = ""
+    if model_block:
+        blocks.append("")
+        blocks.append(model_block)
     blocks.append("")
     blocks.append(f"CONFIRMED FINDINGS ({len(confirmed)}):")
     if confirmed:

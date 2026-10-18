@@ -109,12 +109,10 @@
   check, catches non-self-signed certs from a CA nothing trusts), TLS
   handshake failures, and SAN/CN/IP-SAN hostname mismatch, checked once
   per crawl against an `https://` target's origin.
-- **Subresource checks** (always on, Python-only for now) — cross-origin
-  `<script>`/`<link>` tags missing Subresource Integrity, and HTTPS pages
-  loading `http://` subresources (mixed content). `shroodler-go` doesn't
-  implement this yet; `packages/parity-tests/run_parity.py` excludes the
-  `subresource` finding category from its Python/Go comparison rather
-  than this being gated behind an opt-in flag.
+- **Subresource checks** — cross-origin `<script>`/`<link>` tags missing
+  Subresource Integrity, and HTTPS pages loading `http://` subresources
+  (mixed content). The Go crawl engine emits these; the Python extractor
+  (`extractors/subresource.py`) still runs on captured-session replay.
 - **Remediation guidance** — every finding in the HTML and Markdown
   reports carries a one-line fix suggestion (`packages/report-generator/
   remediation.py`), keyed by finding id with a category-level fallback for
@@ -222,11 +220,9 @@
   `peer-write --program` / `--from-program` keep it up to date. MCP
   `program_state` is the agent's orient step; `coverage_gaps` is the
   prioritized untested-endpoint queue.
-- **Two crawler implementations** — a Python crawler (full feature set) and
-  a Go crawler (`shroodler-go`, faster, same core subcommands including
-  `authz-diff` and session-fixation/logout-invalidation checks). A few
-  features are Python-only for now (subresource/SRI checks, headless
-  mode); `packages/parity-tests/run_parity.py` excludes known
-  Python-only finding categories from its comparison rather than
-  requiring the two engines to be feature-identical before either can
-  ship a check.
+- **Go crawl engine** — `shroodler-go` is the sole crawl/network engine
+  (`crawl`, `authz-diff`, session-fixation/logout-invalidation checks, headless
+  mode). The in-process Python crawler was retired once Go reached finding
+  parity across the eval labs. Engine-independent analysis (JS bundle analysis,
+  the deep extractors, captured-session replay) stays in Python and runs on the
+  crawl documents the Go engine emits.

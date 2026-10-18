@@ -27,6 +27,7 @@ from shroodler.extractors.challenge import detect_challenge, has_challenge_cooki
 from shroodler.extractors.client_side import extract_client_side
 from shroodler.extractors.cloud_storage import extract_cloud_buckets
 from shroodler.extractors.common_paths import (
+    _is_soft_404,
     probe_mutations,
     probe_paths,
     probe_soft_404_baseline,
@@ -406,6 +407,11 @@ class Crawler:
             return item
 
         workers = 1 if self.mode == "headless" or self._resolved_recipe is not None else 4
+        # Soft-404 baseline, computed once and reused for openapi-probe filtering
+        # in the loop and the content-discovery phase below: a SPA that serves its
+        # index page for every path must not have those probe URLs recorded as
+        # real endpoints.
+        soft_404_baseline = probe_soft_404_baseline(origin_url, self.http)
         while queue:
             hit = self._budget_hit(t0, len(pages))
             if hit:
@@ -452,7 +458,10 @@ class Crawler:
                         break
                 if result.status_code == 200 and not self._session_looks_expired(result):
                     self._last_good_url = result.url or url
-                if result.status_code != 200 and is_probe_url(url):
+                if is_probe_url(url) and (
+                    result.status_code != 200
+                    or _is_soft_404(soft_404_baseline, result)
+                ):
                     continue
                 # In headless mode, same-origin JS/browser redirects are followed
                 # transparently: the returned `result.url` may differ from `url`.
@@ -583,10 +592,8 @@ class Crawler:
                 break
 
 
-        # Fingerprinted once and shared by both probe phases below, so a
-        # site's "not found" page is judged against a single consistent
-        # baseline rather than two independently-fetched ones.
-        soft_404_baseline = probe_soft_404_baseline(origin_url, self.http)
+        # soft_404_baseline was fingerprinted once before the crawl loop and is
+        # reused here, so the "not found" page is judged against one baseline.
         extra_pages, extra_findings = probe_paths(
             origin_url,
             self.http,

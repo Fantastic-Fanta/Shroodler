@@ -306,6 +306,15 @@ def build_context(
     if facts_block:
         blocks.append("")
         blocks.append(facts_block)
+    try:
+        from shroodler.llm_agent.cross_program_memory import summarize_for
+
+        patterns_block = summarize_for(state, config)
+    except Exception:  # noqa: BLE001
+        patterns_block = ""
+    if patterns_block:
+        blocks.append("")
+        blocks.append(patterns_block)
     blocks.append("")
     blocks.append(f"CONFIRMED FINDINGS ({len(confirmed)}):")
     if confirmed:

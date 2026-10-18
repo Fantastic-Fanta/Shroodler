@@ -215,7 +215,7 @@
         "engines": {
           "type": "array",
           "items": { "type": "string", "enum": ["python", "go"] },
-          "description": "Optional. Which crawler engine(s) independently reproduced this exact finding (same id+url) when a scan's results were merged via `shroodler compare-engines`. Two engines agreeing is a confidence signal; a single engine is not itself evidence of a false positive."
+          "description": "Optional, legacy. Which crawler engine(s) independently reproduced this exact finding (same id+url). Produced by the retired `shroodler compare-engines` differential; no longer populated now that Go is the sole crawl engine. Still accepted so historical scan documents validate."
         },
         "severity_disagreement": {
           "type": "object",
@@ -224,7 +224,7 @@
             "python": { "type": "array", "items": { "type": "string" } },
             "go": { "type": "array", "items": { "type": "string" } }
           },
-          "description": "Optional. Set by `shroodler compare-engines` only when BOTH engines independently reproduced this (id, path, query) AND reported different severities -- lists the distinct severities each engine actually observed. Never set from one engine emitting the same key twice with different severities on its own."
+          "description": "Optional, legacy. Was set by the retired `shroodler compare-engines` differential when both engines reproduced this (id, path, query) with different severities. No longer populated now that Go is the sole crawl engine; still accepted so historical scan documents validate."
         },
         "owner": {
           "type": "string",

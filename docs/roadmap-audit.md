@@ -59,7 +59,7 @@ Added 2026-09-08 from Whatnot engagement + Immunefi coverage analysis.
 |---|---|---|---|
 | Findings-as-code diff, code-attributed (URL → route → source file) | 5 | **DONE** | `diff --source-root` (`packages/crawler-py/shroodler/code_attribution.py`). Flask/FastAPI/Express/Django heuristics + `git log -L` blame. |
 | Per-finding ownership + SLA | 4 | **DONE** | `shroodler sla apply` (`sla.py`); suppression `owner`/`expires` already existed. |
-| Dual-engine differential as a confidence signal | 3 | **DONE** | `shroodler compare-engines`. |
+| Dual-engine differential as a confidence signal | 3 | **RETIRED** | Was `shroodler compare-engines`; removed when the Python crawler was retired and Go became the sole crawl engine (nothing left to differential against). |
 | Confidence-graded findings (marker vs timing vs heuristic, sortable column) | 4 | **DONE** | Payload tester stamps match-clause confidence; crawl JSON now stamps passive checks via `shroodler/confidence.py` (`confirmed`/`probable`/`heuristic`). |
 | Cost-of-attack weighting | 4 | **DONE** | `packages/report-generator/cost_of_attack.py`; reports already emit the axis. |
 | Minimal-repro payloads | 3 | **DONE** | Payload tester prefers the shortest same-or-higher-confidence match and stamps `minimal_repro: true`. |

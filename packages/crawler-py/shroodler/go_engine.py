@@ -1,15 +1,10 @@
 """Subprocess client for the Go network engine (``shroodler-go``).
 
-This is step 1 of the Go consolidation (see docs/go-consolidation-design.md):
-a thin, well-defined seam between the Python agent and the Go crawl/network
-engine. Nothing in the default path uses this yet -- it is additive. The agent
-is wired to it behind a flag in a later step, after parity is verified.
-
-The Go ``crawl`` subcommand emits the same JSON document shape as the Python
-crawler (``crawler``, ``pages``, ``edges``, ``findings``, ``js_endpoints``,
-``stats``, ``target``, ``scan_started_at``, ``scan_finished_at``), which is what
-makes this seam cheap: the returned document already matches what the rest of
-the Python pipeline consumes.
+A thin seam between the Python agent and the Go crawl/network engine, which
+is the sole crawler. The Go ``crawl`` subcommand emits the JSON document shape
+(``crawler``, ``pages``, ``edges``, ``findings``, ``js_endpoints``, ``stats``,
+``target``, ``scan_started_at``, ``scan_finished_at``) that the rest of the
+Python pipeline consumes directly.
 """
 
 from __future__ import annotations

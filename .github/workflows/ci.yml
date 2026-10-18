@@ -57,6 +57,16 @@ jobs:
         # cascading into every later asyncio.run() test. Installing it lets the
         # headless tests actually run and tears the loop down cleanly.
         run: python -m playwright install --with-deps chromium
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: packages/crawler-go/go.sum
+      - name: Build shroodler-go
+        # The agent's crawl now runs exclusively through the Go engine
+        # (shroodler-go via go_engine.py); there is no Python crawl fallback.
+        # go_engine.find_go_binary() looks for the binary at this path, so the
+        # unit tests that exercise a real crawl need it built here.
+        run: cd packages/crawler-go && go build -o shroodler-go ./cmd/shroodler
       # One step per suite with `if: ${{ !cancelled() }}` so a failure in one
       # suite does not mask the others (they previously ran in a single
       # `bash -e` block, so the first failure hid every later suite's result).

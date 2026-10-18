@@ -136,3 +136,33 @@ def test_execute_crawl_uses_go_engine_when_selected(monkeypatch):
     assert calls["go"] == 1 and calls["py"] == 0
     assert out["pages_crawled"] >= 1
     assert target in state.endpoints
+
+
+def test_execute_crawl_go_collapses_systemic_header_findings(monkeypatch):
+    """The Go path dedups per-response header findings to match the Python crawler."""
+    import shroodler.agent  # noqa: F401  (load first for import order)
+    from shroodler import agent_exec
+    from shroodler.agent_types import AgentConfig, CrawlAction
+    from shroodler.pacer import Pacer
+    from shroodler.program import ProgramState
+
+    origin = "http://127.0.0.1:8081"
+    # Go emits the same header finding once per page; three pages here.
+    doc = {
+        "target": origin + "/",
+        "pages": [{"url": f"{origin}/{p}"} for p in ("", "a", "b")],
+        "findings": [
+            {"id": "server-version-leak", "category": "header", "url": f"{origin}/{p}",
+             "severity": "info", "evidence": "Server: nginx/1.0"}
+            for p in ("", "a", "b")
+        ],
+    }
+    monkeypatch.setattr(go_engine, "available", lambda: True)
+    monkeypatch.setattr(go_engine, "crawl", lambda url, **k: doc)
+
+    state = ProgramState(slug="t")
+    cfg = AgentConfig(program="t", target=origin + "/", engine="go")
+    agent_exec._execute_crawl(CrawlAction(urls=[origin + "/"]), state, cfg, Pacer(0))
+
+    svl = [f for f in state.findings if f.id == "server-version-leak"]
+    assert len(svl) == 1, f"expected the 3 per-page findings collapsed to 1, got {len(svl)}"

@@ -15,32 +15,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 from shroodler import program
-from shroodler.agent import (
-    _AGG_TIMEOUT,
-    _AGG_WORKERS,
-    _PROBE_WORKERS,
-    _allow_external,
-    _apply_login_to_config,
-    _apply_peer_to_config,
-    _auth_header_for_diff,
-    _bind_probe_session,
-    _confirmed_findings,
-    _has_unresolved_placeholder,
-    _in_target_origin,
-    _js_urls_for_analysis,
-    _make_reauth_callback,
-    _merge_findings,
-    _merged_owner_cookie,
-    _new_pacer,
-    _owner_auth_line,
-    _owner_for_probes,
-    _owning_endpoints,
-    _probe_auth_headers,
-    _resolve_idor_sessions,
-    _sync_peer_session_from_config,
-    _url_in_program_scope,
-    emit_log_entry,
-)
 from shroodler.agent_types import (
     AgentAction,
     AgentConfig,
@@ -490,6 +464,15 @@ def _execute_crawl(
                     storage_state=storage_state,
                     allow_external=allow_external,
                     ignore_robots=config.ignore_robots,
+                )
+                # The Python crawler dedups systemic header/subresource findings
+                # to one row per origin+id inline; the Go engine emits them per
+                # response. Collapse them here so the two engines produce the
+                # same findings. min_count=2 means any repeat collapses to one.
+                from shroodler.chains import collapse_systemic_findings
+
+                doc["findings"] = collapse_systemic_findings(
+                    doc.get("findings") or [], min_count=2
                 )
             else:
                 result = crawl_url(
@@ -1768,3 +1751,33 @@ def execute_action(
         return _execute_report(state)
     raise TypeError(f"unknown action {type(action)!r}")
 
+
+# Imported at the bottom on purpose: agent and agent_exec depend on each
+# other, and deferring this import until agent_exec's own functions are
+# defined lets the pair load in either order without a circular-import error.
+from shroodler.agent import (  # noqa: E402
+    _AGG_TIMEOUT,
+    _AGG_WORKERS,
+    _PROBE_WORKERS,
+    _allow_external,
+    _apply_login_to_config,
+    _apply_peer_to_config,
+    _auth_header_for_diff,
+    _bind_probe_session,
+    _confirmed_findings,
+    _has_unresolved_placeholder,
+    _in_target_origin,
+    _js_urls_for_analysis,
+    _make_reauth_callback,
+    _merge_findings,
+    _merged_owner_cookie,
+    _new_pacer,
+    _owner_auth_line,
+    _owner_for_probes,
+    _owning_endpoints,
+    _probe_auth_headers,
+    _resolve_idor_sessions,
+    _sync_peer_session_from_config,
+    _url_in_program_scope,
+    emit_log_entry,
+)

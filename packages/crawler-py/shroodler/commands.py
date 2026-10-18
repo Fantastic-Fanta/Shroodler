@@ -663,6 +663,7 @@ def cmd_agent(args: argparse.Namespace) -> int:
     config = AgentConfig(
         program=str(args.program),
         target=str(args.target),
+        engine=str(getattr(args, "engine", "go") or "go"),
         max_iterations=int(getattr(args, "max_iterations", 10) or 10),
         max_pages_per_crawl=int(getattr(args, "max_pages_per_crawl", 30) or 30),
         login_recipe=getattr(args, "login_recipe", None),

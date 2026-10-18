@@ -15,32 +15,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 from shroodler import program
-from shroodler.agent import (
-    _AGG_TIMEOUT,
-    _AGG_WORKERS,
-    _PROBE_WORKERS,
-    _allow_external,
-    _apply_login_to_config,
-    _apply_peer_to_config,
-    _auth_header_for_diff,
-    _bind_probe_session,
-    _confirmed_findings,
-    _has_unresolved_placeholder,
-    _in_target_origin,
-    _js_urls_for_analysis,
-    _make_reauth_callback,
-    _merge_findings,
-    _merged_owner_cookie,
-    _new_pacer,
-    _owner_auth_line,
-    _owner_for_probes,
-    _owning_endpoints,
-    _probe_auth_headers,
-    _resolve_idor_sessions,
-    _sync_peer_session_from_config,
-    _url_in_program_scope,
-    emit_log_entry,
-)
 from shroodler.agent_types import (
     AgentAction,
     AgentConfig,
@@ -356,6 +330,13 @@ def _execute_js_analysis(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    import types
+
+    from shroodler.extractors.client_side import extract_client_side
+    from shroodler.extractors.js_endpoints import (
+        extract_js_endpoints,
+        ghost_route_findings,
+    )
     from shroodler.js_analyzer import JSAnalyzer
     from shroodler.probes.common import body_text, request
 
@@ -365,6 +346,28 @@ def _execute_js_analysis(
         state.js_urls = list(urls)
     analyzer = JSAnalyzer()
     findings: list[Finding] = []
+    js_eps: list = []
+    # Snapshot the crawled endpoints before the analyzer discovers new ones, so
+    # ghost-route detection matches the Python crawl (which runs it at crawl
+    # time, before JS analysis registers those endpoints).
+    crawled_pages = [types.SimpleNamespace(url=u) for u in list(state.endpoints)]
+    # Crawled HTML pages (from the crawl snapshots). The Python crawler runs
+    # extract_js_endpoints over every page's HTML inline; the Go crawler does
+    # not, so re-visit the pages here and extract from them too, for engine
+    # parity. Exclude the .js files already handled above.
+    _js_url_set = set(urls)
+    page_urls: list[str] = []
+    _seen_pages: set[str] = set()
+    for scan in state.scans or []:
+        if not isinstance(scan, dict):
+            continue
+        for page in scan.get("pages") or []:
+            if not isinstance(page, dict):
+                continue
+            pu = str(page.get("url") or "")
+            if pu and pu not in _js_url_set and pu not in _seen_pages:
+                _seen_pages.add(pu)
+                page_urls.append(pu)
     errors: list[str] = []
     analyzed = 0
     allow_external = _allow_external(config.target)
@@ -395,9 +398,49 @@ def _execute_js_analysis(
                 findings.extend(analyzer.analyze(body, url, state))
             except Exception as exc:  # noqa: BLE001
                 errors.append(f"{url} analyze: {type(exc).__name__}: {exc}")
+            # Deep JS checks the Python crawler runs inline but the Go crawler
+            # does not; run them here so they fire regardless of --engine.
+            # _merge_findings dedups by (id, url), so the Python crawl's copies
+            # don't double-count.
+            try:
+                findings.extend(extract_client_side(body, url))
+                eps, ep_findings = extract_js_endpoints(url, body)
+                js_eps.extend(eps)
+                findings.extend(ep_findings)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{url} js-extract: {type(exc).__name__}: {exc}")
+        # Second pass: extract endpoints + client-side issues from the crawled
+        # HTML pages' inline JS (the Go crawler, unlike the Python one, does not
+        # scan inline page scripts). Full JS analysis stays limited to .js files.
+        for url in page_urls:
+            if not url.startswith(("http://", "https://")):
+                continue
+            if not allow_external and not is_loopback_or_local(url):
+                continue
+            if not _url_in_program_scope(url, state, config):
+                continue
+            try:
+                resp = request("GET", url, cookie_header=owner, pacer=pacer)
+            except Exception as exc:  # noqa: BLE001 - fail closed per URL
+                errors.append(f"{url}: {type(exc).__name__}: {exc}")
+                continue
+            if resp is None:
+                continue
+            body = body_text(resp)
+            if not body:
+                continue
+            try:
+                findings.extend(extract_client_side(body, url))
+                eps, ep_findings = extract_js_endpoints(url, body)
+                js_eps.extend(eps)
+                findings.extend(ep_findings)
+            except Exception as exc:  # noqa: BLE001
+                errors.append(f"{url} page-extract: {type(exc).__name__}: {exc}")
     finally:
         _session_cm.__exit__(None, None, None)
 
+    origin = origin_of(config.target or "")
+    findings.extend(ghost_route_findings(origin, crawled_pages, js_eps))
     findings = _dedupe_js_findings(findings)
     api_n = sum(1 for f in findings if f.id == "js-api-endpoint-found")
     secret_n = sum(1 for f in findings if f.id == "js-hardcoded-secret")
@@ -451,6 +494,7 @@ def _execute_crawl(
     config: AgentConfig,
     pacer: Pacer,
 ) -> dict[str, Any]:
+    from shroodler import go_engine
     from shroodler.crawler import crawl_url
 
     pages_crawled = 0
@@ -464,28 +508,59 @@ def _execute_crawl(
         is_webgoat_url(u) for u in action.urls
     )
     mode = "headless" if webgoat else "static"
+    # The Go engine covers the same crawl surface (incl. --mode headless); fall
+    # back to the in-process Python crawler when it is unavailable or when a
+    # Python-only option (harvest-robots) is requested, so behaviour never
+    # silently degrades.
+    use_go = (
+        str(getattr(config, "engine", "py")).lower() == "go"
+        and not config.harvest_robots
+        and go_engine.available()
+    )
     for url in action.urls:
         if not _in_target_origin(url, config.target):
             continue
         pacer.wait()
+        storage_state = (config.higher_priv_jar or "").strip() or None
         try:
-            result = crawl_url(
-                url,
-                depth=1,
-                max_pages=config.max_pages_per_crawl,
-                login_recipe=config.login_recipe,
-                storage_state=(config.higher_priv_jar or "").strip() or None,
-                allow_external=allow_external,
-                ignore_robots=config.ignore_robots,
-                harvest_robots=config.harvest_robots,
-                mode=mode,
-            )
+            if use_go:
+                doc = go_engine.crawl(
+                    url,
+                    mode=mode,
+                    depth=1,
+                    max_pages=config.max_pages_per_crawl,
+                    login_recipe=config.login_recipe,
+                    storage_state=storage_state,
+                    allow_external=allow_external,
+                    ignore_robots=config.ignore_robots,
+                )
+                # The Python crawler dedups systemic header/subresource findings
+                # to one row per origin+id inline; the Go engine emits them per
+                # response. Collapse them here so the two engines produce the
+                # same findings. min_count=2 means any repeat collapses to one.
+                from shroodler.chains import collapse_systemic_findings
+
+                doc["findings"] = collapse_systemic_findings(
+                    doc.get("findings") or [], min_count=2
+                )
+            else:
+                result = crawl_url(
+                    url,
+                    depth=1,
+                    max_pages=config.max_pages_per_crawl,
+                    login_recipe=config.login_recipe,
+                    storage_state=storage_state,
+                    allow_external=allow_external,
+                    ignore_robots=config.ignore_robots,
+                    harvest_robots=config.harvest_robots,
+                    mode=mode,
+                )
+                doc = result.to_dict() if hasattr(result, "to_dict") else dict(result)
         except Exception as exc:  # noqa: BLE001 - per-URL, loop must continue
             errors.append(f"{url}: {type(exc).__name__}: {exc}")
             # Still stamp last_seen so this URL doesn't loop forever as a gap.
             _stamp_last_seen(state, url)
             continue
-        doc = result.to_dict() if hasattr(result, "to_dict") else dict(result)
         delta = program.merge_crawl_doc(state, doc)
         # Ensure the attempted URL is stamped even when the crawler returned no
         # pages (e.g. a JSON API endpoint the HTML crawler can't traverse).
@@ -1745,3 +1820,33 @@ def execute_action(
         return _execute_report(state)
     raise TypeError(f"unknown action {type(action)!r}")
 
+
+# Imported at the bottom on purpose: agent and agent_exec depend on each
+# other, and deferring this import until agent_exec's own functions are
+# defined lets the pair load in either order without a circular-import error.
+from shroodler.agent import (  # noqa: E402
+    _AGG_TIMEOUT,
+    _AGG_WORKERS,
+    _PROBE_WORKERS,
+    _allow_external,
+    _apply_login_to_config,
+    _apply_peer_to_config,
+    _auth_header_for_diff,
+    _bind_probe_session,
+    _confirmed_findings,
+    _has_unresolved_placeholder,
+    _in_target_origin,
+    _js_urls_for_analysis,
+    _make_reauth_callback,
+    _merge_findings,
+    _merged_owner_cookie,
+    _new_pacer,
+    _owner_auth_line,
+    _owner_for_probes,
+    _owning_endpoints,
+    _probe_auth_headers,
+    _resolve_idor_sessions,
+    _sync_peer_session_from_config,
+    _url_in_program_scope,
+    emit_log_entry,
+)

@@ -733,6 +733,20 @@ func hasFindingCategory(findings []models.Finding, category string) bool {
 	return false
 }
 
+// sameOriginScriptSrcs keeps only same-origin <script src> URLs, matching the
+// Python crawler, which scopes out third-party/CDN scripts (e.g. a Cloudflare
+// beacon) so they are not treated as in-scope JS for the target.
+func sameOriginScriptSrcs(body, pageURL string) []string {
+	out := []string{}
+	for _, s := range extractors.ScriptSrcs(body) {
+		abs := urls.Normalize(pageURL, s)
+		if abs == "" || urls.SameOrigin(abs, pageURL) {
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
 func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchResult, cookiesAttrsReliable bool) (models.Page, []models.Finding, []models.JSEndpoint) {
 	cookies, cf := extractors.ExtractCookies(res.SetCookies, res.URL, cookiesAttrsReliable)
 	headers, hf := extractors.ExtractHeaders(res.Headers, res.URL)
@@ -790,7 +804,7 @@ func pageFrom(res fetchResult, rules []extractors.Rule, get func(string) fetchRe
 		Params:     urls.QueryNames(res.URL),
 		Cookies:    cookies,
 		Headers:    headers,
-		JSFiles:    extractors.ScriptSrcs(res.Body),
+		JSFiles:    sameOriginScriptSrcs(res.Body, res.URL),
 	}
 	if page.Cookies == nil {
 		page.Cookies = []models.Cookie{}

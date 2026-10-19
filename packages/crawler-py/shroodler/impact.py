@@ -172,11 +172,28 @@ def _entity_of(url: str) -> str:
     return segs[-1] if segs else "object"
 
 
+def _auth_present(cookie_header: str, headers: dict[str, str] | None) -> bool:
+    """True when an identity carries some credential: a cookie OR a header.
+
+    Lets token/bearer apps (``Authorization: Bearer ...`` with no session
+    cookie) be proven, not just cookie-session apps.
+    """
+    return bool((cookie_header or "").strip()) or bool(headers)
+
+
+def _auth_extra_headers(headers: dict[str, str] | None) -> dict[str, str] | None:
+    """Per-identity auth headers to apply, minus any Cookie (that goes via the
+    cookie_header arg, same as the peer path has always done)."""
+    extra = {k: v for k, v in (headers or {}).items() if str(k).lower() != "cookie"}
+    return extra or None
+
+
 def prove_idor(
     url: str,
-    owner_cookie_header: str,
-    peer_cookie_header: str,
+    owner_cookie_header: str = "",
+    peer_cookie_header: str = "",
     *,
+    owner_headers: dict[str, str] | None = None,
     peer_headers: dict[str, str] | None = None,
     method: str = "GET",
     client: httpx.Client | None = None,
@@ -184,16 +201,32 @@ def prove_idor(
 ) -> str | None:
     """Prove cross-user object read: one owner read + ONE peer read, diffed.
 
+    Each identity authenticates with a cookie (``*_cookie_header``) and/or
+    arbitrary headers (``*_headers``, e.g. ``Authorization: Bearer ...``), so
+    token-authenticated apps are provable alongside cookie-session ones. A read
+    is attempted only when that identity carries some credential.
+
     Returns a short evidence string ("identical response body (N bytes)" /
     "shared object ids ...") when the peer identity reads the owner's object,
     else None. Read-only; the peer makes exactly one request; never writes.
     """
-    if not url or not peer_cookie_header:
+    if not url:
+        return None
+    if not _auth_present(owner_cookie_header, owner_headers):
+        return None
+    if not _auth_present(peer_cookie_header, peer_headers):
         return None
     verb = (method or "GET").upper() or "GET"
     if verb not in {"GET", "HEAD"}:
         return None
-    owner = request(verb, url, cookie_header=owner_cookie_header, client=client, pacer=pacer)
+    owner = request(
+        verb,
+        url,
+        cookie_header=owner_cookie_header,
+        extra_headers=_auth_extra_headers(owner_headers),
+        client=client,
+        pacer=pacer,
+    )
     if owner is None or not (200 <= int(getattr(owner, "status_code", 0) or 0) < 300):
         return None
     owner_body = body_text(owner)
@@ -204,8 +237,7 @@ def prove_idor(
         verb,
         url,
         cookie_header=peer_cookie_header,
-        extra_headers={k: v for k, v in (peer_headers or {}).items() if str(k).lower() != "cookie"}
-        or None,
+        extra_headers=_auth_extra_headers(peer_headers),
         client=client,
         pacer=pacer,
     )
@@ -421,15 +453,23 @@ def _prove_sqli_finding(finding: Any, url: str, cookie_header, client, pacer) ->
 
 
 def _prove_idor_finding(
-    finding: Any, url: str, cookie_header, peer_cookie_header, peer_headers, client, pacer
+    finding: Any,
+    url: str,
+    cookie_header,
+    owner_headers,
+    peer_cookie_header,
+    peer_headers,
+    client,
+    pacer,
 ) -> str | None:
-    if not peer_cookie_header or not _is_object_addressed(url):
+    if not _auth_present(peer_cookie_header, peer_headers) or not _is_object_addressed(url):
         return None
     try:
         proof = prove_idor(
             url,
             cookie_header,
             peer_cookie_header,
+            owner_headers=owner_headers,
             peer_headers=peer_headers,
             client=client,
             pacer=pacer,
@@ -459,6 +499,7 @@ def annotate_impact(
     findings: list[Any],
     *,
     cookie_header: str = "",
+    owner_headers: dict[str, str] | None = None,
     peer_cookie_header: str = "",
     peer_headers: dict[str, str] | None = None,
     client: httpx.Client | None = None,
@@ -487,7 +528,14 @@ def annotate_impact(
             note = _prove_sqli_finding(finding, url, cookie_header, client, pacer)
         elif fid in _IDOR_IDS:
             note = _prove_idor_finding(
-                finding, url, cookie_header, peer_cookie_header, peer_headers, client, pacer
+                finding,
+                url,
+                cookie_header,
+                owner_headers,
+                peer_cookie_header,
+                peer_headers,
+                client,
+                pacer,
             )
         elif prove_xss and fid == "xss-reflected":
             note = _prove_xss_finding(finding, url, cookie_header, xss_runner)

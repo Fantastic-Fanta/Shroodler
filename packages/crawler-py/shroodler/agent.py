@@ -1637,6 +1637,7 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
         proven = annotate_impact(
             state.findings,
             cookie_header=_merged_owner_cookie(state, config),
+            owner_headers=_login_extra_headers(state, config),
             peer_cookie_header=peer_cookie,
             peer_headers=peer_extra,
             pacer=pacer,

@@ -206,6 +206,153 @@ def test_annotate_impact_idor_skips_without_peer():
     assert annotate_impact([finding], cookie_header=OWNER_C, client=client, pacer=Pacer(0)) == 0
 
 
+# --- IDOR with token (Authorization: Bearer) auth, no cookies -------------
+
+OWNER_BEARER = "owner-tok-abc"
+PEER_BEARER = "peer-tok-xyz"
+OWNER_H = {"Authorization": f"Bearer {OWNER_BEARER}"}
+PEER_H = {"Authorization": f"Bearer {PEER_BEARER}"}
+
+
+class BearerClient:
+    """Routes GET reads by the Authorization header: owner vs peer bodies."""
+
+    def __init__(self, owner_tok, peer_tok, owner_resp, peer_resp):
+        self.owner_tok = owner_tok
+        self.peer_tok = peer_tok
+        self.owner_resp = owner_resp
+        self.peer_resp = peer_resp
+        self.calls = []
+
+    def request(self, method, url, **kw):
+        headers = kw.get("headers") or {}
+        auth = str(headers.get("Authorization") or "")
+        cookie = str(headers.get("Cookie") or "")
+        self.calls.append((method, auth, cookie))
+        if self.peer_tok and self.peer_tok in auth:
+            return self.peer_resp
+        if self.owner_tok and self.owner_tok in auth:
+            return self.owner_resp
+        return FakeResp(0, "")
+
+    def close(self):
+        pass
+
+
+def test_prove_idor_token_auth_identical_body_is_cross_user_read():
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, _OWNER_OBJ)
+    )
+    proof = prove_idor(
+        IDOR_URL,
+        owner_headers=OWNER_H,
+        peer_headers=PEER_H,
+        client=client,
+        pacer=Pacer(0),
+    )
+    assert proof is not None
+    assert "identical response body" in proof
+    # Exactly one owner read + one peer read, each carrying its bearer token.
+    assert len(client.calls) == 2
+    assert any(OWNER_BEARER in auth for _m, auth, _c in client.calls)
+    assert any(PEER_BEARER in auth for _m, auth, _c in client.calls)
+    # No cookies were sent -- pure token auth.
+    assert all(cookie == "" for _m, _a, cookie in client.calls)
+
+
+def test_prove_idor_token_auth_shared_ids_when_bodies_differ():
+    peer_body = '{"data": {"ownerId": 7, "email": "alice@corp.test"}, "ts": 9}'
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, peer_body)
+    )
+    proof = prove_idor(
+        IDOR_URL, owner_headers=OWNER_H, peer_headers=PEER_H, client=client, pacer=Pacer(0)
+    )
+    assert proof is not None
+    assert "owner's object identifiers" in proof
+
+
+def test_prove_idor_token_auth_no_proof_when_peer_denied():
+    # Secured twin: the peer token is rejected -> access control holds -> None.
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(403, "forbidden")
+    )
+    assert (
+        prove_idor(
+            IDOR_URL, owner_headers=OWNER_H, peer_headers=PEER_H, client=client, pacer=Pacer(0)
+        )
+        is None
+    )
+
+
+def test_prove_idor_token_auth_no_proof_when_bodies_unrelated():
+    peer_body = '{"id": 99, "ownerId": 13, "email": "bob@corp.test"}'
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, peer_body)
+    )
+    assert (
+        prove_idor(
+            IDOR_URL, owner_headers=OWNER_H, peer_headers=PEER_H, client=client, pacer=Pacer(0)
+        )
+        is None
+    )
+
+
+def test_prove_idor_requires_some_peer_auth():
+    # Owner token present but peer has neither cookie nor header -> no attempt.
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, _OWNER_OBJ)
+    )
+    assert (
+        prove_idor(IDOR_URL, owner_headers=OWNER_H, client=client, pacer=Pacer(0)) is None
+    )
+
+
+def test_prove_idor_requires_some_owner_auth():
+    # Peer token present but owner has no credential -> no meaningful baseline.
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, _OWNER_OBJ)
+    )
+    assert (
+        prove_idor(IDOR_URL, peer_headers=PEER_H, client=client, pacer=Pacer(0)) is None
+    )
+
+
+def test_annotate_impact_annotates_confirmed_idor_token_auth():
+    finding = SimpleNamespace(
+        id="idor-cross-account",
+        confidence="confirmed",
+        url=IDOR_URL,
+        evidence="owner=200 peer=200",
+    )
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, _OWNER_OBJ)
+    )
+    n = annotate_impact(
+        [finding],
+        owner_headers=OWNER_H,
+        peer_headers=PEER_H,
+        client=client,
+        pacer=Pacer(0),
+    )
+    assert n == 1
+    assert "IMPACT: peer identity read owner's order" in finding.evidence
+
+
+def test_annotate_impact_idor_skips_without_any_peer_identity():
+    finding = SimpleNamespace(
+        id="idor-cross-account",
+        confidence="confirmed",
+        url=IDOR_URL,
+        evidence="owner=200 peer=200",
+    )
+    client = BearerClient(
+        OWNER_BEARER, PEER_BEARER, FakeResp(200, _OWNER_OBJ), FakeResp(200, _OWNER_OBJ)
+    )
+    # Owner token but no peer cookie and no peer headers -> skipped.
+    assert annotate_impact([finding], owner_headers=OWNER_H, client=client, pacer=Pacer(0)) == 0
+
+
 def test_annotate_impact_idor_skips_non_object_url():
     # GraphQL-style IDOR: the endpoint is not object-addressed, so the
     # fetch-and-diff proof does not apply.

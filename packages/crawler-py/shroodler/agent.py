@@ -566,6 +566,30 @@ def _merged_owner_cookie(state: ProgramState, config: AgentConfig) -> str:
     return "; ".join(parts)
 
 
+def _merged_peer_identity(
+    state: ProgramState, config: AgentConfig
+) -> tuple[str, dict[str, str]]:
+    """Build (peer_cookie_header, peer_extra_headers) for the impact proof.
+
+    Returns ("", {}) when no peer identity is configured, so the IDOR fetch-and-
+    diff proof simply skips rather than guessing.
+    """
+    sessions = _resolve_idor_sessions(state, config)
+    if not sessions:
+        return "", {}
+    _oh, _oc, peer_headers, peer_cookies = sessions
+    parts: list[str] = []
+    extra: dict[str, str] = {}
+    for key, value in dict(peer_headers or {}).items():
+        if str(key).lower() == "cookie" and value:
+            parts.append(str(value))
+        elif value:
+            extra[str(key)] = str(value)
+    if peer_cookies:
+        parts.append("; ".join(f"{k}={v}" for k, v in peer_cookies.items() if k))
+    return "; ".join(p for p in parts if p), extra
+
+
 def _owner_auth_line(state: ProgramState, config: AgentConfig) -> str:
     extra = _login_extra_headers(state, config)
     owner, _peer = _probe_auth_headers(config)
@@ -1609,10 +1633,14 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
     if getattr(config, "prove_impact", False) and not config.dry_run:
         from shroodler.impact import annotate_impact
 
+        peer_cookie, peer_extra = _merged_peer_identity(state, config)
         proven = annotate_impact(
             state.findings,
             cookie_header=_merged_owner_cookie(state, config),
+            peer_cookie_header=peer_cookie,
+            peer_headers=peer_extra,
             pacer=pacer,
+            prove_xss=True,
         )
         if proven:
             emit_log_entry({"impact": "proven", "count": proven})

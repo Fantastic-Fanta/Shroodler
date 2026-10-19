@@ -469,6 +469,15 @@ def _snapshot_engagement_memory(state: Any, config: Any, probe_memory: Any) -> N
 
         snapshot(state, config, probe_memory)
     except Exception:  # noqa: BLE001
+        pass
+    # Learn across targets: record this run's abstracted shape + confirmed bug
+    # classes so a future, unrelated target of the same shape is primed. Keyed
+    # by a one-way slug digest; stores only gate-validated categorical tokens.
+    try:
+        from shroodler.llm_agent.cross_program_memory import record_engagement
+
+        record_engagement(state, config)
+    except Exception:  # noqa: BLE001
         return
 
 

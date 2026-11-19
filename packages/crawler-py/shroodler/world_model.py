@@ -215,6 +215,72 @@ def uncovered_ownership(state: ProgramState) -> list[EntityCoverage]:
     return [c for c in build_coverage(state) if c.endpoints and not c.ownership_tested]
 
 
+_INVARIANT_SOURCE = "world-model-invariant"
+
+
+def _example_url(state: ProgramState, pattern: str) -> str:
+    """A concrete crawled URL whose pattern matches, to point a hypothesis at."""
+    for url in (state.endpoints or {}):
+        if url_to_pattern(str(url)) == pattern:
+            return str(url)
+    return ""
+
+
+def seed_invariant_hypotheses(state: ProgramState, *, max_new: int = 10) -> int:
+    """Queue a pending hypothesis for each untested ownership invariant.
+
+    Closes the loop between the coverage map and action: an object-addressed
+    entity whose ownership/IDOR invariant has not been authz-tested becomes one
+    pending hypothesis targeting a concrete URL of that entity, which the
+    ``test_hypothesis`` loop then picks up and validates in-scope. Idempotent --
+    an invariant already queued (same source + target URL) is not re-added, so
+    calling this every iteration is safe. Returns how many were newly queued;
+    never raises.
+    """
+    try:
+        gaps = uncovered_ownership(state)
+        if not gaps:
+            return 0
+        store = getattr(state, "hypotheses", None)
+        if store is None:
+            state.hypotheses = []
+            store = state.hypotheses
+        existing = {
+            (str(h.get("source") or ""), str(h.get("target_url") or ""))
+            for h in store
+            if isinstance(h, dict)
+        }
+        added = 0
+        for c in gaps:
+            if added >= max_new:
+                break
+            url = _example_url(state, c.entity.pattern)
+            if not url or (_INVARIANT_SOURCE, url) in existing:
+                continue
+            verb = "read or modified" if c.entity.mutable else "read"
+            store.append(
+                {
+                    "hypothesis": (
+                        f"a {c.entity.name} object at {c.entity.pattern} can be "
+                        f"{verb} by a non-owner (broken object-level authorization)"
+                    ),
+                    "target_url": url,
+                    "reasoning": (
+                        f"world-model ownership invariant on {c.entity.pattern} is "
+                        f"untested ({c.authz_tested}/{c.endpoints} endpoints "
+                        "authz-tested)"
+                    ),
+                    "severity": "high",
+                    "source": _INVARIANT_SOURCE,
+                }
+            )
+            existing.add((_INVARIANT_SOURCE, url))
+            added += 1
+        return added
+    except Exception:  # noqa: BLE001 - seeding must never break the loop
+        return 0
+
+
 _MAX_LINES = 12
 
 

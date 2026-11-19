@@ -1536,6 +1536,19 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
     for i in range(max(0, int(config.max_iterations))):
         config._iteration = i + 1  # used by decide_next_action triage logs
         if config.llm_agent:
+            try:
+                from shroodler.world_model import seed_invariant_hypotheses
+
+                seeded = seed_invariant_hypotheses(state)
+                if seeded:
+                    emit_log_entry(
+                        {
+                            "iteration": i + 1,
+                            "world_model": f"seeded {seeded} invariant hypotheses",
+                        }
+                    )
+            except Exception:  # noqa: BLE001 - seeding must never break the run
+                pass
             step = _llm_agent_step(
                 state,
                 config,

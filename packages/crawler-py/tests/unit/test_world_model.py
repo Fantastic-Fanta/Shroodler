@@ -173,3 +173,43 @@ def test_coverage_gaps_surface_in_context():
     )
     ctx = build_context(_idor_state(authz=False, payload=False), [], [], cfg)
     assert "COVERAGE GAPS" in ctx
+
+
+# --- seeding hypotheses from untested invariants ---------------------------
+
+from shroodler.world_model import seed_invariant_hypotheses  # noqa: E402
+
+
+def test_seed_queues_hypothesis_for_untested_invariant():
+    st = _idor_state(authz=False, payload=False)
+    st.hypotheses = []
+    n = seed_invariant_hypotheses(st)
+    assert n == 1
+    h = st.hypotheses[0]
+    assert h["source"] == "world-model-invariant"
+    assert h["target_url"] == "http://h/api/orders/123"
+    assert "non-owner" in h["hypothesis"]
+    assert h["severity"] == "high"
+
+
+def test_seed_is_idempotent():
+    st = _idor_state(authz=False, payload=False)
+    st.hypotheses = []
+    assert seed_invariant_hypotheses(st) == 1
+    assert seed_invariant_hypotheses(st) == 0  # already queued, not re-added
+    assert len(st.hypotheses) == 1
+
+
+def test_seed_skips_when_ownership_tested():
+    st = _idor_state(authz=True, payload=True)
+    st.hypotheses = []
+    assert seed_invariant_hypotheses(st) == 0
+    assert st.hypotheses == []
+
+
+def test_seed_handles_missing_hypotheses_attr():
+    st = _idor_state(authz=False, payload=False)
+    # no .hypotheses set -> helper initializes it
+    if hasattr(st, "hypotheses"):
+        st.hypotheses = []
+    assert seed_invariant_hypotheses(st) == 1

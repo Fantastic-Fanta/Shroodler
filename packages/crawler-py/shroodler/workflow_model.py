@@ -21,6 +21,7 @@ document; it issues no requests. Apache-2.0, Shroodler's own code.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -98,10 +99,23 @@ def _segments(url: str) -> list[str]:
         return []
 
 
+# Leading path segments that name the API surface itself, not a flow. Skipped so
+# that /api/checkout/add and /api/checkout/confirm group under "checkout" rather
+# than collapsing every /api/* path into one meaningless "api" workflow.
+_PREFIX_SEGMENTS = frozenset({"api", "rest", "graphql", "gql", "public", "internal"})
+_VERSION_RE = re.compile(r"^v\d+$")
+
+
 def _group_key(action: str) -> str:
-    """The flow a step belongs to: its first meaningful path segment."""
-    segs = _segments(action)
-    return segs[0].lower() if segs else ""
+    """The flow a step belongs to: its first meaningful path segment, skipping a
+    leading API/version prefix (api, v1, rest, ...)."""
+    segs = [s.lower() for s in _segments(action)]
+    for seg in segs:
+        if seg in _PREFIX_SEGMENTS or _VERSION_RE.match(seg):
+            continue
+        return seg
+    # Everything was a prefix (e.g. just /api): fall back to the first segment.
+    return segs[0] if segs else ""
 
 
 def _step_rank(action: str) -> int:

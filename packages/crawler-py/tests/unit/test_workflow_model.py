@@ -195,3 +195,32 @@ def test_seed_workflow_skips_without_terminal_commit():
         }
     )
     assert seed_workflow_hypotheses(st) == 0
+
+
+# --- regression: /api/ prefix grouping (found testing celestial.construction) ---
+
+from shroodler.workflow_model import _group_key  # noqa: E402
+
+
+def test_group_key_skips_api_and_version_prefixes():
+    assert _group_key("/api/checkout/add") == "checkout"
+    assert _group_key("/api/v2/checkout/confirm") == "checkout"
+    assert _group_key("/api/me/saves") == "me"
+    assert _group_key("/api/accounts/login") == "accounts"
+    assert _group_key("/checkout/add") == "checkout"  # unchanged
+    assert _group_key("/api") == "api"  # nothing after the prefix
+
+
+def test_api_prefixed_flows_group_by_resource_not_api():
+    # Regression: previously every /api/* path collapsed into one "api" workflow.
+    st = _state_with(
+        {
+            "https://h/api/me/saves": {"method": "POST"},
+            "https://h/api/me/uploads": {"method": "POST"},
+            "https://h/api/accounts/login": {"method": "POST"},
+            "https://h/api/accounts/logout": {"method": "POST"},
+        }
+    )
+    names = {w.name for w in infer_workflows_from_state(st)}
+    assert "api" not in names
+    assert names == {"me", "accounts"}

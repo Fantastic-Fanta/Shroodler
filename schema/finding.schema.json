@@ -164,6 +164,41 @@
         }
       }
     },
+    "proof_quote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "text"],
+      "properties": {
+        "source": { "type": "string", "enum": ["request", "response"] },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "A substring that appears verbatim in the proof's request_excerpt or response_excerpt (per \"source\"). Enforced at construction time; a quote that is not present verbatim refuses to bind."
+        }
+      }
+    },
+    "proof": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "url"],
+      "description": "Binds a finding to the single HTTP exchange that demonstrates it. Present only on findings that were evidence-bound; a finding with \"verified\": true MUST carry one. The bounded excerpts here are a self-contained record; when \"session_id\" is set, the full unbounded exchange can be retrieved from the proxy store.",
+      "properties": {
+        "method": { "type": "string" },
+        "url": { "type": "string", "minLength": 1 },
+        "status_code": { "type": ["integer", "null"], "minimum": 0, "maximum": 599 },
+        "session_id": {
+          "type": ["string", "null"],
+          "description": "Id of the proxy session (proxy-session.schema.json) that captured this exchange, when one did. Null for proofs captured outside the recording proxy."
+        },
+        "request_excerpt": { "type": ["string", "null"] },
+        "response_excerpt": { "type": ["string", "null"] },
+        "quotes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/proof_quote" }
+        },
+        "captured_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
     "finding": {
       "type": "object",
       "additionalProperties": false,
@@ -202,6 +237,14 @@
           "type": "string",
           "enum": ["confirmed", "probable", "heuristic"],
           "description": "Optional. How this finding was established: \"confirmed\" for an exact/unambiguous signal (an echoed marker string matched verbatim, a secret pattern matched literally), \"probable\" for a strong-but-inferential signal (blind/timing-based payload confirmation), \"heuristic\" for a passive check that flags a likely-but-unverified condition (a missing header, a suspicious comment). Absent on findings produced before this field existed or by checks that don't yet classify themselves."
+        },
+        "proof": {
+          "anyOf": [{ "type": "null" }, { "$ref": "#/$defs/proof" }],
+          "description": "Optional. The captured HTTP exchange that demonstrates this finding, bound at verification time. Null/absent on findings that were not evidence-bound."
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "Optional. True only for a finding carrying a well-formed \"proof\" with at least one verbatim quote from the bound traffic. A verified finding was demonstrated from its own record, not merely asserted; absent/false means not evidence-bound (which is NOT the same as disproven)."
         },
         "cost_of_attack": {
           "type": "string",

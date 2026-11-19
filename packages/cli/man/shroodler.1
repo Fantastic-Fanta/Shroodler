@@ -744,6 +744,28 @@ guardrail flags as
 .B payload
 for its active-payload re-run.
 .TP
+.B retest \fISCAN\fR
+Re-checks every confirmed finding in a prior
+.I SCAN
+document with the same closed loop as
+.BR reverify ,
+reporting a three-state status per finding:
+.BR reproduces ,
+.B fixed
+(only on a trustworthy clean re-scan) or
+.B unconfirmable
+(silence is not treated as a fix). With
+.B \-\-history
+it compares against the last run recorded in that JSONL file, appends this
+one, and exits non-zero if any finding that was
+.B fixed
+now reproduces (a regression). Use
+.B \-\-all
+to retest every finding, not only confirmed ones. Accepts the same
+.BR \-\-mode / \-\-allow\-external / \-\-no\-payloads
+and guardrail flags as
+.BR reverify .
+.TP
 .B gen\-regression\-test \fIURL\fR \fIFINDING_ID\fR
 Runs the same check as
 .BR reverify ;

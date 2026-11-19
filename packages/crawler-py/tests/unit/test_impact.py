@@ -473,3 +473,137 @@ def test_annotate_impact_mixed_findings_each_class():
     assert "cross-user object read" in idor.evidence
     assert "reflected XSS executes" in xss.evidence
     assert sqli.evidence == "param=q"  # untouched here
+
+
+# --- evidence binding: annotate sets a verified Proof on real Finding models ---
+
+from shroodler.models import Finding  # noqa: E402
+
+
+def test_annotate_binds_verified_proof_to_sqli_finding():
+    finding = Finding(
+        id="sqli-error",
+        severity="high",
+        category="payload",
+        url="http://t/search?q=1",
+        description="SQL injection",
+        evidence="param=q",
+        confidence="confirmed",
+    )
+    n = annotate_impact([finding], client=FakeClient(_vuln_handler), pacer=Pacer(0))
+    assert n == 1
+    assert finding.verified is True
+    assert finding.proof is not None
+    # The bound quote is the split sentinel, verbatim in the captured response.
+    assert finding.proof.quotes[0].source == "response"
+    assert finding.proof.quotes[0].text == "SHRDLRIMPACT"
+    assert "SHRDLRIMPACT" in (finding.proof.response_excerpt or "")
+
+
+def test_annotate_binds_verified_proof_to_idor_finding():
+    finding = Finding(
+        id="idor-cross-account",
+        severity="high",
+        category="auth",
+        url="http://t/api/orders/42",
+        description="IDOR",
+        evidence="owner=200 peer=200",
+        confidence="confirmed",
+    )
+    client = IdentityClient(OWNER_C, PEER_C, FakeResp(200, _OWNER_OBJ), FakeResp(200, _OWNER_OBJ))
+    n = annotate_impact(
+        [finding], cookie_header=OWNER_C, peer_cookie_header=PEER_C, client=client, pacer=Pacer(0)
+    )
+    assert n == 1
+    assert finding.verified is True
+    assert finding.proof is not None
+    assert finding.proof.response_excerpt is not None
+    # Every bound quote is present verbatim in the captured peer response.
+    for q in finding.proof.quotes:
+        assert q.text in finding.proof.response_excerpt
+
+
+def test_annotate_binds_verified_proof_to_xss_finding():
+    finding = Finding(
+        id="xss-reflected",
+        severity="medium",
+        category="payload",
+        url="http://t/s?q=1",
+        description="reflected XSS",
+        evidence="param=q",
+        confidence="confirmed",
+    )
+
+    def runner(fired_url, sentinel, **kw):
+        return f"payload executed in headless Chromium (alert() fired; sentinel {sentinel})"
+
+    n = annotate_impact([finding], prove_xss=True, xss_runner=runner)
+    assert n == 1
+    assert finding.verified is True
+    assert finding.proof is not None
+    # XSS binds the request that fired the payload; the sentinel is URL-safe and
+    # so appears verbatim in the fired URL.
+    assert finding.proof.quotes[0].source == "request"
+    assert finding.proof.quotes[0].text in (finding.proof.request_excerpt or "")
+
+
+def test_unproven_finding_stays_unverified():
+    finding = Finding(
+        id="sqli-error",
+        severity="high",
+        category="payload",
+        url="http://t/search?q=1",
+        description="SQL injection",
+        evidence="param=q",
+        confidence="confirmed",
+    )
+    # Reflecting-but-not-injectable: no proof, so no binding.
+    n = annotate_impact([finding], client=FakeClient(_reflecting_handler), pacer=Pacer(0))
+    assert n == 0
+    assert finding.verified is False
+    assert finding.proof is None
+
+
+# --- proxy session_id seam -------------------------------------------------
+
+from shroodler.evidence import PROXY_SESSION_HEADER, session_id_from_response  # noqa: E402
+
+
+class _HeaderResp(FakeResp):
+    def __init__(self, status, text, headers):
+        super().__init__(status, text)
+        self.headers = headers
+
+
+def test_session_id_read_from_stamped_response():
+    resp = _HeaderResp(200, "body", {PROXY_SESSION_HEADER: "sess-xyz"})
+    assert session_id_from_response(resp) == "sess-xyz"
+
+
+def test_session_id_none_without_stamp():
+    assert session_id_from_response(FakeResp(200, "body")) is None
+
+
+def test_sqli_proof_carries_session_id_when_stamped():
+    def stamped_handler(value):
+        if "SHRDLR" in value and "IMPACT" in value and "concat" in value:
+            return _HeaderResp(
+                200,
+                "<p>SHRDLRIMPACTMySQL-8.0.33</p>",
+                {PROXY_SESSION_HEADER: "sess-777"},
+            )
+        return _HeaderResp(200, "<p>no rows</p>", {})
+
+    finding = Finding(
+        id="sqli-error",
+        severity="high",
+        category="payload",
+        url="http://t/search?q=1",
+        description="SQLi",
+        evidence="param=q",
+        confidence="confirmed",
+    )
+    n = annotate_impact([finding], client=FakeClient(stamped_handler), pacer=Pacer(0))
+    assert n == 1
+    assert finding.verified is True
+    assert finding.proof.session_id == "sess-777"

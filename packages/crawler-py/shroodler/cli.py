@@ -38,6 +38,7 @@ from shroodler.commands import (
     cmd_program_status,
     cmd_proxy,
     cmd_report,
+    cmd_retest,
     cmd_reverify,
     cmd_self_scan,
     cmd_session_export,
@@ -1935,6 +1936,50 @@ def _build_reverify_parser(sub) -> None:
     reverify.set_defaults(func=cmd_reverify)
 
 
+def _build_retest_parser(sub) -> None:
+    retest = sub.add_parser(
+        "retest",
+        help="Re-check every confirmed finding in a prior scan and track status "
+        "over time (reproduces / fixed / unconfirmable), flagging regressions",
+        description=(
+            "Reads a prior scan JSON, re-checks each confirmed finding with the "
+            "same closed loop as `reverify`, and reports a three-state status per "
+            "finding: reproduces, fixed (only on a trustworthy clean re-scan), or "
+            "unconfirmable (silence is not a fix). With --history it compares "
+            "against the last run and exits non-zero if any finding that was "
+            "fixed now reproduces (a regression)."
+        ),
+    )
+    retest.add_argument("scan", help="Path to a prior scan JSON document")
+    retest.add_argument(
+        "--all",
+        action="store_true",
+        help="Retest every finding, not only confirmed ones",
+    )
+    retest.add_argument("--mode", choices=["static", "headless"], default="static")
+    retest.add_argument("--allow-external", action="store_true")
+    retest.add_argument(
+        "--no-payloads",
+        action="store_true",
+        help="Only re-run the passive crawl, skip active payload packs",
+    )
+    retest.add_argument(
+        "--history",
+        metavar="PATH",
+        help="JSONL history file: compare against the last run and append this one",
+    )
+    retest.add_argument("--output", "-o")
+    retest.add_argument(
+        "--require-policy",
+        action="store_true",
+        help="Refuse to run active payloads unless the target publishes a "
+        "scan-policy consent manifest.",
+    )
+    retest.add_argument("--policy-file", metavar="PATH")
+    retest.add_argument("--audit-log", metavar="PATH")
+    retest.set_defaults(func=cmd_retest)
+
+
 def _build_gen_test_parser(sub) -> None:
     gen_test = sub.add_parser(
         "gen-regression-test",
@@ -2166,6 +2211,7 @@ def build_parser() -> argparse.ArgumentParser:
     _build_self_scan_parser(sub)
     _build_attack_path_parser(sub)
     _build_reverify_parser(sub)
+    _build_retest_parser(sub)
     _build_gen_test_parser(sub)
     _build_ticket_parser(sub)
     _build_sla_parser(sub)

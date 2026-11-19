@@ -79,6 +79,49 @@ func TestHTTPCapture(t *testing.T) {
 	}
 }
 
+func TestSessionHeaderStamped(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain")
+		w.Write([]byte("hello"))
+	}))
+	defer upstream.Close()
+	s, _, rec := startProxy(t)
+	proxyURL, _ := url.Parse("http://" + s.ListenAddr())
+	client := &http.Client{Transport: &http.Transport{Proxy: http.ProxyURL(proxyURL)}}
+	resp, err := client.Get(upstream.URL + "/")
+	if err != nil {
+		t.Fatal(err)
+	}
+	io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	stamp := resp.Header.Get(proxy.SessionHeader)
+	if stamp == "" {
+		t.Fatalf("expected %s on the client-facing response", proxy.SessionHeader)
+	}
+
+	time.Sleep(100 * time.Millisecond)
+	b, _ := os.ReadFile(rec)
+	line, _, _ := bufio.NewReader(strings.NewReader(string(b))).ReadLine()
+	var sess proxy.Session
+	if err := json.Unmarshal(line, &sess); err != nil {
+		t.Fatalf("record unmarshal: %v (%s)", err, b)
+	}
+	// The stamp a client receives is the id of the session that captured it.
+	if stamp != sess.ID {
+		t.Fatalf("stamp %q != recorded session id %q", stamp, sess.ID)
+	}
+	// The recorded session keeps the upstream's own headers; the stamp is a
+	// wire-only addition and must not have polluted the stored response.
+	if sess.Response != nil {
+		for k := range sess.Response.Headers {
+			if strings.EqualFold(k, proxy.SessionHeader) {
+				t.Fatalf("stamp leaked into recorded session headers")
+			}
+		}
+	}
+}
+
 func bytesLine(b []byte) []byte {
 	if i := strings.IndexByte(string(b), '\n'); i >= 0 {
 		return b[:i]

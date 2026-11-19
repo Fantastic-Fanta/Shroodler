@@ -185,3 +185,53 @@ def test_blocks_denied_path_by_rules_of_engagement(monkeypatch):
     result = check_guardrails(decision, [], state, _config())
     assert result.allowed is False
     assert "off-limits" in result.reason
+
+
+# --- decision provenance (decided_by) --------------------------------------
+
+
+_XSS = {"url": "http://127.0.0.1/s", "param": "q"}
+
+
+def test_decided_by_allowed_on_pass():
+    decision = PlannerDecision(action="probe_xss", params=dict(_XSS))
+    result = check_guardrails(decision, [], ProgramState(slug="lab"), _config())
+    assert result.allowed is True
+    assert result.decided_by == "allowed"
+
+
+def test_decided_by_budget_on_cost_cap():
+    cfg = _config()
+    cfg._llm_cost_usd = 99.0  # over the 5.0 cap
+    decision = PlannerDecision(action="probe_xss", params=dict(_XSS))
+    result = check_guardrails(decision, [], ProgramState(slug="lab"), cfg)
+    assert result.allowed is False
+    assert result.decided_by == "budget"
+
+
+def test_decided_by_loop_guard_on_repeat():
+    decision = PlannerDecision(action="probe_xss", params=dict(_XSS))
+    history = [_hist("probe_xss", "http://127.0.0.1/s", "q")]
+    result = check_guardrails(decision, history, ProgramState(slug="lab"), _config())
+    assert result.decided_by == "loop_guard"
+
+
+def test_decided_by_recon_budget_is_budget():
+    reads = [_hist("crawl", f"http://127.0.0.1/{i}") for i in range(6)]
+    decision = PlannerDecision(action="crawl", params={"url": "http://127.0.0.1/more"})
+    result = check_guardrails(decision, reads, ProgramState(slug="lab"), _config())
+    assert result.allowed is False
+    assert result.decided_by == "budget"
+
+
+def test_decided_by_recon_policy_when_no_endpoints():
+    decision = PlannerDecision(action="analyze_logic", params={})
+    result = check_guardrails(decision, [], ProgramState(slug="lab"), _config())
+    assert result.allowed is False
+    assert result.decided_by == "recon_policy"
+
+
+def test_decided_by_no_decision_on_fallback():
+    decision = PlannerDecision(action="", fallback=True, fallback_reason="bad json")
+    result = check_guardrails(decision, [], ProgramState(slug="lab"), _config())
+    assert result.decided_by == "no_decision"

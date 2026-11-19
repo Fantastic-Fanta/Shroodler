@@ -1310,15 +1310,19 @@ def _llm_agent_step(
         )
 
     blocked_reason = ""
+    blocked_by = "allowed"
     use_fallback = bool(decision.fallback or not decision.action)
     if use_fallback:
         blocked_reason = decision.fallback_reason or "invalid planner output"
+        blocked_by = "no_decision"
     else:
         guard = check_guardrails(decision, history, state, config)
         if not guard.allowed:
             use_fallback = True
             blocked_reason = guard.reason
+            blocked_by = guard.decided_by
     config._llm_last_guardrail = blocked_reason
+    config._llm_last_guardrail_by = blocked_by
 
     if use_fallback:
         emit_log_entry(
@@ -1326,6 +1330,7 @@ def _llm_agent_step(
                 "warning": "llm-agent-fallback",
                 "iteration": iteration,
                 "reason": blocked_reason,
+                "decided_by": blocked_by,
             }
         )
         action = decide_next_action(state, config, crawl_stall_count)

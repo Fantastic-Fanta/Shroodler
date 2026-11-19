@@ -34,6 +34,7 @@ from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 import httpx
 
+from shroodler.evidence import build_proof, render_request, session_id_from_response
 from shroodler.probes.common import body_text, inject, normalize_params, request
 
 # Split sentinel: the payload contains the two halves as separate string
@@ -71,6 +72,45 @@ def _proof_from_body(body: str) -> str | None:
     return tail or "(empty)"
 
 
+def _fill_capture(
+    capture: dict[str, Any] | None,
+    resp: Any,
+    *,
+    fallback_url: str,
+    fallback_method: str,
+    response_excerpt: str | None,
+    quotes: list[tuple[str, str]],
+    request_excerpt: str | None = None,
+) -> None:
+    """Populate ``capture`` from an httpx-like response, best-effort.
+
+    Reads the fired URL/method back off ``resp.request`` when present (so the
+    proof names the exact payload-bearing request), and never raises -- a
+    response object without ``.request`` just falls back to the input URL.
+    Credentials are deliberately not rendered into the excerpts.
+    """
+    if capture is None:
+        return
+    try:
+        req = getattr(resp, "request", None)
+        fired_url = str(getattr(req, "url", "") or fallback_url)
+        req_method = str(getattr(req, "method", "") or fallback_method).upper()
+        status = int(getattr(resp, "status_code", 0) or 0) or None
+        capture.update(
+            method=req_method,
+            url=fired_url,
+            status_code=status,
+            request_excerpt=request_excerpt
+            if request_excerpt is not None
+            else render_request(req_method, fired_url),
+            response_excerpt=response_excerpt,
+            quotes=list(quotes),
+            session_id=session_id_from_response(resp),
+        )
+    except Exception:  # noqa: BLE001 - capture is best-effort, never breaks a proof
+        capture.clear()
+
+
 def prove_sqli(
     url: str,
     param: str,
@@ -79,10 +119,15 @@ def prove_sqli(
     method: str = "GET",
     client: httpx.Client | None = None,
     pacer: Any = None,
+    capture: dict[str, Any] | None = None,
 ) -> str | None:
     """One bounded read-only proof that arbitrary SQL executes.
 
     Returns the extracted DB version/user string (the impact proof), or None.
+    When ``capture`` is given, it is filled on success with the fired request
+    and response so the caller can bind a :class:`~shroodler.models.Proof`; the
+    bound quote is the split sentinel, which can only appear joined in the body
+    if the database actually concatenated it.
     """
     if not url or not param:
         return None
@@ -100,8 +145,17 @@ def prove_sqli(
         )
         if resp is None:
             continue
-        proof = _proof_from_body(body_text(resp))
+        body = body_text(resp)
+        proof = _proof_from_body(body)
         if proof:
+            _fill_capture(
+                capture,
+                resp,
+                fallback_url=url,
+                fallback_method=method,
+                response_excerpt=body,
+                quotes=[("response", _SENTINEL)],
+            )
             return proof
     return None
 
@@ -198,6 +252,7 @@ def prove_idor(
     method: str = "GET",
     client: httpx.Client | None = None,
     pacer: Any = None,
+    capture: dict[str, Any] | None = None,
 ) -> str | None:
     """Prove cross-user object read: one owner read + ONE peer read, diffed.
 
@@ -250,11 +305,30 @@ def prove_idor(
     if len(peer_body.strip()) < _MIN_IDOR_BODY:
         return None
     if _body_hash(owner_body) == _body_hash(peer_body):
+        # Quote a prefix of the shared body: it is present verbatim in the peer
+        # response and is identical to the owner's, which is the cross-user read.
+        _fill_capture(
+            capture,
+            peer,
+            fallback_url=url,
+            fallback_method=verb,
+            response_excerpt=peer_body,
+            quotes=[("response", peer_body[:160])],
+        )
         return f"identical response body ({len(peer_body)} bytes) returned to the peer session"
     path_id = _path_object_id(url)
     shared = _distinctive_ids(owner_body, path_id) & _distinctive_ids(peer_body, path_id)
     if shared:
-        sample = ", ".join(sorted(shared)[:3])
+        sample_ids = sorted(shared)[:3]
+        _fill_capture(
+            capture,
+            peer,
+            fallback_url=url,
+            fallback_method=verb,
+            response_excerpt=peer_body,
+            quotes=[("response", sid) for sid in sample_ids],
+        )
+        sample = ", ".join(sample_ids)
         return f"peer response carried the owner's object identifiers ({sample})"
     return None
 
@@ -370,12 +444,16 @@ def prove_reflected_xss(
     method: str = "GET",
     runner: XssRunner | None = None,
     screenshot_path: str | None = None,
+    capture: dict[str, Any] | None = None,
 ) -> str | None:
     """Fire a nonce payload and confirm it executes. Returns evidence or None.
 
     Only GET (navigation-fireable) reflected findings are provable this way;
     POST-reflected payloads cannot be fired by a plain navigation and are
-    skipped. Bounded: at most a few payload variants, one navigation each.
+    skipped. Bounded: at most a few payload variants, one navigation each. When
+    ``capture`` is given it is filled on success with the fired request; the
+    bound quote is the unique per-run sentinel, which is URL-safe and so appears
+    verbatim in the fired URL.
     """
     if not url or not param:
         return None
@@ -395,6 +473,15 @@ def prove_reflected_xss(
         except Exception:  # noqa: BLE001 - impact proof must never break a run
             evidence = None
         if evidence:
+            if capture is not None and sentinel in fired_url:
+                capture.update(
+                    method="GET",
+                    url=fired_url,
+                    status_code=None,
+                    request_excerpt=render_request("GET", fired_url),
+                    response_excerpt=str(evidence),
+                    quotes=[("request", sentinel)],
+                )
             return evidence
     return None
 
@@ -439,16 +526,47 @@ def _append_note(finding: Any, note: str) -> bool:
     return True
 
 
+def _bind_finding(finding: Any, capture: dict[str, Any]) -> None:
+    """Bind a verified Proof to ``finding`` from a populated capture.
+
+    Best-effort and in-place: an empty capture, a verbatim-check failure, or a
+    finding object that will not accept the attributes leaves the finding
+    unbound (``verified`` stays false). Never raises -- the human-readable IMPACT
+    note is already attached regardless; binding only adds the structured proof.
+    """
+    if not capture or not capture.get("url"):
+        return
+    try:
+        proof = build_proof(
+            method=str(capture.get("method") or "GET"),
+            url=str(capture["url"]),
+            status_code=capture.get("status_code"),
+            request_excerpt=capture.get("request_excerpt"),
+            response_excerpt=capture.get("response_excerpt"),
+            quotes=capture.get("quotes") or (),
+            session_id=capture.get("session_id"),
+            what=f"finding {getattr(finding, 'id', '?')!r}",
+        )
+        finding.proof = proof
+        finding.verified = True
+    except Exception:  # noqa: BLE001 - binding is additive; never break a run
+        return
+
+
 def _prove_sqli_finding(finding: Any, url: str, cookie_header, client, pacer) -> str | None:
     param = _param_of(finding)
     if not param:
         return None
+    capture: dict[str, Any] = {}
     try:
-        proof = prove_sqli(url, param, cookie_header, client=client, pacer=pacer)
+        proof = prove_sqli(
+            url, param, cookie_header, client=client, pacer=pacer, capture=capture
+        )
     except Exception:  # noqa: BLE001 - impact proof must never break a run
         return None
     if not proof:
         return None
+    _bind_finding(finding, capture)
     return f" IMPACT: arbitrary SQL executes; read back DB version/user = {proof!r}"
 
 
@@ -464,6 +582,7 @@ def _prove_idor_finding(
 ) -> str | None:
     if not _auth_present(peer_cookie_header, peer_headers) or not _is_object_addressed(url):
         return None
+    capture: dict[str, Any] = {}
     try:
         proof = prove_idor(
             url,
@@ -473,11 +592,13 @@ def _prove_idor_finding(
             peer_headers=peer_headers,
             client=client,
             pacer=pacer,
+            capture=capture,
         )
     except Exception:  # noqa: BLE001 - impact proof must never break a run
         return None
     if not proof:
         return None
+    _bind_finding(finding, capture)
     entity = _entity_of(url)
     return f" IMPACT: peer identity read owner's {entity} (cross-user object read); {proof}"
 
@@ -486,12 +607,16 @@ def _prove_xss_finding(finding: Any, url: str, cookie_header, runner) -> str | N
     param = _param_of(finding)
     if not param:
         return None
+    capture: dict[str, Any] = {}
     try:
-        proof = prove_reflected_xss(url, param, cookie_header=cookie_header, runner=runner)
+        proof = prove_reflected_xss(
+            url, param, cookie_header=cookie_header, runner=runner, capture=capture
+        )
     except Exception:  # noqa: BLE001 - impact proof must never break a run
         return None
     if not proof:
         return None
+    _bind_finding(finding, capture)
     return f" IMPACT: reflected XSS executes; {proof}"
 
 

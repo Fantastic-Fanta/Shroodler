@@ -6,11 +6,25 @@ Blocked decisions fall back to ``decide_next_action`` for that iteration.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
 from shroodler.llm_agent.history import HistoryEntry
 from shroodler.llm_agent.planner import PlannerDecision
 from shroodler.scope import in_scope, load_scope, path_denied
+
+# Which brake decided a blocked action -- recorded so an audit of the agent run
+# can tell a deterministic scope/rules refusal apart from a budget stop or a
+# loop guard, rather than reading it out of free-text reasons. "allowed" is the
+# pass-through; "no_decision" is a missing/fallback planner output.
+GuardrailDecider = Literal[
+    "allowed",
+    "no_decision",
+    "budget",
+    "recon_policy",
+    "loop_guard",
+    "scope",
+    "rules_of_engagement",
+]
 
 # Recon actions counted against the budget. Both count, so the planner cannot
 # dodge the limit by alternating crawl and fetch_and_read.
@@ -27,6 +41,7 @@ _NEEDS_RECON = {"analyze_logic", "test_hypothesis", "hypothesise", "hypothesize"
 class GuardrailResult:
     allowed: bool
     reason: str = ""
+    decided_by: GuardrailDecider = "allowed"
 
 
 def _entry_action(item: Any) -> str:
@@ -84,7 +99,11 @@ def check_guardrails(
 ) -> GuardrailResult:
     """Return whether `decision` may run. Never raises."""
     if decision is None or decision.fallback or not decision.action:
-        return GuardrailResult(False, decision.fallback_reason if decision else "no decision")
+        return GuardrailResult(
+            False,
+            decision.fallback_reason if decision else "no decision",
+            decided_by="no_decision",
+        )
 
     cost = float(getattr(config, "_llm_cost_usd", 0.0) or 0.0)
     cap = float(getattr(config, "llm_agent_max_cost_usd", 5.0) or 0.0)
@@ -92,6 +111,7 @@ def check_guardrails(
         return GuardrailResult(
             False,
             f"cost cap exceeded ({cost:.4f} USD > {cap:.4f} USD)",
+            decided_by="budget",
         )
 
     params = decision.params or {}
@@ -109,6 +129,7 @@ def check_guardrails(
                 False,
                 "crawl the target first — no endpoints discovered yet, so there "
                 "is nothing to reason about",
+                decided_by="recon_policy",
             )
 
     if decision.action in _RECON_ACTIONS:
@@ -122,6 +143,7 @@ def check_guardrails(
                 False,
                 f"already read {url} — probe it now (craft_payloads or a probe_ tool), "
                 "do not read it again",
+                decided_by="loop_guard",
             )
         # Hard recon budget across crawl + reads: force a transition to attacking.
         if len(recon) >= _MAX_READS:
@@ -130,6 +152,7 @@ def check_guardrails(
                 f"recon budget spent ({len(recon)} crawl/read actions) — stop "
                 "reconnaissance and probe an untested endpoint with craft_payloads "
                 "or a probe_ tool",
+                decided_by="budget",
             )
 
     combo = _combo(decision.action, params)
@@ -139,6 +162,7 @@ def check_guardrails(
             return GuardrailResult(
                 False,
                 f"repeat (action,url,param) in last 5: {combo[0]} {combo[1]} {combo[2]}",
+                decided_by="loop_guard",
             )
 
     candidate_urls = _all_urls(decision)
@@ -148,11 +172,15 @@ def check_guardrails(
         scope = load_scope(slug, path=scope_file) if slug else {}
         for candidate in candidate_urls:
             if not in_scope(candidate, scope):
-                return GuardrailResult(False, f"out of scope: {candidate}")
+                return GuardrailResult(
+                    False, f"out of scope: {candidate}", decided_by="scope"
+                )
             # Rules of engagement: never touch an operator-denied path.
             if path_denied(candidate, scope):
                 return GuardrailResult(
-                    False, f"off-limits by rules of engagement (deny): {candidate}"
+                    False,
+                    f"off-limits by rules of engagement (deny): {candidate}",
+                    decided_by="rules_of_engagement",
                 )
 
-    return GuardrailResult(True, "")
+    return GuardrailResult(True, "", decided_by="allowed")

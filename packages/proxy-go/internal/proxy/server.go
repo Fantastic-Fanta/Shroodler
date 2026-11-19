@@ -292,7 +292,7 @@ func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 		}
 		sess.Tags = append(sess.Tags, "autoresponded")
 		s.finish(sess, resp, sess.Tags)
-		writeResp(w, resp)
+		writeResp(w, resp, sess.ID)
 		return
 	}
 	out, err := s.forward(req, https)
@@ -309,7 +309,7 @@ func (s *Server) handleHTTP(w io.Writer, req *http.Request, https bool) {
 		return
 	}
 	s.finish(sess, out, sess.Tags)
-	writeResp(w, out)
+	writeResp(w, out, sess.ID)
 }
 
 func (s *Server) pauseIf(sess *Session, req *http.Request, resp *HTTPMsg, stage string) (dropped bool, timedOut bool) {
@@ -588,13 +588,26 @@ func (s *Server) ReplaySession(base *Session, edits map[string]any) error {
 	return nil
 }
 
-func writeResp(w io.Writer, resp *HTTPMsg) {
+// SessionHeader is stamped onto each client-facing response with the id of the
+// proxy session that captured the exchange, so a consumer (e.g. Shroodler's
+// evidence binding) can tie a finding's proof back to the full recorded
+// session. It is written on the wire only; the recorded Session keeps the
+// upstream's own headers untouched.
+const SessionHeader = "X-Shroodler-Session"
+
+func writeResp(w io.Writer, resp *HTTPMsg, sessionID string) {
 	body := []byte(resp.Body.Content)
 	if resp.Body.Encoding == "base64" {
 		body, _ = base64.StdEncoding.DecodeString(resp.Body.Content)
 	}
 	fmt.Fprintf(w, "HTTP/1.1 %d OK\r\n", resp.StatusCode)
+	if sessionID != "" {
+		fmt.Fprintf(w, "%s: %s\r\n", SessionHeader, sessionID)
+	}
 	for k, v := range resp.Headers {
+		if strings.EqualFold(k, SessionHeader) {
+			continue // never let an upstream value shadow our stamp
+		}
 		// Body is always already-decoded (see forward/decodeEnc); the original
 		// Content-Encoding no longer describes it and would make the client
 		// try to re-decode plain bytes (e.g. ERR_CONTENT_DECODING_FAILED).

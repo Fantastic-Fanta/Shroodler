@@ -1380,6 +1380,76 @@ def cmd_reverify(args: argparse.Namespace) -> int:
     return 1
 
 
+def cmd_retest(args: argparse.Namespace) -> int:
+    from shroodler.retest import (
+        latest_report,
+        retest_findings,
+        save_report,
+        targets_from_doc,
+    )
+
+    doc = json.loads(Path(args.scan).read_text(encoding="utf-8"))
+    targets = targets_from_doc(doc, confirmed_only=not bool(getattr(args, "all", False)))
+    if not targets:
+        print("no findings to retest in scan", file=sys.stderr)
+        return 0
+
+    run_payloads = not bool(getattr(args, "no_payloads", False))
+    origin_url = str(doc.get("target") or targets[0][0])
+    enforcer = None
+    require_policy = getattr(args, "require_policy", False)
+    policy_file = getattr(args, "policy_file", None)
+    audit_log = getattr(args, "audit_log", None)
+    if run_payloads and (require_policy or policy_file or audit_log):
+        from shroodler_guardrails.policy import (
+            PolicyEnforcer,
+            fetch_policy,
+            origin_of,
+            parse_policy,
+        )
+
+        if policy_file:
+            manifest = json.loads(Path(policy_file).read_text(encoding="utf-8"))
+            policy = parse_policy(manifest, origin=origin_of(origin_url))
+        else:
+            policy = fetch_policy(origin_url)
+        enforcer = PolicyEnforcer(
+            policy=policy,
+            require_policy=require_policy,
+            audit_path=Path(audit_log) if audit_log else None,
+        )
+
+    reverify_kwargs = {
+        "mode": getattr(args, "mode", "static"),
+        "allow_external": bool(getattr(args, "allow_external", False)),
+        "run_payloads": run_payloads,
+        "enforcer": enforcer,
+    }
+    history = getattr(args, "history", None)
+    prior = latest_report(history) if history else None
+    report = retest_findings(
+        targets,
+        target_name=str(doc.get("target") or ""),
+        prior=prior,
+        reverify_kwargs=reverify_kwargs,
+    )
+    if history:
+        save_report(report, history)
+
+    _write(report.model_dump_json(indent=2) + "\n", args.output)
+    counts = report.counts
+    print(
+        f"retest: {counts['reproduces']} reproduce, {counts['fixed']} fixed, "
+        f"{counts['unconfirmable']} unconfirmable"
+    )
+    for e in report.regressions:
+        print(
+            f"REGRESSION: {e.finding_id} at {e.url} was fixed, now reproduces",
+            file=sys.stderr,
+        )
+    return 1 if report.regressions else 0
+
+
 def cmd_gen_regression_test(args: argparse.Namespace) -> int:
     from shroodler.gen_regression_test import render_regression_test
     from shroodler.reverify import reverify

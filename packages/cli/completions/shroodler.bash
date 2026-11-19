@@ -90,6 +90,9 @@ _shroodler_flags_for() {
         audit-verify)
             echo ""
             ;;
+        verify)
+            echo "--flagged --json --output"
+            ;;
         sla-apply)
             echo "--output --history-dir --owners --gate"
             ;;

@@ -744,6 +744,20 @@ guardrail flags as
 .B payload
 for its active-payload re-run.
 .TP
+.B verify \fISCAN\fR
+Adversarially reviews the findings in
+.IR SCAN :
+for each, it builds the strongest false-positive case a human triager would
+make and grades how well the finding survives
+.RB ( proven / solid / weak / refuted ).
+Evidence-bound findings grade
+.BR proven ;
+assertion-only ones are flagged with counterarguments. Read-only;
+.B \-\-flagged
+hides clean findings,
+.B \-\-json
+emits machine-readable output. Exits non-zero if any finding is refuted outright.
+.TP
 .B coverage \fISLUG\fR
 Reports world-model test coverage for the saved program
 .IR SLUG :

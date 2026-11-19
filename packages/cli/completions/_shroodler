@@ -425,6 +425,13 @@ _shroodler() {
         audit-verify)
           _arguments '1:audit log jsonl:_files'
           ;;
+        verify)
+          _arguments \
+            '--flagged[Show only findings with counterarguments]' \
+            '--json[Emit JSON]' \
+            '--output[Write output to file]:path:_files' \
+            '1:scan json:_files'
+          ;;
         ticket)
           _values 'ticket subcommand' \
             'file[Open issues for new findings]' \

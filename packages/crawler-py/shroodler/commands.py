@@ -1452,6 +1452,37 @@ def cmd_retest(args: argparse.Namespace) -> int:
     return 1 if report.regressions else 0
 
 
+def cmd_verify(args: argparse.Namespace) -> int:
+    from shroodler.verifier import verdict_as_dict, verify_findings
+
+    doc = json.loads(Path(args.scan).read_text(encoding="utf-8"))
+    findings = list(doc.get("findings") or [])
+    verdicts = verify_findings(findings)
+    if getattr(args, "json", False):
+        _write(
+            json.dumps([verdict_as_dict(v) for v in verdicts], indent=2) + "\n",
+            args.output,
+        )
+        return 0
+    only_flagged = bool(getattr(args, "flagged", False))
+    lines: list[str] = ["ADVERSARIAL VERIFICATION", ""]
+    shown = 0
+    for v in verdicts:
+        if only_flagged and v.strength == "proven" and not v.counterarguments:
+            continue
+        shown += 1
+        lines.append(f"[{v.strength.upper()}] {v.finding_id} @ {v.url}")
+        if v.suggested_severity:
+            lines.append(f"  suggested severity: {v.suggested_severity}")
+        for arg in v.counterarguments:
+            lines.append(f"  - {arg}")
+    if shown == 0:
+        lines.append("(no findings to review)" if not verdicts else "(nothing flagged)")
+    _write("\n".join(lines) + "\n", args.output)
+    # Exit non-zero when any finding was refuted outright (likely not a real bug).
+    return 1 if any(not v.stands for v in verdicts) else 0
+
+
 def cmd_coverage(args: argparse.Namespace) -> int:
     from shroodler import program
     from shroodler.world_model import coverage_as_dicts, coverage_report

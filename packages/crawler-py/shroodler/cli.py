@@ -53,6 +53,7 @@ from shroodler.commands import (
     cmd_trend,
     cmd_triage,
     cmd_triage_findings,
+    cmd_verify,
     cmd_version,
 )
 from shroodler.config import load_rc
@@ -1954,6 +1955,31 @@ def _build_reverify_parser(sub) -> None:
     reverify.set_defaults(func=cmd_reverify)
 
 
+def _build_verify_parser(sub) -> None:
+    verify = sub.add_parser(
+        "verify",
+        help="Adversarially review a scan's findings: argue the false-positive "
+        "case against each and grade how well it survives (proven/solid/weak/"
+        "refuted)",
+        description=(
+            "Reads a scan JSON and, for each finding, builds the strongest case "
+            "that it is a false positive -- the pushback a human triager gives -- "
+            "and grades it. Evidence-bound findings grade 'proven'; assertion-only "
+            "ones are flagged with counterarguments. Read-only. Exits non-zero if "
+            "any finding is refuted outright (e.g. a scan-note mistaken for a bug)."
+        ),
+    )
+    verify.add_argument("scan", help="Path to a scan JSON document")
+    verify.add_argument(
+        "--flagged",
+        action="store_true",
+        help="Show only findings with counterarguments (hide clean 'proven' ones)",
+    )
+    verify.add_argument("--json", action="store_true", help="Emit JSON")
+    verify.add_argument("--output", "-o")
+    verify.set_defaults(func=cmd_verify)
+
+
 def _build_coverage_parser(sub) -> None:
     coverage = sub.add_parser(
         "coverage",
@@ -2247,6 +2273,7 @@ def build_parser() -> argparse.ArgumentParser:
     _build_self_scan_parser(sub)
     _build_attack_path_parser(sub)
     _build_reverify_parser(sub)
+    _build_verify_parser(sub)
     _build_coverage_parser(sub)
     _build_retest_parser(sub)
     _build_gen_test_parser(sub)

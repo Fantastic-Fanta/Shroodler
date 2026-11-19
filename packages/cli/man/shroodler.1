@@ -744,6 +744,15 @@ guardrail flags as
 .B payload
 for its active-payload re-run.
 .TP
+.B coverage \fISLUG\fR
+Reports world-model test coverage for the saved program
+.IR SLUG :
+per inferred object-addressed entity, how much of its surface has been payload-
+and authz-tested, flagging the ownership/IDOR invariants not yet checked.
+Read-only;
+.B \-\-json
+emits machine-readable output.
+.TP
 .B retest \fISCAN\fR
 Re-checks every confirmed finding in a prior
 .I SCAN

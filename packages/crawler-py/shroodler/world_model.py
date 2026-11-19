@@ -321,6 +321,48 @@ def coverage_gaps_block(state: ProgramState) -> str:
         return ""
 
 
+def coverage_report(state: ProgramState) -> str:
+    """A human-readable per-entity coverage report for the `coverage` command."""
+    cov = build_coverage(state)
+    if not cov:
+        return (
+            "No object-addressed entities inferred yet "
+            "(crawl the target first, then re-run)."
+        )
+    lines = ["WORLD-MODEL COVERAGE", ""]
+    for c in cov:
+        own = "yes" if c.ownership_tested else "NO"
+        pay = "yes" if c.payload_covered else "NO"
+        lines.append(
+            f"- {c.entity.name} [{c.entity.pattern}] endpoints={c.endpoints} "
+            f"payload={pay} ({c.payload_tested}/{c.endpoints}) "
+            f"ownership/IDOR={own} ({c.authz_tested}/{c.endpoints} authz-tested)"
+        )
+    gaps = coverage_gaps_block(state)
+    if gaps:
+        lines.append("")
+        lines.append(gaps)
+    return "\n".join(lines)
+
+
+def coverage_as_dicts(state: ProgramState) -> list[dict]:
+    """Per-entity coverage as plain dicts, for `coverage --json`."""
+    out = []
+    for c in build_coverage(state):
+        out.append(
+            {
+                "entity": c.entity.name,
+                "pattern": c.entity.pattern,
+                "endpoints": c.endpoints,
+                "payload_tested": c.payload_tested,
+                "authz_tested": c.authz_tested,
+                "payload_covered": c.payload_covered,
+                "ownership_tested": c.ownership_tested,
+            }
+        )
+    return out
+
+
 def summarize_model(state: ProgramState) -> str:
     """Render an APP MODEL block for the planner context, or '' if too thin."""
     try:

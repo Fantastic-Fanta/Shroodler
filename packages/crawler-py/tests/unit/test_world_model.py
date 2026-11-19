@@ -213,3 +213,47 @@ def test_seed_handles_missing_hypotheses_attr():
     if hasattr(st, "hypotheses"):
         st.hypotheses = []
     assert seed_invariant_hypotheses(st) == 1
+
+
+# --- coverage report / command ---------------------------------------------
+
+from shroodler.world_model import coverage_as_dicts, coverage_report  # noqa: E402
+
+
+def test_coverage_report_lists_entities_and_gaps():
+    txt = coverage_report(_idor_state(authz=False, payload=False))
+    assert "WORLD-MODEL COVERAGE" in txt
+    assert "orders" in txt
+    assert "ownership/IDOR=NO" in txt
+    assert "COVERAGE GAPS" in txt
+
+
+def test_coverage_report_empty_without_entities():
+    assert "crawl the target first" in coverage_report(_state())
+
+
+def test_coverage_as_dicts_shape():
+    rows = coverage_as_dicts(_idor_state(authz=True, payload=True))
+    assert rows == [
+        {
+            "entity": "orders",
+            "pattern": "/api/orders/{id}",
+            "endpoints": 1,
+            "payload_tested": 1,
+            "authz_tested": 1,
+            "payload_covered": True,
+            "ownership_tested": True,
+        }
+    ]
+
+
+def test_cmd_coverage_prints_report(monkeypatch, capsys):
+    from shroodler.cli import cmd_coverage
+
+    st = _idor_state(authz=False, payload=False)
+    monkeypatch.setattr("shroodler.program.load", lambda slug: st)
+    rc = cmd_coverage(SimpleNamespace(slug="t", json=False, output=None))
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "WORLD-MODEL COVERAGE" in out
+    assert "ownership/IDOR invariant UNTESTED" in out

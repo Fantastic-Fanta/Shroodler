@@ -1452,6 +1452,18 @@ def cmd_retest(args: argparse.Namespace) -> int:
     return 1 if report.regressions else 0
 
 
+def cmd_coverage(args: argparse.Namespace) -> int:
+    from shroodler import program
+    from shroodler.world_model import coverage_as_dicts, coverage_report
+
+    state = program.load(args.slug)
+    if getattr(args, "json", False):
+        _write(json.dumps(coverage_as_dicts(state), indent=2) + "\n", args.output)
+        return 0
+    _write(coverage_report(state) + "\n", args.output)
+    return 0
+
+
 def cmd_gen_regression_test(args: argparse.Namespace) -> int:
     from shroodler.gen_regression_test import render_regression_test
     from shroodler.reverify import reverify

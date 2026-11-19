@@ -14,6 +14,7 @@ from shroodler.commands import (
     cmd_baseline,
     cmd_cadence,
     cmd_ci_template,
+    cmd_coverage,
     cmd_crawl,
     cmd_dedup,
     cmd_diff,
@@ -1953,6 +1954,24 @@ def _build_reverify_parser(sub) -> None:
     reverify.set_defaults(func=cmd_reverify)
 
 
+def _build_coverage_parser(sub) -> None:
+    coverage = sub.add_parser(
+        "coverage",
+        help="Show world-model test coverage for a program: which inferred "
+        "object-addressed entities have had payload/authz testing, and which "
+        "ownership/IDOR invariants are still untested",
+        description=(
+            "Loads the saved program state for SLUG and reports, per inferred "
+            "entity, how much of its surface has been payload- and authz-tested, "
+            "flagging the ownership/IDOR invariants not yet checked. Read-only."
+        ),
+    )
+    coverage.add_argument("slug", help="Program slug (as used by scans)")
+    coverage.add_argument("--json", action="store_true", help="Emit JSON")
+    coverage.add_argument("--output", "-o")
+    coverage.set_defaults(func=cmd_coverage)
+
+
 def _build_retest_parser(sub) -> None:
     retest = sub.add_parser(
         "retest",
@@ -2228,6 +2247,7 @@ def build_parser() -> argparse.ArgumentParser:
     _build_self_scan_parser(sub)
     _build_attack_path_parser(sub)
     _build_reverify_parser(sub)
+    _build_coverage_parser(sub)
     _build_retest_parser(sub)
     _build_gen_test_parser(sub)
     _build_ticket_parser(sub)

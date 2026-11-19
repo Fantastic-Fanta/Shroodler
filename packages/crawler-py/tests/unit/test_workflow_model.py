@@ -132,3 +132,66 @@ def test_cmd_workflows_prints(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "WORKFLOWS" in out
     assert "checkout" in out
+
+
+# --- state-based inference + hypothesis seeding ----------------------------
+
+from shroodler.workflow_model import (  # noqa: E402
+    infer_workflows_from_state,
+    seed_workflow_hypotheses,
+)
+
+
+def _state_with(endpoints):
+    return SimpleNamespace(endpoints=endpoints, hypotheses=[])
+
+
+def test_infer_from_state_groups_mutating_endpoints():
+    st = _state_with(
+        {
+            "http://t/checkout/add": {"method": "POST"},
+            "http://t/checkout/pay": {"method": "POST"},
+            "http://t/about": {"method": "GET"},  # read-only, ignored
+        }
+    )
+    wfs = infer_workflows_from_state(st)
+    assert len(wfs) == 1
+    assert wfs[0].name == "checkout"
+    assert wfs[0].terminal.action == "http://t/checkout/pay"
+
+
+def test_seed_workflow_hypothesis_targets_terminal():
+    st = _state_with(
+        {
+            "http://t/checkout/add": {"method": "POST"},
+            "http://t/checkout/confirm": {"method": "POST"},
+        }
+    )
+    n = seed_workflow_hypotheses(st)
+    assert n == 1
+    h = st.hypotheses[0]
+    assert h["source"] == "world-model-workflow"
+    assert h["target_url"] == "http://t/checkout/confirm"
+    assert "broken" in h["hypothesis"]
+
+
+def test_seed_workflow_is_idempotent():
+    st = _state_with(
+        {
+            "http://t/checkout/add": {"method": "POST"},
+            "http://t/checkout/pay": {"method": "POST"},
+        }
+    )
+    assert seed_workflow_hypotheses(st) == 1
+    assert seed_workflow_hypotheses(st) == 0
+    assert len(st.hypotheses) == 1
+
+
+def test_seed_workflow_skips_without_terminal_commit():
+    st = _state_with(
+        {
+            "http://t/profile/add": {"method": "POST"},
+            "http://t/profile/new": {"method": "POST"},
+        }
+    )
+    assert seed_workflow_hypotheses(st) == 0

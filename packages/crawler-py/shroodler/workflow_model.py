@@ -188,6 +188,96 @@ def workflow_invariants(doc: dict) -> list[WorkflowInvariant]:
     return out
 
 
+def infer_workflows_from_state(state: object) -> list[Workflow]:
+    """Infer workflows from ProgramState's mutating endpoints (forms register as
+    non-GET endpoints there). Same grouping/ordering as the doc-based path, so
+    the agent loop can reason about flows without a scan document. Never raises.
+    """
+    try:
+        endpoints = getattr(state, "endpoints", None) or {}
+        groups: dict[str, dict[tuple[str, str], WorkflowStep]] = {}
+        for url, meta in endpoints.items():
+            method = str((meta or {}).get("method") or "GET").upper() or "GET"
+            if method in _READ_METHODS:
+                continue
+            action = str(url)
+            key = _group_key(action)
+            if not key:
+                continue
+            groups.setdefault(key, {})[(action, method)] = WorkflowStep(
+                action=action, method=method, rank=_step_rank(action)
+            )
+        workflows: list[Workflow] = []
+        for key in sorted(groups):
+            steps = list(groups[key].values())
+            if len(steps) < 2:
+                continue
+            steps.sort(key=lambda s: (s.rank, s.action))
+            workflows.append(Workflow(name=key, steps=steps))
+        return workflows
+    except Exception:  # noqa: BLE001 - inference must never break the loop
+        return []
+
+
+_WORKFLOW_SOURCE = "world-model-workflow"
+
+
+def seed_workflow_hypotheses(state: object, *, max_new: int = 10) -> int:
+    """Queue a pending hypothesis for each inferred flow's sequence invariant.
+
+    Mirrors the ownership-invariant seeding: a flow with a clear terminal commit
+    step becomes one hypothesis targeting that step (reach it without the prior
+    steps, or replay it). Idempotent by (source, target_url); safe to call every
+    iteration. Returns how many were newly queued. Never raises.
+    """
+    try:
+        workflows = infer_workflows_from_state(state)
+        if not workflows:
+            return 0
+        store = getattr(state, "hypotheses", None)
+        if store is None:
+            state.hypotheses = []
+            store = state.hypotheses
+        existing = {
+            (str(h.get("source") or ""), str(h.get("target_url") or ""))
+            for h in store
+            if isinstance(h, dict)
+        }
+        added = 0
+        for wf in workflows:
+            if added >= max_new:
+                break
+            terminal = wf.terminal
+            if terminal is None or terminal.rank == 0:
+                continue
+            url = terminal.action
+            if not url or (_WORKFLOW_SOURCE, url) in existing:
+                continue
+            priors = ", ".join(s.action for s in wf.steps[:-1]) or "the earlier steps"
+            store.append(
+                {
+                    "hypothesis": (
+                        f"the {wf.name} flow's step {terminal.action} "
+                        f"({terminal.method}) can be reached without completing "
+                        f"{priors}, or replayed to double its effect (broken "
+                        "sequence / business-logic)"
+                    ),
+                    "target_url": url,
+                    "reasoning": (
+                        f"world-model workflow '{wf.name}': "
+                        + " -> ".join(f"{s.method} {s.action}" for s in wf.steps)
+                    ),
+                    "severity": "high",
+                    "source": _WORKFLOW_SOURCE,
+                }
+            )
+            existing.add((_WORKFLOW_SOURCE, url))
+            added += 1
+        return added
+    except Exception:  # noqa: BLE001 - seeding must never break the loop
+        return 0
+
+
 def summarize_workflows(doc: dict) -> str:
     """Render a WORKFLOWS block, or '' when nothing multi-step was inferred."""
     workflows = infer_workflows(doc)

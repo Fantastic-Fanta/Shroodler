@@ -56,16 +56,58 @@ class Entity:
 class Invariant:
     """A property whose violation is a bug, with how to test it."""
 
-    kind: str  # "ownership"
+    kind: str  # "ownership" | "privilege"
     entity: str
     statement: str
     test_hint: str
+
+
+# Path tokens that mark an elevated-privilege / administrative surface: reaching
+# one as a normal or unauthenticated identity is broken function-level
+# authorization (forced browsing), a different trust boundary from per-object
+# ownership. Conservative, whole-segment matches only, to avoid flagging e.g.
+# "administrate-help" articles or a "systems" catalogue.
+_ELEVATED_TOKENS = frozenset(
+    {
+        "admin",
+        "administrator",
+        "administration",
+        "internal",
+        "manage",
+        "management",
+        "console",
+        "superuser",
+        "root",
+        "sudo",
+        "debug",
+        "actuator",
+        "staff",
+        "moderator",
+        "backoffice",
+        "sysadmin",
+        "privileged",
+    }
+)
+
+
+@dataclass
+class PrivilegedSurface:
+    """An endpoint pattern that exercises elevated privilege, by path naming."""
+
+    marker: str  # the elevated path segment that flagged it
+    pattern: str
+    methods: list[str] = field(default_factory=list)
+
+    @property
+    def mutable(self) -> bool:
+        return any(m.upper() not in _READ_METHODS for m in self.methods)
 
 
 @dataclass
 class WorldModel:
     entities: list[Entity] = field(default_factory=list)
     invariants: list[Invariant] = field(default_factory=list)
+    privileged: list[PrivilegedSurface] = field(default_factory=list)
 
 
 def _entity_name(pattern: str) -> str:
@@ -101,6 +143,35 @@ def _methods_for(state: ProgramState, pattern: str) -> list[str]:
         if method not in seen:
             seen.append(method)
     return seen or ["GET"]
+
+
+def _elevated_marker(pattern: str) -> str:
+    """The elevated path segment in a pattern, or '' if none."""
+    for seg in pattern.split("/"):
+        if seg and seg != _ID_SEG and seg.lower() in _ELEVATED_TOKENS:
+            return seg.lower()
+    return ""
+
+
+def _privileged_surfaces(state: ProgramState) -> list[PrivilegedSurface]:
+    """Infer elevated-privilege surfaces from endpoint path naming. Never raises."""
+    by_pattern: dict[str, PrivilegedSurface] = {}
+    try:
+        for url, meta in (state.endpoints or {}).items():
+            pattern = url_to_pattern(str(url))
+            marker = _elevated_marker(pattern)
+            if not marker:
+                continue
+            surface = by_pattern.get(pattern)
+            if surface is None:
+                surface = PrivilegedSurface(marker=marker, pattern=pattern, methods=[])
+                by_pattern[pattern] = surface
+            method = str((meta or {}).get("method") or "GET").upper() or "GET"
+            if method not in surface.methods:
+                surface.methods.append(method)
+    except Exception:  # noqa: BLE001 - inference must never break the loop
+        return []
+    return [by_pattern[p] for p in sorted(by_pattern)]
 
 
 def build_model(state: ProgramState) -> WorldModel:
@@ -141,6 +212,26 @@ def build_model(state: ProgramState) -> WorldModel:
                         "another user's)"
                     ),
                     test_hint=f"authz-diff / idor on {entity.pattern}",
+                )
+            )
+
+        model.privileged = _privileged_surfaces(state)
+        for surface in model.privileged[:_MAX_ENTITIES]:
+            verb = "reach or invoke" if surface.mutable else "reach"
+            model.invariants.append(
+                Invariant(
+                    kind="privilege",
+                    entity=surface.marker,
+                    statement=(
+                        f"the {surface.marker} surface at {surface.pattern} "
+                        "exercises elevated privilege; a normal or unauthenticated "
+                        f"identity must not be able to {verb} it (broken "
+                        "function-level authorization)"
+                    ),
+                    test_hint=(
+                        f"role-diff / forced-browse {surface.pattern} as a "
+                        "lower-privilege identity"
+                    ),
                 )
             )
     except Exception:  # noqa: BLE001 - inference must never break the loop
@@ -367,19 +458,26 @@ def summarize_model(state: ProgramState) -> str:
     """Render an APP MODEL block for the planner context, or '' if too thin."""
     try:
         model = build_model(state)
-        if not model.entities:
+        if not model.entities and not model.privileged:
             return ""
-        lines = [
-            "APP MODEL (inferred from crawl surface; verify, do not assume):",
-            "entities (object-addressed resources):",
-        ]
-        for entity in model.entities[:_MAX_LINES]:
-            mut = "mutable" if entity.mutable else "read-only"
-            methods = ",".join(entity.methods)
-            lines.append(
-                f"- {entity.name} [{entity.pattern}] ids={entity.id_scheme}"
-                f" known={entity.known_ids} {mut} ({methods})"
-            )
+        lines = ["APP MODEL (inferred from crawl surface; verify, do not assume):"]
+        if model.entities:
+            lines.append("entities (object-addressed resources):")
+            for entity in model.entities[:_MAX_LINES]:
+                mut = "mutable" if entity.mutable else "read-only"
+                methods = ",".join(entity.methods)
+                lines.append(
+                    f"- {entity.name} [{entity.pattern}] ids={entity.id_scheme}"
+                    f" known={entity.known_ids} {mut} ({methods})"
+                )
+        if model.privileged:
+            lines.append("privileged surfaces (elevated-privilege by path naming):")
+            for surface in model.privileged[:_MAX_LINES]:
+                mut = "mutable" if surface.mutable else "read-only"
+                methods = ",".join(surface.methods)
+                lines.append(
+                    f"- {surface.marker} [{surface.pattern}] {mut} ({methods})"
+                )
         if model.invariants:
             lines.append("invariants to check (a violation is a finding):")
             for inv in model.invariants[:_MAX_LINES]:

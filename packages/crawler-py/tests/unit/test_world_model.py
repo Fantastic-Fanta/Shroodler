@@ -257,3 +257,58 @@ def test_cmd_coverage_prints_report(monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "WORLD-MODEL COVERAGE" in out
     assert "ownership/IDOR invariant UNTESTED" in out
+
+
+# --- privilege / function-level-authz invariants ---------------------------
+
+from shroodler.world_model import _privileged_surfaces  # noqa: E402
+
+
+def test_infers_privileged_surface_from_admin_path():
+    st = _state(endpoints={"http://h/admin/users": {"method": "GET"}})
+    model = build_model(st)
+    assert len(model.privileged) == 1
+    surf = model.privileged[0]
+    assert surf.marker == "admin"
+    assert surf.pattern == "/admin/users"
+    kinds = {inv.kind for inv in model.invariants}
+    assert "privilege" in kinds
+    priv = next(i for i in model.invariants if i.kind == "privilege")
+    assert "function-level authorization" in priv.statement
+    assert "role-diff" in priv.test_hint
+
+
+def test_privilege_mutable_from_method():
+    st = _state(
+        endpoints={
+            "http://h/internal/config": {"method": "POST"},
+        }
+    )
+    model = build_model(st)
+    assert model.privileged[0].mutable is True
+    priv = next(i for i in model.invariants if i.kind == "privilege")
+    assert "invoke" in priv.statement
+
+
+def test_non_elevated_paths_are_not_privileged():
+    # whole-segment match only: "administrate-help" / "systems" must not match
+    st = _state(
+        endpoints={
+            "http://h/articles/administrate-help": {"method": "GET"},
+            "http://h/catalog/systems": {"method": "GET"},
+            "http://h/api/orders/1": {"method": "GET"},
+        }
+    )
+    assert _privileged_surfaces(st) == []
+
+
+def test_privileged_surface_shown_in_app_model():
+    st = _state(endpoints={"http://h/admin/users": {"method": "DELETE"}})
+    block = summarize_model(st)
+    assert "privileged surfaces" in block
+    assert "admin [/admin/users]" in block
+    assert "function-level authorization" in block
+
+
+def test_app_model_empty_without_entities_or_privileged():
+    assert summarize_model(_state(endpoints={"http://h/about": {"method": "GET"}})) == ""

@@ -316,14 +316,19 @@ def build_context(
         blocks.append("")
         blocks.append(patterns_block)
     try:
-        from shroodler.world_model import summarize_model
+        from shroodler.world_model import coverage_gaps_block, summarize_model
 
         model_block = summarize_model(state)
+        gaps_block = coverage_gaps_block(state)
     except Exception:  # noqa: BLE001
         model_block = ""
+        gaps_block = ""
     if model_block:
         blocks.append("")
         blocks.append(model_block)
+    if gaps_block:
+        blocks.append("")
+        blocks.append(gaps_block)
     blocks.append("")
     blocks.append(f"CONFIRMED FINDINGS ({len(confirmed)}):")
     if confirmed:

@@ -108,3 +108,68 @@ def test_build_context_includes_app_model():
     text = build_context(st, [], [], cfg)
     assert "APP MODEL" in text
     assert "orders" in text
+
+
+# --- coverage anchors: world-model <-> test coverage -----------------------
+
+from shroodler.world_model import (  # noqa: E402
+    build_coverage,
+    coverage_gaps_block,
+    uncovered_ownership,
+)
+
+
+def _idor_state(authz=False, payload=False):
+    return _state(
+        endpoints={
+            "http://h/api/orders/123": {
+                "method": "GET",
+                "tested_payload": payload,
+                "tested_authz": authz,
+            }
+        },
+        object_ids={"/api/orders/{id}": ["123", "456"]},
+    )
+
+
+def test_coverage_counts_tested_endpoints_per_entity():
+    cov = build_coverage(_idor_state(authz=True, payload=True))
+    assert len(cov) == 1
+    c = cov[0]
+    assert c.entity.name == "orders"
+    assert c.endpoints == 1
+    assert c.payload_covered is True
+    assert c.ownership_tested is True
+
+
+def test_untested_ownership_is_flagged():
+    cov = build_coverage(_idor_state(authz=False, payload=True))
+    assert cov[0].payload_covered is True
+    assert cov[0].ownership_tested is False
+    gaps = uncovered_ownership(_idor_state(authz=False, payload=True))
+    assert len(gaps) == 1
+    assert gaps[0].entity.pattern == "/api/orders/{id}"
+
+
+def test_coverage_gaps_block_names_untested_invariant():
+    block = coverage_gaps_block(_idor_state(authz=False, payload=False))
+    assert "COVERAGE GAPS" in block
+    assert "ownership/IDOR invariant UNTESTED" in block
+    assert "/api/orders/{id}" in block
+    assert "no payload testing yet" in block
+
+
+def test_coverage_gaps_block_empty_when_fully_tested():
+    assert coverage_gaps_block(_idor_state(authz=True, payload=True)) == ""
+
+
+def test_coverage_gaps_block_empty_without_entities():
+    assert coverage_gaps_block(_state()) == ""
+
+
+def test_coverage_gaps_surface_in_context():
+    cfg = SimpleNamespace(
+        target="http://h/", program="t", _iteration=1, max_iterations=10
+    )
+    ctx = build_context(_idor_state(authz=False, payload=False), [], [], cfg)
+    assert "COVERAGE GAPS" in ctx

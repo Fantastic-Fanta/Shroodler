@@ -148,7 +148,111 @@ def build_model(state: ProgramState) -> WorldModel:
     return model
 
 
+@dataclass
+class EntityCoverage:
+    """How thoroughly an inferred entity's surface has actually been tested.
+
+    Anchors the world-model (what the app *is*) to test coverage (what we have
+    *tried*): for each entity it counts how many of its matching endpoints have
+    had payload and authz testing, so the planner can chase the untested
+    object-addressed resources -- where the ownership/IDOR bugs live -- instead
+    of re-probing covered ones.
+    """
+
+    entity: Entity
+    endpoints: int
+    payload_tested: int
+    authz_tested: int
+
+    @property
+    def payload_covered(self) -> bool:
+        return self.payload_tested > 0
+
+    @property
+    def ownership_tested(self) -> bool:
+        # The ownership invariant is an authz/IDOR property, so it is only
+        # "tested" once an authz-diff / IDOR check has run on this surface.
+        return self.authz_tested > 0
+
+
+def build_coverage(state: ProgramState) -> list[EntityCoverage]:
+    """Per-entity test coverage, from the endpoint flags the run already sets.
+
+    Reads ``tested_payload`` / ``tested_authz`` off each endpoint (maintained by
+    the agent loop) and groups them by inferred entity. Never raises; returns []
+    on any trouble so a coverage read can never break the agent loop.
+    """
+    try:
+        model = build_model(state)
+        endpoints = (state.endpoints or {}).items()
+        out: list[EntityCoverage] = []
+        for entity in model.entities:
+            total = payload = authz = 0
+            for url, meta in endpoints:
+                if url_to_pattern(str(url)) != entity.pattern:
+                    continue
+                total += 1
+                meta = meta or {}
+                if meta.get("tested_payload"):
+                    payload += 1
+                if meta.get("tested_authz"):
+                    authz += 1
+            out.append(
+                EntityCoverage(
+                    entity=entity,
+                    endpoints=total,
+                    payload_tested=payload,
+                    authz_tested=authz,
+                )
+            )
+        return out
+    except Exception:  # noqa: BLE001 - coverage must never break the loop
+        return []
+
+
+def uncovered_ownership(state: ProgramState) -> list[EntityCoverage]:
+    """Entities whose ownership/IDOR invariant has not yet been tested."""
+    return [c for c in build_coverage(state) if c.endpoints and not c.ownership_tested]
+
+
 _MAX_LINES = 12
+
+
+def coverage_gaps_block(state: ProgramState) -> str:
+    """Render a COVERAGE GAPS block naming untested invariants for the planner.
+
+    Returns '' when every inferred entity's ownership invariant has been tested
+    (or there are no entities), so it only appears when there is a real gap to
+    chase. The ownership/IDOR gap is surfaced first because that is where the
+    highest-impact bugs on object-addressed resources live.
+    """
+    try:
+        coverage = build_coverage(state)
+        if not coverage:
+            return ""
+        owner_gap = [c for c in coverage if c.endpoints and not c.ownership_tested]
+        payload_gap = [c for c in coverage if c.endpoints and not c.payload_covered]
+        if not owner_gap and not payload_gap:
+            return ""
+        lines = [
+            "COVERAGE GAPS (world-model invariants not yet tested; go here before "
+            "re-probing covered surface):"
+        ]
+        if owner_gap:
+            lines.append("ownership/IDOR invariant UNTESTED on:")
+            for c in owner_gap[:_MAX_LINES]:
+                lines.append(
+                    f"- {c.entity.name} [{c.entity.pattern}] "
+                    f"({c.authz_tested}/{c.endpoints} endpoints authz-tested) "
+                    f"-> run authz-diff / idor"
+                )
+        if payload_gap:
+            lines.append("no payload testing yet on:")
+            for c in payload_gap[:_MAX_LINES]:
+                lines.append(f"- {c.entity.name} [{c.entity.pattern}]")
+        return "\n".join(lines)
+    except Exception:  # noqa: BLE001
+        return ""
 
 
 def summarize_model(state: ProgramState) -> str:

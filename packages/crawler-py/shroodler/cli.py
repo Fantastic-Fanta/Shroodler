@@ -55,6 +55,7 @@ from shroodler.commands import (
     cmd_triage_findings,
     cmd_verify,
     cmd_version,
+    cmd_workflows,
 )
 from shroodler.config import load_rc
 from shroodler.robots import DEFAULT_UA
@@ -1955,6 +1956,25 @@ def _build_reverify_parser(sub) -> None:
     reverify.set_defaults(func=cmd_reverify)
 
 
+def _build_workflows_parser(sub) -> None:
+    workflows = sub.add_parser(
+        "workflows",
+        help="Infer multi-step state-changing flows (e.g. checkout) from a scan "
+        "and the sequence invariants to test (step-skipping, replay)",
+        description=(
+            "Reads a scan JSON and groups its state-changing form submissions "
+            "into candidate workflows, ordered by action verb, then states each "
+            "flow's sequence invariant: the terminal step should not succeed "
+            "without the earlier ones and should not be blindly replayable. "
+            "Read-only; surfaces business-logic leads a point-in-time scan misses."
+        ),
+    )
+    workflows.add_argument("scan", help="Path to a scan JSON document")
+    workflows.add_argument("--json", action="store_true", help="Emit JSON")
+    workflows.add_argument("--output", "-o")
+    workflows.set_defaults(func=cmd_workflows)
+
+
 def _build_verify_parser(sub) -> None:
     verify = sub.add_parser(
         "verify",
@@ -2273,6 +2293,7 @@ def build_parser() -> argparse.ArgumentParser:
     _build_self_scan_parser(sub)
     _build_attack_path_parser(sub)
     _build_reverify_parser(sub)
+    _build_workflows_parser(sub)
     _build_verify_parser(sub)
     _build_coverage_parser(sub)
     _build_retest_parser(sub)

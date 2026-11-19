@@ -1452,6 +1452,18 @@ def cmd_retest(args: argparse.Namespace) -> int:
     return 1 if report.regressions else 0
 
 
+def cmd_workflows(args: argparse.Namespace) -> int:
+    from shroodler.workflow_model import summarize_workflows, workflows_as_dicts
+
+    doc = json.loads(Path(args.scan).read_text(encoding="utf-8"))
+    if getattr(args, "json", False):
+        _write(json.dumps(workflows_as_dicts(doc), indent=2) + "\n", args.output)
+        return 0
+    text = summarize_workflows(doc) or "No multi-step state-changing workflows inferred."
+    _write(text + "\n", args.output)
+    return 0
+
+
 def cmd_verify(args: argparse.Namespace) -> int:
     from shroodler.verifier import verdict_as_dict, verify_findings
 

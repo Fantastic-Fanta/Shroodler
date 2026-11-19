@@ -744,6 +744,16 @@ guardrail flags as
 .B payload
 for its active-payload re-run.
 .TP
+.B workflows \fISCAN\fR
+Infers multi-step state-changing flows (e.g. a checkout) from the forms in
+.IR SCAN ,
+ordered by action verb, and states each flow's sequence invariant: the terminal
+step should not succeed without the earlier ones (step-skipping) and should not
+be blindly replayable. Read-only; surfaces business-logic leads a point-in-time
+scan misses.
+.B \-\-json
+emits machine-readable output.
+.TP
 .B verify \fISCAN\fR
 Adversarially reviews the findings in
 .IR SCAN :

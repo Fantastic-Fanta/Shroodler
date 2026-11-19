@@ -308,6 +308,8 @@ _shroodler() {
             '--target[Base URL]:url' \
             '--context[Operator context about the target to ground business-logic reasoning]:text' \
             '--prove-impact[Demonstrate bounded read-only impact for confirmed findings]' \
+            '--recording-proxy-url[Route probe traffic through the recording proxy so findings bind a proof]:url:' \
+            '--recording-proxy-ca[CA bundle for the recording proxy (HTTPS MITM)]:path:_files' \
             '--max-iterations[Loop budget]:count' \
             '--max-pages-per-crawl[Cap on URLs per crawl action]:count' \
             '--login-recipe[Login recipe JSON]:file:_files' \

@@ -726,6 +726,8 @@ def cmd_agent(args: argparse.Namespace) -> int:
         scope_file=getattr(args, "scope_file", None),
         context_note=str(getattr(args, "context", None) or ""),
         prove_impact=bool(getattr(args, "prove_impact", False)),
+        recording_proxy_url=getattr(args, "recording_proxy_url", None),
+        recording_proxy_ca=getattr(args, "recording_proxy_ca", None),
         llm_agent=bool(getattr(args, "llm_agent", False)),
         llm_provider=str(getattr(args, "llm_provider", None) or "deepseek"),
         llm_agent_model=str(

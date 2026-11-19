@@ -1533,6 +1533,15 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
                 {"pre_loop": "content-discover", "error": f"{type(exc).__name__}: {exc}"}
             )
 
+    # Route live probe traffic through the recording proxy for the whole loop
+    # when one is configured, so every probe's finding can bind a proof. No-op
+    # (direct requests) when recording_proxy_url is unset.
+    from shroodler.probes.common import enter_recording_proxy, reset_recording_proxy
+
+    _proxy_token = enter_recording_proxy(
+        getattr(config, "recording_proxy_url", None),
+        getattr(config, "recording_proxy_ca", None),
+    )
     for i in range(max(0, int(config.max_iterations))):
         config._iteration = i + 1  # used by decide_next_action triage logs
         if config.llm_agent:
@@ -1644,6 +1653,8 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
         emit_log_entry(entry)
         if isinstance(action, ReportAction):
             break
+
+    reset_recording_proxy(_proxy_token)
 
     if getattr(config, "llm_verify", False):
         _run_llm_verify(state, config, pacer, log)

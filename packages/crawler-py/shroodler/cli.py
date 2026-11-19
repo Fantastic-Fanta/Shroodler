@@ -1371,6 +1371,23 @@ def _build_agent_parser(sub) -> None:
         ),
     )
     agent.add_argument(
+        "--recording-proxy-url",
+        metavar="URL",
+        help=(
+            "Route live probe traffic through the recording proxy (packages/"
+            "proxy-go) at URL (e.g. http://127.0.0.1:8788) so every probe's "
+            "traffic is captured and findings can bind a proof. Off by default."
+        ),
+    )
+    agent.add_argument(
+        "--recording-proxy-ca",
+        metavar="PATH",
+        help=(
+            "CA bundle for the recording proxy, required for HTTPS targets so "
+            "the client trusts the proxy's MITM certificate."
+        ),
+    )
+    agent.add_argument(
         "--llm-provider",
         choices=["anthropic", "deepseek", "ollama"],
         default="deepseek",

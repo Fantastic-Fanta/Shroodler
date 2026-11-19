@@ -30,6 +30,10 @@ class AgentConfig:
     harvest_robots: bool = False  # aggressive: seed + surface robots Disallow leads
     write_authz_spec: str | None = None
     write_authz_endpoints: list[dict] | None = None
+    # Route live probe traffic through the recording proxy (packages/proxy-go)
+    # so every probe's finding can bind a proof. Opt-in; None = direct requests.
+    recording_proxy_url: str | None = None
+    recording_proxy_ca: str | None = None  # CA bundle path, for HTTPS MITM
     run_probes: bool = False  # opt-in; default off
     probe_sqli: bool = True
     probe_nosql: bool = True

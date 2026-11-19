@@ -39,6 +39,63 @@ def use_aggressive_client(client: Any) -> Iterator[None]:
         _aggressive_http_client.reset(token)
 
 
+# When set, request() routes its own fallback client through the recording proxy
+# so every probe's traffic is captured (and responses carry X-Shroodler-Session).
+# Unset by default -> the fallback client is built exactly as before.
+_recording_proxy: ContextVar[dict[str, Any] | None] = ContextVar(
+    "shroodler_recording_proxy", default=None
+)
+
+
+@contextmanager
+def use_recording_proxy(proxy_url: str, ca_cert: str | None = None) -> Iterator[None]:
+    """Route request()'s own fallback client through the recording proxy here.
+
+    Only affects calls where request() opens its own client (no explicit or
+    pooled client); a caller that passes its own client is responsible for
+    routing it. A falsy proxy_url is a no-op.
+    """
+    if not proxy_url:
+        yield
+        return
+    token = _recording_proxy.set({"url": str(proxy_url), "ca_cert": ca_cert})
+    try:
+        yield
+    finally:
+        _recording_proxy.reset(token)
+
+
+def enter_recording_proxy(proxy_url: str | None, ca_cert: str | None = None) -> Any:
+    """Bind the recording proxy for this context; returns a token (or None).
+
+    Pair with :func:`reset_recording_proxy`. A falsy ``proxy_url`` binds nothing
+    and returns None, so callers can wire this unconditionally.
+    """
+    if not proxy_url:
+        return None
+    return _recording_proxy.set({"url": str(proxy_url), "ca_cert": ca_cert})
+
+
+def reset_recording_proxy(token: Any) -> None:
+    """Undo a prior :func:`enter_recording_proxy`; a None token is a no-op."""
+    if token is not None:
+        _recording_proxy.reset(token)
+
+
+def _new_fallback_client() -> httpx.Client:
+    """The per-call client request() opens when given none: through the recording
+    proxy when one is bound for this context, otherwise the plain default."""
+    cfg = _recording_proxy.get()
+    if cfg and cfg.get("url"):
+        try:
+            from shroodler.proxy_client import proxied_client
+
+            return proxied_client(str(cfg["url"]), ca_cert=cfg.get("ca_cert"))
+        except Exception:  # noqa: BLE001 - never let proxy setup break a probe
+            pass
+    return httpx.Client(timeout=8.0, follow_redirects=False)
+
+
 @contextmanager
 def probe_http_session(
     *,
@@ -129,7 +186,7 @@ def request(
 
     pooled = _aggressive_http_client.get() if client is None else None
     own = client is None and pooled is None
-    http = client or pooled or httpx.Client(timeout=8.0, follow_redirects=False)
+    http = client or pooled or _new_fallback_client()
     try:
         resp = http.request(method.upper(), url, headers=headers, **kwargs)
     except Exception:  # noqa: BLE001 - fail closed; probe must not crash the loop

@@ -104,6 +104,11 @@ class ProgramState:
     reauth_callback: Any | None = field(default=None, repr=False, compare=False)
     waf_vendor: str | None = None
     waf_detected: bool = False
+    # Coverage ledger and per-program exploration graph. Derived or recorded;
+    # nothing here is fetched on its own. Apache-2.0, Shroodler's own model.
+    assets: list[dict[str, Any]] = field(default_factory=list)
+    exploration_nodes: list[dict[str, Any]] = field(default_factory=list)
+    exploration_edges: list[dict[str, Any]] = field(default_factory=list)
     oob: Any | None = field(default=None, repr=False, compare=False)
 
 
@@ -125,19 +130,45 @@ def _finding_to_dict(finding: Finding | dict) -> dict[str, Any]:
     return dict(finding)
 
 
+def _finding_base(raw: dict) -> dict[str, Any]:
+    return {
+        "id": str(raw.get("id") or ""),
+        "severity": raw.get("severity") or "info",
+        "category": raw.get("category") or "scan-note",
+        "url": str(raw.get("url") or ""),
+        "description": str(raw.get("description") or ""),
+        "evidence": raw.get("evidence"),
+        "confidence": raw.get("confidence"),
+        "retest_status": raw.get("retest_status"),
+    }
+
+
 def _finding_from_dict(raw: dict) -> Finding | None:
+    """Restore a finding, including its proof binding and verified flag.
+
+    A corrupt proof must not drop the finding: load it unverified instead.
+    """
+    base = _finding_base(raw)
+    proof = raw.get("proof")
+    verified = bool(raw.get("verified") or False)
+    if proof is not None or verified:
+        try:
+            data = dict(base)
+            if proof is not None:
+                data["proof"] = proof
+            if verified:
+                data["verified"] = True
+            return Finding.model_validate(data)
+        except Exception:
+            pass
     try:
-        return Finding(
-            id=str(raw.get("id") or ""),
-            severity=raw.get("severity") or "info",
-            category=raw.get("category") or "scan-note",
-            url=str(raw.get("url") or ""),
-            description=str(raw.get("description") or ""),
-            evidence=raw.get("evidence"),
-            confidence=raw.get("confidence"),
-        )
+        return Finding.model_validate(base)
     except Exception:
         return None
+
+
+def _dict_rows(raw: Any) -> list[dict[str, Any]]:
+    return [dict(row) for row in (raw or []) if isinstance(row, dict)]
 
 
 def load(slug: str) -> ProgramState:
@@ -242,6 +273,9 @@ def load(slug: str) -> ProgramState:
             else None
         ),
         waf_detected=bool(data.get("waf_detected") or False),
+        assets=_dict_rows(data.get("assets")),
+        exploration_nodes=_dict_rows(data.get("exploration_nodes")),
+        exploration_edges=_dict_rows(data.get("exploration_edges")),
     )
 
 
@@ -278,6 +312,9 @@ def save(state: ProgramState) -> Path:
         "source_map_urls": list(getattr(state, "source_map_urls", None) or []),
         "waf_vendor": getattr(state, "waf_vendor", None),
         "waf_detected": bool(getattr(state, "waf_detected", False)),
+        "assets": list(getattr(state, "assets", None) or []),
+        "exploration_nodes": list(getattr(state, "exploration_nodes", None) or []),
+        "exploration_edges": list(getattr(state, "exploration_edges", None) or []),
     }
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

@@ -312,14 +312,63 @@ shroodler program status etoro-bugcrowd    # counts, coverage gaps, stale sessio
 `program status` shows coverage gaps (endpoints not yet authz-diffed or
 peer-write tested) -- your prioritised queue.
 
-The `agent` command loads that state, picks the next highest-value action,
-executes it, merges the result, and loops. LLM reasoning is opt-in via
-`--llm-agent` / `--llm-triage` and the provider flags; `--dry-run` prints the
-plan without making requests.
+The `agent` command loads that state and lets the exploration graph pick the
+next action. At the start of each decision the checklist is seeded as ranked
+open intents (login, then crawl, then authz and probes). The loop runs the
+lowest-rank intent whose prerequisite is already met, closes it, and writes
+the fact that makes the next intent ready. `program status` lists untested
+endpoint assets, blocked workflow steps, and open intents. LLM reasoning is
+opt-in via `--llm-agent` / `--llm-triage` and the provider flags; `--dry-run`
+prints that same sequence and makes no requests. With `--llm-agent`, `note_intent`
+appends a follow-up the graph keeps across iterations. After login, TLS, and
+crawl, that step is next. A second step can name the first step's key and
+waits until it is done. A dry-run still prints the checklist.
 
 ```bash
 shroodler agent --program etoro-bugcrowd --target http://127.0.0.1:8081 --dry-run
 ```
+
+A live run also keeps later workflow steps on the graph. A step stays blocked
+until its prerequisite fact exists, including after the process restarts. A
+retest writes `reproduces`, `fixed`, or `unconfirmable` back onto the finding
+and keeps the original proof. A `fixed` finding drops out of the confirmed
+set the report still treats as open.
+
+`--approve-active` requires an allow rule (or one terminal yes) before a
+mutating action such as `probe`, `peer-write`, or `retest`. Without the flag
+those built-in actions stay allowed. `run_tool` is still deny-by-default.
+`--llm-fallback ollama` tries that provider once when the primary call fails
+on a connection error, HTTP failure, or timeout.
+
+`shroodler replay <record>` resends one stored exchange from a proxy JSONL
+line (`sessions.jsonl` or `sessions.jsonl#<session id>`) or, with `--program`,
+from a finding's proof. It uses the same scope and `--allow-external` checks
+as every other live request.
+
+### Budgets, pace, and external tools
+
+`--token-budget` and `--turn-budget` cap the LLM path (0 means unlimited).
+Inside the reserve the loop only writes the report. `--noise-profile
+quiet|balanced|aggressive` paces Shroodler's own HTTP per host (2, 5, or 20
+requests per second) and backs off on 429/503.
+
+`run_tool` (LLM agent only) runs one external program as an argv list. There
+is no shell: pipes, redirects, `bash -c`, and environment-assignment prefixes
+are rejected. Known binaries are `nmap`, `nuclei`, `httpx`, `katana`, `ffuf`,
+`sqlmap`, and `curl`. Anything else needs an approval rule that names it.
+Rules live at `~/.shroodler/programs/<slug>/approvals.json`:
+
+```json
+{"rules": [{"argv": ["curl"], "effect": "allow"}]}
+```
+
+A rule is a prefix of 1 to 8 tokens. Flags after the prefix are covered; a
+different binary is not. No matching rule denies the command when stdin is
+not a terminal. A terminal prompts once; there is no blanket yes. Every allow
+and deny is appended to `audit.jsonl`, and stdout is a capped line in
+`traces.jsonl`. Tool text does not become a verified finding. Verification
+still requires a proof whose quote appears in the captured exchange. Non-local
+hosts still need `--allow-external`, and the host has to be in program scope.
 
 ## 12. MCP server
 

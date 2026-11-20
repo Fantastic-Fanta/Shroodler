@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 from urllib.parse import urlparse
 
@@ -31,7 +32,7 @@ def _as_dict(item: Any) -> dict[str, Any]:
         except Exception:  # noqa: BLE001
             pass
     out: dict[str, Any] = {}
-    for key in ("id", "url", "severity", "description", "confidence", "category"):
+    for key in ("id", "url", "severity", "description", "confidence", "category", "retest_status"):
         if hasattr(item, key):
             out[key] = getattr(item, key)
     return out
@@ -107,6 +108,8 @@ def _confirmed(findings: list[Any]) -> list[dict[str, Any]]:
     for raw in findings or []:
         row = _as_dict(raw)
         if str(row.get("confidence") or "") != "confirmed":
+            continue
+        if str(row.get("retest_status") or "") == "fixed":
             continue
         rows.append(row)
     rows.sort(
@@ -272,6 +275,56 @@ def _render_observation(obs: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _trace_query(opened: list[dict[str, Any]], history: list[Any], config: Any) -> str:
+    for node in opened:
+        for item in node.get("urls") or []:
+            if item:
+                return str(item)
+    if history:
+        url = str(_entry_params(history[-1]).get("url") or "")
+        if url:
+            return url
+    return str(getattr(config, "target", "") or "")
+
+
+def _trace_block(
+    state: Any,
+    config: Any,
+    opened: list[dict[str, Any]],
+    history: list[Any],
+) -> str:
+    """Search capped traces for the URL under consideration and frame the hits."""
+    slug = str(getattr(state, "slug", "") or getattr(config, "program", "") or "")
+    query = _trace_query(opened, history, config)
+    if not slug or not query:
+        return ""
+    try:
+        parsed = urlparse(query)
+    except Exception:  # noqa: BLE001
+        parsed = None
+    needle = ""
+    if parsed is not None:
+        needle = parsed.path or ""
+        if needle in {"", "/"}:
+            needle = parsed.hostname or ""
+    needle = needle or query
+    try:
+        from shroodler.exploration import search_traces
+        from shroodler.toolchain import frame_untrusted
+
+        hits = search_traces(slug, needle, limit=5)
+    except Exception:  # noqa: BLE001
+        return ""
+    if not hits:
+        return ""
+    lines = [
+        f"{hit.get('action')}: {str(hit.get('output') or '')[:240]}"
+        for hit in hits
+    ]
+    nonce = hashlib.sha256(needle.encode()).hexdigest()[:8]
+    return frame_untrusted("\n".join(lines), nonce)
+
+
 def build_context(
     state: Any,
     findings: list[Any],
@@ -340,6 +393,36 @@ def build_context(
             blocks.append(f"- [{sev}] {fid} @ {url} — {desc}")
     else:
         blocks.append("- (none)")
+
+    try:
+        from shroodler.exploration import open_intents
+
+        opened = open_intents(state)
+    except Exception:  # noqa: BLE001
+        opened = []
+    if opened:
+        blocks.append("")
+        blocks.append("OPEN INTENTS (choose among these before opening a new direction):")
+        for node in opened[:12]:
+            urls = ", ".join(str(item) for item in (node.get("urls") or [])[:3])
+            detail = node.get("detail") if isinstance(node.get("detail"), dict) else {}
+            if detail.get("improvised"):
+                from shroodler.exploration import prerequisite_met
+
+                ready = prerequisite_met(state, node)
+                mark = "NEXT" if ready else "WAITING"
+                prereq = str(detail.get("prerequisite") or "-")
+                blocks.append(
+                    f"- {mark} {node.get('key')} prereq={prereq} "
+                    f"{node.get('summary') or ''} {urls}".rstrip()
+                )
+            else:
+                blocks.append(f"- {node.get('summary') or node.get('key')} {urls}".rstrip())
+    trace_block = _trace_block(state, config, opened, window)
+    if trace_block:
+        blocks.append("")
+        blocks.append("TRACES (untrusted output from earlier tool runs):")
+        blocks.append(trace_block)
 
     blocks.append("")
     blocks.append(f"UNTESTED ENDPOINTS ({untested_n} of {total_endpoints}):")

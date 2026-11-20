@@ -135,6 +135,9 @@ class Finding(BaseModel):
     confidence: Confidence | None = None
     proof: Proof | None = None
     verified: bool = False
+    # Standing retest result. ``fixed`` is no longer an open confirmed finding.
+    # The original proof stays on the finding either way.
+    retest_status: Literal["reproduces", "fixed", "unconfirmable"] | None = None
 
     @model_validator(mode="after")
     def _verified_requires_proof(self) -> Finding:

@@ -22,6 +22,7 @@ from shroodler.agent_types import (
     AutoRegisterAction,
     BusinessLogicAction,
     ChainAction,
+    ChainStepAction,
     ContentDiscoverAction,
     CrawlAction,
     DiffAction,
@@ -33,6 +34,7 @@ from shroodler.agent_types import (
     PeerWriteAction,
     ProbeAction,
     ReportAction,
+    RetestAction,
     TLSCheckAction,
     WafDetectAction,
     WriteAuthzAction,
@@ -1754,6 +1756,59 @@ def _execute_idor(
 
 
 
+def _execute_retest(
+    action: RetestAction,
+    state: ProgramState,
+    config: AgentConfig,
+) -> dict[str, Any]:
+    """Re-check one finding. Status is reproduces, fixed, or unconfirmable."""
+    from shroodler.retest import retest_findings
+
+    report = retest_findings(
+        [(action.url, action.finding_id)],
+        target_name=str(config.target or ""),
+    )
+    entry = report.entries[0] if report.entries else None
+    status = entry.status if entry is not None else "unconfirmable"
+    reason = entry.reason if entry is not None else ""
+    from shroodler.exploration import record_retest_status
+
+    record_retest_status(
+        state,
+        finding_id=action.finding_id,
+        url=action.url,
+        status=status,
+        reason=reason,
+    )
+    return {
+        "summary": f"retest {action.finding_id} {status}",
+        "retest_status": status,
+        "finding_id": action.finding_id,
+        "url": action.url,
+    }
+
+
+def _execute_chain_step(action: ChainStepAction, state: ProgramState) -> dict[str, Any]:
+    """Record a workflow step whose prerequisite fact is already present.
+
+    This does not send a new mutating request. The step is now a fact later
+    steps can depend on; the existing chain runner still owns bypass mutations.
+    """
+    from shroodler.exploration import note_step_facts
+
+    note_step_facts(state, [action.url], method=action.method)
+    return {
+        "summary": (
+            f"chain step {action.workflow} {action.method} {action.url} "
+            f"prerequisite met"
+        ),
+        "workflow": action.workflow,
+        "url": action.url,
+        "method": action.method,
+        "executed": False,
+    }
+
+
 def execute_action(
     action: AgentAction,
     state: ProgramState,
@@ -1797,6 +1852,10 @@ def execute_action(
         return _execute_chain(action, state, config, clock)
     if isinstance(action, ReportAction):
         return _execute_report(state)
+    if isinstance(action, RetestAction):
+        return _execute_retest(action, state, config)
+    if isinstance(action, ChainStepAction):
+        return _execute_chain_step(action, state)
     raise TypeError(f"unknown action {type(action)!r}")
 
 

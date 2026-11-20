@@ -91,6 +91,66 @@ def _all_urls(decision: PlannerDecision) -> list[str]:
     return urls
 
 
+def _open_intent_urls(state: Any) -> set[str] | None:
+    """URLs of open intents, or None when the graph is not in use."""
+    nodes = getattr(state, "exploration_nodes", None) or []
+    if not nodes:
+        return None
+    urls: set[str] = set()
+    found = False
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        if node.get("kind") == "intent" and node.get("status") == "open":
+            found = True
+            for item in node.get("urls") or []:
+                if item:
+                    urls.add(str(item))
+    if not found:
+        return None
+    return urls
+
+
+def _gate_run_tool(decision: PlannerDecision, state: Any, config: Any) -> GuardrailResult | None:
+    from shroodler.exploration import host_of
+    from shroodler.toolchain import authorize, scope_hosts_from
+
+    params = decision.params or {}
+    argv = params.get("argv")
+    if isinstance(argv, str):
+        return GuardrailResult(False, "run_tool argv must be a list", decided_by="scope")
+    slug = str(getattr(state, "slug", "") or getattr(config, "program", "") or "")
+    hosts = scope_hosts_from(list(getattr(state, "scope_urls", None) or []))
+    target = str(getattr(config, "target", "") or "")
+    if target:
+        host = host_of(target)
+        if host and host not in hosts:
+            hosts.append(host)
+    decision_result = authorize(
+        argv if isinstance(argv, list) else [],
+        slug=slug,
+        allow_external=bool(getattr(config, "allow_external", False)),
+        scope_hosts=hosts,
+        interactive=False,
+        audit=False,
+    )
+    if decision_result.allowed:
+        return None
+    # A missing rule can still be confirmed on a TTY. The executor asks.
+    # Shell syntax and scope failures are not.
+    if (
+        decision_result.reason == "no matching approval rule"
+        and getattr(config, "interactive_approvals", False)
+    ):
+        return None
+    decided: GuardrailDecider = "scope"
+    if decision_result.decider == "budget":
+        decided = "budget"
+    elif decision_result.decider in {"rule", "human"}:
+        decided = "rules_of_engagement"
+    return GuardrailResult(False, decision_result.reason, decided_by=decided)
+
+
 def check_guardrails(
     decision: PlannerDecision,
     history: list[HistoryEntry],
@@ -114,8 +174,49 @@ def check_guardrails(
             decided_by="budget",
         )
 
+    from shroodler.toolchain import in_wrap_up
+
+    if in_wrap_up(config) and decision.action != "report":
+        return GuardrailResult(
+            False,
+            "budget reserve reached — only the report may run",
+            decided_by="budget",
+        )
+
+    if decision.action == "run_tool":
+        gated = _gate_run_tool(decision, state, config)
+        if gated is not None:
+            return gated
+
     params = decision.params or {}
     url = _decision_url(decision)
+
+    open_urls = _open_intent_urls(state)
+    bound = decision.action.startswith("probe_") or decision.action in {
+        "fetch_and_read",
+        "send_request",
+    }
+    if bound and decision.action != "note_intent":
+        from shroodler.exploration import ready_improvised
+
+        head = ready_improvised(state)
+        head_urls = [str(item) for item in ((head or {}).get("urls") or []) if item]
+        if head_urls and url and url not in head_urls:
+            summary = str(
+                (head or {}).get("summary") or (head or {}).get("key") or "improvised step"
+            )
+            return GuardrailResult(
+                False,
+                f"follow the attack list first ({summary}) at {head_urls[0]}",
+                decided_by="loop_guard",
+            )
+    if open_urls is not None and bound:
+        if url and url not in open_urls:
+            return GuardrailResult(
+                False,
+                f"{decision.action} is not an open intent for {url}",
+                decided_by="loop_guard",
+            )
 
     # Reconnaissance-first: block logic/hypothesis actions until the target has
     # actually been crawled (this run) or endpoints are already known (a prior

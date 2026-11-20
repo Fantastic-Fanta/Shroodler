@@ -38,6 +38,7 @@ from shroodler.commands import (
     cmd_program_scope,
     cmd_program_status,
     cmd_proxy,
+    cmd_replay,
     cmd_report,
     cmd_retest,
     cmd_reverify,
@@ -1282,6 +1283,47 @@ def _build_agent_parser(sub) -> None:
         help="Loop budget (default 10)",
     )
     agent.add_argument(
+        "--token-budget",
+        type=int,
+        default=0,
+        metavar="N",
+        help="LLM token budget for the run (0 = unlimited). Inside the reserve "
+        "the loop only writes the report.",
+    )
+    agent.add_argument(
+        "--turn-budget",
+        type=int,
+        default=0,
+        metavar="N",
+        help="LLM turn budget for the run (0 = unlimited).",
+    )
+    agent.add_argument(
+        "--noise-profile",
+        choices=["quiet", "balanced", "aggressive"],
+        default=None,
+        help="Per-host request pace: quiet (2/s), balanced (5/s), aggressive (20/s).",
+    )
+    agent.add_argument(
+        "--approve-active",
+        action="store_true",
+        help=(
+            "Require an approvals.json allow rule, or one terminal yes, before "
+            "a mutating action (probe, peer-write, retest). Built-in actions "
+            "stay allowed when this flag is off."
+        ),
+    )
+    agent.add_argument(
+        "--llm-fallback",
+        action="append",
+        default=None,
+        choices=["anthropic", "deepseek", "ollama"],
+        metavar="PROVIDER",
+        help=(
+            "Provider to try once if the primary LLM fails on a connection "
+            "error, HTTP failure, or timeout. Repeat for an ordered list."
+        ),
+    )
+    agent.add_argument(
         "--max-pages-per-crawl",
         type=int,
         default=30,
@@ -2018,6 +2060,29 @@ def _build_coverage_parser(sub) -> None:
     coverage.set_defaults(func=cmd_coverage)
 
 
+def _build_replay_parser(sub) -> None:
+    replay = sub.add_parser(
+        "replay",
+        help="Resend one stored exchange from a proxy JSONL line or a finding proof",
+        description=(
+            "Reads one proxy session (sessions.jsonl or sessions.jsonl#<id>) or, "
+            "with --program, a finding id whose proof has the method, URL, and "
+            "request excerpt. Loopback is allowed. Any other host needs "
+            "--allow-external and a scope that includes it."
+        ),
+    )
+    replay.add_argument(
+        "record",
+        help="Path to a proxy JSONL/JSON exchange, or a finding id when --program is set",
+    )
+    replay.add_argument(
+        "--program", default="", metavar="SLUG", help="Program slug for a finding id"
+    )
+    replay.add_argument("--allow-external", action="store_true")
+    replay.add_argument("--scope-file", default=None, metavar="PATH")
+    replay.set_defaults(func=cmd_replay)
+
+
 def _build_retest_parser(sub) -> None:
     retest = sub.add_parser(
         "retest",
@@ -2297,6 +2362,7 @@ def build_parser() -> argparse.ArgumentParser:
     _build_verify_parser(sub)
     _build_coverage_parser(sub)
     _build_retest_parser(sub)
+    _build_replay_parser(sub)
     _build_gen_test_parser(sub)
     _build_ticket_parser(sub)
     _build_sla_parser(sub)

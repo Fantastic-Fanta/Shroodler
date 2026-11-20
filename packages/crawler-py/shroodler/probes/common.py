@@ -167,7 +167,12 @@ def request(
     kwargs. A probe_http_session() context (set by the agent) merges the
     owner login session only when cookie_header matches the owner session.
     """
-    pace(pacer)
+    host = ""
+    try:
+        host = (urlparse(url).hostname or "") if url else ""
+    except Exception:  # noqa: BLE001
+        host = ""
+    pace(pacer, host or None)
     ctx = _probe_http_ctx.get() or {}
     explicit_reauth = reauth is not None
     is_owner = _is_owner_request(cookie_header, ctx)
@@ -194,6 +199,11 @@ def request(
     finally:
         if own:
             http.close()
+
+    if pacer is not None and resp is not None and host:
+        note = getattr(pacer, "note_status", None)
+        if callable(note):
+            note(host, int(getattr(resp, "status_code", 0) or 0))
 
     reauth_fn = reauth if explicit_reauth else ctx.get("reauth")
     allow_reauth = explicit_reauth or is_owner

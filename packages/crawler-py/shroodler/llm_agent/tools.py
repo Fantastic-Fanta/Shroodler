@@ -182,6 +182,22 @@ TOOLS: list[dict[str, Any]] = [
         "params": {"index": "int | null — specific hypothesis, or null for the next pending"},
     },
     {
+        "name": "note_intent",
+        "description": (
+            "Append one follow-up attack to the durable list. It stays open "
+            "across iterations until that URL is tested. Set prerequisite to "
+            "the key returned for the previous step when this step must wait. "
+            "Does not send a request."
+        ),
+        "params": {
+            "summary": "str — what to try and why",
+            "url": "str | null",
+            "prerequisite": "str | null — intent key or fact:/step: key",
+            "action": "str | null — probe_sqli, send_request, fetch_and_read, run_tool, retest",
+            "finding_id": "str | null — required when action is retest",
+        },
+    },
+    {
         "name": "hypothesise",
         "description": (
             "Record a hypothesis about a potential vulnerability to investigate. "
@@ -189,6 +205,19 @@ TOOLS: list[dict[str, Any]] = [
             "test_hypothesis later to actually check it."
         ),
         "params": {"hypothesis": "str", "target_url": "str", "reasoning": "str"},
+    },
+    {
+        "name": "run_tool",
+        "description": (
+            "Run one external program as an argv list (never a shell string). "
+            "Known programs are nmap, nuclei, httpx, katana, ffuf, sqlmap, and curl. "
+            "Any other binary needs an approval rule that names it. "
+            "Output is a hint, not a verified finding."
+        ),
+        "params": {
+            "argv": "list[str] — program and arguments, e.g. ['curl', 'http://127.0.0.1/']",
+            "timeout": "float | null — seconds, default 30",
+        },
     },
     {
         "name": "report",

@@ -24,7 +24,9 @@ _EXPECTED = (
     "verify_finding",
     "analyze_logic",
     "test_hypothesis",
+    "note_intent",
     "hypothesise",
+    "run_tool",
     "report",
 )
 

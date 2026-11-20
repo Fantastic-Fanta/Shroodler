@@ -174,9 +174,25 @@ shroodler ask "show critical findings" out.json
 - **program** — per-engagement state at `~/.shroodler/programs/<slug>/state.json`
   (endpoints tested, object ids, findings, sessions). `crawl`/`authz-diff`/
   `peer-write --program` feed it; `program status` shows coverage gaps.
-- **agent** — loads program state, picks the next highest-value action, runs it,
-  loops. LLM reasoning opt-in via `--llm-agent`/`--llm-triage`; `--dry-run`
-  prints the plan.
+- **agent** — loads program state and lets the exploration graph pick the next
+  ranked intent (login, crawl, authz, probes, then a ready chain step, retest,
+  or report). `--dry-run` prints that sequence and makes no requests.
+  `--token-budget` / `--turn-budget` cap the LLM path (0 is unlimited; inside
+  the reserve the loop only reports). `--noise-profile quiet|balanced|aggressive`
+  paces requests per host. `--approve-active` requires an allow rule or one
+  terminal yes before `probe`, `peer-write`, or `retest`; without the flag
+  those actions stay allowed. `--llm-fallback PROVIDER` (repeatable) tries the
+  next profile once on a connection, HTTP, or timeout failure. The LLM tool
+  `run_tool` runs an argv list (`nmap`, `nuclei`, `httpx`, `katana`, `ffuf`,
+  `sqlmap`, `curl`, or another binary named by an approval rule) with no shell.
+  Approvals are `~/.shroodler/programs/<slug>/approvals.json`
+  (`{"rules":[{"argv":["curl"],"effect":"allow"},{"action":"peer-write","effect":"allow"}]}`).
+  Allows and denies are appended to `audit.jsonl`. Tool output is a trace, not
+  a verified finding. A retest writes `reproduces` / `fixed` / `unconfirmable`
+  onto the finding; `fixed` leaves the open confirmed set. The proof stays.
+- **replay** — resend one proxy JSONL exchange or a finding proof.
+  `shroodler replay sessions.jsonl#<id>` or `shroodler replay <finding-id>
+  --program <slug>`. Non-local hosts need `--allow-external` and a matching scope.
 - **mcp-server** — stdio server for an MCP client. Tools (`scan_route`,
   `check_idor`, `peer_write`, `program_state`, `coverage_gaps`, ...) return a
   compact `{leads, confirmed, probable, top, next_step}` summary unless

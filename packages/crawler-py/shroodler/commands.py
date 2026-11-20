@@ -626,7 +626,17 @@ def cmd_program_init(args: argparse.Namespace) -> int:
     return 0
 
 
+def _stdin_is_tty() -> bool:
+    import sys
+
+    try:
+        return bool(sys.stdin.isatty())
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def cmd_program_status(args: argparse.Namespace) -> int:
+    from shroodler.exploration import status_lines
     from shroodler.program import as_briefing, coverage_gaps, load, stale_sessions
 
     state = load(args.slug)
@@ -641,6 +651,7 @@ def cmd_program_status(args: argparse.Namespace) -> int:
         f"unconfirmed leads: {briefing['unconfirmed_leads']}",
         f"stale sessions: {len(stale)}",
     ]
+    lines.extend(status_lines(state))
     if briefing.get("stale_session_warning"):
         lines.append(briefing["stale_session_warning"])
     if gaps:
@@ -748,6 +759,12 @@ def cmd_agent(args: argparse.Namespace) -> int:
         oob=bool(getattr(args, "oob", False)),
         oob_listen=str(getattr(args, "oob_listen", None) or "127.0.0.1:8765"),
         oob_public_url=str(getattr(args, "oob_public_url", None) or ""),
+        token_budget=int(getattr(args, "token_budget", 0) or 0),
+        turn_budget=int(getattr(args, "turn_budget", 0) or 0),
+        noise_profile=str(getattr(args, "noise_profile", None) or ""),
+        interactive_approvals=_stdin_is_tty(),
+        approve_active=bool(getattr(args, "approve_active", False)),
+        llm_fallback=[str(item) for item in (getattr(args, "llm_fallback", None) or [])],
     )
     if config.llm_agent or config.llm_verify:
         from shroodler.llm_provider import llm_api_key_env, provider_requires_api_key
@@ -1380,6 +1397,43 @@ def cmd_reverify(args: argparse.Namespace) -> int:
         return 0
     print(f"still present: {args.finding_id} at {args.url}", file=sys.stderr)
     return 1
+
+
+def cmd_replay(args: argparse.Namespace) -> int:
+    """Resend one stored exchange. Refuses an out-of-scope host before sending."""
+    from shroodler.program import load
+    from shroodler.replay import replay_exchange
+    from shroodler.scope import load_scope
+    from shroodler.toolchain import scope_hosts_from
+
+    record = str(getattr(args, "record", "") or "")
+    program = str(getattr(args, "program", "") or "")
+    finding = None
+    scope_urls: list[str] = []
+    path_text = record.split("#", 1)[0]
+    if program and not Path(path_text).is_file():
+        state = load(program)
+        scope_urls = [str(item) for item in (getattr(state, "scope_urls", None) or [])]
+        for item in state.findings:
+            if str(getattr(item, "id", "") or "") != record:
+                continue
+            finding = item.model_dump() if hasattr(item, "model_dump") else dict(item)
+            break
+        if finding is None:
+            print(f"error: finding {record!r} not in program {program}", file=sys.stderr)
+            return 2
+    scope = load_scope(program, path=getattr(args, "scope_file", None)) if (
+        program or getattr(args, "scope_file", None)
+    ) else {}
+    hosts = scope_hosts_from(scope_urls, list(scope.get("include") or []))
+    result = replay_exchange(
+        record,
+        allow_external=bool(getattr(args, "allow_external", False)),
+        scope_hosts=hosts,
+        finding=finding,
+    )
+    print(json.dumps(result, default=str))
+    return 0 if result.get("ok") else 2
 
 
 def cmd_retest(args: argparse.Namespace) -> int:

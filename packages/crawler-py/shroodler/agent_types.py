@@ -100,6 +100,19 @@ class AgentConfig:
     oob: bool = False  # --oob; local HTTP callback collaborator
     oob_listen: str = "127.0.0.1:8765"
     oob_public_url: str = ""
+    # 0 means unlimited. Inside the reserve the loop may only report.
+    token_budget: int = 0
+    turn_budget: int = 0
+    # quiet | balanced | aggressive. Empty keeps the existing global pacer.
+    noise_profile: str = ""
+    # When true, an argv with no approval rule may be confirmed on a TTY.
+    # Non-interactive runs deny. This is never a blanket yes.
+    interactive_approvals: bool = False
+    # When true, mutating checklist actions need an allow rule or one TTY yes.
+    # Off by default: a normal agent run does not prompt for built-in actions.
+    approve_active: bool = False
+    # Ordered providers tried after the primary one fails on transport or HTTP.
+    llm_fallback: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -192,6 +205,20 @@ class ReportAction:
     pass
 
 
+@dataclass
+class RetestAction:
+    finding_id: str
+    url: str
+
+
+@dataclass
+class ChainStepAction:
+    workflow: str
+    url: str
+    method: str
+    prerequisite: str = ""
+
+
 AgentAction = (
     LoginAction
     | TLSCheckAction
@@ -211,6 +238,8 @@ AgentAction = (
     | BusinessLogicAction
     | ChainAction
     | ReportAction
+    | RetestAction
+    | ChainStepAction
 )
 
 

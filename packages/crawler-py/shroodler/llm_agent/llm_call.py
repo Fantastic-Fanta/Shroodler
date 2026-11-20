@@ -140,6 +140,7 @@ def complete_json(
         model=model,
         max_tokens=int(max_tokens),
         temperature=0,
+        fallbacks=[str(item) for item in (getattr(config, "llm_fallback", None) or [])],
     )
     messages = [
         {"role": "system", "content": UNTRUSTED_NOTE + "\n\n" + system},

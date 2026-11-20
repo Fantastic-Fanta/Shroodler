@@ -231,6 +231,67 @@ def test_decided_by_recon_policy_when_no_endpoints():
     assert result.decided_by == "recon_policy"
 
 
+def test_ready_attack_step_keeps_the_planner_on_its_url():
+    from shroodler.exploration import note_improvised_intent
+
+    state = ProgramState(slug="lab", endpoints={"http://127.0.0.1/search": {}})
+    note_improvised_intent(
+        state,
+        summary="sqli on search",
+        url="http://127.0.0.1/search",
+        action="probe_sqli",
+    )
+    blocked = check_guardrails(
+        PlannerDecision(action="fetch_and_read", params={"url": "http://127.0.0.1/admin"}),
+        [],
+        state,
+        _config(),
+    )
+    assert blocked.allowed is False
+    assert "attack list" in blocked.reason
+    allowed = check_guardrails(
+        PlannerDecision(
+            action="probe_sqli",
+            params={"url": "http://127.0.0.1/search", "param": "q"},
+        ),
+        [],
+        state,
+        _config(),
+    )
+    assert allowed.allowed is True
+
+
+def test_fetch_outside_an_open_intent_falls_back():
+    state = ProgramState(
+        slug="lab",
+        endpoints={"http://127.0.0.1/search": {}},
+        exploration_nodes=[
+            {
+                "id": "intent-1",
+                "kind": "intent",
+                "key": "probe:http://127.0.0.1/search",
+                "summary": "probe search",
+                "status": "open",
+                "urls": ["http://127.0.0.1/search"],
+            }
+        ],
+    )
+    decision = PlannerDecision(
+        action="fetch_and_read",
+        params={"url": "http://127.0.0.1/admin"},
+    )
+    result = check_guardrails(decision, [], state, _config())
+    assert result.allowed is False
+    assert "not an open intent" in result.reason
+    allowed = check_guardrails(
+        PlannerDecision(action="fetch_and_read", params={"url": "http://127.0.0.1/search"}),
+        [],
+        state,
+        _config(),
+    )
+    assert allowed.allowed is True
+
+
 def test_decided_by_no_decision_on_fallback():
     decision = PlannerDecision(action="", fallback=True, fallback_reason="bad json")
     result = check_guardrails(decision, [], ProgramState(slug="lab"), _config())

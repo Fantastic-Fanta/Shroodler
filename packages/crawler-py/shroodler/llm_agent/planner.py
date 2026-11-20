@@ -82,6 +82,11 @@ class you've already run.
   reasoning. Prefer confirmed over tentative.
 
 Chaining and strategy:
+- The ATTACK LIST in the context is durable. If a step is marked NEXT, do that
+  URL next (probe, fetch, or send_request). Do not switch URLs while it is open.
+- To queue what you will try after this result, call note_intent. Pass the
+  previous step's key as prerequisite when the follow-up must wait. The list
+  is still there on the next iteration.
 - When you find a vulnerability, immediately think about what it chains with
 - If XSS is found: check if session cookies are accessible (no HttpOnly)
 - If IDOR is found: check if the same pattern exists on related endpoints
@@ -205,6 +210,9 @@ def _with_probe_memory(context: str, memory: ProbeMemory | None) -> str:
 
 
 def _user_prompt(context: str, tools: list[dict], history: list[Any]) -> str:
+    from shroodler.toolchain import frame_untrusted
+
+    nonce = os.urandom(4).hex()
     payload = {
         "tools": tools,
         "recent_history": [
@@ -218,9 +226,14 @@ def _user_prompt(context: str, tools: list[dict], history: list[Any]) -> str:
                 "findings_added": getattr(item, "findings_added", 0)
                 if not isinstance(item, dict)
                 else item.get("findings_added", 0),
-                "summary": getattr(item, "summary", "")
-                if not isinstance(item, dict)
-                else item.get("summary", ""),
+                "summary": frame_untrusted(
+                    str(
+                        getattr(item, "summary", "")
+                        if not isinstance(item, dict)
+                        else item.get("summary", "")
+                    ),
+                    nonce,
+                ),
             }
             for item in (history or [])[-10:]
         ],
@@ -339,8 +352,15 @@ def plan_next_action(
             model=model,
             max_tokens=PLANNER_MAX_TOKENS,
             temperature=PLANNER_TEMPERATURE,
+            fallbacks=[str(item) for item in (getattr(config, "llm_fallback", None) or [])],
         )
         response = llm_complete_sync(messages, llm_config, tools=openai_tools)
+        answered = str(getattr(response, "provider", "") or "")
+        if answered:
+            try:
+                config._llm_answered_by = answered
+            except Exception:  # noqa: BLE001 - recording the profile must not break the plan
+                pass
         return _decision_from_response(response, model=display_model)
     except Exception as exc:  # noqa: BLE001 - planner must never raise
         log_exc("llm_agent", exc)

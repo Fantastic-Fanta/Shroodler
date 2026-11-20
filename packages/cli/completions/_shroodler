@@ -308,6 +308,11 @@ _shroodler() {
             '--target[Base URL]:url' \
             '--context[Operator context about the target to ground business-logic reasoning]:text' \
             '--prove-impact[Demonstrate bounded read-only impact for confirmed findings]' \
+            '--approve-active[Approve the active-probe/tool run for this scan]' \
+            '--llm-fallback[Fallback LLM provider/model when the primary fails]:value:' \
+            '--noise-profile[Request-pacing noise profile]:profile:' \
+            '--token-budget[Max LLM tokens for the run]:n:' \
+            '--turn-budget[Max agent turns for the run]:n:' \
             '--recording-proxy-url[Route probe traffic through the recording proxy so findings bind a proof]:url:' \
             '--recording-proxy-ca[CA bundle for the recording proxy (HTTPS MITM)]:path:_files' \
             '--max-iterations[Loop budget]:count' \

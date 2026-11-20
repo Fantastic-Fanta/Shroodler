@@ -33,6 +33,7 @@ from shroodler.agent_types import (
     AutoRegisterAction,
     BusinessLogicAction,
     ChainAction,
+    ChainStepAction,
     ContentDiscoverAction,
     CrawlAction,
     DiffAction,
@@ -44,6 +45,7 @@ from shroodler.agent_types import (
     PeerWriteAction,
     ProbeAction,
     ReportAction,
+    RetestAction,
     TLSCheckAction,
     WafDetectAction,
     WriteAuthzAction,
@@ -358,6 +360,7 @@ def _confirmed_findings(state: ProgramState) -> list[Finding]:
         for f in state.findings
         if getattr(f, "confidence", None) == "confirmed"
         and getattr(f, "id", None) not in _TOOL_NOISE_IDS
+        and str(getattr(f, "retest_status", "") or "") != "fixed"
         and not is_suppressed(
             state,
             str(getattr(f, "id", "") or ""),
@@ -873,35 +876,243 @@ def _hydrate_ghost_routes(state: ProgramState, config: AgentConfig) -> None:
             stored["auth_required"] = True
 
 
+_ACTIVE_GATES: dict[type, str] = {
+    ProbeAction: "probe",
+    OpenApiProbeAction: "openapi-probe",
+    PeerWriteAction: "peer-write",
+    WriteAuthzAction: "write-authz",
+    RetestAction: "retest",
+    ChainAction: "chain",
+    AuthzDiffAction: "authz",
+}
+
+
+def _active_gate(action: AgentAction) -> str:
+    for cls, name in _ACTIVE_GATES.items():
+        if isinstance(action, cls):
+            return name
+    return ""
+
+
+def _is_improvised_node(node: dict[str, Any] | None) -> bool:
+    if not isinstance(node, dict):
+        return False
+    detail = node.get("detail") if isinstance(node.get("detail"), dict) else {}
+    return bool(detail.get("improvised"))
+
+
+def _action_from_improvised(node: dict[str, Any] | None) -> AgentAction | None:
+    """Turn a queued attack step into a checklist action the loop can run.
+
+    Steps the deterministic executor cannot perform (an external argv, a
+    crafted request) stay on the graph for the LLM. The checklist then
+    continues on a fallback turn.
+    """
+    if not isinstance(node, dict):
+        return None
+    detail = node.get("detail") if isinstance(node.get("detail"), dict) else {}
+    payload = detail.get("payload") if isinstance(detail.get("payload"), dict) else {}
+    suggested = str(detail.get("action") or payload.get("suggested") or "")
+    urls = [str(item) for item in (node.get("urls") or []) if item]
+    url = urls[0] if urls else ""
+    finding_id = str(payload.get("finding_id") or "")
+    if suggested in {"retest", "RetestAction"} and finding_id and url:
+        return RetestAction(finding_id=finding_id, url=url)
+    if suggested in {"chain", "ChainStepAction"} and payload.get("workflow") and url:
+        return ChainStepAction(
+            workflow=str(payload.get("workflow") or ""),
+            url=url,
+            method=str(payload.get("method") or "POST"),
+            prerequisite=str(detail.get("prerequisite") or ""),
+        )
+    if url and (
+        suggested.startswith("probe")
+        or suggested in {"craft_payloads", "send_request", "fetch_and_read", "probe", "check_authz"}
+    ):
+        if suggested == "check_authz":
+            return AuthzDiffAction(urls=[url])
+        return ProbeAction(urls=[url])
+    return None
+
+
+def _action_from_intent(node: dict[str, Any]) -> AgentAction | None:
+    """Rebuild the checklist action stored on a scheduler intent."""
+    detail = node.get("detail") if isinstance(node.get("detail"), dict) else {}
+    payload = detail.get("payload") if isinstance(detail.get("payload"), dict) else {}
+    name = str(detail.get("action") or "")
+    urls = [str(item) for item in (payload.get("urls") or node.get("urls") or []) if item]
+    if name == "LoginAction":
+        return LoginAction()
+    if name == "TLSCheckAction":
+        return TLSCheckAction()
+    if name == "WafDetectAction":
+        return WafDetectAction()
+    if name == "ContentDiscoverAction":
+        return ContentDiscoverAction()
+    if name == "CrawlAction":
+        return CrawlAction(urls=urls)
+    if name == "JSAnalysisAction":
+        return JSAnalysisAction(urls=urls)
+    if name == "DiffAction":
+        return DiffAction()
+    if name == "OpenApiDiscoverAction":
+        return OpenApiDiscoverAction()
+    if name == "AutoRegisterAction":
+        return AutoRegisterAction()
+    if name == "AuthzDiffAction":
+        return AuthzDiffAction(urls=list(payload.get("urls") or urls))
+    if name == "IDORScanAction":
+        return IDORScanAction()
+    if name == "WriteAuthzAction":
+        return WriteAuthzAction(endpoints=list(payload.get("endpoints") or []))
+    if name == "PeerWriteAction":
+        return PeerWriteAction(object_ids=[str(item) for item in (payload.get("object_ids") or [])])
+    if name == "ProbeAction":
+        return ProbeAction(urls=urls)
+    if name == "OpenApiProbeAction":
+        return OpenApiProbeAction(endpoints=list(payload.get("endpoints") or []))
+    if name == "BusinessLogicAction":
+        return BusinessLogicAction()
+    if name == "ChainAction":
+        return ChainAction()
+    if name == "ReportAction":
+        return ReportAction()
+    if name == "RetestAction":
+        return RetestAction(
+            finding_id=str(payload.get("finding_id") or ""),
+            url=str(payload.get("url") or (urls[0] if urls else "")),
+        )
+    if name == "ChainStepAction":
+        return ChainStepAction(
+            workflow=str(payload.get("workflow") or ""),
+            url=str(payload.get("url") or (urls[0] if urls else "")),
+            method=str(payload.get("method") or "POST"),
+            prerequisite=str(payload.get("prerequisite") or ""),
+        )
+    return None
+
+
+def _endpoint_was_tested(state: ProgramState, url: str) -> bool:
+    meta = state.endpoints.get(url) if url else None
+    if not isinstance(meta, dict) or not meta:
+        return True
+    return bool(
+        meta.get("tested_payload") or meta.get("tested_authz") or meta.get("tested_peer_write")
+    )
+
+
 def decide_next_action(
     state: ProgramState,
     config: AgentConfig,
     crawl_stall_count: int = 0,
 ) -> AgentAction | None:
-    """Priority: Login > TLSCheck > Crawl > JSAnalysis > Diff > WafDetect >
+    """Seed the checklist as ranked intents and return the first ready one.
+
+    Priority stays Login > TLSCheck > Crawl > JSAnalysis > Diff > WafDetect >
     OpenApiDiscover > AutoRegister > AuthzDiff > IDORScan > WriteAuthz >
     PeerWrite > ContentDiscover > Probe > OpenApiProbe > BusinessLogic >
-    Chain > Report.
+    Chain, then a ready chain step, a retest, and an extra probe, then Report.
 
-    WafDetect sits after Diff (not immediately after TLSCheck) so existing
-    decide_next_action tests that expect Crawl/JS/Diff as the next live action
-    still pass. It still runs before Probe so mutate_payload() applies. Dry-run
-    plans skip it: nearly every unit test uses dry_run=True via _config(), and
-    inserting a default-on action would change those return values.
+    WafDetect and the live-only tail are skipped in dry-run so existing
+    decide_next_action tests keep their observed sequence. Side effects that
+    used to run only once an earlier step had been skipped (triage, ghost
+    hydration, the write-authz spec load) still wait until that step is the
+    one the picker would choose.
     """
     from urllib.parse import urlparse
 
-    if _pending_login(state, config):
-        return LoginAction()
+    from shroodler.exploration import (
+        CHECKLIST_RANK,
+        close_scheduled_except,
+        finding_needs_retest,
+        pick_ready_intent,
+        prerequisite_met,
+        schedule_intent,
+        seed_chain_intents,
+    )
+    from shroodler.toolchain import in_wrap_up
 
-    if config.run_tls_check and not getattr(config, "_tls_check_done", False):
-        if urlparse(config.target).scheme == "https":
-            return TLSCheckAction()
-        config._tls_check_done = True
+    if in_wrap_up(config):
+        return ReportAction()
+
+    denied = {str(item) for item in (getattr(config, "_denied_actions", None) or set())}
+    close_scheduled_except(state, set())
+    keep: set[str] = set()
+    prev_key = ""
+    dry_run = bool(config.dry_run)
+
+    def has_ready_below(rank: int) -> bool:
+        for node in state.exploration_nodes:
+            if node.get("kind") != "intent" or node.get("status") != "open":
+                continue
+            detail = node.get("detail") if isinstance(node.get("detail"), dict) else {}
+            if not detail.get("scheduled"):
+                continue
+            if str(node.get("key") or "") not in keep:
+                continue
+            if int(detail.get("rank") or 0) >= rank:
+                continue
+            if dry_run and detail.get("live_only"):
+                continue
+            if prerequisite_met(state, node):
+                return True
+        return False
+
+    def offer(
+        rank_name: str,
+        key: str,
+        action: str,
+        *,
+        summary: str,
+        urls: list[str] | None = None,
+        payload: dict[str, Any] | None = None,
+        live_only: bool = False,
+        gate: str = "",
+        blocks_next: bool = True,
+    ) -> None:
+        nonlocal prev_key
+        if gate and gate in denied:
+            return
+        body = dict(payload or {})
+        if urls is not None:
+            body["urls"] = list(urls)
+        if gate:
+            body["gate"] = gate
+        schedule_intent(
+            state,
+            key=key,
+            summary=summary,
+            rank=CHECKLIST_RANK[rank_name],
+            prerequisite=prev_key,
+            urls=list(urls or []),
+            live_only=live_only,
+            action=action,
+            payload=body,
+            target=str(config.target or ""),
+        )
+        keep.add(key)
+        if blocks_next:
+            prev_key = key
+
+    if _pending_login(state, config):
+        offer("login", "checklist:login", "LoginAction", summary="login")
+
+    if not _pending_login(state, config):
+        if config.run_tls_check and not getattr(config, "_tls_check_done", False):
+            if urlparse(config.target).scheme == "https":
+                offer("tls", "checklist:tls", "TLSCheckAction", summary="tls check")
+            else:
+                config._tls_check_done = True
 
     crawl_urls = crawl_coverage_gaps(state, config)
     if crawl_urls and crawl_stall_count < _CRAWL_STALL_LIMIT:
-        return CrawlAction(urls=crawl_urls)
+        offer(
+            "crawl",
+            "checklist:crawl",
+            "CrawlAction",
+            summary="crawl coverage gaps",
+            urls=crawl_urls,
+        )
 
     js_urls = _js_urls_for_analysis(state)
     if (
@@ -909,29 +1120,45 @@ def decide_next_action(
         and not getattr(config, "_js_analysis_done", False)
         and js_urls
     ):
-        return JSAnalysisAction(urls=js_urls)
+        offer(
+            "js",
+            "checklist:js",
+            "JSAnalysisAction",
+            summary="javascript analysis",
+            urls=js_urls,
+        )
 
     if _should_run_diff(state, config):
-        return DiffAction()
+        offer("diff", "checklist:diff", "DiffAction", summary="engagement diff")
 
     # After Diff / Crawl / JS, before OpenAPI and Probe. Skipped in dry-run so
     # existing decide_next_action tests keep their observed sequence.
     if (
         getattr(config, "run_waf_detect", True)
         and not getattr(config, "_waf_detect_done", False)
-        and not getattr(config, "dry_run", False)
+        and not dry_run
     ):
-        return WafDetectAction()
+        offer("waf", "checklist:waf", "WafDetectAction", summary="waf detect", live_only=True)
 
     if (
         config.run_openapi_discovery
         and not getattr(config, "_openapi_discover_done", False)
         and not state.openapi_spec_url
     ):
-        return OpenApiDiscoverAction()
+        offer(
+            "openapi_discover",
+            "checklist:openapi-discover",
+            "OpenApiDiscoverAction",
+            summary="openapi discovery",
+        )
 
     if _pending_auto_register(state, config):
-        return AutoRegisterAction()
+        offer(
+            "auto_register",
+            "checklist:auto-register",
+            "AutoRegisterAction",
+            summary="auto register peer",
+        )
 
     authz_urls: list[str] = []
     object_ids: list[str] = []
@@ -942,10 +1169,16 @@ def decide_next_action(
         authz_urls = _untested_authz_urls(state, config)
     if config.owner_cookie and config.peer_cookie:
         object_ids = _pending_peer_write_ids(state, config)
-        if not getattr(config, "_write_authz_done", False):
+        if not getattr(config, "_write_authz_done", False) and not has_ready_below(
+            CHECKLIST_RANK["write_authz"]
+        ):
             write_endpoints = _ensure_write_authz_endpoints(config)
 
-    if config.llm_triage and (authz_urls or object_ids):
+    if (
+        not has_ready_below(CHECKLIST_RANK["authz"])
+        and config.llm_triage
+        and (authz_urls or object_ids)
+    ):
         from shroodler.llm_triage import triage_leads
 
         triage = triage_leads(state, object_ids, authz_urls, config)
@@ -960,41 +1193,131 @@ def decide_next_action(
         )
 
     if authz_urls:
-        return AuthzDiffAction(urls=authz_urls)
+        offer(
+            "authz",
+            "checklist:authz",
+            "AuthzDiffAction",
+            summary="authz diff",
+            urls=authz_urls,
+            gate="authz",
+        )
     if _pending_idor_scan(state, config):
-        return IDORScanAction()
+        offer("idor", "checklist:idor", "IDORScanAction", summary="idor scan")
     if write_endpoints:
-        return WriteAuthzAction(endpoints=write_endpoints)
+        offer(
+            "write_authz",
+            "checklist:write-authz",
+            "WriteAuthzAction",
+            summary="write authz",
+            payload={"endpoints": write_endpoints},
+            gate="write-authz",
+        )
     if object_ids:
-        return PeerWriteAction(object_ids=object_ids)
+        offer(
+            "peer_write",
+            "checklist:peer-write",
+            "PeerWriteAction",
+            summary="peer write",
+            payload={"object_ids": list(object_ids)},
+            gate="peer-write",
+        )
 
     if config.run_content_discovery and not getattr(config, "_content_discover_done", False):
-        return ContentDiscoverAction()
+        offer(
+            "content_discover",
+            "checklist:content-discover",
+            "ContentDiscoverAction",
+            summary="content discovery",
+        )
 
-    # After OpenAPI discover has had a chance to run (this branch is only
-    # reached when it already returned, is disabled, or spec_url is set).
-    # Also hydrates JS-only ghost routes when no spec was found.
-    _maybe_hydrate_ghost_routes(state, config)
+    # Hydrate only once nothing earlier is ready, matching the old early return.
+    if not has_ready_below(CHECKLIST_RANK["probe"]):
+        _maybe_hydrate_ghost_routes(state, config)
 
     if config.run_probes:
         probe_urls = _untested_probe_urls(state, config)
         if probe_urls:
-            return ProbeAction(urls=probe_urls)
+            offer(
+                "probe",
+                "checklist:probe",
+                "ProbeAction",
+                summary="payload probes",
+                urls=probe_urls,
+                gate="probe",
+            )
 
     if config.run_openapi_probes:
         oa_endpoints = _untested_openapi_endpoints(state, config)
         if oa_endpoints:
-            return OpenApiProbeAction(endpoints=oa_endpoints)
+            offer(
+                "openapi_probe",
+                "checklist:openapi-probe",
+                "OpenApiProbeAction",
+                summary="openapi probes",
+                payload={"endpoints": oa_endpoints},
+                gate="openapi-probe",
+            )
 
     if _pending_business_logic(config):
-        return BusinessLogicAction()
+        offer(
+            "business_logic",
+            "checklist:business-logic",
+            "BusinessLogicAction",
+            summary="business logic",
+        )
 
-    if _pending_chains(state, config):
-        return ChainAction()
+    if not has_ready_below(CHECKLIST_RANK["chain"]) and _pending_chains(state, config):
+        offer("chain", "checklist:chain", "ChainAction", summary="attack chain", gate="chain")
+
+    # Durable chain steps stay on the graph even in dry-run. The picker skips
+    # them then, so the printed plan does not jump ahead of the checklist.
+    keep.update(seed_chain_intents(state))
+
+    if not dry_run:
+        finding = finding_needs_retest(state)
+        if finding is not None and _endpoint_was_tested(
+            state, str(getattr(finding, "url", "") or "")
+        ):
+            fid = str(getattr(finding, "id", "") or "")
+            url = str(getattr(finding, "url", "") or "")
+            offer(
+                "retest",
+                f"retest:{fid}:{url}",
+                "RetestAction",
+                summary=f"retest {fid}",
+                urls=[url] if url else [],
+                payload={"finding_id": fid, "url": url},
+                live_only=True,
+                gate="retest",
+            )
+        if config.run_probes:
+            from shroodler.exploration import endpoint_without_probe_intent
+
+            extra = endpoint_without_probe_intent(state)
+            if extra and "checklist:probe" not in keep:
+                offer(
+                    "uncovered_probe",
+                    f"probe:{extra}",
+                    "ProbeAction",
+                    summary=f"probe {extra}",
+                    urls=[extra],
+                    live_only=True,
+                    gate="probe",
+                )
 
     if _confirmed_findings(state):
-        return ReportAction()
-    return None
+        offer("report", "checklist:report", "ReportAction", summary="report confirmed findings")
+
+    close_scheduled_except(state, keep)
+    picked = pick_ready_intent(state, dry_run=dry_run)
+    if _is_improvised_node(picked):
+        mapped = _action_from_improvised(picked)
+        if mapped is not None:
+            return mapped
+        picked = pick_ready_intent(state, dry_run=dry_run, skip_improvised=True)
+    if picked is None:
+        return None
+    return _action_from_intent(picked)
 
 
 def emit_log_entry(entry: dict[str, Any], *, stream: Any | None = None) -> None:
@@ -1178,7 +1501,59 @@ def _describe_action(action: AgentAction) -> dict[str, Any]:
         return {"chain": True}
     if isinstance(action, ReportAction):
         return {"report": True}
+    if isinstance(action, RetestAction):
+        return {"retest": True, "finding_id": action.finding_id, "urls": [action.url]}
+    if isinstance(action, ChainStepAction):
+        return {
+            "chain_step": True,
+            "workflow": action.workflow,
+            "method": action.method,
+            "urls": [action.url],
+            "prerequisite": action.prerequisite,
+        }
     return {}
+
+
+def _remember_action(
+    state: ProgramState,
+    action: AgentAction,
+    entry: dict[str, Any],
+    config: AgentConfig,
+) -> None:
+    """Write the action into the exploration graph. Never breaks the loop."""
+    from shroodler.exploration import remember_action
+
+    described = _describe_action(action)
+    urls = [str(item) for item in (described.get("urls") or []) if item]
+    result = entry.get("result") if isinstance(entry.get("result"), dict) else {}
+    finding_ids = []
+    for item in (result or {}).get("findings") or []:
+        if isinstance(item, dict) and item.get("id"):
+            finding_ids.append(str(item["id"]))
+    key = type(action).__name__
+    if isinstance(action, RetestAction):
+        key = f"retest:{action.finding_id}:{action.url}"
+    elif isinstance(action, ChainStepAction):
+        key = f"chain:{action.workflow}:{action.method}:{action.url}"
+    elif isinstance(action, ProbeAction) and urls:
+        key = f"probe:{urls[0]}"
+    elif urls:
+        key = f"{type(action).__name__}:{urls[0]}"
+    summary = str((result or {}).get("summary") or type(action).__name__)
+    remember_action(
+        state,
+        action=type(action).__name__,
+        summary=summary,
+        urls=urls,
+        key=key,
+        finding_ids=finding_ids,
+        fact=summary,
+        target=str(config.target or ""),
+        method=str(described.get("method") or ""),
+    )
+    from shroodler.exploration import close_ready_improvised
+
+    close_ready_improvised(state, urls)
 
 
 def _llm_cost_cap_finding(config: AgentConfig) -> Finding:
@@ -1294,6 +1669,10 @@ def _llm_agent_step(
         decision.model, decision.input_tokens, decision.output_tokens
     )
     config._llm_cost_usd = cost + delta
+    config._llm_tokens = int(getattr(config, "_llm_tokens", 0) or 0) + int(
+        decision.input_tokens or 0
+    ) + int(decision.output_tokens or 0)
+    config._llm_turns = int(getattr(config, "_llm_turns", 0) or 0) + 1
 
     if float(config._llm_cost_usd) > cap:
         added = _merge_findings(state, [_llm_cost_cap_finding(config)])
@@ -1370,6 +1749,14 @@ def _llm_agent_step(
             pacer,
             probe_memory=probe_memory,
         )
+        raw = result.raw_output if isinstance(result.raw_output, dict) else {}
+        if decision.action != "note_intent" and not raw.get("error"):
+            from shroodler.exploration import close_ready_improvised
+
+            close_ready_improvised(
+                state,
+                [str((decision.params or {}).get("url") or "")],
+            )
     except Exception as exc:  # noqa: BLE001
         message = f"{type(exc).__name__}: {exc}"
         return _LlmStep(
@@ -1472,7 +1859,13 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
     errors: list[str] = []
     consecutive_errors = 0
     _crawl_stall_count = 0
-    pacer = Pacer(0.0) if getattr(config, "aggressive", False) else _new_pacer()
+    profile = str(getattr(config, "noise_profile", "") or "").strip()
+    if profile:
+        pacer = Pacer(profile=profile)
+    elif getattr(config, "aggressive", False):
+        pacer = Pacer(0.0)
+    else:
+        pacer = _new_pacer()
     llm_history: list[Any] = []
     config._llm_cost_usd = 0.0
     config._llm_last_guardrail = ""
@@ -1596,6 +1989,26 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
             entry.update(_describe_action(action))
             consecutive_errors = 0
         else:
+            if _active_gate(action) and getattr(config, "approve_active", False):
+                from shroodler.toolchain import authorize_action
+
+                gate_name = _active_gate(action)
+                decision = authorize_action(
+                    gate_name,
+                    slug=str(state.slug or config.program or ""),
+                    interactive=bool(getattr(config, "interactive_approvals", False)),
+                    approve_active=True,
+                )
+                if not decision.allowed:
+                    denied = set(getattr(config, "_denied_actions", None) or set())
+                    denied.add(gate_name)
+                    config._denied_actions = denied
+                    entry["error"] = decision.reason
+                    entry["result"] = {"executed": False, "summary": decision.reason}
+                    log.append(entry)
+                    emit_log_entry(entry)
+                    errors.append(decision.reason)
+                    continue
             try:
                 before_findings = {_finding_key(item) for item in state.findings}
                 before_endpoints = set(state.endpoints)
@@ -1650,6 +2063,7 @@ def _run_agent_body(config: AgentConfig, probe_memory: Any = None) -> AgentResul
             kept = _trim(list(llm_history), 10)
             llm_history.clear()
             llm_history.extend(kept)
+        _remember_action(state, action, entry, config)
         log.append(entry)
         emit_log_entry(entry)
         if isinstance(action, ReportAction):

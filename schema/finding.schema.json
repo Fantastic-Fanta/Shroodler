@@ -246,6 +246,11 @@
           "type": "boolean",
           "description": "Optional. True only for a finding carrying a well-formed \"proof\" with at least one verbatim quote from the bound traffic. A verified finding was demonstrated from its own record, not merely asserted; absent/false means not evidence-bound (which is NOT the same as disproven)."
         },
+        "retest_status": {
+          "type": ["string", "null"],
+          "enum": ["reproduces", "fixed", "unconfirmable", null],
+          "description": "Optional. Standing retest result for this finding (set by the retest tracker): \"reproduces\" (still present), \"fixed\" (gone on a trustworthy re-scan; no longer an open confirmed finding), or \"unconfirmable\" (the re-scan could not establish either). The original proof stays on the finding regardless. Absent on findings that have not been retested."
+        },
         "cost_of_attack": {
           "type": "string",
           "enum": ["none", "low", "medium", "high"],

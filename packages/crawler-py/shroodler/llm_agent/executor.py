@@ -427,6 +427,33 @@ def _fetch_and_read(
     )
 
 
+def _note_intent(decision: PlannerDecision, state: Any, config: Any) -> ToolResult:
+    """Queue one durable attack step. No request is sent."""
+    from shroodler.exploration import note_improvised_intent
+
+    params = _params_of(decision)
+    summary = str(params.get("summary") or params.get("hypothesis") or "").strip()
+    url = str(params.get("url") or params.get("target_url") or "").strip()
+    if not summary:
+        return ToolResult(
+            summary="note_intent needs a summary", raw_output={"error": "missing summary"}
+        )
+    key = note_improvised_intent(
+        state,
+        summary=summary,
+        url=url,
+        prerequisite=str(params.get("prerequisite") or "").strip(),
+        action=str(params.get("action") or "probe").strip(),
+        finding_id=str(params.get("finding_id") or "").strip(),
+        target=str(getattr(config, "target", "") or ""),
+    )
+    return ToolResult(
+        findings_added=0,
+        summary=f"queued {key}",
+        raw_output={"key": key, "url": url, "verified": False},
+    )
+
+
 def _hypothesise(decision: PlannerDecision, state: Any) -> ToolResult:
     params = _params_of(decision)
     entry = {
@@ -508,6 +535,63 @@ def _report(state: Any) -> ToolResult:
     )
 
 
+def _run_tool(
+    decision: PlannerDecision,
+    state: Any,
+    config: Any,
+    pacer: Pacer,
+) -> ToolResult:
+    """Run an approved argv. Output becomes a trace and a hint, never a verified finding."""
+    from shroodler.exploration import add_hint, host_of
+    from shroodler.toolchain import execute_approved, scope_hosts_from
+
+    params = _params_of(decision)
+    argv = params.get("argv")
+    if not isinstance(argv, list) or not argv:
+        return ToolResult(
+            summary="run_tool requires an argv list",
+            raw_output={"error": "argv", "verified": False},
+        )
+    timeout = params.get("timeout")
+    try:
+        timeout_s = float(timeout) if timeout is not None else 30.0
+    except (TypeError, ValueError):
+        timeout_s = 30.0
+    slug = str(getattr(state, "slug", "") or getattr(config, "program", "") or "")
+    hosts = scope_hosts_from(list(getattr(state, "scope_urls", None) or []))
+    target = str(getattr(config, "target", "") or "")
+    target_host = host_of(target)
+    if target_host and target_host not in hosts:
+        hosts.append(target_host)
+    ran = execute_approved(
+        [str(item) for item in argv],
+        slug=slug,
+        allow_external=bool(getattr(config, "allow_external", False)),
+        scope_hosts=hosts,
+        interactive=bool(getattr(config, "interactive_approvals", False)),
+        timeout=timeout_s,
+        pacer=pacer,
+    )
+    output = str(ran.get("output") or "")
+    if output:
+        add_hint(state, output, urls=[target] if target else [])
+    summary = (
+        output.splitlines()[0][:200] if output else str(ran.get("error") or "run_tool finished")
+    )
+    return ToolResult(
+        findings_added=0,
+        summary=summary,
+        raw_output={
+            "verified": False,
+            "trace_id": ran.get("trace_id") or "",
+            "returncode": ran.get("returncode"),
+            "output": output,
+            "error": ran.get("error") or "",
+            "decider": ran.get("decider") or "",
+        },
+    )
+
+
 def execute_tool(
     decision: PlannerDecision,
     state: Any,
@@ -570,8 +654,12 @@ def execute_tool(
             return hypotheses.test_hypothesis(
                 decision, state, config, pacer, owner_client, probe_memory=probe_memory
             )
+        if name == "note_intent":
+            return _note_intent(decision, state, config)
         if name == "hypothesise":
             return _hypothesise(decision, state)
+        if name == "run_tool":
+            return _run_tool(decision, state, config, pacer)
         if name == "report":
             _auto_verify_before_report(state, config, pacer, owner_client)
             _snapshot_engagement_memory(state, config, probe_memory)

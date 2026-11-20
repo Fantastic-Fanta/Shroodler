@@ -97,6 +97,9 @@ class LLMConfig:
     max_tokens: int = 512
     temperature: float = 0.0
     timeout: float = DEFAULT_TIMEOUT_S
+    # Provider names tried, in order, after this profile fails on transport or HTTP.
+    # Each profile is attempted once. This is not concurrent rotation.
+    fallbacks: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -107,6 +110,8 @@ class LLMResponse:
     output_tokens: int = 0
     model: str = ""
     stop_reason: str = ""
+    # Which profile produced this response after failover. Empty until a call returns.
+    provider: str = ""
 
 
 def coerce_provider(value: Any) -> LLMProvider:
@@ -517,14 +522,49 @@ async def _complete_ollama(
     return _openai_chat_response(payload, model)
 
 
-async def llm_complete(
+def _failover_error(exc: BaseException) -> bool:
+    """True for connection errors, timeouts, and HTTP failures. Not for a missing key."""
+    if isinstance(exc, (TimeoutError, ConnectionError, OSError)):
+        return True
+    if not isinstance(exc, LLMProviderError):
+        return False
+    text = str(exc).lower()
+    if "is not set" in text or "unknown llm provider" in text:
+        return False
+    return (
+        "request failed" in text
+        or "http " in text
+        or "timeout" in text
+        or "timed out" in text
+    )
+
+
+def _fallback_configs(config: LLMConfig) -> list[LLMConfig]:
+    """Primary profile, then each named fallback once with that provider's default model."""
+    chain = [config]
+    for name in list(config.fallbacks or []):
+        text = str(name or "").strip()
+        if not text:
+            continue
+        chain.append(
+            LLMConfig(
+                provider=text,
+                model="",
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
+                timeout=config.timeout,
+            )
+        )
+    return chain
+
+
+async def _complete_one(
     messages: list[dict[str, Any]],
     config: LLMConfig,
-    tools: list[dict[str, Any]] | None = None,
+    tools: list[dict[str, Any]] | None,
     *,
     client: Any = None,
 ) -> LLMResponse:
-    """Complete a chat turn. `tools` must be OpenAI function-tool schema or None."""
     provider = coerce_provider(config.provider)
     model = _resolve_model(config, provider)
     openai_tools = tools if tools else None
@@ -542,6 +582,39 @@ async def llm_complete(
         # Local provider: no API key required.
         return await _complete_ollama(messages, config, openai_tools, model=model)
     raise LLMProviderError(f"unknown LLM provider {provider!r}")
+
+
+async def llm_complete(
+    messages: list[dict[str, Any]],
+    config: LLMConfig,
+    tools: list[dict[str, Any]] | None = None,
+    *,
+    client: Any = None,
+) -> LLMResponse:
+    """Complete a chat turn. `tools` must be OpenAI function-tool schema or None.
+
+    On a connection error, HTTP failure, or timeout, the next fallback profile
+    is tried once. The response records which profile answered.
+    """
+    last: BaseException | None = None
+    profiles = _fallback_configs(config)
+    for index, profile in enumerate(profiles):
+        try:
+            response = await _complete_one(
+                messages,
+                profile,
+                tools,
+                client=client if index == 0 else None,
+            )
+        except Exception as exc:
+            last = exc
+            if index >= len(profiles) - 1 or not _failover_error(exc):
+                raise
+            continue
+        response.provider = coerce_provider(profile.provider).value
+        return response
+    assert last is not None
+    raise last
 
 
 def llm_complete_sync(

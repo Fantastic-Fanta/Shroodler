@@ -25,9 +25,13 @@ from shroodler.urls import is_loopback_or_local
 from shroodler.util import now_iso
 
 # Binaries the agent may run once an approval rule (or a human) says so.
-# Anything else needs a rule whose prefix names that binary.
+# Anything else needs a rule whose prefix names that binary. curl is
+# deliberately NOT here: it is a general-purpose HTTP client (arbitrary methods,
+# redirects, exfiltration), so it must be named by an explicit operator allow
+# rule rather than run as a "known scanner". The HTTP a probe needs goes through
+# send_request / replay, which are scoped.
 KNOWN_BINARIES = frozenset(
-    {"nmap", "nuclei", "httpx", "katana", "ffuf", "sqlmap", "curl"}
+    {"nmap", "nuclei", "httpx", "katana", "ffuf", "sqlmap"}
 )
 _SHELLS = frozenset(
     {"bash", "sh", "zsh", "dash", "ash", "cmd", "powershell", "pwsh", "fish"}
@@ -119,8 +123,17 @@ def reject_shell(argv: list[Any]) -> str | None:
             return "shell syntax is rejected"
         if index == 0 and "=" in token and not token.startswith("-"):
             return "environment assignment prefix is rejected"
-    name = Path(str(argv[0])).name
-    if name in _SHELLS:
+        # Only http/https targets. file://, gopher://, dict://, ftp:// etc. carry
+        # no host (so the scope check cannot see them) and are classic local-file
+        # read / SSRF vectors.
+        if "://" in token and token.split("://", 1)[0].lower() not in {"http", "https"}:
+            return "only http/https URL schemes are allowed"
+    first = str(argv[0]).strip()
+    # The gate authorizes by basename, so the binary must BE a bare name:
+    # a path like /tmp/evil/nmap would pass a name check but execute the path.
+    if "/" in first or "\\" in first:
+        return "binary must be a bare name, not a path"
+    if first in _SHELLS:
         return "shell wrapper is rejected"
     return None
 
@@ -300,7 +313,8 @@ def authorize(
         return decision
 
     binary = Path(tokens[0]).name
-    for host in hosts_in_argv(tokens):
+    argv_hosts = hosts_in_argv(tokens)
+    for host in argv_hosts:
         if not host_in_scope(host, scope_hosts):
             decision = ToolDecision(False, f"out of scope: {host}", "scope", tokens)
             _maybe_audit(slug, decision, audit, trace_id)
@@ -314,6 +328,20 @@ def authorize(
             )
             _maybe_audit(slug, decision, audit, trace_id)
             return decision
+
+    # A network scanner that names no host in argv (e.g. nuclei -l targets.txt)
+    # would run against a target set the scope check never sees. Require an
+    # in-scope host on the command line so scope stays verifiable, even for an
+    # operator-allowed binary.
+    if binary in KNOWN_BINARIES and not argv_hosts:
+        decision = ToolDecision(
+            False,
+            f"{binary} names no target host in argv; target scope cannot be verified",
+            "scope",
+            tokens,
+        )
+        _maybe_audit(slug, decision, audit, trace_id)
+        return decision
 
     loaded = list(rules) if rules is not None else load_approvals(slug)
     rule = match_rule(tokens, loaded)

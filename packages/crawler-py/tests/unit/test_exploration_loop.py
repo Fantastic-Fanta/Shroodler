@@ -598,3 +598,42 @@ def test_replay_refuses_an_out_of_scope_host(tmp_path):
     assert result["ok"] is False
     assert "out of scope" in result["error"]
     assert called == []
+
+
+def test_toolchain_hardening_closes_scope_bypasses():
+    allow_nuclei = [{"argv": ["nuclei"], "effect": "allow"}]
+    # Positive baseline: known scanner + in-scope host + allow rule runs.
+    ok = authorize(
+        ["nuclei", "http://127.0.0.1/"], slug="lab", rules=allow_nuclei, audit=False
+    )
+    assert ok.allowed is True
+
+    # 1. A path as argv[0] is rejected (gate authorizes by basename).
+    pathed = authorize(
+        ["/tmp/evil/nuclei", "http://127.0.0.1/"],
+        slug="lab",
+        rules=allow_nuclei,
+        audit=False,
+    )
+    assert pathed.allowed is False
+
+    # 2. Non-http(s) schemes (file:// local read, gopher SSRF) are rejected.
+    filescheme = authorize(
+        ["nuclei", "file:///etc/passwd"],
+        slug="lab",
+        rules=allow_nuclei,
+        audit=False,
+    )
+    assert filescheme.allowed is False
+
+    # 3. A known scanner naming no host in argv (target file) is denied even
+    #    with an allow rule: scope cannot be verified.
+    hostless = authorize(
+        ["nuclei", "-l", "targets.txt"],
+        slug="lab",
+        allow_external=True,
+        rules=allow_nuclei,
+        audit=False,
+    )
+    assert hostless.allowed is False
+    assert "scope" in hostless.reason
